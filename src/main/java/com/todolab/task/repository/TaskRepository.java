@@ -16,6 +16,14 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
 
     Optional<Task> findByRecurrenceSeriesIdAndOccurrenceDate(Long recurrenceSeriesId, java.time.LocalDate occurrenceDate);
 
+    List<Task> findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(Long recurrenceSeriesId, Long ownerId);
+
+    List<Task> findByRecurrenceSeriesIdAndOwnerIdAndOccurrenceDateGreaterThanEqualOrderByOccurrenceDateAscIdAsc(
+            Long recurrenceSeriesId,
+            Long ownerId,
+            java.time.LocalDate occurrenceDate
+    );
+
     Optional<Task> findByIdAndOwnerId(Long id, Long ownerId);
 
     boolean existsByIdAndOwnerId(Long id, Long ownerId);

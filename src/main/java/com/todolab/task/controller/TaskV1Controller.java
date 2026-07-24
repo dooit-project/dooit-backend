@@ -3,6 +3,7 @@ package com.todolab.task.controller;
 import com.todolab.auth.service.CurrentUserService;
 import com.todolab.common.api.ApiResponse;
 import com.todolab.task.domain.DeferReason;
+import com.todolab.task.domain.RecurrenceEditScope;
 import com.todolab.task.domain.TodayOrderDirection;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskRecommendationResponse;
@@ -259,11 +260,13 @@ public class TaskV1Controller {
     public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id,
-            @Valid @RequestBody TaskRequest request
+            @Valid @RequestBody TaskRequest request,
+            @Parameter(description = "반복 Task 수정 범위. 반복 Task가 아니면 무시됩니다.", schema = @Schema(allowableValues = {"THIS", "THIS_AND_FUTURE", "ALL"}, example = "THIS"))
+            @RequestParam(required = false) RecurrenceEditScope recurrenceScope
     ) {
         request.validate();
         User owner = currentUserService.requireUser(jwt);
-        return ResponseEntity.ok(ApiResponse.success(taskService.updateForOwner(id, request, owner)));
+        return ResponseEntity.ok(ApiResponse.success(taskService.updateForOwner(id, request, owner, recurrenceScope)));
     }
 
     @Operation(summary = "Task Today 이동", description = "로그인 사용자의 Task를 요청 날짜의 Today로 이동합니다.")
@@ -412,10 +415,12 @@ public class TaskV1Controller {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTask(
             @AuthenticationPrincipal Jwt jwt,
-            @PathVariable Long id
+            @PathVariable Long id,
+            @Parameter(description = "반복 Task 삭제 범위. 반복 Task가 아니면 무시됩니다.", schema = @Schema(allowableValues = {"THIS", "THIS_AND_FUTURE", "ALL"}, example = "THIS"))
+            @RequestParam(required = false) RecurrenceEditScope recurrenceScope
     ) {
         User owner = currentUserService.requireUser(jwt);
-        taskService.deleteForOwner(id, owner);
+        taskService.deleteForOwner(id, owner, recurrenceScope);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

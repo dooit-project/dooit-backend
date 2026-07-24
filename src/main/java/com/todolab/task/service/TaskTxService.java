@@ -4,6 +4,8 @@ import com.todolab.dday.domain.DdayGoal;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.task.domain.DeferReason;
+import com.todolab.task.domain.RecurrenceEditScope;
+import com.todolab.task.domain.RecurrenceExceptionType;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskStatus;
 import com.todolab.task.domain.TaskType;
@@ -45,9 +47,25 @@ public class TaskTxService {
 
     @Transactional
     public Task updateTxForOwner(Long id, TaskRequest req, User owner) {
+        return updateTxForOwner(id, req, owner, RecurrenceEditScope.THIS);
+    }
+
+    @Transactional
+    public Task updateTxForOwner(Long id, TaskRequest req, User owner, RecurrenceEditScope recurrenceScope) {
         Task task = findTaskForOwner(id, owner);
-        task.update(req.title(), req.description(), req.normalizedType(), req.startAt(), req.endAt(), req.allDay(), req.category());
-        return taskRepository.save(task);
+        RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
+        if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
+            applySingleUpdate(task, req);
+            return taskRepository.save(task);
+        }
+
+        List<Task> scopedTasks = scopedRecurringTasks(task, ownerId(owner), effectiveScope);
+        scopedTasks.forEach(scopedTask -> applyScopedOccurrenceUpdate(scopedTask, req));
+        taskRepository.saveAll(scopedTasks);
+        return scopedTasks.stream()
+                .filter(scopedTask -> id.equals(scopedTask.getId()))
+                .findFirst()
+                .orElse(task);
     }
 
     @Transactional
@@ -268,6 +286,22 @@ public class TaskTxService {
         return taskRepository.save(task);
     }
 
+    @Transactional
+    public void deleteTxForOwner(Long id, User owner, RecurrenceEditScope recurrenceScope) {
+        Task task = findTaskForOwner(id, owner);
+        RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
+        if (!isRecurringOccurrence(task)) {
+            taskRepository.deleteById(id);
+            return;
+        }
+
+        List<Task> scopedTasks = effectiveScope == RecurrenceEditScope.THIS
+                ? List.of(task)
+                : scopedRecurringTasks(task, ownerId(owner), effectiveScope);
+        scopedTasks.forEach(this::skipRecurringOccurrence);
+        taskRepository.saveAll(scopedTasks);
+    }
+
     private Task findTask(Long id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
@@ -320,6 +354,66 @@ public class TaskTxService {
         for (int i = 0; i < tasks.size(); i++) {
             tasks.get(i).assignTodayOrder(i);
         }
+    }
+
+    private RecurrenceEditScope normalizeScope(RecurrenceEditScope recurrenceScope) {
+        return recurrenceScope == null ? RecurrenceEditScope.THIS : recurrenceScope;
+    }
+
+    private boolean isRecurringOccurrence(Task task) {
+        return task.getRecurrenceSeries() != null && task.getOccurrenceDate() != null;
+    }
+
+    private void applySingleUpdate(Task task, TaskRequest req) {
+        task.update(req.title(), req.description(), req.normalizedType(), req.startAt(), req.endAt(), req.allDay(), req.category());
+        if (isRecurringOccurrence(task)) {
+            task.markRecurrenceException(RecurrenceExceptionType.MODIFIED, originalOccurrenceDate(task));
+        }
+    }
+
+    private void applyScopedOccurrenceUpdate(Task task, TaskRequest req) {
+        TaskRequest occurrenceRequest = requestForOccurrence(req, task.getOccurrenceDate());
+        task.update(
+                occurrenceRequest.title(),
+                occurrenceRequest.description(),
+                occurrenceRequest.normalizedType(),
+                occurrenceRequest.startAt(),
+                occurrenceRequest.endAt(),
+                occurrenceRequest.allDay(),
+                occurrenceRequest.category()
+        );
+    }
+
+    private TaskRequest requestForOccurrence(TaskRequest req, LocalDate occurrenceDate) {
+        if (req.startAt() == null) {
+            throw new TaskValidationException("반복 범위 수정은 시작 일시가 필요합니다.");
+        }
+        LocalDate requestDate = req.startAt().toLocalDate();
+        long daysToMove = java.time.temporal.ChronoUnit.DAYS.between(requestDate, occurrenceDate);
+        LocalDateTime startAt = req.startAt().plusDays(daysToMove);
+        LocalDateTime endAt = req.endAt() == null ? null : req.endAt().plusDays(daysToMove);
+        return new TaskRequest(req.title(), req.description(), req.type(), startAt, endAt, req.category(), req.allDay());
+    }
+
+    private LocalDate originalOccurrenceDate(Task task) {
+        return task.getOriginalOccurrenceDate() == null ? task.getOccurrenceDate() : task.getOriginalOccurrenceDate();
+    }
+
+    private List<Task> scopedRecurringTasks(Task task, Long ownerId, RecurrenceEditScope recurrenceScope) {
+        Long recurrenceSeriesId = task.getRecurrenceSeries().getId();
+        if (recurrenceScope == RecurrenceEditScope.ALL) {
+            return taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(recurrenceSeriesId, ownerId);
+        }
+        return taskRepository.findByRecurrenceSeriesIdAndOwnerIdAndOccurrenceDateGreaterThanEqualOrderByOccurrenceDateAscIdAsc(
+                recurrenceSeriesId,
+                ownerId,
+                task.getOccurrenceDate()
+        );
+    }
+
+    private void skipRecurringOccurrence(Task task) {
+        task.moveToInbox();
+        task.markRecurrenceException(RecurrenceExceptionType.SKIPPED, originalOccurrenceDate(task));
     }
 
     private void validateBulkTodayOrderRequest(TodayOrderRequest request) {

@@ -449,6 +449,93 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 반복 Task는 THIS_AND_FUTURE scope로 현재와 미래 occurrence를 수정/삭제한다")
+    void recurrenceScope_updateAndDeleteThisAndFuture() throws Exception {
+        String accessToken = accessToken("task-recurrence-scope@example.com");
+        User owner = userRepository.findByEmail("task-recurrence-scope@example.com").orElseThrow();
+        RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
+                owner,
+                RecurrenceFrequency.WEEKLY,
+                1,
+                "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=3",
+                "Asia/Seoul",
+                LocalDateTime.of(2026, 7, 6, 9, 0),
+                null,
+                3
+        ));
+        taskRepository.save(Task.builder()
+                .title("반복 회의")
+                .description("주간 싱크")
+                .type(TaskType.SCHEDULE)
+                .startAt(LocalDateTime.of(2026, 7, 6, 9, 0))
+                .endAt(LocalDateTime.of(2026, 7, 6, 10, 0))
+                .category("업무")
+                .owner(owner)
+                .recurrenceSeries(series)
+                .occurrenceDate(java.time.LocalDate.of(2026, 7, 6))
+                .originalOccurrenceDate(java.time.LocalDate.of(2026, 7, 6))
+                .build());
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-07"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3));
+
+        Long secondOccurrenceId = taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(series.getId(), owner.getId())
+                .get(1)
+                .getId();
+        TaskRequest updateRequest = new TaskRequest(
+                "변경 회의",
+                "범위 수정",
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 13, 11, 0),
+                LocalDateTime.of(2026, 7, 13, 12, 0),
+                "변경",
+                false
+        );
+
+        mockMvc.perform(put("/api/v1/tasks/{id}", secondOccurrenceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("recurrenceScope", "THIS_AND_FUTURE")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("변경 회의"))
+                .andExpect(jsonPath("$.data.startAt").value("2026-07-13T11:00:00"));
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-07"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].title").value("반복 회의"))
+                .andExpect(jsonPath("$.data[0].startAt").value("2026-07-06T09:00:00"))
+                .andExpect(jsonPath("$.data[1].title").value("변경 회의"))
+                .andExpect(jsonPath("$.data[1].startAt").value("2026-07-13T11:00:00"))
+                .andExpect(jsonPath("$.data[2].title").value("변경 회의"))
+                .andExpect(jsonPath("$.data[2].startAt").value("2026-07-20T11:00:00"));
+
+        mockMvc.perform(delete("/api/v1/tasks/{id}", secondOccurrenceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("recurrenceScope", "THIS_AND_FUTURE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-07"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-07-06"));
+    }
+
+    @Test
     @DisplayName("v1 Task 삭제 응답은 data null envelope를 반환한다")
     void deleteTask_success_dataNull() throws Exception {
         String accessToken = accessToken("task-delete@example.com");

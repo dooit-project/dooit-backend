@@ -105,14 +105,14 @@ class TaskV1ControllerTest {
         TaskRequest request = new TaskRequest("updated", null, null, null, null, false);
         TaskResponse response = TaskResponse.from(Task.builder().title("updated").owner(owner).build());
         given(currentUserService.requireUser(jwt)).willReturn(owner);
-        given(taskService.updateForOwner(10L, request, owner)).willReturn(response);
+        given(taskService.updateForOwner(10L, request, owner, null)).willReturn(response);
 
-        var result = controller.updateTask(jwt, 10L, request);
+        var result = controller.updateTask(jwt, 10L, request, null);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().data().title()).isEqualTo("updated");
-        then(taskService).should().updateForOwner(10L, request, owner);
+        then(taskService).should().updateForOwner(10L, request, owner, null);
     }
 
     @Test
@@ -139,12 +139,12 @@ class TaskV1ControllerTest {
         User owner = owner();
         given(currentUserService.requireUser(jwt)).willReturn(owner);
 
-        var result = controller.deleteTask(jwt, 10L);
+        var result = controller.deleteTask(jwt, 10L, null);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().data()).isNull();
-        then(taskService).should().deleteForOwner(10L, owner);
+        then(taskService).should().deleteForOwner(10L, owner, null);
     }
 
     private Jwt jwt(String subject) {

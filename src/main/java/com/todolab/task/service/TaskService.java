@@ -1,6 +1,7 @@
 package com.todolab.task.service;
 
 import com.todolab.task.domain.DeferReason;
+import com.todolab.task.domain.RecurrenceEditScope;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskStatus;
 import com.todolab.task.domain.TodayOrderDirection;
@@ -251,7 +252,11 @@ public class TaskService {
     }
 
     public TaskResponse updateForOwner(Long id, TaskRequest taskRequest, User owner) {
-        Task updated = taskTxService.updateTxForOwner(id, taskRequest, owner);
+        return updateForOwner(id, taskRequest, owner, RecurrenceEditScope.THIS);
+    }
+
+    public TaskResponse updateForOwner(Long id, TaskRequest taskRequest, User owner, RecurrenceEditScope recurrenceScope) {
+        Task updated = taskTxService.updateTxForOwner(id, taskRequest, owner, recurrenceScope);
         return TaskResponse.from(updated);
     }
 
@@ -374,10 +379,11 @@ public class TaskService {
     }
 
     public void deleteForOwner(Long id, User owner) {
-        if (!taskRepository.existsByIdAndOwnerId(id, ownerId(owner))) {
-            throw new TaskNotFoundException(id);
-        }
-        taskRepository.deleteById(id);
+        deleteForOwner(id, owner, RecurrenceEditScope.THIS);
+    }
+
+    public void deleteForOwner(Long id, User owner, RecurrenceEditScope recurrenceScope) {
+        taskTxService.deleteTxForOwner(id, owner, recurrenceScope);
     }
 
     private List<TaskResponse> findTasks(TaskQueryRequest request) {

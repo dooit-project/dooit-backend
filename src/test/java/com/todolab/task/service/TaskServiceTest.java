@@ -1263,13 +1263,11 @@ class TaskServiceTest {
     @DisplayName("인증 사용자용 Task 삭제는 owner 조건을 적용한다")
     void deleteForOwner_success_ownerScoped() {
         User owner = persistedOwner(1L);
-        given(taskRepository.existsByIdAndOwnerId(10L, 1L)).willReturn(true);
 
         taskService.deleteForOwner(10L, owner);
 
-        then(taskRepository).should().existsByIdAndOwnerId(10L, 1L);
-        then(taskRepository).should().deleteById(10L);
-        then(taskTxService).shouldHaveNoInteractions();
+        then(taskTxService).should().deleteTxForOwner(10L, owner, com.todolab.task.domain.RecurrenceEditScope.THIS);
+        then(taskRepository).shouldHaveNoInteractions();
     }
 
     @Test

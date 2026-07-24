@@ -302,19 +302,37 @@ Response: `TaskResponse[]`
 
 ```http
 PUT /api/v1/tasks/{id}
+PUT /api/v1/tasks/{id}?recurrenceScope=THIS|THIS_AND_FUTURE|ALL
 ```
 
 Request: `TaskRequest`
 
 Response: `TaskResponse`
 
+반복 Task 수정 범위:
+
+- `recurrenceScope`를 생략하면 `THIS`다.
+- 반복 Task가 아니면 `recurrenceScope`는 무시된다.
+- `THIS`는 해당 occurrence row만 수정하고 `recurrenceException=MODIFIED`로 표시한다.
+- `THIS_AND_FUTURE`는 현재 occurrence 날짜 이상으로 materialize된 같은 series occurrence를 수정한다.
+- `ALL`은 materialize된 같은 series occurrence 전체를 수정한다.
+- `THIS_AND_FUTURE`, `ALL`은 occurrence 날짜별로 요청 `startAt`/`endAt`의 시간을 유지해 날짜를 이동한다. 따라서 `startAt`이 필요하다.
+
 ### 삭제
 
 ```http
 DELETE /api/v1/tasks/{id}
+DELETE /api/v1/tasks/{id}?recurrenceScope=THIS|THIS_AND_FUTURE|ALL
 ```
 
 Response: `data: null`
+
+반복 Task 삭제 범위:
+
+- `recurrenceScope`를 생략하면 `THIS`다.
+- 반복 Task가 아니면 기존처럼 해당 Task를 삭제한다.
+- 반복 occurrence 삭제는 같은 occurrence가 다시 materialize되지 않도록 row를 물리 삭제하지 않고 `recurrenceException=SKIPPED` marker로 남긴다.
+- `THIS_AND_FUTURE`는 현재 occurrence 날짜 이상, `ALL`은 같은 series 전체를 `SKIPPED`로 표시한다.
 
 ### Today 이동
 

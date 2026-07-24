@@ -63,4 +63,8 @@ Last updated: 2026-07-23
 - 현재 materialize 기준 template은 같은 series에 연결된 가장 이른 non-exception Task다.
 - occurrence별 완료 상태는 materialize된 `TASK` row의 `status=DONE`, `completedAt`으로 저장한다.
 - 완료된 occurrence도 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`를 유지하므로 같은 series의 다른 occurrence와 독립적으로 구분된다.
+- 수정/삭제 scope는 `THIS`, `THIS_AND_FUTURE`, `ALL`이다.
+- `THIS` 수정은 해당 occurrence만 `MODIFIED`로 표시한다.
+- `THIS_AND_FUTURE`, `ALL` 수정은 materialize된 occurrence row 범위에 적용한다.
+- 반복 occurrence 삭제는 재생성을 막기 위해 row를 보존하고 `SKIPPED` marker로 표시한다.
 - 모바일은 반복 UI를 실제 저장 기능처럼 열면 안 된다.
