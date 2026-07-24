@@ -61,4 +61,6 @@ Last updated: 2026-07-23
 - Today/Calendar owner 조회는 연결된 반복 series와 template Task를 기준으로 조회 범위의 누락 occurrence Task를 materialize한다.
 - materialize는 `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`와 검증된 `BYDAY`, `BYMONTHDAY`, `COUNT`, `UNTIL` 범위를 사용한다.
 - 현재 materialize 기준 template은 같은 series에 연결된 가장 이른 non-exception Task다.
+- occurrence별 완료 상태는 materialize된 `TASK` row의 `status=DONE`, `completedAt`으로 저장한다.
+- 완료된 occurrence도 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`를 유지하므로 같은 series의 다른 occurrence와 독립적으로 구분된다.
 - 모바일은 반복 UI를 실제 저장 기능처럼 열면 안 된다.

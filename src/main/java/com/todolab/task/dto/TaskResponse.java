@@ -2,6 +2,7 @@ package com.todolab.task.dto;
 
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.DeferReason;
+import com.todolab.task.domain.RecurrenceExceptionType;
 import com.todolab.task.domain.TaskStatus;
 import com.todolab.task.domain.TaskType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -58,6 +59,14 @@ public record TaskResponse(
         LocalDate ddayGoalTargetDate,
         @Schema(description = "연결된 D-Day 목표까지 남은 일수", example = "10", nullable = true)
         Long ddayDaysLeft,
+        @Schema(description = "연결된 반복 series ID", example = "1", nullable = true)
+        Long recurrenceSeriesId,
+        @Schema(description = "이 Task가 나타내는 반복 occurrence 날짜", example = "2026-07-22", nullable = true)
+        LocalDate occurrenceDate,
+        @Schema(description = "이동/수정 전 원래 반복 occurrence 날짜", example = "2026-07-15", nullable = true)
+        LocalDate originalOccurrenceDate,
+        @Schema(description = "반복 occurrence 예외 종류", example = "MODIFIED", nullable = true)
+        RecurrenceExceptionType recurrenceException,
         @Schema(description = "생성 시각", example = "2026-07-22T09:30:00", nullable = true)
         LocalDateTime createdAt,
         @Schema(description = "수정 시각. 생성 직후에는 null입니다.", example = "2026-07-22T10:30:00", nullable = true)
@@ -74,11 +83,12 @@ public record TaskResponse(
             String category,
             LocalDateTime createdAt
     ) {
-        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, null, null, null, null, 0, false, null, null, null, null, null, null, createdAt, null);
+        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, createdAt, null);
     }
 
     public static TaskResponse from(Task t) {
         var ddayGoal = t.getDdayGoal();
+        var recurrenceSeries = t.getRecurrenceSeries();
         return TaskResponse.builder()
                 .id(t.getId())
                 .type(t.getType())
@@ -102,6 +112,10 @@ public record TaskResponse(
                 .ddayGoalTitle(ddayGoal == null ? null : ddayGoal.getTitle())
                 .ddayGoalTargetDate(ddayGoal == null ? null : ddayGoal.getTargetDate())
                 .ddayDaysLeft(ddayGoal == null ? null : ChronoUnit.DAYS.between(LocalDate.now(), ddayGoal.getTargetDate()))
+                .recurrenceSeriesId(recurrenceSeries == null ? null : recurrenceSeries.getId())
+                .occurrenceDate(t.getOccurrenceDate())
+                .originalOccurrenceDate(t.getOriginalOccurrenceDate())
+                .recurrenceException(t.getRecurrenceException())
                 .createdAt(t.getCreatedAt())
                 .updatedAt(t.getUpdatedAt())
                 .build();

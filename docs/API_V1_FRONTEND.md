@@ -132,6 +132,7 @@ type TaskType = 'SCHEDULE' | 'TODO' | 'IDEA';
 type TaskStatus = 'INBOX' | 'TODAY' | 'DONE';
 type DeferReason = 'TOO_BIG' | 'NOT_NEEDED_NOW' | 'AVOIDING' | 'NO_DEADLINE' | 'WAITING_OTHER' | 'ETC';
 type TodayOrderDirection = 'UP' | 'DOWN';
+type RecurrenceExceptionType = 'SKIPPED' | 'MOVED' | 'MODIFIED';
 
 type TaskResponse = {
   id: number;
@@ -156,6 +157,10 @@ type TaskResponse = {
   ddayGoalTitle: string | null;
   ddayGoalTargetDate: string | null;
   ddayDaysLeft: number | null;
+  recurrenceSeriesId: number | null;
+  occurrenceDate: string | null;
+  originalOccurrenceDate: string | null;
+  recurrenceException: RecurrenceExceptionType | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -186,8 +191,9 @@ Task 응답 nullable/default 규칙:
 - 저장된 Task의 `createdAt`은 내려온다. 일부 legacy 테스트/생성자 기반 응답에서는 null일 수 있으나 v1 API 응답에서는 non-null로 본다.
 - 날짜 없는 Task는 `startAt`, `endAt`, `plannedDate`, `targetDate`, `todayOrder`, `completedAt`이 null이고 `status=INBOX`, `unscheduled=true`, `allDay=false`다.
 - 날짜가 있는 Task는 생성 직후 `status=TODAY`, `targetDate=startAt 날짜`, `plannedDate=targetDate`, `unscheduled=false`다.
-- `description`, `category`, `deferReason`, `deferReasonLabel`, D-Day 연결 필드는 값이 없으면 null이다.
+- `description`, `category`, `deferReason`, `deferReasonLabel`, D-Day 연결 필드, 반복 occurrence 필드는 값이 없으면 null이다.
 - `updatedAt`은 생성 직후 null이고 수정 후 값이 생긴다.
+- 반복 occurrence Task를 완료하면 해당 occurrence row만 `DONE`으로 바뀌며 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`는 유지된다.
 
 ## 4. Task API
 

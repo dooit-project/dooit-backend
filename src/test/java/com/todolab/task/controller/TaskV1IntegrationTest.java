@@ -396,7 +396,7 @@ class TaskV1IntegrationTest {
                 .build();
         taskRepository.save(template);
 
-        mockMvc.perform(get("/api/v1/tasks/today")
+        String todayResponse = mockMvc.perform(get("/api/v1/tasks/today")
                         .header("Authorization", "Bearer " + accessToken)
                         .param("date", "2026-07-13"))
                 .andExpect(status().isOk())
@@ -404,7 +404,33 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].title").value("반복 회의"))
                 .andExpect(jsonPath("$.data[0].startAt").value("2026-07-13T09:00:00"))
-                .andExpect(jsonPath("$.data[0].targetDate").value("2026-07-13"));
+                .andExpect(jsonPath("$.data[0].targetDate").value("2026-07-13"))
+                .andExpect(jsonPath("$.data[0].recurrenceSeriesId").value(series.getId()))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-07-13"))
+                .andExpect(jsonPath("$.data[0].originalOccurrenceDate").value("2026-07-13"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Number occurrenceId = JsonPath.read(todayResponse, "$.data[0].id");
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done", occurrenceId.longValue())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("completedAt", "2026-07-13T18:00:00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("DONE"))
+                .andExpect(jsonPath("$.data.completedAt").value("2026-07-13T18:00:00"))
+                .andExpect(jsonPath("$.data.recurrenceSeriesId").value(series.getId()))
+                .andExpect(jsonPath("$.data.occurrenceDate").value("2026-07-13"));
+
+        mockMvc.perform(get("/api/v1/tasks/done")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-07-13"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(occurrenceId.longValue()))
+                .andExpect(jsonPath("$.data[0].recurrenceSeriesId").value(series.getId()))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-07-13"));
 
         mockMvc.perform(get("/api/v1/tasks")
                         .header("Authorization", "Bearer " + accessToken)
@@ -415,7 +441,11 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.length()").value(3))
                 .andExpect(jsonPath("$.data[0].startAt").value("2026-07-06T09:00:00"))
                 .andExpect(jsonPath("$.data[1].startAt").value("2026-07-13T09:00:00"))
-                .andExpect(jsonPath("$.data[2].startAt").value("2026-07-20T09:00:00"));
+                .andExpect(jsonPath("$.data[1].status").value("DONE"))
+                .andExpect(jsonPath("$.data[1].occurrenceDate").value("2026-07-13"))
+                .andExpect(jsonPath("$.data[2].startAt").value("2026-07-20T09:00:00"))
+                .andExpect(jsonPath("$.data[2].status").value("TODAY"))
+                .andExpect(jsonPath("$.data[2].occurrenceDate").value("2026-07-20"));
     }
 
     @Test
