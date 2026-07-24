@@ -536,6 +536,83 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 반복 Task 전체 수정은 기존 완료 occurrence의 완료 기록을 보존한다")
+    void recurrenceScope_updateAll_preservesCompletedOccurrence() throws Exception {
+        String accessToken = accessToken("task-recurrence-preserve-done@example.com");
+        User owner = userRepository.findByEmail("task-recurrence-preserve-done@example.com").orElseThrow();
+        RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
+                owner,
+                RecurrenceFrequency.WEEKLY,
+                1,
+                "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=3",
+                "Asia/Seoul",
+                LocalDateTime.of(2026, 7, 6, 9, 0),
+                null,
+                3
+        ));
+        taskRepository.save(Task.builder()
+                .title("반복 회의")
+                .description("주간 싱크")
+                .type(TaskType.SCHEDULE)
+                .startAt(LocalDateTime.of(2026, 7, 6, 9, 0))
+                .endAt(LocalDateTime.of(2026, 7, 6, 10, 0))
+                .category("업무")
+                .owner(owner)
+                .recurrenceSeries(series)
+                .occurrenceDate(java.time.LocalDate.of(2026, 7, 6))
+                .originalOccurrenceDate(java.time.LocalDate.of(2026, 7, 6))
+                .build());
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-07"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3));
+
+        List<Task> occurrences = taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(series.getId(), owner.getId());
+        Long firstOccurrenceId = occurrences.get(0).getId();
+        Long secondOccurrenceId = occurrences.get(1).getId();
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done", secondOccurrenceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("completedAt", "2026-07-13T18:00:00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("DONE"));
+
+        TaskRequest updateRequest = new TaskRequest(
+                "전체 변경 회의",
+                "완료 보존",
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 6, 11, 0),
+                LocalDateTime.of(2026, 7, 6, 12, 0),
+                "변경",
+                false
+        );
+
+        mockMvc.perform(put("/api/v1/tasks/{id}", firstOccurrenceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("recurrenceScope", "ALL")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("전체 변경 회의"));
+
+        mockMvc.perform(get("/api/v1/tasks/done")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-07-13"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(secondOccurrenceId))
+                .andExpect(jsonPath("$.data[0].title").value("전체 변경 회의"))
+                .andExpect(jsonPath("$.data[0].status").value("DONE"))
+                .andExpect(jsonPath("$.data[0].completedAt").value("2026-07-13T18:00:00"))
+                .andExpect(jsonPath("$.data[0].startAt").value("2026-07-13T11:00:00"))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-07-13"));
+    }
+
+    @Test
     @DisplayName("v1 Task 삭제 응답은 data null envelope를 반환한다")
     void deleteTask_success_dataNull() throws Exception {
         String accessToken = accessToken("task-delete@example.com");

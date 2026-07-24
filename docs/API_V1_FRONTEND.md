@@ -317,6 +317,7 @@ Response: `TaskResponse`
 - `THIS_AND_FUTURE`는 현재 occurrence 날짜 이상으로 materialize된 같은 series occurrence를 수정한다.
 - `ALL`은 materialize된 같은 series occurrence 전체를 수정한다.
 - `THIS_AND_FUTURE`, `ALL`은 occurrence 날짜별로 요청 `startAt`/`endAt`의 시간을 유지해 날짜를 이동한다. 따라서 `startAt`이 필요하다.
+- `THIS_AND_FUTURE`, `ALL` 범위에 이미 완료된 occurrence가 포함되면 제목/시간 등 일반 필드는 수정되지만 `status=DONE`, `completedAt`은 유지된다.
 
 ### 삭제
 

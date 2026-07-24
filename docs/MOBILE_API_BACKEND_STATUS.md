@@ -113,7 +113,7 @@ Last audited: 2026-07-22
 - [x] Today / Calendar 조회 시 occurrence materialize
 - [x] occurrence별 완료 상태 저장
 - [x] `THIS` / `THIS_AND_FUTURE` / `ALL` 수정·삭제 scope
-- [ ] 반복 전체 수정 후 기존 완료 기록 보존
+- [x] 반복 전체 수정 후 기존 완료 기록 보존
 - [ ] 월말, 윤년, 공휴일 등 RRULE validation 범위
 
 제품 주의:

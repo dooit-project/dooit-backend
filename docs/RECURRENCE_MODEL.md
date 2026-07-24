@@ -66,5 +66,6 @@ Last updated: 2026-07-23
 - 수정/삭제 scope는 `THIS`, `THIS_AND_FUTURE`, `ALL`이다.
 - `THIS` 수정은 해당 occurrence만 `MODIFIED`로 표시한다.
 - `THIS_AND_FUTURE`, `ALL` 수정은 materialize된 occurrence row 범위에 적용한다.
+- `THIS_AND_FUTURE`, `ALL` 수정은 완료된 occurrence의 `status=DONE`, `completedAt`을 보존한다.
 - 반복 occurrence 삭제는 재생성을 막기 위해 row를 보존하고 `SKIPPED` marker로 표시한다.
 - 모바일은 반복 UI를 실제 저장 기능처럼 열면 안 된다.
