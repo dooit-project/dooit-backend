@@ -125,16 +125,18 @@ Last audited: 2026-07-22
 
 문서: `todolab-mobile/docs/API_NOTIFICATIONS.md`
 
-현재 상태: [ ] 미구현
+현재 상태: [x] 계약 확정
 
 확정해야 할 백엔드 책임:
 
-- [ ] 반복 occurrence 계산은 백엔드 책임
-- [ ] 모바일은 가까운 미래 occurrence만 로컬 알림 예약
-- [ ] 완료·미룸·삭제 후 같은 occurrence가 다음 동기화에서 제외/변경되는지
-- [ ] `SKIPPED`, `MOVED`, `MODIFIED` 예외 처리
-- [ ] time zone 변경 시 과거/미래 occurrence 재계산 방식
-- [ ] 향후 서버 push 알림과 로컬 알림 중복 방지 방식
+- [x] 반복 occurrence 계산은 백엔드 책임
+- [x] 모바일은 가까운 미래 occurrence만 로컬 알림 예약
+- [x] 완료·미룸·삭제 후 같은 occurrence가 다음 동기화에서 제외/변경되는지
+- [x] `SKIPPED`, `MOVED`, `MODIFIED` 예외 처리
+- [x] time zone 변경 시 과거/미래 occurrence 재계산 방식
+- [x] 향후 서버 push 알림과 로컬 알림 중복 방지 방식
+
+세부 계약은 `docs/NOTIFICATION_CONTRACT.md`에서 관리한다.
 
 ## 6. Today 재정렬 API
 
