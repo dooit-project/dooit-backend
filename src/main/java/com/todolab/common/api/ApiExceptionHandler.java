@@ -33,9 +33,9 @@ public class ApiExceptionHandler {
         FieldError error = extractFirstFieldError(e);
         if (error != null) {
             String detail = error.getField() + ": " + error.getDefaultMessage();
-            log.error("Validation Failed : {}", detail);
+            log.warn("Validation Failed : {}", detail);
         } else {
-            log.error("Validation Failed : {}", e.getMessage());
+            log.warn("Validation Failed : {}", e.getMessage());
         }
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
     }
@@ -45,7 +45,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<?>> handleArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
-        log.error("Type Mismatch : {}", e.getMessage());
+        log.warn("Type Mismatch : {}", e.getMessage());
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
     }
 
@@ -54,7 +54,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler({MissingServletRequestParameterException.class, MissingPathVariableException.class})
     public ResponseEntity<ApiResponse<?>> handleMissingRequestValueException(Exception e) {
-        log.error("Missing Request Value : {}", e.getMessage());
+        log.warn("Missing Request Value : {}", e.getMessage());
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
     }
 
@@ -63,7 +63,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<?>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        log.error("Unreadable Request Body : {}", e.getMessage());
+        log.warn("Unreadable Request Body : {}", e.getMessage());
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
     }
 
@@ -72,7 +72,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(TaskValidationException.class)
     public ResponseEntity<ApiResponse<?>> handleTaskValidationException(TaskValidationException e) {
-        log.error("Task Validation Failed : {}", e.getDetail());
+        log.warn("Task Validation Failed : {}", e.getDetail());
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
     }
 

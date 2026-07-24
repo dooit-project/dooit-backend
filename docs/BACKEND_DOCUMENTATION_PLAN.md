@@ -17,6 +17,8 @@ Last updated: 2026-07-15
 | `docs/RECURRENCE_MODEL.md` | 반복 series와 occurrence Task 내부 모델 | 신규, 반복 API 확정 시 갱신 필요 |
 | `docs/NOTIFICATION_CONTRACT.md` | 반복 occurrence와 모바일 로컬 알림 책임 계약 | 신규, 알림 API 도입 시 갱신 필요 |
 | `docs/AUTH_CONTRACT.md` | JWT 인증, 토큰 TTL, refresh token, 로그아웃, 401/403 계약 | 신규, refresh token 도입 시 갱신 필요 |
+| `docs/API_ERROR_CODES.md` | 오류 코드, HTTP status, 모바일 처리, retry, logging/masking 기준 | 신규, ErrorCode 변경 시 갱신 필요 |
+| `docs/MOBILE_INCIDENT_RUNBOOK.md` | 모바일 real-mode 장애 접수와 백엔드 확인 절차 | 신규, 장애 대응 결과 누적 필요 |
 | `docs/ROADMAP.md` | 앞으로의 백엔드 작업 우선순위 | 유지 |
 | `/v3/api-docs` | 기계 판독 가능한 OpenAPI 원본 계약 | 신규 기준 |
 | `/swagger-ui` | 개발자 테스트용 OpenAPI UI | 신규 기준 |
@@ -66,7 +68,7 @@ Last updated: 2026-07-15
 - retry 가능 여부
 - 로그에 남길 내부 진단 정보
 
-우선순위: 최상
+상태: 초안 작성 완료, `ErrorCode` 변경 시 갱신 필요
 
 ### 2.3 인증/인가 계약서
 

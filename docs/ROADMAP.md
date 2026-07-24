@@ -150,10 +150,10 @@ Last updated: 2026-07-25
 
 ### 4.3 관측과 장애 대응
 
-- [ ] API error code catalog 작성
-- [ ] 4xx/5xx logging 기준 정리
-- [ ] 개인정보가 포함될 수 있는 필드 masking 정책 정리
-- [ ] 모바일 연동 장애 대응 runbook 작성
+- [x] API error code catalog 작성
+- [x] 4xx/5xx logging 기준 정리
+- [x] 개인정보가 포함될 수 있는 필드 masking 정책 정리
+- [x] 모바일 연동 장애 대응 runbook 작성
 
 ## 5. 백엔드 문서화 과제
 
@@ -161,7 +161,7 @@ Last updated: 2026-07-25
 
 - [ ] API 연동 규격서: v1 endpoint, 인증, envelope, 오류, 날짜 규칙
 - [x] 환경별 연동 가이드: local/staging/prod URL, CORS, 실행 순서
-- [ ] 오류 코드 카탈로그: code, HTTP status, 사용자 노출 message
+- [x] 오류 코드 카탈로그: code, HTTP status, 사용자 노출 message
 - [x] 인증/인가 계약서: JWT claim, 만료, 401/403 처리
 - [ ] 데이터 모델 사전: Task, D-Day, User 주요 필드와 상태 전이
 - [x] 릴리스/호환성 정책: v1 유지, deprecation, breaking change 기준
