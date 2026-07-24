@@ -16,6 +16,9 @@ app:
   cors:
     allowed-origins: http://localhost:8081,http://localhost:8090
 
+  docs:
+    public-enabled: true
+
   batch:
     scheduler:
       enabled: false

@@ -1,6 +1,6 @@
 # ToDoLab Environment Integration
 
-Last updated: 2026-07-14
+Last updated: 2026-07-25
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준을 정리한다.
 
@@ -11,19 +11,22 @@ Last updated: 2026-07-14
 | local | `http://localhost:8080` | 확정 | 백엔드 로컬 실행 기준 |
 | local, Android Emulator | `http://10.0.2.2:8080` | 확정 | Android Emulator에서 호스트 머신 접근 시 사용 |
 | local, 실제 기기 | `http://<dev-machine-lan-ip>:8080` | 확인 필요 | 같은 네트워크에서 개발 머신 IP로 접근 |
-| staging | 미정 | 확인 필요 | 배포 URL 확정 후 갱신 |
-| production | 미정 | 확인 필요 | 운영 도메인 확정 후 갱신 |
+| staging | 배포 URL 미정 | 확인 필요 | 배포 URL 확정 후 갱신 |
+| production | 운영 도메인 미정 | 확인 필요 | 운영 도메인 확정 후 갱신 |
 
 모바일 기본 base path는 모든 환경에서 `/api/v1`이다.
 
 ## 2. CORS Origin
 
-현재 코드 기준 CORS 설정은 `app.cors.allowed-origins` 값을 사용한다.
+현재 코드 기준 CORS 설정은 `app.cors.allowed-origins` 값을 사용한다. 운영 프로필에서는 `TODOLAB_ALLOWED_ORIGINS` 환경변수로 주입한다.
 
 | 환경 | Origin | 상태 | 설정 위치 |
 | --- | --- | --- | --- |
 | local, Expo Web | `http://localhost:8081` | 확인됨 | `application.yml`, `application-local.yml` |
 | local, Expo Web 대체 포트 | `http://localhost:8090` | 확인됨 | `application.yml`, `application-local.yml` |
+| local, iOS Simulator | CORS origin 없음 | 확인됨 | native 요청은 브라우저 CORS 대상이 아님 |
+| local, Android Emulator | CORS origin 없음 | 확인됨 | native 요청은 브라우저 CORS 대상이 아님 |
+| local, 실제 기기 | CORS origin 없음 | 확인 필요 | Expo Go/native 요청은 브라우저 CORS 대상이 아님 |
 | staging | 미정 | 확인 필요 | `TODOLAB_ALLOWED_ORIGINS` |
 | production | 미정 | 확인 필요 | `TODOLAB_ALLOWED_ORIGINS` |
 
@@ -48,6 +51,7 @@ Last updated: 2026-07-14
 
 ```bash
 TODOLAB_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
+TODOLAB_DOCS_PUBLIC_ENABLED=false
 ```
 
 원칙:
@@ -56,13 +60,16 @@ TODOLAB_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
 - 여러 origin은 쉼표로 구분한다.
 - secret 값은 문서에 기록하지 않는다.
 - origin을 추가한 뒤 `Authorization` header가 포함된 preflight를 확인한다.
+- iOS Simulator, Android Emulator, 실제 기기 native 앱 요청은 CORS 대상이 아니므로 API URL 접근성만 확인한다.
+- Expo Web은 브라우저 CORS 대상이므로 실제 접속 origin을 `TODOLAB_ALLOWED_ORIGINS`에 추가한다.
+- production에서는 `TODOLAB_DOCS_PUBLIC_ENABLED=false`를 기본값으로 유지한다.
 
 ## 4. 문서 UI 공개 기준
 
 | 환경 | Swagger UI `/swagger-ui` | Scalar `/scalar.html` | 비고 |
 | --- | --- | --- | --- |
 | local | 공개 | 공개 | 개발 확인용 |
-| staging | 제한 공개 권장 | 제한 공개 권장 | 접근 제어 또는 네트워크 제한 필요 |
-| production | 비공개 또는 제한 공개 권장 | 비공개 또는 제한 공개 권장 | 운영 공개 범위 확정 필요 |
+| staging | 제한 공개 | 제한 공개 | `TODOLAB_DOCS_PUBLIC_ENABLED=true`일 때만 공개하고 접근 제어 또는 네트워크 제한 적용 |
+| production | 비공개 기본 | 비공개 기본 | `TODOLAB_DOCS_PUBLIC_ENABLED=false` 기본값 유지 |
 
-현재 백엔드는 문서 UI 경로를 인증 없이 열어 둔다. staging/prod 배포 전 공개 범위를 별도로 결정해야 한다.
+현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다.

@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties(AuthJwtProperties.class)
+@EnableConfigurationProperties({AuthJwtProperties.class, DocumentationProperties.class})
 public class SecurityConfig {
 
     static final String[] DOCUMENTATION_MATCHERS = {
@@ -39,14 +39,11 @@ public class SecurityConfig {
             "/favicon.ico",
             "/css/**",
             "/js/**",
-            "/images/**",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/scalar.html"
+            "/images/**"
     };
 
     private final ApiAuthenticationEntryPoint apiAuthenticationEntryPoint;
+    private final DocumentationProperties documentationProperties;
 
     @Bean
     @Order(1)
@@ -75,7 +72,7 @@ public class SecurityConfig {
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(WEB_PUBLIC_MATCHERS).permitAll()
+                        .requestMatchers(publicWebMatchers()).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -88,6 +85,23 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                 )
                 .build();
+    }
+
+    private String[] publicWebMatchers() {
+        if (!documentationProperties.publicEnabled()) {
+            return WEB_PUBLIC_MATCHERS;
+        }
+
+        String[] matchers = new String[WEB_PUBLIC_MATCHERS.length + DOCUMENTATION_MATCHERS.length];
+        System.arraycopy(WEB_PUBLIC_MATCHERS, 0, matchers, 0, WEB_PUBLIC_MATCHERS.length);
+        System.arraycopy(
+                DOCUMENTATION_MATCHERS,
+                0,
+                matchers,
+                WEB_PUBLIC_MATCHERS.length,
+                DOCUMENTATION_MATCHERS.length
+        );
+        return matchers;
     }
 
     @Bean

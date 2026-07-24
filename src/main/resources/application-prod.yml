@@ -44,6 +44,9 @@ app:
   cors:
     allowed-origins: ${TODOLAB_ALLOWED_ORIGINS:}
 
+  docs:
+    public-enabled: ${TODOLAB_DOCS_PUBLIC_ENABLED:false}
+
   batch:
     scheduler:
       enabled: true

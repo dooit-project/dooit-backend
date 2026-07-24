@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SecurityConfigTest {
 
-    SecurityConfig securityConfig = new SecurityConfig(null);
+    SecurityConfig securityConfig = new SecurityConfig(null, new DocumentationProperties(true));
 
     @Test
     @DisplayName("BCrypt PasswordEncoder를 제공한다")
@@ -22,9 +22,11 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("API 문서 endpoint는 공개 경로에 포함한다")
+    @DisplayName("API 문서 endpoint는 별도 공개 제어 경로로 관리한다")
     void documentationMatchersArePublic() {
+        assertThat(SecurityConfig.DOCUMENTATION_MATCHERS)
+                .contains("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/scalar.html");
         assertThat(SecurityConfig.WEB_PUBLIC_MATCHERS)
-                .contains(SecurityConfig.DOCUMENTATION_MATCHERS);
+                .doesNotContain(SecurityConfig.DOCUMENTATION_MATCHERS);
     }
 }

@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-07-22
+Last updated: 2026-07-25
 
 이 문서는 완료 이력보다 **앞으로 백엔드에서 닫아야 할 작업**을 관리한다. 이미 구현된 인증, v1 경로, owner scope, OpenAPI/Swagger/Scalar 문서 UI는 기준 상태로 보고, 아래 항목은 모바일 실사용과 운영 안정성에 필요한 후속 작업이다.
 
@@ -136,10 +136,10 @@ Last updated: 2026-07-22
 
 ### 4.1 환경과 CORS
 
-- [ ] local, staging, production API URL 문서화
-- [ ] `TODOLAB_ALLOWED_ORIGINS` 운영 값 관리 방식 정리
-- [ ] Expo Web, iOS Simulator, Android Emulator, 실제 기기 origin 차이 문서화
-- [ ] staging/prod에서 Swagger UI와 Scalar 공개 범위 결정
+- [x] local, staging, production API URL 문서화
+- [x] `TODOLAB_ALLOWED_ORIGINS` 운영 값 관리 방식 정리
+- [x] Expo Web, iOS Simulator, Android Emulator, 실제 기기 origin 차이 문서화
+- [x] staging/prod에서 Swagger UI와 Scalar 공개 범위 결정
 
 ### 4.2 인증 토큰 정책
 

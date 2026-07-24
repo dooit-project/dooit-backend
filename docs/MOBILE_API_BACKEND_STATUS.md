@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-07-22
+Last audited: 2026-07-25
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -182,7 +182,7 @@ Last audited: 2026-07-22
 
 | 항목 | 상태 | 메모 |
 | --- | --- | --- |
-| 개발 / 스테이징 / 운영 API URL | [~] | `ENVIRONMENT_INTEGRATION.md`에 local 기준과 staging/production 미정 상태 정리 |
+| 개발 / 스테이징 / 운영 API URL | [x] | `ENVIRONMENT_INTEGRATION.md`에 local 기준, staging/production 미정 상태, CORS 운영 값 관리, 문서 UI 공개 제어 방식 정리 |
 | 인증 방식과 토큰 계약 | [~] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. 모바일 저장/refresh token 정책은 미정 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
 | `GET /api/tasks` 범위 조회 계약 | [~] | `DAY/WEEK/MONTH`, `taskType` 지원. v1/owner 기준 계약 문서화 필요 |
