@@ -114,7 +114,7 @@ Last audited: 2026-07-22
 - [x] occurrence별 완료 상태 저장
 - [x] `THIS` / `THIS_AND_FUTURE` / `ALL` 수정·삭제 scope
 - [x] 반복 전체 수정 후 기존 완료 기록 보존
-- [ ] 월말, 윤년, 공휴일 등 RRULE validation 범위
+- [x] 월말, 윤년, time zone 경계 테스트
 
 제품 주의:
 

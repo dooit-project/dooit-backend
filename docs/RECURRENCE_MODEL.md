@@ -52,7 +52,7 @@ Last updated: 2026-07-23
 - RRULE `COUNT`와 `UNTIL`은 함께 사용할 수 없다.
 - RRULE `BYDAY`는 `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, `SU`를 콤마로 나열한다.
 - RRULE `BYMONTHDAY`는 `-31`부터 `31`까지 허용하되 `0`은 허용하지 않는다. `-1`은 월말 표현으로 예약한다.
-- 월말/윤년 occurrence 산출과 time zone 경계 처리는 다음 단계에서 별도로 테스트한다.
+- 월말(`BYMONTHDAY=-1`), 윤년 2월 29일, DST가 있는 time zone 경계에서 occurrence 산출을 테스트한다.
 
 ## API 상태
 

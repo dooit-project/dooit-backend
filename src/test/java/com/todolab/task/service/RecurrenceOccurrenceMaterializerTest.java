@@ -85,4 +85,117 @@ class RecurrenceOccurrenceMaterializerTest extends RepositoryTestSupport {
         assertThat(tasks.get(1).getStatus()).isEqualTo(TaskStatus.TODAY);
         assertThat(tasks.get(1).getTargetDate()).isEqualTo(LocalDate.of(2026, 7, 13));
     }
+
+    @Test
+    @DisplayName("월말 반복은 BYMONTHDAY=-1로 각 월의 마지막 날 occurrence를 생성한다")
+    void materializeForOwner_monthEndByMonthDay() {
+        User owner = userRepository.save(new User("materialize-month-end@example.com", "encoded-password", "반복 사용자"));
+        RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
+                owner,
+                RecurrenceFrequency.MONTHLY,
+                1,
+                "FREQ=MONTHLY;INTERVAL=1;BYMONTHDAY=-1;COUNT=3",
+                "Asia/Seoul",
+                LocalDateTime.of(2026, 1, 31, 9, 0),
+                null,
+                3
+        ));
+        taskRepository.save(Task.builder()
+                .title("월말 정산")
+                .type(TaskType.SCHEDULE)
+                .startAt(LocalDateTime.of(2026, 1, 31, 9, 0))
+                .endAt(LocalDateTime.of(2026, 1, 31, 10, 0))
+                .owner(owner)
+                .recurrenceSeries(series)
+                .occurrenceDate(LocalDate.of(2026, 1, 31))
+                .originalOccurrenceDate(LocalDate.of(2026, 1, 31))
+                .build());
+        flushAndClear();
+
+        materializer.materializeForOwner(owner.getId(), LocalDate.of(2026, 1, 1), LocalDate.of(2026, 5, 1));
+        flushAndClear();
+
+        List<Task> tasks = taskRepository.findByRecurrenceSeriesIdOrderByOccurrenceDateAscIdAsc(series.getId());
+
+        assertThat(tasks).extracting(Task::getOccurrenceDate)
+                .containsExactly(LocalDate.of(2026, 1, 31), LocalDate.of(2026, 2, 28), LocalDate.of(2026, 3, 31));
+        assertThat(tasks).extracting(Task::getStartAt)
+                .containsExactly(
+                        LocalDateTime.of(2026, 1, 31, 9, 0),
+                        LocalDateTime.of(2026, 2, 28, 9, 0),
+                        LocalDateTime.of(2026, 3, 31, 9, 0)
+                );
+    }
+
+    @Test
+    @DisplayName("윤년 2월 29일 yearly 반복은 다음 윤년 occurrence만 생성한다")
+    void materializeForOwner_leapDayYearly() {
+        User owner = userRepository.save(new User("materialize-leap@example.com", "encoded-password", "반복 사용자"));
+        RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
+                owner,
+                RecurrenceFrequency.YEARLY,
+                1,
+                "FREQ=YEARLY;INTERVAL=1;COUNT=2",
+                "Asia/Seoul",
+                LocalDateTime.of(2028, 2, 29, 9, 0),
+                null,
+                2
+        ));
+        taskRepository.save(Task.builder()
+                .title("윤년 점검")
+                .type(TaskType.SCHEDULE)
+                .startAt(LocalDateTime.of(2028, 2, 29, 9, 0))
+                .endAt(LocalDateTime.of(2028, 2, 29, 10, 0))
+                .owner(owner)
+                .recurrenceSeries(series)
+                .occurrenceDate(LocalDate.of(2028, 2, 29))
+                .originalOccurrenceDate(LocalDate.of(2028, 2, 29))
+                .build());
+        flushAndClear();
+
+        materializer.materializeForOwner(owner.getId(), LocalDate.of(2028, 1, 1), LocalDate.of(2033, 1, 1));
+        flushAndClear();
+
+        List<Task> tasks = taskRepository.findByRecurrenceSeriesIdOrderByOccurrenceDateAscIdAsc(series.getId());
+
+        assertThat(tasks).extracting(Task::getOccurrenceDate)
+                .containsExactly(LocalDate.of(2028, 2, 29), LocalDate.of(2032, 2, 29));
+    }
+
+    @Test
+    @DisplayName("DST가 있는 time zone 경계에서도 occurrence의 로컬 시간을 유지한다")
+    void materializeForOwner_timeZoneBoundaryKeepsLocalTime() {
+        User owner = userRepository.save(new User("materialize-time-zone@example.com", "encoded-password", "반복 사용자"));
+        RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
+                owner,
+                RecurrenceFrequency.WEEKLY,
+                1,
+                "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=2",
+                "America/New_York",
+                LocalDateTime.of(2026, 3, 2, 9, 0),
+                null,
+                2
+        ));
+        taskRepository.save(Task.builder()
+                .title("DST 경계 회의")
+                .type(TaskType.SCHEDULE)
+                .startAt(LocalDateTime.of(2026, 3, 2, 9, 0))
+                .endAt(LocalDateTime.of(2026, 3, 2, 10, 0))
+                .owner(owner)
+                .recurrenceSeries(series)
+                .occurrenceDate(LocalDate.of(2026, 3, 2))
+                .originalOccurrenceDate(LocalDate.of(2026, 3, 2))
+                .build());
+        flushAndClear();
+
+        materializer.materializeForOwner(owner.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 16));
+        flushAndClear();
+
+        List<Task> tasks = taskRepository.findByRecurrenceSeriesIdOrderByOccurrenceDateAscIdAsc(series.getId());
+
+        assertThat(tasks).extracting(Task::getOccurrenceDate)
+                .containsExactly(LocalDate.of(2026, 3, 2), LocalDate.of(2026, 3, 9));
+        assertThat(tasks).extracting(Task::getStartAt)
+                .containsExactly(LocalDateTime.of(2026, 3, 2, 9, 0), LocalDateTime.of(2026, 3, 9, 9, 0));
+    }
 }

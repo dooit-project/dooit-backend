@@ -113,7 +113,7 @@ Last updated: 2026-07-22
 - [x] occurrence별 완료 상태 저장
 - [x] `THIS`, `THIS_AND_FUTURE`, `ALL` 수정/삭제 scope
 - [x] 반복 전체 수정 후 기존 완료 기록 보존
-- [ ] 월말, 윤년, 타임존 경계 테스트
+- [x] 월말, 윤년, 타임존 경계 테스트
 
 완료 기준:
 
