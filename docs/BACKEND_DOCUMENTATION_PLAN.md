@@ -48,7 +48,7 @@ Last updated: 2026-07-15
 - pagination/cursor 기준
 - idempotency, 동시성, 409 기준
 
-우선순위: 최상
+상태: 현재 `docs/API_V1_FRONTEND.md` 유지, 공통 계약 문서와 동기화 완료
 
 ### 2.2 오류 코드 카탈로그
 

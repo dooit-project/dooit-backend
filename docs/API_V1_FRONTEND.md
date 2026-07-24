@@ -1,10 +1,12 @@
 # ToDoLab v1 Frontend API
 
-Last updated: 2026-07-22
+Last updated: 2026-07-25
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
 ## 1. 공통
+
+환경별 base URL과 CORS 기준은 [`ENVIRONMENT_INTEGRATION.md`](./ENVIRONMENT_INTEGRATION.md)를 따른다.
 
 Base path:
 
@@ -16,6 +18,13 @@ Base path:
 
 ```http
 Authorization: Bearer <accessToken>
+```
+
+공통 request header:
+
+```http
+Content-Type: application/json
+Accept: application/json
 ```
 
 공통 성공 응답:
@@ -48,6 +57,13 @@ type ApiErrorResponse = {
 - `LocalDate`: `YYYY-MM-DD`
 - `LocalDateTime`: offset 없는 `YYYY-MM-DDTHH:mm:ss`
 - 서비스 기준 시간대는 `Asia/Seoul`
+
+오류 코드:
+
+- 상세 오류 코드는 [`API_ERROR_CODES.md`](./API_ERROR_CODES.md)를 원본으로 한다.
+- 인증/인가 정책은 [`AUTH_CONTRACT.md`](./AUTH_CONTRACT.md)를 원본으로 한다.
+- 401은 토큰 없음/만료/위변조, 403은 인증 후 권한 부족이다.
+- 삭제 성공 응답은 `status=success`, `data=null`, `error=null`이다.
 
 ## 2. 인증
 
@@ -570,14 +586,21 @@ Response: `TaskSearchResponse`
 
 `dateSource` 값은 `TARGET_DATE`, `START_AT`, `COMPLETED_AT`, `CREATED_AT`, `UPDATED_AT`, `NONE` 중 하나다. 잘못된 enum, `dateFrom > dateTo`, 잘못된 cursor, 범위를 벗어난 `limit`은 HTTP 400으로 응답한다.
 
+Cursor 기준:
+
+- 현재 cursor는 offset 문자열이다.
+- `nextCursor=null`이면 다음 페이지가 없다.
+- 중간에 Task가 생성/수정/삭제되면 offset pagination 특성상 중복/누락이 생길 수 있다.
+- 강한 pagination 안정성이 필요한 화면은 첫 페이지부터 다시 조회한다.
+
 ## 7. 아직 프론트에서 의존하면 안 되는 계약
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
-- 반복 Task/일정 API
+- 반복 series 생성 API
 - 알림 예약 후보 API
 - refresh token API
-- OpenAPI/Swagger JSON
+- 서버 push 알림 API
 
 ## 8. 모바일 전환 체크리스트
 
@@ -588,7 +611,9 @@ Response: `TaskSearchResponse`
 - [ ] legacy `/api/ddays/**` alias 추가를 기다리지 않고 v1 D-Day 계약으로 전환
 - [ ] D-Day Today Task 생성은 3단계 workflow 대신 `POST /api/v1/dday-goals/{id}/tasks` 사용
 - [ ] 검색 UI는 `GET /api/v1/tasks/search` 사용
+- [ ] Today drag-and-drop 저장은 `PUT /api/v1/tasks/today-order` 사용
 - [ ] 401 응답 시 로그인 화면으로 이동하거나 세션 만료 안내
+- [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
 - [ ] 반복/알림 UI는 백엔드 계약 구현 전까지 실제 저장 기능처럼 열지 않음
 
 ## 9. Legacy API 정책

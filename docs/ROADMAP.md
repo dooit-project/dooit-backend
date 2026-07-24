@@ -159,7 +159,7 @@ Last updated: 2026-07-25
 
 우선 작성할 문서:
 
-- [ ] API 연동 규격서: v1 endpoint, 인증, envelope, 오류, 날짜 규칙
+- [x] API 연동 규격서: v1 endpoint, 인증, envelope, 오류, 날짜 규칙
 - [x] 환경별 연동 가이드: local/staging/prod URL, CORS, 실행 순서
 - [x] 오류 코드 카탈로그: code, HTTP status, 사용자 노출 message
 - [x] 인증/인가 계약서: JWT claim, 만료, 401/403 처리
