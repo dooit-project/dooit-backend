@@ -16,6 +16,7 @@ public enum ErrorCode {
     // Auth
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, 11001, "이메일 또는 비밀번호가 올바르지 않습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, 11002, "인증이 필요합니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, 11003, "접근 권한이 없습니다."),
 
     // Task
     TASK_NOT_FOUND(HttpStatus.NOT_FOUND, 20001, "일정을 찾을 수 없습니다."),

@@ -143,10 +143,10 @@ Last updated: 2026-07-25
 
 ### 4.2 인증 토큰 정책
 
-- [ ] access token TTL 운영값 확정
-- [ ] refresh token 도입 여부 결정
-- [ ] 토큰 폐기/로그아웃 서버 책임 범위 결정
-- [ ] 401, 403 오류 message와 code 정리
+- [x] access token TTL 운영값 확정
+- [x] refresh token 도입 여부 결정
+- [x] 토큰 폐기/로그아웃 서버 책임 범위 결정
+- [x] 401, 403 오류 message와 code 정리
 
 ### 4.3 관측과 장애 대응
 
@@ -162,7 +162,7 @@ Last updated: 2026-07-25
 - [ ] API 연동 규격서: v1 endpoint, 인증, envelope, 오류, 날짜 규칙
 - [x] 환경별 연동 가이드: local/staging/prod URL, CORS, 실행 순서
 - [ ] 오류 코드 카탈로그: code, HTTP status, 사용자 노출 message
-- [ ] 인증/인가 계약서: JWT claim, 만료, 401/403 처리
+- [x] 인증/인가 계약서: JWT claim, 만료, 401/403 처리
 - [ ] 데이터 모델 사전: Task, D-Day, User 주요 필드와 상태 전이
 - [x] 릴리스/호환성 정책: v1 유지, deprecation, breaking change 기준
 - [x] 모바일 연동 테스트 runbook: smoke test 절차와 기록 방식

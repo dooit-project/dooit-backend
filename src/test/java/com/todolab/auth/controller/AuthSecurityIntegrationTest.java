@@ -1,5 +1,6 @@
 package com.todolab.auth.controller;
 
+import com.todolab.auth.security.ApiAccessDeniedHandler;
 import com.todolab.auth.service.JwtTokenService;
 import com.todolab.common.api.ErrorCode;
 import com.todolab.mail.MailService;
@@ -9,11 +10,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +33,9 @@ class AuthSecurityIntegrationTest {
 
     @Autowired
     JwtTokenService jwtTokenService;
+
+    @Autowired
+    ApiAccessDeniedHandler apiAccessDeniedHandler;
 
     @MockitoBean
     MailService mailService;
@@ -55,5 +63,21 @@ class AuthSecurityIntegrationTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value("fail"))
                 .andExpect(jsonPath("$.error.code").value(ErrorCode.UNAUTHORIZED.getCode()));
+    }
+
+    @Test
+    @DisplayName("API 접근 권한이 부족하면 403 오류 envelope를 반환한다")
+    void apiForbiddenEnvelope() throws Exception {
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        apiAccessDeniedHandler.handle(
+                new MockHttpServletRequest("GET", "/api/v1/tasks"),
+                response,
+                new AccessDeniedException("denied")
+        );
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getContentAsString()).contains("\"code\":11003");
+        assertThat(response.getContentAsString()).contains("접근 권한이 없습니다.");
     }
 }

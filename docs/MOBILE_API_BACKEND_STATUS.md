@@ -33,7 +33,8 @@ Last audited: 2026-07-25
    - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
    - 완료: `/api/v1/tasks`, `/api/v1/dday-goals`의 주요 조회/수정/삭제 endpoint를 owner-aware service path로 확장
    - 완료: 기존 `/api/tasks`, `/api/ddays`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않는 정책 확정
-   - 남음: access token TTL, refresh token 도입 여부, 로그아웃 서버 책임 범위 결정
+   - 완료: access token TTL 1시간, refresh token 미도입, 모바일 로그아웃 클라이언트 책임, 401/403 오류 계약 확정
+   - 문서: `docs/AUTH_CONTRACT.md`
 
 2. [~] Today / Calendar 여러 날 일정 범위 조회
    - 완료: `GET /api/tasks/today?date=...`는 요청 날짜와 겹치는 `SCHEDULE`을 포함한다.
@@ -183,7 +184,7 @@ Last audited: 2026-07-25
 | 항목 | 상태 | 메모 |
 | --- | --- | --- |
 | 개발 / 스테이징 / 운영 API URL | [x] | `ENVIRONMENT_INTEGRATION.md`에 local 기준, staging/production 미정 상태, CORS 운영 값 관리, 문서 UI 공개 제어 방식 정리 |
-| 인증 방식과 토큰 계약 | [~] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. 모바일 저장/refresh token 정책은 미정 |
+| 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. access token TTL, refresh token 미도입, 로그아웃 책임, 401/403 계약은 `AUTH_CONTRACT.md` 기준 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
 | `GET /api/tasks` 범위 조회 계약 | [~] | `DAY/WEEK/MONTH`, `taskType` 지원. v1/owner 기준 계약 문서화 필요 |
 | `GET /api/ddays/{id}` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `GET /api/v1/dday-goals/{id}` 사용 |

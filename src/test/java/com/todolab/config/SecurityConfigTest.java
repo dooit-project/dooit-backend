@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SecurityConfigTest {
 
-    SecurityConfig securityConfig = new SecurityConfig(null, new DocumentationProperties(true));
+    SecurityConfig securityConfig = new SecurityConfig(null, null, new DocumentationProperties(true));
 
     @Test
     @DisplayName("BCrypt PasswordEncoder를 제공한다")
