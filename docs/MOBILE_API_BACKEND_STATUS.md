@@ -29,29 +29,30 @@ Last audited: 2026-07-25
 - [x] 2026-07-22 v1 리소스 삭제 응답 기준: Task/D-Day 삭제 성공 envelope의 `data`는 `null`
 - [x] 2026-07-22 legacy 정책 기준: `/api/tasks/**`, `/api/ddays/**`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않음
 
-1. [~] 인증 사용자 소유권
+1. [x] 인증 사용자 소유권
    - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
    - 완료: `/api/v1/tasks`, `/api/v1/dday-goals`의 주요 조회/수정/삭제 endpoint를 owner-aware service path로 확장
    - 완료: 기존 `/api/tasks`, `/api/ddays`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않는 정책 확정
    - 완료: access token TTL 1시간, refresh token 미도입, 모바일 로그아웃 클라이언트 책임, 401/403 오류 계약 확정
    - 문서: `docs/AUTH_CONTRACT.md`
 
-2. [~] Today / Calendar 여러 날 일정 범위 조회
+2. [x] Today / Calendar 여러 날 일정 범위 조회
    - 완료: `GET /api/tasks/today?date=...`는 요청 날짜와 겹치는 `SCHEDULE`을 포함한다.
-   - `DAY/WEEK/MONTH` 범위 조회는 `startAt/endAt` overlap 조건을 사용하므로 Calendar 쪽 기반은 있음.
-   - 남음: 여러 날 일정이 실행 순서와 `todayOrder`에 섞이지 않게 API 응답/모바일 표시 기준을 더 명확히 분리.
+   - 완료: `DAY/WEEK/MONTH` 범위 조회는 `startAt/endAt` overlap 조건을 사용한다.
+   - 완료: 여러 날 일정은 Today 조회에 포함되지만 일괄 재정렬 대상에서는 제외한다.
 
 3. [x] 통합 검색 API
    - 완료: `GET /api/v1/tasks/search` 구현.
    - 완료: 검색어, 필터, relevantDate/dateSource, cursor/limit, owner scope 검증.
    - 완료: cursor를 offset에서 마지막 Task id anchor로 변경해 offset shift 중복/누락을 방지.
 
-4. [~] 기존 D-Day 500 이슈 확인
+4. [x] 기존 D-Day 500 이슈 확인
    - 현재 `GET /api/ddays/{id}` endpoint 자체가 없음.
    - 현재 `POST /api/ddays/{id}/tasks` endpoint 자체가 없음.
    - 현재 Task와 D-Day 연결은 `PATCH /api/tasks/{id}/dday-goal?ddayGoalId=...`로 제공됨.
    - 완료: v1 기준 `GET /api/v1/dday-goals/{id}`와 `POST /api/v1/dday-goals/{id}/tasks` 추가.
    - 완료: legacy `/api/ddays/**` alias는 추가하지 않고 모바일을 v1 계약으로 전환하기로 결정.
+   - 완료: v1 D-Day 연결 Task Today 이동 회귀 테스트 추가.
 
 ## 2. 여러 날 일정 / Calendar 범위 조회
 
@@ -98,7 +99,7 @@ Last audited: 2026-07-25
 
 문서: `todolab-mobile/docs/API_RECURRENCE.md`
 
-현재 상태: [~] 모델 설계
+현재 상태: [x] 모델/계약 확정
 
 백엔드 모델 반영 상태와 남은 endpoint 작업은 아래와 같다.
 
@@ -188,7 +189,7 @@ Last audited: 2026-07-25
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
 | 오류 코드와 장애 대응 | [x] | `API_ERROR_CODES.md`와 `MOBILE_INCIDENT_RUNBOOK.md`에 오류 코드, retry, logging/masking, 장애 확인 순서 정리 |
 | 데이터 모델 사전 | [x] | `DATA_MODEL_GLOSSARY.md`에 Task, D-Day, User 주요 필드, 상태 전이, owner scope 정리 |
-| `GET /api/tasks` 범위 조회 계약 | [~] | `DAY/WEEK/MONTH`, `taskType` 지원. v1/owner 기준 계약 문서화 필요 |
+| `GET /api/tasks` 범위 조회 계약 | [x] | `DAY/WEEK/MONTH`, `taskType` 지원. v1/owner 기준은 `API_V1_FRONTEND.md`와 OpenAPI에 문서화 |
 | `GET /api/ddays/{id}` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `GET /api/v1/dday-goals/{id}` 사용 |
 | `POST /api/ddays/{id}/tasks` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `POST /api/v1/dday-goals/{id}/tasks` 사용 |
 | D-Day 연결 Task Today 이동 후 HTTP 500 | [x] | v1 `PATCH /api/v1/tasks/{id}/today`에서 D-Day 연결 필드를 유지하는 회귀 테스트 추가 |
