@@ -167,7 +167,7 @@ public class TaskV1Controller {
                     }, example = "RELEVANT_DATE_ASC")
             )
             @RequestParam(required = false) String sort,
-            @Parameter(description = "이전 응답의 nextCursor", schema = @Schema(example = "50"))
+            @Parameter(description = "이전 응답의 nextCursor. 마지막 항목의 Task id입니다.", schema = @Schema(example = "42"))
             @RequestParam(required = false) String cursor,
             @Parameter(description = "페이지 크기. 1 이상 100 이하", schema = @Schema(example = "50", minimum = "1", maximum = "100"))
             @RequestParam(required = false) Integer limit

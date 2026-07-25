@@ -31,7 +31,7 @@ class ApiV1FrontendDocumentationTest {
 
         assertThat(content).contains("GET /api/v1/tasks/search");
         assertThat(content).contains("PUT /api/v1/tasks/today-order");
-        assertThat(content).contains("현재 cursor는 offset 문자열이다.");
+        assertThat(content).contains("현재 cursor는 마지막으로 받은 항목의 `task.id` 문자열이다.");
         assertThat(content).contains("Today drag-and-drop 저장은 `PUT /api/v1/tasks/today-order` 사용");
     }
 }

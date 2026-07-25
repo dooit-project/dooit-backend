@@ -204,7 +204,7 @@ class TaskV1IntegrationTest {
         String ownerToken = accessToken("task-search-owner@example.com");
         String otherOwnerToken = accessToken("task-search-other@example.com");
 
-        createTask(ownerToken, new TaskRequest(
+        Long firstTaskId = createTask(ownerToken, new TaskRequest(
                 "출시 회의",
                 "Release 범위 확인",
                 LocalDateTime.of(2026, 7, 22, 9, 0),
@@ -212,7 +212,7 @@ class TaskV1IntegrationTest {
                 "업무",
                 false
         ));
-        createTask(ownerToken, new TaskRequest(
+        Long secondTaskId = createTask(ownerToken, new TaskRequest(
                 "출시 리허설",
                 "영문 release 점검",
                 LocalDateTime.of(2026, 7, 23, 9, 0),
@@ -230,29 +230,34 @@ class TaskV1IntegrationTest {
                 false
         ));
 
-        mockMvc.perform(get("/api/v1/tasks/search")
-                        .header("Authorization", "Bearer " + ownerToken)
-                        .param("q", "출시")
-                        .param("statuses", "TODAY")
-                        .param("taskTypes", "SCHEDULE")
-                        .param("category", "업무")
-                        .param("allDay", "false")
-                        .param("dateField", "PLANNED")
-                        .param("dateFrom", "2026-07-01")
-                        .param("dateTo", "2026-07-31")
-                        .param("sort", "RELEVANT_DATE_ASC")
-                        .param("limit", "1"))
+        String firstPage = mockMvc.perform(get("/api/v1/tasks/search")
+                                .header("Authorization", "Bearer " + ownerToken)
+                                .param("q", "출시")
+                                .param("statuses", "TODAY")
+                                .param("taskTypes", "SCHEDULE")
+                                .param("category", "업무")
+                                .param("allDay", "false")
+                                .param("dateField", "PLANNED")
+                                .param("dateFrom", "2026-07-01")
+                                .param("dateTo", "2026-07-31")
+                                .param("sort", "RELEVANT_DATE_ASC")
+                                .param("limit", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].task.id").value(firstTaskId))
                 .andExpect(jsonPath("$.data.items[0].task.title").value("출시 회의"))
                 .andExpect(jsonPath("$.data.items[0].task.description").value("Release 범위 확인"))
                 .andExpect(jsonPath("$.data.items[0].task.status").value("TODAY"))
                 .andExpect(jsonPath("$.data.items[0].task.type").value("SCHEDULE"))
                 .andExpect(jsonPath("$.data.items[0].relevantDate").value("2026-07-22"))
                 .andExpect(jsonPath("$.data.items[0].dateSource").value("TARGET_DATE"))
-                .andExpect(jsonPath("$.data.nextCursor").value("1"))
-                .andExpect(jsonPath("$.data.limit").value(1));
+                .andExpect(jsonPath("$.data.nextCursor").value(String.valueOf(firstTaskId)))
+                .andExpect(jsonPath("$.data.limit").value(1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String nextCursor = JsonPath.read(firstPage, "$.data.nextCursor");
 
         mockMvc.perform(get("/api/v1/tasks/search")
                         .header("Authorization", "Bearer " + ownerToken)
@@ -262,13 +267,69 @@ class TaskV1IntegrationTest {
                         .param("dateField", "PLANNED")
                         .param("dateFrom", "2026-07-01")
                         .param("dateTo", "2026-07-31")
-                        .param("cursor", "1")
+                        .param("cursor", nextCursor)
                         .param("limit", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].task.id").value(secondTaskId))
                 .andExpect(jsonPath("$.data.items[0].task.title").value("출시 리허설"))
                 .andExpect(jsonPath("$.data.items[0].relevantDate").value("2026-07-23"))
                 .andExpect(jsonPath("$.data.nextCursor").isEmpty());
+    }
+
+    @Test
+    @DisplayName("v1 Task 통합 검색 cursor는 offset 대신 마지막 Task id 기준으로 다음 페이지를 이어간다")
+    void searchTasks_cursorUsesLastTaskIdAnchor() throws Exception {
+        String accessToken = accessToken("task-search-cursor-anchor@example.com");
+        Long firstTaskId = createTask(accessToken, new TaskRequest(
+                "커서 둘째",
+                null,
+                LocalDateTime.of(2026, 7, 22, 9, 0),
+                LocalDateTime.of(2026, 7, 22, 10, 0),
+                "업무",
+                false
+        ));
+        Long secondTaskId = createTask(accessToken, new TaskRequest(
+                "커서 셋째",
+                null,
+                LocalDateTime.of(2026, 7, 23, 9, 0),
+                LocalDateTime.of(2026, 7, 23, 10, 0),
+                "업무",
+                false
+        ));
+
+        String firstPage = mockMvc.perform(get("/api/v1/tasks/search")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "커서")
+                        .param("sort", "RELEVANT_DATE_ASC")
+                        .param("limit", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].task.id").value(firstTaskId))
+                .andExpect(jsonPath("$.data.nextCursor").value(String.valueOf(firstTaskId)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String nextCursor = JsonPath.read(firstPage, "$.data.nextCursor");
+
+        createTask(accessToken, new TaskRequest(
+                "커서 첫째",
+                null,
+                LocalDateTime.of(2026, 7, 21, 9, 0),
+                LocalDateTime.of(2026, 7, 21, 10, 0),
+                "업무",
+                false
+        ));
+
+        mockMvc.perform(get("/api/v1/tasks/search")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "커서")
+                        .param("sort", "RELEVANT_DATE_ASC")
+                        .param("cursor", nextCursor)
+                        .param("limit", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].task.id").value(secondTaskId))
+                .andExpect(jsonPath("$.data.items[0].task.title").value("커서 셋째"));
     }
 
     @Test

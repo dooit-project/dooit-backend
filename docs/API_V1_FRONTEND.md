@@ -588,10 +588,11 @@ Response: `TaskSearchResponse`
 
 Cursor 기준:
 
-- 현재 cursor는 offset 문자열이다.
+- 현재 cursor는 마지막으로 받은 항목의 `task.id` 문자열이다.
 - `nextCursor=null`이면 다음 페이지가 없다.
-- 중간에 Task가 생성/수정/삭제되면 offset pagination 특성상 중복/누락이 생길 수 있다.
-- 강한 pagination 안정성이 필요한 화면은 첫 페이지부터 다시 조회한다.
+- 다음 페이지 요청은 이전 응답의 `nextCursor`를 그대로 보낸다.
+- cursor Task가 더 이상 검색 조건에 포함되지 않으면 HTTP 400이다.
+- 중간에 Task가 생성/수정/삭제되어도 이전 페이지 마지막 항목 이후부터 이어서 조회하므로 offset shift 중복/누락을 피한다.
 
 ## 7. 아직 프론트에서 의존하면 안 되는 계약
 

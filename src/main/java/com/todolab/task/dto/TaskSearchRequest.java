@@ -32,7 +32,7 @@ public class TaskSearchRequest {
     private final LocalDate dateFrom;
     private final LocalDate dateTo;
     private final TaskSearchSort sort;
-    private final int offset;
+    private final Long cursorTaskId;
     private final int limit;
 
     public TaskSearchRequest(
@@ -61,7 +61,7 @@ public class TaskSearchRequest {
         this.dateFrom = dateFrom;
         this.dateTo = dateTo;
         this.sort = parseEnum(rawSort, TaskSearchSort.class, TaskSearchSort.RELEVANT_DATE_ASC, "sort");
-        this.offset = parseCursor(rawCursor);
+        this.cursorTaskId = parseCursor(rawCursor);
         this.limit = normalizeLimit(limit);
         validateDateRange(dateFrom, dateTo);
     }
@@ -113,17 +113,17 @@ public class TaskSearchRequest {
         }
     }
 
-    private static int parseCursor(String rawCursor) {
+    private static Long parseCursor(String rawCursor) {
         if (rawCursor == null || rawCursor.isBlank()) {
-            return 0;
+            return null;
         }
 
         try {
-            int offset = Integer.parseInt(rawCursor.trim());
-            if (offset < 0) {
+            long cursorTaskId = Long.parseLong(rawCursor.trim());
+            if (cursorTaskId <= 0) {
                 throw new NumberFormatException();
             }
-            return offset;
+            return cursorTaskId;
         } catch (NumberFormatException e) {
             throw new TaskValidationException("올바르지 않은 cursor 값입니다.");
         }

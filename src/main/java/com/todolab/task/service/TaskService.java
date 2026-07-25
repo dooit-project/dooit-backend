@@ -20,6 +20,7 @@ import com.todolab.task.dto.TaskSearchRequest;
 import com.todolab.task.dto.TaskSearchResponse;
 import com.todolab.task.dto.TodayOrderRequest;
 import com.todolab.task.exception.TaskNotFoundException;
+import com.todolab.task.exception.TaskValidationException;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -121,14 +122,30 @@ public class TaskService {
                 .sorted(searchComparator(request.getSort()))
                 .toList();
 
-        int fromIndex = Math.min(request.getOffset(), candidates.size());
+        int fromIndex = cursorFromIndex(candidates, request.getCursorTaskId());
         int toIndex = Math.min(fromIndex + request.getLimit(), candidates.size());
-        String nextCursor = toIndex < candidates.size() ? String.valueOf(toIndex) : null;
+        String nextCursor = toIndex < candidates.size()
+                ? String.valueOf(candidates.get(toIndex - 1).task().getId())
+                : null;
         List<TaskSearchItemResponse> items = candidates.subList(fromIndex, toIndex).stream()
                 .map(SearchCandidate::toResponse)
                 .toList();
 
         return new TaskSearchResponse(items, nextCursor, request.getLimit());
+    }
+
+    private int cursorFromIndex(List<SearchCandidate> candidates, Long cursorTaskId) {
+        if (cursorTaskId == null) {
+            return 0;
+        }
+
+        for (int i = 0; i < candidates.size(); i++) {
+            if (cursorTaskId.equals(candidates.get(i).task().getId())) {
+                return i + 1;
+            }
+        }
+
+        throw new TaskValidationException("올바르지 않은 cursor 값입니다.");
     }
 
     public List<TaskResponse> getInboxTasks() {
