@@ -3,6 +3,7 @@ package com.todolab.dday.controller;
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
 import com.todolab.dday.dto.DdayGoalRequest;
+import com.todolab.dday.dto.DdayGoalTaskRequest;
 import com.todolab.mail.MailService;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -82,8 +84,44 @@ class DdayGoalV1IntegrationTest {
                 .andExpect(jsonPath("$.timestamp").value(notNullValue()));
     }
 
+    @Test
+    @DisplayName("v1 D-Day 연결 Task를 Today로 이동해도 D-Day 응답 필드를 유지한다")
+    void moveDdayConnectedTaskToToday_success() throws Exception {
+        User owner = userRepository.save(new User("dday-task-today@example.com", "encoded-password", "D-Day 사용자"));
+        String accessToken = jwtTokenService.createAccessToken(owner).tokenValue();
+        Long goalId = createGoal(accessToken, new DdayGoalRequest("출시", LocalDate.of(2026, 8, 1)));
+        Long taskId = createTodayTask(accessToken, goalId, new DdayGoalTaskRequest("출시 준비", LocalDate.of(2026, 7, 22)));
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/today", taskId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-07-23"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.id").value(taskId))
+                .andExpect(jsonPath("$.data.status").value("TODAY"))
+                .andExpect(jsonPath("$.data.targetDate").value("2026-07-23"))
+                .andExpect(jsonPath("$.data.ddayGoalId").value(goalId))
+                .andExpect(jsonPath("$.data.ddayGoalTitle").value("출시"))
+                .andExpect(jsonPath("$.data.ddayGoalTargetDate").value("2026-08-01"))
+                .andExpect(jsonPath("$.data.ddayDaysLeft").value(notNullValue()));
+    }
+
     private Long createGoal(String accessToken, DdayGoalRequest request) throws Exception {
         String response = mockMvc.perform(post("/api/v1/dday-goals")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private Long createTodayTask(String accessToken, Long goalId, DdayGoalTaskRequest request) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/dday-goals/{id}/tasks", goalId)
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

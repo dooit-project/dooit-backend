@@ -191,7 +191,7 @@ Last audited: 2026-07-25
 | `GET /api/tasks` 범위 조회 계약 | [~] | `DAY/WEEK/MONTH`, `taskType` 지원. v1/owner 기준 계약 문서화 필요 |
 | `GET /api/ddays/{id}` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `GET /api/v1/dday-goals/{id}` 사용 |
 | `POST /api/ddays/{id}/tasks` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `POST /api/v1/dday-goals/{id}/tasks` 사용 |
-| D-Day 연결 Task Today 이동 후 HTTP 500 | [~] | 관련 회귀 테스트 필요. 현재 `PATCH /api/tasks/{id}/today`와 D-Day fetch join 응답 구조는 있음 |
+| D-Day 연결 Task Today 이동 후 HTTP 500 | [x] | v1 `PATCH /api/v1/tasks/{id}/today`에서 D-Day 연결 필드를 유지하는 회귀 테스트 추가 |
 
 ## 9. 추천 구현 순서
 
@@ -200,7 +200,7 @@ Last audited: 2026-07-25
 3. [x] Today 조회에 여러 날 schedule overlap 포함
 4. [x] OpenAPI/Swagger/Scalar 문서 UI 추가
 5. [x] Expo Web Authorization CORS preflight 허용
-6. [~] D-Day legacy 500 이슈 재현 테스트 또는 endpoint 계약 정리
-7. [ ] `GET /api/v1/tasks/search` 구현
-8. [ ] Today 일괄 재정렬 API 구현
-9. [ ] 반복/알림 계약 설계 확정 후 recurrence 모델링
+6. [x] D-Day legacy 500 이슈 재현 테스트 또는 endpoint 계약 정리
+7. [x] `GET /api/v1/tasks/search` 구현
+8. [x] Today 일괄 재정렬 API 구현
+9. [x] 반복/알림 계약 설계 확정 후 recurrence 모델링
