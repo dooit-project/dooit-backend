@@ -19,6 +19,7 @@ Last updated: 2026-07-15
 | `docs/AUTH_CONTRACT.md` | JWT 인증, 토큰 TTL, refresh token, 로그아웃, 401/403 계약 | 신규, refresh token 도입 시 갱신 필요 |
 | `docs/API_ERROR_CODES.md` | 오류 코드, HTTP status, 모바일 처리, retry, logging/masking 기준 | 신규, ErrorCode 변경 시 갱신 필요 |
 | `docs/MOBILE_INCIDENT_RUNBOOK.md` | 모바일 real-mode 장애 접수와 백엔드 확인 절차 | 신규, 장애 대응 결과 누적 필요 |
+| `docs/DATA_MODEL_GLOSSARY.md` | Task, D-Day, User 주요 필드와 상태 전이 | 신규, 도메인 필드 추가 시 갱신 필요 |
 | `docs/ROADMAP.md` | 앞으로의 백엔드 작업 우선순위 | 유지 |
 | `/v3/api-docs` | 기계 판독 가능한 OpenAPI 원본 계약 | 신규 기준 |
 | `/swagger-ui` | 개발자 테스트용 OpenAPI UI | 신규 기준 |
@@ -148,7 +149,7 @@ Last updated: 2026-07-15
 - 여러 날 일정 overlap 규칙
 - end-exclusive 규칙
 
-우선순위: 중간
+상태: 초안 작성 완료, 도메인 필드 추가 시 갱신 필요
 
 ### 2.7 릴리스와 호환성 정책
 

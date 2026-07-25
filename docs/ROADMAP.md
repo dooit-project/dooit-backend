@@ -163,7 +163,7 @@ Last updated: 2026-07-25
 - [x] 환경별 연동 가이드: local/staging/prod URL, CORS, 실행 순서
 - [x] 오류 코드 카탈로그: code, HTTP status, 사용자 노출 message
 - [x] 인증/인가 계약서: JWT claim, 만료, 401/403 처리
-- [ ] 데이터 모델 사전: Task, D-Day, User 주요 필드와 상태 전이
+- [x] 데이터 모델 사전: Task, D-Day, User 주요 필드와 상태 전이
 - [x] 릴리스/호환성 정책: v1 유지, deprecation, breaking change 기준
 - [x] 모바일 연동 테스트 runbook: smoke test 절차와 기록 방식
 
