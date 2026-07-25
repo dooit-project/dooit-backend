@@ -1,5 +1,6 @@
 package com.todolab.view;
 
+import com.todolab.Constant;
 import com.todolab.dday.dto.DdayGoalResponse;
 import com.todolab.dday.service.DdayGoalService;
 import com.todolab.task.domain.query.TaskQueryType;
@@ -34,7 +35,7 @@ public class TaskViewService {
     public WeekPageModel getWeekPage(String move, String date) {
         LocalDate targetDate = (date != null && !date.isBlank())
                 ? LocalDate.parse(date)
-                : LocalDate.now();
+                : LocalDate.now(Constant.ZONE);
 
         if ("prev".equals(move)) targetDate = targetDate.minusWeeks(1);
         if ("next".equals(move)) targetDate = targetDate.plusWeeks(1);
@@ -181,7 +182,7 @@ public class TaskViewService {
     }
 
     private LocalDate parseMonthTargetDate(String date) {
-        if (date == null || date.isBlank()) return LocalDate.now();
+        if (date == null || date.isBlank()) return LocalDate.now(Constant.ZONE);
 
         String s = date.trim();
         try {
@@ -191,9 +192,9 @@ public class TaskViewService {
             if (s.length() == 10) {
                 return LocalDate.parse(s);
             }
-            return LocalDate.now();
+            return LocalDate.now(Constant.ZONE);
         } catch (Exception e) {
-            return LocalDate.now();
+            return LocalDate.now(Constant.ZONE);
         }
     }
 

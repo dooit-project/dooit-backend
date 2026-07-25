@@ -111,12 +111,12 @@ public class Task {
         if (this.status == null) {
             applyInitialStatus();
         }
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(Constant.ZONE);
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(Constant.ZONE);
     }
 
 

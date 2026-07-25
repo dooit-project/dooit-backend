@@ -1,5 +1,6 @@
 package com.todolab.view;
 
+import com.todolab.Constant;
 import com.todolab.task.dto.TaskResponse;
 import com.todolab.task.service.TaskService;
 import com.todolab.view.model.MonthPageModel;
@@ -91,7 +92,7 @@ public class TaskPageController {
     @GetMapping("/tasks/today")
     public String today(Model model) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(Constant.ZONE);
 
         model.addAttribute("title", "ToDoLab");
         model.addAttribute("showBaseHeader", false);
@@ -111,7 +112,7 @@ public class TaskPageController {
             Model model
     ) {
         LocalDate selectedDate = date == null || date.isBlank()
-                ? LocalDate.now()
+                ? LocalDate.now(Constant.ZONE)
                 : LocalDate.parse(date);
 
         model.addAttribute("title", "ToDoLab");

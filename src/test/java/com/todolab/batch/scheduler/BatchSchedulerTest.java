@@ -10,7 +10,6 @@ import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.launch.JobOperator;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -34,7 +33,7 @@ class BatchSchedulerTest {
     void runDailyScheduleMailJob_startsJob() throws Exception {
         // given
         ArgumentCaptor<JobParameters> jobParametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
-        String expectedBaseDate = LocalDate.now(ZoneId.of(Constant.ZONE_ID)).toString();
+        String expectedBaseDate = LocalDate.now(Constant.ZONE).toString();
 
         // when
         batchScheduler.runDailyScheduleMailJob();

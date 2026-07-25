@@ -1,5 +1,6 @@
 package com.todolab.user.domain;
 
+import com.todolab.Constant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -54,12 +55,12 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(Constant.ZONE);
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(Constant.ZONE);
     }
 
     public void update(String email, String passwordHash, String displayName) {

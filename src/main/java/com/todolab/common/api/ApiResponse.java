@@ -1,6 +1,7 @@
 package com.todolab.common.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.todolab.Constant;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -20,11 +21,11 @@ public record ApiResponse<T>(
 ) {
 
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>("success", data, null, LocalDateTime.now());
+        return new ApiResponse<>("success", data, null, LocalDateTime.now(Constant.ZONE));
     }
 
     public static <T> ApiResponse<T> failure(ErrorCode errorCode) {
-        return new ApiResponse<>("fail", null, new ErrorBody(errorCode.getCode(), errorCode.getMessage()), LocalDateTime.now());
+        return new ApiResponse<>("fail", null, new ErrorBody(errorCode.getCode(), errorCode.getMessage()), LocalDateTime.now(Constant.ZONE));
     }
 
     @Schema(description = "공통 API 오류 응답 본문")

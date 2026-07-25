@@ -1,5 +1,6 @@
 package com.todolab.auth.service;
 
+import com.todolab.Constant;
 import com.todolab.auth.config.AuthJwtProperties;
 import com.todolab.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ public class JwtTokenService {
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
         String tokenValue = jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
 
-        return new AccessToken(tokenValue, LocalDateTime.ofInstant(expiresAt, ZoneId.systemDefault()));
+        return new AccessToken(tokenValue, LocalDateTime.ofInstant(expiresAt, Constant.ZONE));
     }
 
     public record AccessToken(String tokenValue, LocalDateTime expiresAt) {

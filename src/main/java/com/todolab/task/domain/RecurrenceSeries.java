@@ -1,5 +1,6 @@
 package com.todolab.task.domain;
 
+import com.todolab.Constant;
 import com.todolab.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -80,12 +81,12 @@ public class RecurrenceSeries {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(Constant.ZONE);
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(Constant.ZONE);
     }
 
     public void assignOwner(User owner) {

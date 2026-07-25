@@ -1,5 +1,6 @@
 package com.todolab.task.controller;
 
+import com.todolab.Constant;
 import com.todolab.auth.service.CurrentUserService;
 import com.todolab.common.api.ApiResponse;
 import com.todolab.task.domain.DeferReason;
@@ -240,7 +241,7 @@ public class TaskV1Controller {
             @RequestParam(required = false) LocalDate date
     ) {
         User owner = currentUserService.requireUser(jwt);
-        LocalDate referenceDate = date == null ? LocalDate.now() : date;
+        LocalDate referenceDate = date == null ? LocalDate.now(Constant.ZONE) : date;
         return ResponseEntity.ok(ApiResponse.success(taskService.getOverdueTasksForOwner(referenceDate, owner)));
     }
 
@@ -300,7 +301,7 @@ public class TaskV1Controller {
             @RequestParam(required = false) LocalDateTime completedAt
     ) {
         User owner = currentUserService.requireUser(jwt);
-        LocalDateTime effectiveCompletedAt = completedAt == null ? LocalDateTime.now() : completedAt;
+        LocalDateTime effectiveCompletedAt = completedAt == null ? LocalDateTime.now(Constant.ZONE) : completedAt;
         return ResponseEntity.ok(ApiResponse.success(taskService.completeForOwner(id, effectiveCompletedAt, owner)));
     }
 

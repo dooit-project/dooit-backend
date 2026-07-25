@@ -1,5 +1,6 @@
 package com.todolab.dday.domain;
 
+import com.todolab.Constant;
 import com.todolab.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -44,7 +45,7 @@ public class DdayGoal {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(Constant.ZONE);
     }
 
     public void update(String title, LocalDate targetDate) {

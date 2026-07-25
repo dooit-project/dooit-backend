@@ -12,7 +12,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 
 @Slf4j
 @Component
@@ -30,7 +29,7 @@ public class BatchScheduler {
     @Scheduled(initialDelay = 1_000, fixedDelay = 86_400_000)
     public void runDailyScheduleMailJob() {
         try {
-            String baseDate = LocalDate.now(ZoneId.of(Constant.ZONE_ID)).toString();
+            String baseDate = LocalDate.now(Constant.ZONE).toString();
             JobParameters jobParameters = new JobParametersBuilder()
                     .addString("baseDate", baseDate)
                     .addLong("timestamp", System.currentTimeMillis())

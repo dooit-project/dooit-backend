@@ -1,5 +1,6 @@
 package com.todolab.task.controller;
 
+import com.todolab.Constant;
 import com.todolab.common.api.ApiResponse;
 import com.todolab.task.domain.DeferReason;
 import com.todolab.task.domain.TodayOrderDirection;
@@ -145,7 +146,7 @@ public class TaskController {
     public ResponseEntity<ApiResponse<List<TaskResponse>>> getStaleTasks(
             @RequestParam(required = false) LocalDate date
     ) {
-        LocalDate referenceDate = date == null ? LocalDate.now() : date;
+        LocalDate referenceDate = date == null ? LocalDate.now(Constant.ZONE) : date;
         log.info("[API] getStaleTasks request :: date={}", referenceDate);
 
         List<TaskResponse> res = taskService.getOverdueTasks(referenceDate);
@@ -216,7 +217,7 @@ public class TaskController {
             @PathVariable Long id,
             @RequestParam(required = false) LocalDateTime completedAt
     ) {
-        LocalDateTime effectiveCompletedAt = completedAt == null ? LocalDateTime.now() : completedAt;
+        LocalDateTime effectiveCompletedAt = completedAt == null ? LocalDateTime.now(Constant.ZONE) : completedAt;
         log.info("[API] complete request :: id={}, completedAt={}", id, effectiveCompletedAt);
 
         TaskResponse res = taskService.complete(id, effectiveCompletedAt);

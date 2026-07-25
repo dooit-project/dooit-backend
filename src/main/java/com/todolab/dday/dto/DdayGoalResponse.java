@@ -1,5 +1,6 @@
 package com.todolab.dday.dto;
 
+import com.todolab.Constant;
 import com.todolab.dday.domain.DdayGoal;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -26,7 +27,7 @@ public record DdayGoalResponse(
                 goal.getId(),
                 goal.getTitle(),
                 goal.getTargetDate(),
-                ChronoUnit.DAYS.between(LocalDate.now(), goal.getTargetDate()),
+                ChronoUnit.DAYS.between(LocalDate.now(Constant.ZONE), goal.getTargetDate()),
                 goal.getCreatedAt()
         );
     }

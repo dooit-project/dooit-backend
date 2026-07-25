@@ -169,13 +169,13 @@ Last audited: 2026-07-25
 | 서비스 기준 시간대 `Asia/Seoul` | [x] | `Constant.ZONE_ID`에 정의 |
 | `LocalDate`는 `YYYY-MM-DD` | [x] | Spring `LocalDate` binding/JSON 기본 형식 |
 | `LocalDateTime`은 offset 없는 `YYYY-MM-DDTHH:mm:ss` | [x] | Java `LocalDateTime` 사용 |
-| 모바일이 서울 기준으로 해석 가능 | [~] | 값 형식은 맞지만 전체 코드가 `Constant.ZONE_ID`를 일관되게 쓰는 구조는 아님 |
+| 모바일이 서울 기준으로 해석 가능 | [x] | 현재 날짜/시간 계산은 `Constant.ZONE` 기준으로 통일 |
 | 향후 사용자 time zone 계약 | [ ] | 미정 |
 
 필요 작업:
 
-- [ ] `LocalDate.now()` 직접 사용 지점은 `Constant.ZONE_ID` 기준 clock으로 정리
-- [ ] 사용자 time zone 도입 전까지 API 문서에 “서버/서비스 기준은 Asia/Seoul” 명시 유지
+- [x] `LocalDate.now()` 직접 사용 지점은 `Constant.ZONE_ID` 기준 clock으로 정리
+- [x] 사용자 time zone 도입 전까지 API 문서에 “서버/서비스 기준은 Asia/Seoul” 명시 유지
 
 ## 8. 기존 백엔드 이슈와 운영 확인
 

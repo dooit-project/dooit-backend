@@ -1,5 +1,6 @@
 package com.todolab.task.dto;
 
+import com.todolab.Constant;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.DeferReason;
 import com.todolab.task.domain.RecurrenceExceptionType;
@@ -111,7 +112,7 @@ public record TaskResponse(
                 .ddayGoalId(ddayGoal == null ? null : ddayGoal.getId())
                 .ddayGoalTitle(ddayGoal == null ? null : ddayGoal.getTitle())
                 .ddayGoalTargetDate(ddayGoal == null ? null : ddayGoal.getTargetDate())
-                .ddayDaysLeft(ddayGoal == null ? null : ChronoUnit.DAYS.between(LocalDate.now(), ddayGoal.getTargetDate()))
+                .ddayDaysLeft(ddayGoal == null ? null : ChronoUnit.DAYS.between(LocalDate.now(Constant.ZONE), ddayGoal.getTargetDate()))
                 .recurrenceSeriesId(recurrenceSeries == null ? null : recurrenceSeries.getId())
                 .occurrenceDate(t.getOccurrenceDate())
                 .originalOccurrenceDate(t.getOriginalOccurrenceDate())
