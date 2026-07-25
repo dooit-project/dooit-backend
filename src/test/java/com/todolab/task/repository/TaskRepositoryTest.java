@@ -396,7 +396,7 @@ class TaskRepositoryTest extends RepositoryTestSupport {
     }
 
     @Test
-    @DisplayName("findTodayTasks()는 요청 날짜와 겹치는 여러 날 일정을 포함한다")
+    @DisplayName("findTodayTasks()는 실행 Task를 먼저 정렬하고 요청 날짜와 겹치는 여러 날 일정을 포함한다")
     void findTodayTasks_includesOverlappingPeriodSchedule() {
         // given
         LocalDate targetDate = LocalDate.of(2026, 5, 20);
@@ -440,7 +440,7 @@ class TaskRepositoryTest extends RepositoryTestSupport {
 
         // then
         then(result).extracting("title")
-                .containsExactly("spanning", "today");
+                .containsExactly("today", "spanning");
     }
 
     @Test

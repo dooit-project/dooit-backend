@@ -330,6 +330,75 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Today/Calendar overlap은 여러 날 일정을 포함하지만 Today 일괄 재정렬 대상에서는 제외한다")
+    void todayAndCalendarOverlap_excludesScheduleFromBulkReorder() throws Exception {
+        String accessToken = accessToken("task-overlap-reorder@example.com");
+
+        Long firstId = moveToToday(
+                accessToken,
+                createTask(accessToken, new TaskRequest("첫 번째 실행", null, null, null, null, false)),
+                "2026-07-22"
+        );
+        Long secondId = moveToToday(
+                accessToken,
+                createTask(accessToken, new TaskRequest("두 번째 실행", null, null, null, null, false)),
+                "2026-07-22"
+        );
+        Long scheduleId = createTask(accessToken, new TaskRequest(
+                "여러 날 일정",
+                null,
+                LocalDateTime.of(2026, 7, 21, 23, 0),
+                LocalDateTime.of(2026, 7, 23, 1, 0),
+                null,
+                false
+        ));
+
+        mockMvc.perform(get("/api/v1/tasks/today")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-07-22"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].id").value(firstId))
+                .andExpect(jsonPath("$.data[1].id").value(secondId))
+                .andExpect(jsonPath("$.data[2].id").value(scheduleId))
+                .andExpect(jsonPath("$.data[2].type").value("SCHEDULE"))
+                .andExpect(jsonPath("$.data[2].todayOrder").isEmpty());
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-07-22"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(scheduleId))
+                .andExpect(jsonPath("$.data[0].startAt").value("2026-07-21T23:00:00"))
+                .andExpect(jsonPath("$.data[0].endAt").value("2026-07-23T01:00:00"));
+
+        mockMvc.perform(put("/api/v1/tasks/today-order")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TodayOrderRequest(
+                                java.time.LocalDate.parse("2026-07-22"),
+                                List.of(secondId, firstId)
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].id").value(secondId))
+                .andExpect(jsonPath("$.data[1].id").value(firstId));
+
+        mockMvc.perform(put("/api/v1/tasks/today-order")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TodayOrderRequest(
+                                java.time.LocalDate.parse("2026-07-22"),
+                                List.of(secondId, firstId, scheduleId)
+                        ))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value(20002));
+    }
+
+    @Test
     @DisplayName("v1 Today 일괄 재정렬은 중복 ID를 400, stale 목록을 409로 거부한다")
     void reorderToday_fail_duplicateAndConflict() throws Exception {
         String accessToken = accessToken("task-bulk-order-invalid@example.com");

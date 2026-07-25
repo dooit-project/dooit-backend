@@ -70,9 +70,9 @@ Last audited: 2026-07-25
 필요 작업:
 
 - [x] Today 조회에 schedule overlap 포함
-- [~] Today 응답에서 실행 TODO 정렬과 일정 정렬 기준 분리
-- [ ] 여러 날 일정이 `todayOrder` 재정렬 대상에서 제외되는 테스트 추가
-- [ ] Today/Calendar가 같은 overlap 기준을 쓰는 통합 테스트 추가
+- [x] Today 응답에서 실행 TODO 정렬과 일정 정렬 기준 분리
+- [x] 여러 날 일정이 `todayOrder` 재정렬 대상에서 제외되는 테스트 추가
+- [x] Today/Calendar가 같은 overlap 기준을 쓰는 통합 테스트 추가
 
 ## 3. 통합 검색 API
 

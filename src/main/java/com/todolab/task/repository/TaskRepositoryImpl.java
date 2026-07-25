@@ -155,9 +155,9 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                                         .and(overlapsRange(t, start, end)))
                 )
                 .orderBy(
-                        timedScheduleFirst(t).asc(),
-                        t.startAt.asc().nullsLast(),
+                        executableTaskFirst(t).asc(),
                         t.todayOrder.asc().nullsLast(),
+                        t.startAt.asc().nullsLast(),
                         t.createdAt.asc(),
                         t.id.asc()
                 )
@@ -208,6 +208,13 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
     private NumberExpression<Integer> timedScheduleFirst(QTask task) {
         return new com.querydsl.core.types.dsl.CaseBuilder()
                 .when(task.allDay.isFalse().and(task.startAt.isNotNull()))
+                .then(0)
+                .otherwise(1);
+    }
+
+    private NumberExpression<Integer> executableTaskFirst(QTask task) {
+        return new com.querydsl.core.types.dsl.CaseBuilder()
+                .when(task.type.ne(TaskType.SCHEDULE))
                 .then(0)
                 .otherwise(1);
     }
