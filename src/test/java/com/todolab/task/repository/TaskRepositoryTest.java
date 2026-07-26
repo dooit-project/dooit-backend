@@ -1,5 +1,6 @@
 package com.todolab.task.repository;
 
+import com.todolab.Constant;
 import com.todolab.config.QuerydslConfig;
 import com.todolab.dday.domain.DdayGoal;
 import com.todolab.support.RepositoryTestSupport;
@@ -79,7 +80,7 @@ class TaskRepositoryTest extends RepositoryTestSupport {
 
         // then
         then(saved.getCreatedAt()).isNotNull();
-        then(saved.getCreatedAt()).isBeforeOrEqualTo(LocalDateTime.now());
+        then(saved.getCreatedAt()).isBeforeOrEqualTo(LocalDateTime.now(Constant.ZONE));
     }
 
     @Test
