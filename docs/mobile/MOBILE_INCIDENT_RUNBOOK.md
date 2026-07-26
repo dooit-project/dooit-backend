@@ -10,6 +10,7 @@ Last updated: 2026-07-25
 - 환경: local, staging, production
 - 앱 실행 형태: Expo Web, iOS Simulator, Android Emulator, 실제 기기
 - API method/path/query
+- 백엔드 `X-Request-Id`
 - HTTP status와 `error.code`
 - 사용자에게 노출된 message
 
@@ -28,10 +29,11 @@ Last updated: 2026-07-25
 ## 3. 백엔드 확인 순서
 
 1. `/v3/api-docs` 기준으로 요청 path, method, schema가 맞는지 확인한다.
-2. [`../api/API_ERROR_CODES.md`](../api/API_ERROR_CODES.md)에서 `error.code` 의미와 retry 가능 여부를 확인한다.
-3. 인증 문제면 [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md)의 TTL, claim, 401/403 기준을 확인한다.
-4. CORS 문제면 [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)의 origin 설정과 preflight 기준을 확인한다.
-5. 반복 occurrence 문제면 [`../api/RECURRENCE_MODEL.md`](../api/RECURRENCE_MODEL.md)와 [`../api/NOTIFICATION_CONTRACT.md`](../api/NOTIFICATION_CONTRACT.md)를 확인한다.
+2. 응답의 `X-Request-Id`로 백엔드 `API_REQUEST_IN`, `API_RESPONSE_OUT` 로그를 찾는다.
+3. [`../api/API_ERROR_CODES.md`](../api/API_ERROR_CODES.md)에서 `error.code` 의미와 retry 가능 여부를 확인한다.
+4. 인증 문제면 [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md)의 TTL, claim, 401/403 기준을 확인한다.
+5. CORS 문제면 [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)의 origin 설정과 preflight 기준을 확인한다.
+6. 반복 occurrence 문제면 [`../api/RECURRENCE_MODEL.md`](../api/RECURRENCE_MODEL.md)와 [`../api/NOTIFICATION_CONTRACT.md`](../api/NOTIFICATION_CONTRACT.md)를 확인한다.
 
 ## 4. 기록 형식
 
@@ -40,6 +42,7 @@ Date:
 Environment:
 Client:
 API:
+RequestId:
 Status/ErrorCode:
 Symptom:
 Root cause:

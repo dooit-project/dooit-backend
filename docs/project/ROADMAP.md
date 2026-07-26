@@ -153,6 +153,7 @@ Last updated: 2026-07-25
 - [x] API error code catalog 작성
 - [x] 4xx/5xx logging 기준 정리
 - [x] 개인정보가 포함될 수 있는 필드 masking 정책 정리
+- [x] `/api/**` 공통 request/response logging 필터 도입
 - [x] 모바일 연동 장애 대응 runbook 작성
 
 ## 5. 백엔드 문서화 과제

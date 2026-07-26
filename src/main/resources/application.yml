@@ -19,6 +19,11 @@ app:
   docs:
     public-enabled: true
 
+  api-logging:
+    enabled: true
+    payload-enabled: false
+    max-payload-length: 4096
+
   batch:
     scheduler:
       enabled: false

@@ -83,6 +83,18 @@ src/main/java/com/todolab/
 - [`docs/api/RECURRENCE_MODEL.md`](./docs/api/RECURRENCE_MODEL.md)
 - [`docs/api/NOTIFICATION_CONTRACT.md`](./docs/api/NOTIFICATION_CONTRACT.md)
 
+### API 로그
+
+`/api/**` 요청은 공통 필터에서 request id, method, path, query, headers, status, elapsed time을 기록합니다. 요청/응답 전문은 `app.api-logging.payload-enabled`가 `true`일 때만 남기며, 운영 기본값은 비활성입니다.
+
+운영 환경변수:
+
+```bash
+TODOLAB_API_LOGGING_ENABLED=true
+TODOLAB_API_LOGGING_PAYLOAD_ENABLED=false
+TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH=4096
+```
+
 ### Docker Compose
 
 `.env.example`을 `.env`로 복사한 뒤 실제 로컬 값을 입력합니다.

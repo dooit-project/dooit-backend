@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-25
 
-이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준을 정리한다.
+이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
 ## 1. 환경별 API URL
 
@@ -73,3 +73,30 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 | production | 비공개 기본 | 비공개 기본 | `TODOLAB_DOCS_PUBLIC_ENABLED=false` 기본값 유지 |
 
 현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다.
+
+## 5. API 로그 운영 기준
+
+백엔드는 `/api/**` 요청에 공통 API 로그 필터를 적용한다. 서버 렌더링 화면과 정적 리소스는 이 필터 대상이 아니다.
+
+기본 기록 항목:
+
+- request id: `X-Request-Id` 요청 헤더가 있으면 재사용하고, 없으면 서버가 생성해 응답 헤더로 내려준다.
+- request: method, path, query, remote IP, user agent, headers
+- response: status, elapsed time, response headers
+- payload: `app.api-logging.payload-enabled=true`일 때 요청/응답 body를 기록한다.
+
+운영 환경변수:
+
+```bash
+TODOLAB_API_LOGGING_ENABLED=true
+TODOLAB_API_LOGGING_PAYLOAD_ENABLED=false
+TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH=4096
+```
+
+운영 원칙:
+
+- production의 전문 로깅은 장애 재현이나 제한된 점검 시간에만 켠다.
+- `Authorization`, `Cookie`, `Set-Cookie`, `password`, `token`, `secret`, `jwt` 계열 값은 로그에 `[MASKED]`로 남긴다.
+- payload는 `TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH` 길이를 넘으면 잘라서 남긴다.
+- JSON, text, form payload만 기록하고 multipart 또는 binary payload는 전문을 남기지 않는다.
+- 로그 공유 시 request id, 발생 시각, method/path, status, elapsed time을 우선 전달한다.
