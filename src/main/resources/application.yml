@@ -23,6 +23,9 @@ app:
     enabled: true
     payload-enabled: false
     max-payload-length: 4096
+    payload-excluded-paths:
+      - /api/auth
+      - /api/v1/auth
 
   batch:
     scheduler:

@@ -41,7 +41,7 @@ public class ApiPayloadSanitizer {
         if (value == null) {
             return null;
         }
-        String sanitized = isSensitive(key, sensitiveFields) ? MASK : value;
+        String sanitized = isSensitive(key, sensitiveFields) ? MASK : normalizeForLog(value);
         return truncate(sanitized, maxLength);
     }
 
@@ -89,6 +89,10 @@ public class ApiPayloadSanitizer {
             return value;
         }
         return value.substring(0, maxLength) + TRUNCATED_SUFFIX;
+    }
+
+    private String normalizeForLog(String value) {
+        return value.replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t");
     }
 
     private String normalize(String value) {

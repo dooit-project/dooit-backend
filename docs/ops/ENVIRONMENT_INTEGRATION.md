@@ -84,6 +84,7 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 - request: method, path, query, remote IP, user agent, headers
 - response: status, elapsed time, response headers
 - payload: `app.api-logging.payload-enabled=true`일 때 요청/응답 body를 기록한다.
+- payload 제외: `/api/auth`, `/api/v1/auth`는 전문 로깅을 켜도 요청/응답 body를 남기지 않는다.
 
 운영 환경변수:
 
@@ -96,7 +97,7 @@ TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH=4096
 운영 원칙:
 
 - production의 전문 로깅은 장애 재현이나 제한된 점검 시간에만 켠다.
-- `Authorization`, `Cookie`, `Set-Cookie`, `password`, `token`, `secret`, `jwt` 계열 값은 로그에 `[MASKED]`로 남긴다.
+- `Authorization`, `Cookie`, `Set-Cookie`, `email`, `name`, `password`, `token`, `secret`, `jwt`, `title`, `category`, `description`, `content`, `memo`, `note`, `query`, `keyword`, `subject`, `body`, `to`, `from` 계열 값은 로그에 `[MASKED]`로 남긴다.
 - payload는 `TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH` 길이를 넘으면 잘라서 남긴다.
 - JSON, text, form payload만 기록하고 multipart 또는 binary payload는 전문을 남기지 않는다.
 - 로그 공유 시 request id, 발생 시각, method/path, status, elapsed time을 우선 전달한다.

@@ -103,8 +103,8 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                     request.getRequestURI(),
                     responseToUse.getStatus(),
                     elapsedMs,
-                    requestBody(requestWrapper),
-                    responseBody(responseWrapper),
+                    requestBody(requestWrapper, request.getRequestURI()),
+                    responseBody(responseWrapper, request.getRequestURI()),
                     responseHeaders(responseToUse)
             );
             try {
@@ -171,9 +171,12 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         return headers;
     }
 
-    private String requestBody(ContentCachingRequestWrapper request) {
+    private String requestBody(ContentCachingRequestWrapper request, String path) {
         if (request == null) {
             return payloadDisabledReason(null);
+        }
+        if (isPayloadPathExcluded(path)) {
+            return "[PAYLOAD_PATH_EXCLUDED]";
         }
         if (!canLogPayload(request.getContentType())) {
             return payloadDisabledReason(request.getContentType());
@@ -181,9 +184,12 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         return payload(request.getContentAsByteArray(), request.getCharacterEncoding(), request.getContentType());
     }
 
-    private String responseBody(ContentCachingResponseWrapper response) {
+    private String responseBody(ContentCachingResponseWrapper response, String path) {
         if (response == null) {
             return payloadDisabledReason(null);
+        }
+        if (isPayloadPathExcluded(path)) {
+            return "[PAYLOAD_PATH_EXCLUDED]";
         }
         if (!canLogPayload(response.getContentType())) {
             return payloadDisabledReason(response.getContentType());
@@ -241,6 +247,10 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
 
     private String headerValue(HttpServletRequest request, String name) {
         return sanitizer.sanitizeValue(name, request.getHeader(name), properties.getSensitiveFields(), properties.getMaxPayloadLength());
+    }
+
+    private boolean isPayloadPathExcluded(String path) {
+        return properties.getPayloadExcludedPaths().stream().anyMatch(path::startsWith);
     }
 
     private int requestCacheLimit() {

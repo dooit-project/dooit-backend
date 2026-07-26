@@ -31,8 +31,7 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<TaskResponse>> createTask(@Valid @RequestBody TaskRequest request) {
-        log.info("[API] createTask request :: title={}, category={}, allDay={}",
-                request.title(), request.category(), request.allDay());
+        log.info("[API] createTask request :: allDay={}", request.allDay());
 
         request.validate();
 
@@ -174,8 +173,7 @@ public class TaskController {
             @PathVariable Long id,
             @Valid @RequestBody TaskRequest request
     ) {
-        log.info("[API] updateTask request :: id={}, title={}, category={}, allDay={}",
-                id, request.title(), request.category(), request.allDay());
+        log.info("[API] updateTask request :: id={}, allDay={}", id, request.allDay());
 
         request.validate();
 

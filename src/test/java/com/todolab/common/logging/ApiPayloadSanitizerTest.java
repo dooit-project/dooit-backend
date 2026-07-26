@@ -44,4 +44,12 @@ class ApiPayloadSanitizerTest {
 
         assertThat(result).isEqualTo("{\"title\":\"...[TRUNCATED]");
     }
+
+    @Test
+    @DisplayName("로그 값을 한 줄로 정규화해 로그 삽입을 방지한다")
+    void sanitizeValue_normalizesControlCharacters() {
+        String result = sanitizer.sanitizeValue("user-agent", "app\r\nforged\tlog", Set.of(), 4096);
+
+        assertThat(result).isEqualTo("app\\r\\nforged\\tlog");
+    }
 }

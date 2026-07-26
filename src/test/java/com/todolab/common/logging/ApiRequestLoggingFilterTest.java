@@ -47,7 +47,7 @@ class ApiRequestLoggingFilterTest {
     @DisplayName("전문 로깅은 request/response 민감 값을 마스킹한다")
     void doFilterInternal_masksSensitivePayload(CapturedOutput output) throws Exception {
         properties.setPayloadEnabled(true);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/tasks");
         request.setContentType(MediaType.APPLICATION_JSON_VALUE);
         request.addHeader("Authorization", "Bearer raw-token");
         request.setContent("{\"email\":\"user@example.com\",\"password\":\"plain-password\"}".getBytes(StandardCharsets.UTF_8));
@@ -60,7 +60,26 @@ class ApiRequestLoggingFilterTest {
         filter.doFilter(request, response, chain);
 
         assertThat(output).contains("[MASKED]");
-        assertThat(output).doesNotContain("plain-password", "raw-token", "issued-token");
+        assertThat(output).doesNotContain("user@example.com", "plain-password", "raw-token", "issued-token");
+    }
+
+    @Test
+    @DisplayName("인증 API는 전문 로깅을 켜도 body를 남기지 않는다")
+    void doFilterInternal_excludesAuthPayload(CapturedOutput output) throws Exception {
+        properties.setPayloadEnabled(true);
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
+        request.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        request.setContent("{\"email\":\"user@example.com\",\"password\":\"plain-password\"}".getBytes(StandardCharsets.UTF_8));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = (servletRequest, servletResponse) -> {
+            servletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            servletResponse.getWriter().write("{\"data\":{\"accessToken\":\"issued-token\"}}");
+        };
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(output).contains("[PAYLOAD_PATH_EXCLUDED]");
+        assertThat(output).doesNotContain("user@example.com", "plain-password", "issued-token");
     }
 
     @Test

@@ -14,6 +14,8 @@ public class ApiLoggingProperties {
             "authorization",
             "cookie",
             "set-cookie",
+            "email",
+            "name",
             "password",
             "token",
             "accessToken",
@@ -21,12 +23,28 @@ public class ApiLoggingProperties {
             "refreshToken",
             "refresh_token",
             "secret",
-            "jwt"
+            "jwt",
+            "title",
+            "category",
+            "description",
+            "content",
+            "memo",
+            "note",
+            "query",
+            "keyword",
+            "subject",
+            "body",
+            "to",
+            "from"
     );
     private Set<String> excludedPaths = Set.of(
             "/v3/api-docs",
             "/swagger-ui",
             "/scalar.html"
+    );
+    private Set<String> payloadExcludedPaths = Set.of(
+            "/api/auth",
+            "/api/v1/auth"
     );
 
     public boolean isEnabled() {
@@ -67,5 +85,13 @@ public class ApiLoggingProperties {
 
     public void setExcludedPaths(Set<String> excludedPaths) {
         this.excludedPaths = excludedPaths;
+    }
+
+    public Set<String> getPayloadExcludedPaths() {
+        return payloadExcludedPaths;
+    }
+
+    public void setPayloadExcludedPaths(Set<String> payloadExcludedPaths) {
+        this.payloadExcludedPaths = payloadExcludedPaths;
     }
 }

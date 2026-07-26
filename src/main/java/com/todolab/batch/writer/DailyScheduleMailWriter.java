@@ -42,12 +42,11 @@ public class DailyScheduleMailWriter implements ItemWriter<ScheduleMailSectionCo
         String subject = "[ToDoLab] " + baseDate + " 일정 요약";
         String body = buildMailBody(baseDate, items);
 
-        log.info("[BATCH] try send mail. to={}, subject={}, sectionCount={}, bodyLength={}",
-                recipient, subject, items.size(), body.length());
+        log.info("[BATCH] try send mail. sectionCount={}, bodyLength={}", items.size(), body.length());
 
         mailService.sendText(recipient, subject, body);
 
-        log.info("[BATCH] mail send completed. to={}", recipient);
+        log.info("[BATCH] mail send completed");
     }
 
     private LocalDate getBaseDate() {
