@@ -1,0 +1,51 @@
+package com.todolab.docs;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class DocumentationIndexTest {
+
+    private static final List<DocumentLink> FRONTEND_DOCS = List.of(
+            new DocumentLink("docs/api/API_V1_FRONTEND.md", "api/API_V1_FRONTEND.md"),
+            new DocumentLink("docs/ops/ENVIRONMENT_INTEGRATION.md", "ops/ENVIRONMENT_INTEGRATION.md"),
+            new DocumentLink("docs/api/AUTH_CONTRACT.md", "api/AUTH_CONTRACT.md"),
+            new DocumentLink("docs/api/API_ERROR_CODES.md", "api/API_ERROR_CODES.md"),
+            new DocumentLink("docs/api/DATA_MODEL_GLOSSARY.md", "api/DATA_MODEL_GLOSSARY.md"),
+            new DocumentLink("docs/api/TIMEZONE_CONTRACT.md", "api/TIMEZONE_CONTRACT.md"),
+            new DocumentLink("docs/api/RECURRENCE_MODEL.md", "api/RECURRENCE_MODEL.md"),
+            new DocumentLink("docs/api/NOTIFICATION_CONTRACT.md", "api/NOTIFICATION_CONTRACT.md")
+    );
+
+    @Test
+    @DisplayName("README와 docs index는 프론트/모바일 전달 문서를 안내한다")
+    void readmeAndDocsIndexLinkFrontendDocuments() throws Exception {
+        String rootReadme = Files.readString(Path.of("README.md"));
+        String docsReadme = Files.readString(Path.of("docs/README.md"));
+
+        assertThat(docsReadme).contains("프론트/모바일 전달 문서");
+        assertThat(rootReadme).contains("문서 전체 목록과 전달 우선순위");
+        FRONTEND_DOCS.forEach(doc -> {
+            assertThat(rootReadme).contains(doc.rootPath());
+            assertThat(docsReadme).contains(doc.docsPath());
+        });
+    }
+
+    @Test
+    @DisplayName("문서 유지 계획은 문서 그룹과 커밋 전 점검 기준을 안내한다")
+    void documentationPlanDefinesMaintenanceRules() throws Exception {
+        String plan = Files.readString(Path.of("docs/project/BACKEND_DOCUMENTATION_PLAN.md"));
+
+        assertThat(plan).contains("## 문서 그룹");
+        assertThat(plan).contains("## 유지 원칙");
+        assertThat(plan).contains("## 커밋 전 점검");
+    }
+
+    private record DocumentLink(String rootPath, String docsPath) {
+    }
+}

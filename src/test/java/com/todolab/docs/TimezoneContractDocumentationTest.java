@@ -13,7 +13,7 @@ class TimezoneContractDocumentationTest {
     @Test
     @DisplayName("timezone 계약 문서는 현재 기준과 향후 도입 조건을 설명한다")
     void timezoneContractDocumentsCurrentAndFuturePolicy() throws Exception {
-        String content = Files.readString(Path.of("docs/TIMEZONE_CONTRACT.md"));
+        String content = Files.readString(Path.of("docs/api/TIMEZONE_CONTRACT.md"));
 
         assertThat(content).contains("Asia/Seoul");
         assertThat(content).contains("Constant.ZONE");

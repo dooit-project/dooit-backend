@@ -8,7 +8,7 @@ Last updated: 2026-07-14
 
 - 백엔드가 local 환경에서 실행 중이어야 한다.
 - 모바일 앱은 mock mode가 아니라 real mode로 실행해야 한다.
-- 모바일 base URL은 `docs/ENVIRONMENT_INTEGRATION.md`의 환경별 API URL을 사용한다.
+- 모바일 base URL은 `docs/ops/ENVIRONMENT_INTEGRATION.md`의 환경별 API URL을 사용한다.
 - 모바일 요청은 인증이 필요한 v1 API에 `Authorization: Bearer <accessToken>`을 포함해야 한다.
 
 ## 2. 백엔드 실행
@@ -197,7 +197,7 @@ DELETE /api/v1/dday-goals/{id}
 
 ## 6. 결과 기록 템플릿
 
-`docs/MOBILE_API_BACKEND_STATUS.md`의 "최근 모바일 연동 테스트 결과"에 아래 형식으로 기록한다.
+`docs/mobile/MOBILE_API_BACKEND_STATUS.md`의 "최근 모바일 연동 테스트 결과"에 아래 형식으로 기록한다.
 
 ```text
 - [x] 2026-07-14 local real mode: register/login/me, Today, Calendar, D-Day Today Task 생성 확인

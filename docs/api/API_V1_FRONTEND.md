@@ -6,7 +6,7 @@ Last updated: 2026-07-25
 
 ## 1. 공통
 
-환경별 base URL과 CORS 기준은 [`ENVIRONMENT_INTEGRATION.md`](./ENVIRONMENT_INTEGRATION.md)를 따른다.
+환경별 base URL과 CORS 기준은 [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)를 따른다.
 
 Base path:
 

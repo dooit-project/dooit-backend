@@ -61,4 +61,4 @@ Last updated: 2026-07-25
 
 ## 장애 대응
 
-모바일 연동 장애는 `docs/MOBILE_INCIDENT_RUNBOOK.md` 절차에 따라 기록한다.
+모바일 연동 장애는 [`../mobile/MOBILE_INCIDENT_RUNBOOK.md`](../mobile/MOBILE_INCIDENT_RUNBOOK.md) 절차에 따라 기록한다.

@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ApiV1FrontendDocumentationTest {
 
-    private static final Path API_DOC = Path.of("docs/API_V1_FRONTEND.md");
+    private static final Path API_DOC = Path.of("docs/api/API_V1_FRONTEND.md");
 
     @Test
     @DisplayName("v1 연동 문서는 공통 계약 원본 문서를 연결한다")

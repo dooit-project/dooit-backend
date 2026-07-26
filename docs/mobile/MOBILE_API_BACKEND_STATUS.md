@@ -34,7 +34,7 @@ Last audited: 2026-07-25
    - 완료: `/api/v1/tasks`, `/api/v1/dday-goals`의 주요 조회/수정/삭제 endpoint를 owner-aware service path로 확장
    - 완료: 기존 `/api/tasks`, `/api/ddays`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않는 정책 확정
    - 완료: access token TTL 1시간, refresh token 미도입, 모바일 로그아웃 클라이언트 책임, 401/403 오류 계약 확정
-   - 문서: `docs/AUTH_CONTRACT.md`
+   - 문서: `docs/api/AUTH_CONTRACT.md`
 
 2. [x] Today / Calendar 여러 날 일정 범위 조회
    - 완료: `GET /api/tasks/today?date=...`는 요청 날짜와 겹치는 `SCHEDULE`을 포함한다.
@@ -121,7 +121,7 @@ Last audited: 2026-07-25
 제품 주의:
 
 - 반복 UI는 이 계약 확정 전까지 실제 저장 기능처럼 열면 안 된다.
-- 반복 series 저장 모델은 `docs/RECURRENCE_MODEL.md`에 정리했지만, 반복 생성/수정 API는 아직 제공하지 않는다.
+- 반복 series 저장 모델은 `docs/api/RECURRENCE_MODEL.md`에 정리했지만, 반복 생성/수정 API는 아직 제공하지 않는다.
 
 ## 5. 반복 일정과 알림 책임
 
@@ -138,7 +138,7 @@ Last audited: 2026-07-25
 - [x] time zone 변경 시 과거/미래 occurrence 재계산 방식
 - [x] 향후 서버 push 알림과 로컬 알림 중복 방지 방식
 
-세부 계약은 `docs/NOTIFICATION_CONTRACT.md`에서 관리한다.
+세부 계약은 `docs/api/NOTIFICATION_CONTRACT.md`에서 관리한다.
 
 ## 6. Today 재정렬 API
 
@@ -171,7 +171,7 @@ Last audited: 2026-07-25
 | `LocalDate`는 `YYYY-MM-DD` | [x] | Spring `LocalDate` binding/JSON 기본 형식 |
 | `LocalDateTime`은 offset 없는 `YYYY-MM-DDTHH:mm:ss` | [x] | Java `LocalDateTime` 사용 |
 | 모바일이 서울 기준으로 해석 가능 | [x] | 현재 날짜/시간 계산은 `Constant.ZONE` 기준으로 통일 |
-| 향후 사용자 time zone 계약 | [x] | `TIMEZONE_CONTRACT.md`에 사용자 timezone 도입 조건과 호환성 원칙 정리 |
+| 향후 사용자 time zone 계약 | [x] | `docs/api/TIMEZONE_CONTRACT.md`에 사용자 timezone 도입 조건과 호환성 원칙 정리 |
 
 필요 작업:
 
@@ -184,12 +184,12 @@ Last audited: 2026-07-25
 
 | 항목 | 상태 | 메모 |
 | --- | --- | --- |
-| 개발 / 스테이징 / 운영 API URL | [x] | `ENVIRONMENT_INTEGRATION.md`에 local 기준, staging/production 미정 상태, CORS 운영 값 관리, 문서 UI 공개 제어 방식 정리 |
-| 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. access token TTL, refresh token 미도입, 로그아웃 책임, 401/403 계약은 `AUTH_CONTRACT.md` 기준 |
+| 개발 / 스테이징 / 운영 API URL | [x] | `docs/ops/ENVIRONMENT_INTEGRATION.md`에 local 기준, staging/production 미정 상태, CORS 운영 값 관리, 문서 UI 공개 제어 방식 정리 |
+| 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. access token TTL, refresh token 미도입, 로그아웃 책임, 401/403 계약은 `docs/api/AUTH_CONTRACT.md` 기준 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
-| 오류 코드와 장애 대응 | [x] | `API_ERROR_CODES.md`와 `MOBILE_INCIDENT_RUNBOOK.md`에 오류 코드, retry, logging/masking, 장애 확인 순서 정리 |
-| 데이터 모델 사전 | [x] | `DATA_MODEL_GLOSSARY.md`에 Task, D-Day, User 주요 필드, 상태 전이, owner scope 정리 |
-| `GET /api/tasks` 범위 조회 계약 | [x] | `DAY/WEEK/MONTH`, `taskType` 지원. v1/owner 기준은 `API_V1_FRONTEND.md`와 OpenAPI에 문서화 |
+| 오류 코드와 장애 대응 | [x] | `docs/api/API_ERROR_CODES.md`와 `docs/mobile/MOBILE_INCIDENT_RUNBOOK.md`에 오류 코드, retry, logging/masking, 장애 확인 순서 정리 |
+| 데이터 모델 사전 | [x] | `docs/api/DATA_MODEL_GLOSSARY.md`에 Task, D-Day, User 주요 필드, 상태 전이, owner scope 정리 |
+| `GET /api/tasks` 범위 조회 계약 | [x] | `DAY/WEEK/MONTH`, `taskType` 지원. v1/owner 기준은 `docs/api/API_V1_FRONTEND.md`와 OpenAPI에 문서화 |
 | `GET /api/ddays/{id}` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `GET /api/v1/dday-goals/{id}` 사용 |
 | `POST /api/ddays/{id}/tasks` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `POST /api/v1/dday-goals/{id}/tasks` 사용 |
 | D-Day 연결 Task Today 이동 후 HTTP 500 | [x] | v1 `PATCH /api/v1/tasks/{id}/today`에서 D-Day 연결 필드를 유지하는 회귀 테스트 추가 |

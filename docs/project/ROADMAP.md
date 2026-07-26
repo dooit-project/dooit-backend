@@ -11,8 +11,8 @@ Last updated: 2026-07-25
 - 웹 화면은 세션 기반 인증을 사용한다.
 - API 문서 원본은 `/v3/api-docs` OpenAPI JSON이다.
 - 개발 확인용 문서 UI는 `/swagger-ui`, 읽기용 문서 UI는 `/scalar.html`을 사용한다.
-- 모바일 연동 요약 문서는 [`API_V1_FRONTEND.md`](./API_V1_FRONTEND.md)에 둔다.
-- 모바일 연동 상태 관리는 [`MOBILE_API_BACKEND_STATUS.md`](./MOBILE_API_BACKEND_STATUS.md)에 둔다.
+- 모바일 연동 요약 문서는 [`../api/API_V1_FRONTEND.md`](../api/API_V1_FRONTEND.md)에 둔다.
+- 모바일 연동 상태 관리는 [`../mobile/MOBILE_API_BACKEND_STATUS.md`](../mobile/MOBILE_API_BACKEND_STATUS.md)에 둔다.
 
 ## 2. 최우선 작업
 
@@ -28,8 +28,8 @@ Last updated: 2026-07-25
 
 관련 문서:
 
-- [`ENVIRONMENT_INTEGRATION.md`](./ENVIRONMENT_INTEGRATION.md)
-- [`MOBILE_INTEGRATION_RUNBOOK.md`](./MOBILE_INTEGRATION_RUNBOOK.md)
+- [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)
+- [`../mobile/MOBILE_INTEGRATION_RUNBOOK.md`](../mobile/MOBILE_INTEGRATION_RUNBOOK.md)
 
 완료 기준:
 

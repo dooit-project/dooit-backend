@@ -41,8 +41,8 @@ API 계약 변경 PR에는 아래를 함께 반영한다.
 
 - Controller/DTO/OpenAPI annotation 변경
 - 관련 테스트
-- `docs/API_V1_FRONTEND.md`
-- 필요하면 `docs/MOBILE_API_BACKEND_STATUS.md`와 `docs/ROADMAP.md`
+- `docs/api/API_V1_FRONTEND.md`
+- 필요하면 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`와 `docs/project/ROADMAP.md`
 - breaking change이면 마이그레이션 계획 또는 기존/신규 API 병행 기간
 
 ## 4. OpenAPI 변경 검토
@@ -51,7 +51,7 @@ API 계약 변경 PR에는 아래를 함께 반영한다.
 
 - CI에는 별도 OpenAPI JSON snapshot diff를 추가하지 않는다.
 - 대신 `OpenApiDocumentationIntegrationTest`를 전체 테스트에 포함해 `/v3/api-docs`의 v1 tag, security, error schema, request schema 제약, 문서 UI 접근성을 검증한다.
-- 릴리스 전에는 `/v3/api-docs`를 기준으로 `docs/API_V1_FRONTEND.md`와 모바일 타입의 차이를 검토한다.
+- 릴리스 전에는 `/v3/api-docs`를 기준으로 `docs/api/API_V1_FRONTEND.md`와 모바일 타입의 차이를 검토한다.
 
 별도 OpenAPI JSON diff를 도입할 조건:
 
@@ -72,7 +72,7 @@ API 계약 변경 PR에는 아래를 함께 반영한다.
 1. 새 API 또는 새 field를 먼저 추가한다.
 2. 기존 API와 새 API를 함께 유지하는 기간을 정한다.
 3. 모바일 앱에서 새 계약으로 전환한다.
-4. `docs/API_V1_FRONTEND.md`에 deprecation 상태를 표시한다.
+4. `docs/api/API_V1_FRONTEND.md`에 deprecation 상태를 표시한다.
 5. 실제 제거는 모바일 지원 버전 정책과 운영 영향 범위를 확인한 뒤 진행한다.
 
 ## 6. Legacy API 정책

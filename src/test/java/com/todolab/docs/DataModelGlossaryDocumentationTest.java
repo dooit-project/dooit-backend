@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DataModelGlossaryDocumentationTest {
 
-    private static final Path GLOSSARY = Path.of("docs/DATA_MODEL_GLOSSARY.md");
+    private static final Path GLOSSARY = Path.of("docs/api/DATA_MODEL_GLOSSARY.md");
 
     @Test
     @DisplayName("데이터 모델 사전은 주요 Task 상태와 날짜 규칙을 설명한다")

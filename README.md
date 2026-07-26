@@ -68,7 +68,20 @@ src/main/java/com/todolab/
 | Swagger UI | `/swagger-ui` |
 | Scalar Reference | `/scalar.html` |
 
-프론트엔드와 모바일 연동의 기계 판독 가능한 원본 계약은 OpenAPI JSON입니다. 사람이 읽기 좋은 현재 v1 요약은 [`docs/API_V1_FRONTEND.md`](./docs/API_V1_FRONTEND.md)에서 함께 관리합니다.
+프론트엔드와 모바일 연동의 기계 판독 가능한 원본 계약은 OpenAPI JSON입니다. 사람이 읽기 좋은 현재 v1 요약은 [`docs/api/API_V1_FRONTEND.md`](./docs/api/API_V1_FRONTEND.md)에서 함께 관리합니다.
+
+문서 전체 목록과 전달 우선순위는 [`docs/README.md`](./docs/README.md)를 기준으로 확인합니다.
+
+프론트엔드/모바일 전달용 핵심 문서:
+
+- [`docs/api/API_V1_FRONTEND.md`](./docs/api/API_V1_FRONTEND.md)
+- [`docs/ops/ENVIRONMENT_INTEGRATION.md`](./docs/ops/ENVIRONMENT_INTEGRATION.md)
+- [`docs/api/AUTH_CONTRACT.md`](./docs/api/AUTH_CONTRACT.md)
+- [`docs/api/API_ERROR_CODES.md`](./docs/api/API_ERROR_CODES.md)
+- [`docs/api/DATA_MODEL_GLOSSARY.md`](./docs/api/DATA_MODEL_GLOSSARY.md)
+- [`docs/api/TIMEZONE_CONTRACT.md`](./docs/api/TIMEZONE_CONTRACT.md)
+- [`docs/api/RECURRENCE_MODEL.md`](./docs/api/RECURRENCE_MODEL.md)
+- [`docs/api/NOTIFICATION_CONTRACT.md`](./docs/api/NOTIFICATION_CONTRACT.md)
 
 ### Docker Compose
 
