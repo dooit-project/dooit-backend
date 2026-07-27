@@ -122,7 +122,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         if (requestId == null || requestId.isBlank()) {
             return UUID.randomUUID().toString();
         }
-        return sanitizer.sanitizeValue(REQUEST_ID_HEADER, requestId, properties.getSensitiveFields(), 128);
+        return sanitizer.sanitizeExactValue(REQUEST_ID_HEADER, requestId, properties.getSensitiveHeaders(), 128);
     }
 
     private String sanitizeQuery(String queryString) {
@@ -137,14 +137,24 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
             }
             int separator = pair.indexOf('=');
             if (separator < 0) {
-                sanitized.append(sanitizer.sanitizeValue(pair, pair, properties.getSensitiveFields(), properties.getMaxPayloadLength()));
+                sanitized.append(sanitizer.sanitizeExactValue(
+                        pair,
+                        pair,
+                        properties.getSensitiveQueryParameters(),
+                        properties.getMaxPayloadLength()
+                ));
                 continue;
             }
             String key = pair.substring(0, separator);
             String value = pair.substring(separator + 1);
             sanitized.append(key)
                     .append("=")
-                    .append(sanitizer.sanitizeValue(key, value, properties.getSensitiveFields(), properties.getMaxPayloadLength()));
+                    .append(sanitizer.sanitizeExactValue(
+                            key,
+                            value,
+                            properties.getSensitiveQueryParameters(),
+                            properties.getMaxPayloadLength()
+                    ));
         }
         return sanitized.toString();
     }
@@ -154,7 +164,12 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         Collections.list(request.getHeaderNames()).forEach(name ->
                 headers.put(
                         name,
-                        sanitizer.sanitizeValue(name, request.getHeader(name), properties.getSensitiveFields(), properties.getMaxPayloadLength())
+                        sanitizer.sanitizeExactValue(
+                                name,
+                                request.getHeader(name),
+                                properties.getSensitiveHeaders(),
+                                properties.getMaxPayloadLength()
+                        )
                 )
         );
         return headers;
@@ -165,7 +180,12 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         response.getHeaderNames().forEach(name ->
                 headers.put(
                         name,
-                        sanitizer.sanitizeValue(name, response.getHeader(name), properties.getSensitiveFields(), properties.getMaxPayloadLength())
+                        sanitizer.sanitizeExactValue(
+                                name,
+                                response.getHeader(name),
+                                properties.getSensitiveHeaders(),
+                                properties.getMaxPayloadLength()
+                        )
                 )
         );
         return headers;
@@ -224,9 +244,13 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
 
         String payload = toString(content, encoding);
         if (contentType != null && contentType.startsWith(MediaType.APPLICATION_JSON_VALUE)) {
-            return sanitizer.sanitizeJsonPayload(payload, properties.getSensitiveFields(), properties.getMaxPayloadLength());
+            return sanitizer.sanitizeJsonPayload(
+                    payload,
+                    properties.getSensitivePayloadFields(),
+                    properties.getMaxPayloadLength()
+            );
         }
-        return sanitizer.sanitizeValue(null, payload, properties.getSensitiveFields(), properties.getMaxPayloadLength());
+        return sanitizer.sanitizeValue(null, payload, properties.getSensitivePayloadFields(), properties.getMaxPayloadLength());
     }
 
     private String toString(byte[] content, String encoding) {
@@ -246,7 +270,12 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
     }
 
     private String headerValue(HttpServletRequest request, String name) {
-        return sanitizer.sanitizeValue(name, request.getHeader(name), properties.getSensitiveFields(), properties.getMaxPayloadLength());
+        return sanitizer.sanitizeExactValue(
+                name,
+                request.getHeader(name),
+                properties.getSensitiveHeaders(),
+                properties.getMaxPayloadLength()
+        );
     }
 
     private boolean isPayloadPathExcluded(String path) {

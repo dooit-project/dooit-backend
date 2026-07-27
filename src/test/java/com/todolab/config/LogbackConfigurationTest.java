@@ -22,7 +22,7 @@ class LogbackConfigurationTest {
         String content = java.nio.file.Files.readString(LOGBACK);
 
         assertThat(document.getDocumentElement().getNodeName()).isEqualTo("configuration");
-        assertThat(content).contains("%X{requestId:-no-request-id}");
+        assertThat(content).contains("%X{requestId:--}");
         assertThat(content).contains("%d{yyyy-MM-dd}.%i.log.gz");
         assertThat(content).contains("SizeAndTimeBasedRollingPolicy");
         assertThat(content).contains("ASYNC_APP_FILE");

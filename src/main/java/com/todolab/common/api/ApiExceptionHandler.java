@@ -45,7 +45,11 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<?>> handleArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
-        log.warn("Type Mismatch : {}", e.getMessage());
+        log.warn(
+                "Type Mismatch : parameter={}, requiredType={}",
+                e.getName(),
+                requiredTypeName(e)
+        );
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
     }
 
@@ -139,5 +143,10 @@ public class ApiExceptionHandler {
                     : be.getBindingResult().getFieldErrors().getFirst();
         }
         return null;
+    }
+
+    private String requiredTypeName(MethodArgumentTypeMismatchException e) {
+        Class<?> requiredType = e.getRequiredType();
+        return requiredType == null ? "unknown" : requiredType.getSimpleName();
     }
 }

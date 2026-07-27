@@ -83,6 +83,27 @@ class ApiRequestLoggingFilterTest {
     }
 
     @Test
+    @DisplayName("헤더는 과하게 마스킹하지 않고 검색어 query parameter는 마스킹한다")
+    void doFilterInternal_masksQueryWithoutOverMaskingHeaders(CapturedOutput output) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/tasks/search");
+        request.setQueryString("q=private-search&date=2026-07-28");
+        request.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        request.addHeader("Authorization", "Bearer raw-token");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = (servletRequest, servletResponse) -> {
+            servletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            servletResponse.getWriter().write("{\"success\":true}");
+        };
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(output).contains("q=[MASKED]&date=2026-07-28");
+        assertThat(output).contains("Content-Type=application/json");
+        assertThat(output).contains("Authorization=[MASKED]");
+        assertThat(output).doesNotContain("private-search", "Content-Type=[MASKED]");
+    }
+
+    @Test
     @DisplayName("API가 아닌 요청은 필터 대상에서 제외한다")
     void shouldNotFilter_skipsNonApiPath() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/tasks/today");

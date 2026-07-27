@@ -52,4 +52,13 @@ class ApiPayloadSanitizerTest {
 
         assertThat(result).isEqualTo("app\\r\\nforged\\tlog");
     }
+
+    @Test
+    @DisplayName("정확 매칭 마스킹은 content-type 같은 운영 헤더를 보존한다")
+    void sanitizeExactValue_masksOnlyExactKey() {
+        assertThat(sanitizer.sanitizeExactValue("Authorization", "Bearer token", Set.of("authorization"), 4096))
+                .isEqualTo("[MASKED]");
+        assertThat(sanitizer.sanitizeExactValue("Content-Type", "application/json", Set.of("content"), 4096))
+                .isEqualTo("application/json");
+    }
 }

@@ -45,6 +45,14 @@ public class ApiPayloadSanitizer {
         return truncate(sanitized, maxLength);
     }
 
+    public String sanitizeExactValue(String key, String value, Set<String> sensitiveFields, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String sanitized = isSensitiveExact(key, sensitiveFields) ? MASK : normalizeForLog(value);
+        return truncate(sanitized, maxLength);
+    }
+
     public boolean isSensitive(String key, Set<String> sensitiveFields) {
         if (key == null) {
             return false;
@@ -53,6 +61,16 @@ public class ApiPayloadSanitizer {
         return sensitiveFields.stream()
                 .map(this::normalize)
                 .anyMatch(normalizedKey::contains);
+    }
+
+    public boolean isSensitiveExact(String key, Set<String> sensitiveFields) {
+        if (key == null) {
+            return false;
+        }
+        String normalizedKey = normalize(key);
+        return sensitiveFields.stream()
+                .map(this::normalize)
+                .anyMatch(normalizedKey::equals);
     }
 
     private String sanitizeJson(String payload, Set<String> sensitiveFields) {

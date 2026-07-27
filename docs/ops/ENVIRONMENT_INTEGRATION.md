@@ -96,12 +96,16 @@ TODOLAB_LOG_PATH=./logs
 TODOLAB_LOG_MAX_HISTORY=30
 TODOLAB_LOG_TOTAL_SIZE_CAP=1GB
 TODOLAB_LOG_MAX_FILE_SIZE=100MB
+TODOLAB_SPRINGDOC_API_DOCS_ENABLED=false
+TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED=false
 ```
 
 운영 원칙:
 
 - production의 전문 로깅은 장애 재현이나 제한된 점검 시간에만 켠다.
 - `Authorization`, `Cookie`, `Set-Cookie`, `email`, `name`, `password`, `token`, `secret`, `jwt`, `title`, `category`, `description`, `content`, `memo`, `note`, `query`, `keyword`, `subject`, `body`, `to`, `from` 계열 값은 로그에 `[MASKED]`로 남긴다.
+- header는 `Authorization`, `Cookie`, `Set-Cookie`, `Proxy-Authorization`, `X-Api-Key`만 마스킹해 `Content-Type`, `Content-Length` 같은 운영 진단용 값은 보존한다.
+- query string은 `q`, `query`, `keyword`, `search`, 인증/개인정보성 파라미터를 마스킹한다.
 - payload는 `TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH` 길이를 넘으면 잘라서 남긴다.
 - JSON, text, form payload만 기록하고 multipart 또는 binary payload는 전문을 남기지 않는다.
 - 로그 공유 시 request id, 발생 시각, method/path, status, elapsed time을 우선 전달한다.

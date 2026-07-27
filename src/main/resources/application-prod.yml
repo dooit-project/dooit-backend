@@ -69,3 +69,9 @@ logging:
   level:
     org.hibernate.SQL: INFO
     org.hibernate.orm.jdbc.bind: INFO
+
+springdoc:
+  api-docs:
+    enabled: ${TODOLAB_SPRINGDOC_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED:false}

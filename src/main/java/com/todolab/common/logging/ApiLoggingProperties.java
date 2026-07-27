@@ -10,10 +10,30 @@ public class ApiLoggingProperties {
     private boolean enabled = true;
     private boolean payloadEnabled = false;
     private int maxPayloadLength = 4096;
-    private Set<String> sensitiveFields = Set.of(
+    private Set<String> sensitiveHeaders = Set.of(
             "authorization",
             "cookie",
             "set-cookie",
+            "proxy-authorization",
+            "x-api-key"
+    );
+    private Set<String> sensitiveQueryParameters = Set.of(
+            "q",
+            "query",
+            "keyword",
+            "search",
+            "email",
+            "name",
+            "password",
+            "token",
+            "accessToken",
+            "access_token",
+            "refreshToken",
+            "refresh_token",
+            "secret",
+            "jwt"
+    );
+    private Set<String> sensitivePayloadFields = Set.of(
             "email",
             "name",
             "password",
@@ -71,12 +91,28 @@ public class ApiLoggingProperties {
         this.maxPayloadLength = maxPayloadLength;
     }
 
-    public Set<String> getSensitiveFields() {
-        return sensitiveFields;
+    public Set<String> getSensitiveHeaders() {
+        return sensitiveHeaders;
     }
 
-    public void setSensitiveFields(Set<String> sensitiveFields) {
-        this.sensitiveFields = sensitiveFields;
+    public void setSensitiveHeaders(Set<String> sensitiveHeaders) {
+        this.sensitiveHeaders = sensitiveHeaders;
+    }
+
+    public Set<String> getSensitiveQueryParameters() {
+        return sensitiveQueryParameters;
+    }
+
+    public void setSensitiveQueryParameters(Set<String> sensitiveQueryParameters) {
+        this.sensitiveQueryParameters = sensitiveQueryParameters;
+    }
+
+    public Set<String> getSensitivePayloadFields() {
+        return sensitivePayloadFields;
+    }
+
+    public void setSensitivePayloadFields(Set<String> sensitivePayloadFields) {
+        this.sensitivePayloadFields = sensitivePayloadFields;
     }
 
     public Set<String> getExcludedPaths() {
