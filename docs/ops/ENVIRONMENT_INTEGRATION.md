@@ -92,6 +92,10 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 TODOLAB_API_LOGGING_ENABLED=true
 TODOLAB_API_LOGGING_PAYLOAD_ENABLED=false
 TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH=4096
+TODOLAB_LOG_PATH=./logs
+TODOLAB_LOG_MAX_HISTORY=30
+TODOLAB_LOG_TOTAL_SIZE_CAP=1GB
+TODOLAB_LOG_MAX_FILE_SIZE=100MB
 ```
 
 운영 원칙:
@@ -101,3 +105,6 @@ TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH=4096
 - payload는 `TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH` 길이를 넘으면 잘라서 남긴다.
 - JSON, text, form payload만 기록하고 multipart 또는 binary payload는 전문을 남기지 않는다.
 - 로그 공유 시 request id, 발생 시각, method/path, status, elapsed time을 우선 전달한다.
+- production에서는 `${TODOLAB_LOG_PATH}/todolab-backend.log`와 `${TODOLAB_LOG_PATH}/todolab-backend-error.log`를 파일로 남긴다.
+- archive 파일은 일 단위와 크기 단위로 끊고 `${TODOLAB_LOG_PATH}/archive/*.log.gz`로 압축한다.
+- Logback 기본 기능은 압축 시점을 롤오버 시점으로 처리한다. 정확히 3일 지난 파일만 지연 압축해야 하면 운영 환경의 `logrotate` 또는 cron 정책을 추가한다.
