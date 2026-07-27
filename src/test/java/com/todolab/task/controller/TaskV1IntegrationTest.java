@@ -655,11 +655,11 @@ class TaskV1IntegrationTest {
                 owner,
                 RecurrenceFrequency.WEEKLY,
                 1,
-                "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=3",
+                "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=8",
                 "Asia/Seoul",
                 LocalDateTime.of(2026, 7, 6, 9, 0),
                 null,
-                3
+                8
         ));
         taskRepository.save(Task.builder()
                 .title("반복 회의")
@@ -680,7 +680,7 @@ class TaskV1IntegrationTest {
                         .param("taskType", "SCHEDULE")
                         .param("date", "2026-07"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(3));
+                .andExpect(jsonPath("$.data.length()").value(4));
 
         Long secondOccurrenceId = taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(series.getId(), owner.getId())
                 .get(1)
@@ -715,7 +715,9 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data[1].title").value("변경 회의"))
                 .andExpect(jsonPath("$.data[1].startAt").value("2026-07-13T11:00:00"))
                 .andExpect(jsonPath("$.data[2].title").value("변경 회의"))
-                .andExpect(jsonPath("$.data[2].startAt").value("2026-07-20T11:00:00"));
+                .andExpect(jsonPath("$.data[2].startAt").value("2026-07-20T11:00:00"))
+                .andExpect(jsonPath("$.data[3].title").value("변경 회의"))
+                .andExpect(jsonPath("$.data[3].startAt").value("2026-07-27T11:00:00"));
 
         mockMvc.perform(delete("/api/v1/tasks/{id}", secondOccurrenceId)
                         .header("Authorization", "Bearer " + accessToken)
@@ -731,6 +733,14 @@ class TaskV1IntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-07-06"));
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 
     @Test

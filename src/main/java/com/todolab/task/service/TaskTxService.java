@@ -301,6 +301,7 @@ public class TaskTxService {
                 ? List.of(task)
                 : scopedRecurringTasks(task, ownerId(owner), effectiveScope);
         scopedTasks.forEach(this::skipRecurringOccurrence);
+        truncateSeriesIfNeeded(task, effectiveScope);
         taskRepository.saveAll(scopedTasks);
     }
 
@@ -416,6 +417,17 @@ public class TaskTxService {
     private void skipRecurringOccurrence(Task task) {
         task.moveToInbox();
         task.markRecurrenceException(RecurrenceExceptionType.SKIPPED, originalOccurrenceDate(task));
+    }
+
+    private void truncateSeriesIfNeeded(Task task, RecurrenceEditScope recurrenceScope) {
+        if (recurrenceScope == RecurrenceEditScope.THIS) {
+            return;
+        }
+
+        LocalDate truncateBeforeDate = recurrenceScope == RecurrenceEditScope.ALL
+                ? task.getRecurrenceSeries().getRecurrenceStartAt().toLocalDate()
+                : task.getOccurrenceDate();
+        task.getRecurrenceSeries().truncateBefore(truncateBeforeDate);
     }
 
     private void validateBulkTodayOrderRequest(TodayOrderRequest request) {

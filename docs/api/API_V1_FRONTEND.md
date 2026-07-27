@@ -403,6 +403,7 @@ Response: `data: null`
 - 반복 Task가 아니면 기존처럼 해당 Task를 삭제한다.
 - 반복 occurrence 삭제는 같은 occurrence가 다시 materialize되지 않도록 row를 물리 삭제하지 않고 `recurrenceException=SKIPPED` marker로 남긴다.
 - `THIS_AND_FUTURE`는 현재 occurrence 날짜 이상, `ALL`은 같은 series 전체를 `SKIPPED`로 표시한다.
+- `THIS_AND_FUTURE`, `ALL` 삭제는 아직 materialize되지 않은 미래 occurrence가 다시 생성되지 않도록 series 종료일도 함께 줄인다.
 
 ### Today 이동
 

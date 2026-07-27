@@ -21,12 +21,15 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "`RECURRENCE_SERIES`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RecurrenceSeries {
+
+    private static final DateTimeFormatter BASIC_DATE = DateTimeFormatter.BASIC_ISO_DATE;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -140,6 +143,24 @@ public class RecurrenceSeries {
         this.recurrenceStartAt = recurrenceStartAt;
         this.recurrenceUntil = recurrenceUntil;
         this.recurrenceCount = recurrenceCount;
+    }
+
+    public void truncateBefore(LocalDate occurrenceDate) {
+        if (occurrenceDate == null) {
+            throw new IllegalArgumentException("occurrenceDate는 필수입니다.");
+        }
+
+        LocalDate until = occurrenceDate.minusDays(1);
+        this.recurrenceRule = withoutEndCondition(this.recurrenceRule) + ";UNTIL=" + BASIC_DATE.format(until);
+        this.recurrenceUntil = until;
+        this.recurrenceCount = null;
+    }
+
+    private String withoutEndCondition(String rule) {
+        return java.util.Arrays.stream(rule.split(";"))
+                .filter(part -> !part.startsWith("COUNT=") && !part.startsWith("UNTIL="))
+                .reduce((left, right) -> left + ";" + right)
+                .orElseThrow(() -> new IllegalStateException("RRULE은 비어 있을 수 없습니다."));
     }
 
     private String normalizeRequired(String value) {
