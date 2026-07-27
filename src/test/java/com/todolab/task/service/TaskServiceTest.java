@@ -15,6 +15,7 @@ import com.todolab.task.dto.TaskRecommendationResponse;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskResponse;
 import com.todolab.task.exception.TaskNotFoundException;
+import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ class TaskServiceTest {
     TaskRepository taskRepository;
 
     @Mock
+    RecurrenceSeriesRepository recurrenceSeriesRepository;
+
+    @Mock
     TaskTxService taskTxService;
 
     @Mock
@@ -60,7 +64,13 @@ class TaskServiceTest {
     @BeforeEach
     void setUp() {
         taskCategoryGrouper = new TaskCategoryGrouper();
-        taskService = new TaskService(taskTxService, taskRepository, taskCategoryGrouper, recurrenceOccurrenceMaterializer);
+        taskService = new TaskService(
+                taskTxService,
+                taskRepository,
+                recurrenceSeriesRepository,
+                taskCategoryGrouper,
+                recurrenceOccurrenceMaterializer
+        );
     }
 
     /*******************
@@ -108,6 +118,7 @@ class TaskServiceTest {
         assertThat(res.completedAt()).isNull();
 
         then(taskRepository).should(times(1)).save(any(Task.class));
+        then(recurrenceSeriesRepository).shouldHaveNoInteractions();
         then(taskTxService).shouldHaveNoInteractions();
     }
 
@@ -138,6 +149,7 @@ class TaskServiceTest {
         assertThat(res.completedAt()).isNull();
 
         then(taskRepository).should(times(1)).save(any(Task.class));
+        then(recurrenceSeriesRepository).shouldHaveNoInteractions();
         then(taskTxService).shouldHaveNoInteractions();
     }
 
@@ -169,6 +181,7 @@ class TaskServiceTest {
         assertThat(res.unscheduled()).isTrue();
 
         then(taskRepository).should(times(1)).save(any(Task.class));
+        then(recurrenceSeriesRepository).shouldHaveNoInteractions();
         then(taskTxService).shouldHaveNoInteractions();
     }
 
@@ -196,6 +209,7 @@ class TaskServiceTest {
         ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
         then(taskRepository).should().save(taskCaptor.capture());
         assertThat(taskCaptor.getValue().getOwner()).isSameAs(owner);
+        then(recurrenceSeriesRepository).shouldHaveNoInteractions();
         then(taskTxService).shouldHaveNoInteractions();
     }
 
@@ -216,6 +230,7 @@ class TaskServiceTest {
                 .hasMessage("owner는 필수입니다.");
 
         then(taskRepository).shouldHaveNoInteractions();
+        then(recurrenceSeriesRepository).shouldHaveNoInteractions();
         then(taskTxService).shouldHaveNoInteractions();
     }
 

@@ -8,6 +8,7 @@ import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskType;
 import com.todolab.task.dto.TaskRequest;
+import com.todolab.task.dto.TaskRecurrenceRequest;
 import com.todolab.task.dto.TodayOrderRequest;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
@@ -129,6 +130,66 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.completedAt").isEmpty())
                 .andExpect(jsonPath("$.data.createdAt").value(notNullValue()))
                 .andExpect(jsonPath("$.data.updatedAt").isEmpty());
+    }
+
+    @Test
+    @DisplayName("v1 Task 생성은 매주 화요일 9시 반복 일정을 저장하고 조회 시 occurrence를 생성한다")
+    void create_recurringWeeklySchedule_success() throws Exception {
+        String accessToken = accessToken("task-recurrence-create@example.com");
+        TaskRequest request = new TaskRequest(
+                "주간 회의",
+                "화요일 싱크",
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 7, 9, 0),
+                LocalDateTime.of(2026, 7, 7, 10, 0),
+                "업무",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("TU"),
+                        null
+                )
+        );
+
+        String response = mockMvc.perform(post("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.title").value("주간 회의"))
+                .andExpect(jsonPath("$.data.startAt").value("2026-07-07T09:00:00"))
+                .andExpect(jsonPath("$.data.recurrenceSeriesId").value(notNullValue()))
+                .andExpect(jsonPath("$.data.occurrenceDate").value("2026-07-07"))
+                .andExpect(jsonPath("$.data.originalOccurrenceDate").value("2026-07-07"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number recurrenceSeriesId = JsonPath.read(response, "$.data.recurrenceSeriesId");
+
+        RecurrenceSeries series = recurrenceSeriesRepository.findById(recurrenceSeriesId.longValue()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(series.getFrequency()).isEqualTo(RecurrenceFrequency.WEEKLY);
+        org.assertj.core.api.Assertions.assertThat(series.getInterval()).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThat(series.getRecurrenceRule()).isEqualTo("FREQ=WEEKLY;INTERVAL=1;BYDAY=TU;COUNT=3");
+        org.assertj.core.api.Assertions.assertThat(series.getTimeZone()).isEqualTo("Asia/Seoul");
+        org.assertj.core.api.Assertions.assertThat(series.getRecurrenceCount()).isEqualTo(3);
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-07"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].startAt").value("2026-07-07T09:00:00"))
+                .andExpect(jsonPath("$.data[1].startAt").value("2026-07-14T09:00:00"))
+                .andExpect(jsonPath("$.data[1].recurrenceSeriesId").value(recurrenceSeriesId.longValue()))
+                .andExpect(jsonPath("$.data[1].occurrenceDate").value("2026-07-14"))
+                .andExpect(jsonPath("$.data[2].startAt").value("2026-07-21T09:00:00"));
     }
 
     @Test

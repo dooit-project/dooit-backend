@@ -38,8 +38,23 @@ public record TaskRequest(
         String category,
 
         @Schema(description = "종일 일정 여부. true이면 startAt/endAt은 모두 00:00이어야 합니다.", example = "false")
-        boolean allDay
+        boolean allDay,
+
+        @Schema(description = "반복 생성 옵션. 없으면 단일 Task로 생성합니다.", nullable = true)
+        TaskRecurrenceRequest recurrence
 ) {
+
+    public TaskRequest(
+            String title,
+            String description,
+            TaskType type,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            String category,
+            boolean allDay
+    ) {
+        this(title, description, type, startAt, endAt, category, allDay, null);
+    }
 
     public TaskRequest(
             String title,
@@ -49,7 +64,7 @@ public record TaskRequest(
             String category,
             boolean allDay
     ) {
-        this(title, description, null, startAt, endAt, category, allDay);
+        this(title, description, null, startAt, endAt, category, allDay, null);
     }
 
     public TaskType normalizedType() {
@@ -70,6 +85,7 @@ public record TaskRequest(
         validateDateTimeOrder();
         validateUnscheduledAllDay();
         validateCategory();
+        validateRecurrence();
     }
 
     private void validateEndAtWithoutStartAt() {
@@ -121,6 +137,13 @@ public record TaskRequest(
         if (Constant.UNCATEGORIZED.equals(normalizedCategory)) {
             throw new TaskValidationException("'미분류'는 시스템 예약어라서 카테고리명으로 사용할 수 없습니다.");
         }
+    }
+
+    private void validateRecurrence() {
+        if (recurrence == null) {
+            return;
+        }
+        recurrence.validate(startAt);
     }
 
     private boolean isMidnight(LocalDateTime dt) {

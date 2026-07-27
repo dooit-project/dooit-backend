@@ -149,6 +149,7 @@ type TaskStatus = 'INBOX' | 'TODAY' | 'DONE';
 type DeferReason = 'TOO_BIG' | 'NOT_NEEDED_NOW' | 'AVOIDING' | 'NO_DEADLINE' | 'WAITING_OTHER' | 'ETC';
 type TodayOrderDirection = 'UP' | 'DOWN';
 type RecurrenceExceptionType = 'SKIPPED' | 'MOVED' | 'MODIFIED';
+type RecurrenceFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
 type TaskResponse = {
   id: number;
@@ -189,6 +190,18 @@ type TaskRequest = {
   endAt?: string | null;
   category?: string | null; // 30자 이하
   allDay: boolean;
+  recurrence?: TaskRecurrenceRequest | null;
+};
+
+type TaskRecurrenceRequest = {
+  frequency: RecurrenceFrequency;
+  interval?: number | null; // 생략하면 1
+  recurrenceRule?: string | null; // 직접 지정 RRULE. 보통은 생략하고 byDays/byMonthDays 사용
+  timeZone?: string | null; // 생략하면 Asia/Seoul
+  recurrenceUntil?: string | null; // YYYY-MM-DD, recurrenceCount와 함께 사용 불가
+  recurrenceCount?: number | null; // recurrenceUntil과 함께 사용 불가
+  byDays?: string[] | null; // 예: ['TU']
+  byMonthDays?: number[] | null; // 예: [15], 월말은 [-1]
 };
 ```
 
@@ -200,6 +213,11 @@ Task 생성 규칙:
 - `endAt`은 `startAt` 이후여야 한다.
 - `allDay=true`이면 `startAt`, `endAt`은 모두 자정이어야 한다.
 - 날짜 없는 Task에는 `allDay=true`를 사용할 수 없다.
+- `recurrence`가 있으면 `startAt`은 필수다.
+- `recurrence.interval`은 생략하면 `1`이다.
+- `recurrence.timeZone`은 생략하면 `Asia/Seoul`이다.
+- `recurrence.recurrenceUntil`과 `recurrence.recurrenceCount`는 함께 사용할 수 없다.
+- `recurrence.recurrenceRule`을 생략하면 `frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`로 RRULE을 생성한다.
 
 Task 응답 nullable/default 규칙:
 
@@ -224,6 +242,28 @@ POST /api/v1/tasks
 Request: `TaskRequest`
 
 Response: `TaskResponse`
+
+매주 화요일 9시 회의 예시:
+
+```json
+{
+  "title": "주간 회의",
+  "description": "화요일 싱크",
+  "type": "SCHEDULE",
+  "startAt": "2026-07-07T09:00:00",
+  "endAt": "2026-07-07T10:00:00",
+  "category": "업무",
+  "allDay": false,
+  "recurrence": {
+    "frequency": "WEEKLY",
+    "interval": 1,
+    "byDays": ["TU"],
+    "recurrenceCount": 10
+  }
+}
+```
+
+반복 생성 응답의 첫 occurrence에는 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`가 포함된다. 이후 범위 조회, Today 조회, 월간 조회 시 누락된 occurrence가 materialize되어 같은 `recurrenceSeriesId`로 반환된다.
 
 ### 단건 조회
 

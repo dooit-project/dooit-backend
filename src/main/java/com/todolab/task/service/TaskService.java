@@ -2,6 +2,7 @@ package com.todolab.task.service;
 
 import com.todolab.task.domain.DeferReason;
 import com.todolab.task.domain.RecurrenceEditScope;
+import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskStatus;
 import com.todolab.task.domain.TodayOrderDirection;
@@ -21,10 +22,12 @@ import com.todolab.task.dto.TaskSearchResponse;
 import com.todolab.task.dto.TodayOrderRequest;
 import com.todolab.task.exception.TaskNotFoundException;
 import com.todolab.task.exception.TaskValidationException;
+import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,13 +42,16 @@ public class TaskService {
 
     private final TaskTxService taskTxService;
     private final TaskRepository taskRepository;
+    private final RecurrenceSeriesRepository recurrenceSeriesRepository;
     private final TaskCategoryGrouper taskCategoryGrouper;
     private final RecurrenceOccurrenceMaterializer recurrenceOccurrenceMaterializer;
 
+    @Transactional
     public TaskResponse create(TaskRequest req) {
         return create(req, null);
     }
 
+    @Transactional
     public TaskResponse createForOwner(TaskRequest req, User owner) {
         if (owner == null) {
             throw new IllegalArgumentException("owner는 필수입니다.");
@@ -54,6 +60,7 @@ public class TaskService {
     }
 
     private TaskResponse create(TaskRequest req, User owner) {
+        req.validate();
         Task task = Task.builder()
                 .title(req.title())
                 .description(req.description())
@@ -64,6 +71,20 @@ public class TaskService {
                 .category(req.category())
                 .owner(owner)
                 .build();
+
+        if (req.recurrence() != null) {
+            RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
+                    owner,
+                    req.recurrence().normalizedFrequency(),
+                    req.recurrence().normalizedInterval(),
+                    req.recurrence().normalizedRecurrenceRule(),
+                    req.recurrence().normalizedTimeZone(),
+                    req.startAt(),
+                    req.recurrence().recurrenceUntil(),
+                    req.recurrence().recurrenceCount()
+            ));
+            task.connectRecurrenceSeries(series, req.startAt().toLocalDate());
+        }
 
         Task saved = taskRepository.save(task);
         return TaskResponse.from(saved);

@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-23
 
-이 문서는 반복 Task/일정 저장을 위한 백엔드 내부 모델 기준이다. 현재 단계에서는 모델과 저장 구조만 확정하며, 모바일에서 호출할 반복 생성/수정 API는 아직 제공하지 않는다.
+이 문서는 반복 Task/일정 저장과 v1 API 계약 기준이다.
 
 ## 목표
 
@@ -56,8 +56,12 @@ Last updated: 2026-07-23
 
 ## API 상태
 
-- 반복 생성/수정/삭제 API는 아직 없다.
-- 기존 Task 생성/수정 API는 반복 필드를 받지 않는다.
+- `POST /api/v1/tasks`는 `recurrence` 하위 객체로 반복 생성을 지원한다.
+- 반복 생성 요청은 `startAt`이 필요하다.
+- `recurrence.timeZone`은 생략하면 `Asia/Seoul`이다.
+- `recurrence.interval`은 생략하면 `1`이다.
+- `recurrence.recurrenceRule`을 직접 보내거나, `frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`로 RRULE을 생성할 수 있다.
+- 반복 수정/삭제 API는 기존 `PUT /api/v1/tasks/{id}`, `DELETE /api/v1/tasks/{id}`의 `recurrenceScope` query parameter를 사용한다.
 - Today/Calendar owner 조회는 연결된 반복 series와 template Task를 기준으로 조회 범위의 누락 occurrence Task를 materialize한다.
 - materialize는 `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`와 검증된 `BYDAY`, `BYMONTHDAY`, `COUNT`, `UNTIL` 범위를 사용한다.
 - 현재 materialize 기준 template은 같은 series에 연결된 가장 이른 non-exception Task다.
@@ -68,4 +72,26 @@ Last updated: 2026-07-23
 - `THIS_AND_FUTURE`, `ALL` 수정은 materialize된 occurrence row 범위에 적용한다.
 - `THIS_AND_FUTURE`, `ALL` 수정은 완료된 occurrence의 `status=DONE`, `completedAt`을 보존한다.
 - 반복 occurrence 삭제는 재생성을 막기 위해 row를 보존하고 `SKIPPED` marker로 표시한다.
-- 모바일은 반복 UI를 실제 저장 기능처럼 열면 안 된다.
+- 모바일은 반복 생성 UI를 열 수 있다. 다만 반복 rule 편집 UI는 현재 지원 필드(`frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`) 범위 안에서만 노출한다.
+
+## 생성 예시
+
+매주 화요일 9시 회의:
+
+```json
+{
+  "title": "주간 회의",
+  "description": "화요일 싱크",
+  "type": "SCHEDULE",
+  "startAt": "2026-07-07T09:00:00",
+  "endAt": "2026-07-07T10:00:00",
+  "category": "업무",
+  "allDay": false,
+  "recurrence": {
+    "frequency": "WEEKLY",
+    "interval": 1,
+    "byDays": ["TU"],
+    "recurrenceCount": 10
+  }
+}
+```
