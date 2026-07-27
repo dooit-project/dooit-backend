@@ -655,7 +655,6 @@ Cursor 기준:
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
-- 반복 series 생성 API
 - 알림 예약 후보 API
 - refresh token API
 - 서버 push 알림 API
@@ -670,9 +669,11 @@ Cursor 기준:
 - [ ] D-Day Today Task 생성은 3단계 workflow 대신 `POST /api/v1/dday-goals/{id}/tasks` 사용
 - [ ] 검색 UI는 `GET /api/v1/tasks/search` 사용
 - [ ] Today drag-and-drop 저장은 `PUT /api/v1/tasks/today-order` 사용
+- [ ] 반복 생성 UI는 `POST /api/v1/tasks`의 `recurrence` 하위 객체 사용
+- [ ] 반복 기존 rule 수정 UI는 숨기고 일반 필드 수정 scope만 노출
 - [ ] 401 응답 시 로그인 화면으로 이동하거나 세션 만료 안내
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
-- [ ] 반복/알림 UI는 백엔드 계약 구현 전까지 실제 저장 기능처럼 열지 않음
+- [ ] 알림 UI는 알림 예약 후보 API 구현 전까지 실제 저장 기능처럼 열지 않음
 
 ## 9. Legacy API 정책
 
