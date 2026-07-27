@@ -81,8 +81,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
             responseToUse = responseWrapper;
         }
 
-        log.info(
-                "API_REQUEST_IN requestId={} method={} path={} query={} remoteIp={} userAgent={} headers={}",
+        log.info(apiRequestInMessage(
                 requestId,
                 request.getMethod(),
                 request.getRequestURI(),
@@ -90,14 +89,13 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                 clientIp(request),
                 headerValue(request, "User-Agent"),
                 requestHeaders(request)
-        );
+        ));
 
         try {
             filterChain.doFilter(requestToUse, responseToUse);
         } finally {
             long elapsedMs = (System.nanoTime() - startedAt) / 1_000_000;
-            log.info(
-                    "API_RESPONSE_OUT requestId={} method={} path={} status={} elapsedMs={} requestBody={} responseBody={} headers={}",
+            log.info(apiResponseOutMessage(
                     requestId,
                     request.getMethod(),
                     request.getRequestURI(),
@@ -106,7 +104,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                     requestBody(requestWrapper, request.getRequestURI()),
                     responseBody(responseWrapper, request.getRequestURI()),
                     responseHeaders(responseToUse)
-            );
+            ));
             try {
                 if (responseWrapper != null) {
                     responseWrapper.copyBodyToResponse();
@@ -123,6 +121,73 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
             return UUID.randomUUID().toString();
         }
         return sanitizer.sanitizeExactValue(REQUEST_ID_HEADER, requestId, properties.getSensitiveHeaders(), 128);
+    }
+
+    private String apiRequestInMessage(
+            String requestId,
+            String method,
+            String path,
+            String query,
+            String remoteIp,
+            String userAgent,
+            Map<String, String> headers
+    ) {
+        return """
+
+                ==================================
+                  API_REQUEST_IN
+                ==================================
+                  requestId : %s
+                  method    : %s
+                  path      : %s
+                  query     : %s
+                  remoteIp  : %s
+                  userAgent : %s
+                  headers   : %s
+                ==================================""".formatted(
+                requestId,
+                method,
+                path,
+                query,
+                remoteIp,
+                userAgent,
+                headers
+        );
+    }
+
+    private String apiResponseOutMessage(
+            String requestId,
+            String method,
+            String path,
+            int status,
+            long elapsedMs,
+            String requestBody,
+            String responseBody,
+            Map<String, String> headers
+    ) {
+        return """
+
+                ==================================
+                  API_RESPONSE_OUT
+                ==================================
+                  requestId    : %s
+                  method       : %s
+                  path         : %s
+                  status       : %d
+                  elapsedMs    : %d
+                  requestBody  : %s
+                  responseBody : %s
+                  headers      : %s
+                ==================================""".formatted(
+                requestId,
+                method,
+                path,
+                status,
+                elapsedMs,
+                requestBody,
+                responseBody,
+                headers
+        );
     }
 
     private String sanitizeQuery(String queryString) {

@@ -59,6 +59,9 @@ class ApiRequestLoggingFilterTest {
 
         filter.doFilter(request, response, chain);
 
+        assertThat(output).contains("API_REQUEST_IN", "API_RESPONSE_OUT");
+        assertThat(output).contains("  method    : POST", "  path      : /api/v1/tasks");
+        assertThat(output).contains("  requestBody  : ", "  responseBody : ");
         assertThat(output).contains("[MASKED]");
         assertThat(output).doesNotContain("user@example.com", "plain-password", "raw-token", "issued-token");
     }
