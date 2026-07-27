@@ -178,8 +178,20 @@ type TaskResponse = {
   occurrenceDate: string | null;
   originalOccurrenceDate: string | null;
   recurrenceException: RecurrenceExceptionType | null;
+  recurrence: TaskRecurrenceResponse | null;
   createdAt: string | null;
   updatedAt: string | null;
+};
+
+type TaskRecurrenceResponse = {
+  id: number;
+  frequency: RecurrenceFrequency;
+  interval: number;
+  recurrenceRule: string;
+  timeZone: string;
+  recurrenceStartAt: string;
+  recurrenceUntil: string | null;
+  recurrenceCount: number | null;
 };
 
 type TaskRequest = {
@@ -263,7 +275,7 @@ Response: `TaskResponse`
 }
 ```
 
-반복 생성 응답의 첫 occurrence에는 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`가 포함된다. 이후 범위 조회, Today 조회, 월간 조회 시 누락된 occurrence가 materialize되어 같은 `recurrenceSeriesId`로 반환된다.
+반복 생성 응답의 첫 occurrence에는 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`, `recurrence`가 포함된다. 이후 범위 조회, Today 조회, 월간 조회 시 누락된 occurrence가 materialize되어 같은 `recurrenceSeriesId`와 `recurrence`로 반환된다.
 
 ### 단건 조회
 

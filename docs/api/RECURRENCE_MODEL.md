@@ -57,6 +57,7 @@ Last updated: 2026-07-23
 ## API 상태
 
 - `POST /api/v1/tasks`는 `recurrence` 하위 객체로 반복 생성을 지원한다.
+- 반복 Task 응답은 기존 occurrence 필드와 함께 `recurrence` 상세 객체를 포함한다.
 - 반복 생성 요청은 `startAt`이 필요하다.
 - `recurrence.timeZone`은 생략하면 `Asia/Seoul`이다.
 - `recurrence.interval`은 생략하면 `1`이다.

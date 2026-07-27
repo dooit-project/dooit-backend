@@ -68,6 +68,8 @@ public record TaskResponse(
         LocalDate originalOccurrenceDate,
         @Schema(description = "반복 occurrence 예외 종류", example = "MODIFIED", nullable = true)
         RecurrenceExceptionType recurrenceException,
+        @Schema(description = "반복 series 상세. 반복 Task가 아니면 null입니다.", nullable = true)
+        TaskRecurrenceResponse recurrence,
         @Schema(description = "생성 시각", example = "2026-07-22T09:30:00", nullable = true)
         LocalDateTime createdAt,
         @Schema(description = "수정 시각. 생성 직후에는 null입니다.", example = "2026-07-22T10:30:00", nullable = true)
@@ -84,7 +86,7 @@ public record TaskResponse(
             String category,
             LocalDateTime createdAt
     ) {
-        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, createdAt, null);
+        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, null, createdAt, null);
     }
 
     public static TaskResponse from(Task t) {
@@ -117,6 +119,7 @@ public record TaskResponse(
                 .occurrenceDate(t.getOccurrenceDate())
                 .originalOccurrenceDate(t.getOriginalOccurrenceDate())
                 .recurrenceException(t.getRecurrenceException())
+                .recurrence(TaskRecurrenceResponse.from(recurrenceSeries))
                 .createdAt(t.getCreatedAt())
                 .updatedAt(t.getUpdatedAt())
                 .build();

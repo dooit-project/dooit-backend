@@ -166,6 +166,12 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.recurrenceSeriesId").value(notNullValue()))
                 .andExpect(jsonPath("$.data.occurrenceDate").value("2026-07-07"))
                 .andExpect(jsonPath("$.data.originalOccurrenceDate").value("2026-07-07"))
+                .andExpect(jsonPath("$.data.recurrence.frequency").value("WEEKLY"))
+                .andExpect(jsonPath("$.data.recurrence.interval").value(1))
+                .andExpect(jsonPath("$.data.recurrence.recurrenceRule").value("FREQ=WEEKLY;INTERVAL=1;BYDAY=TU;COUNT=3"))
+                .andExpect(jsonPath("$.data.recurrence.timeZone").value("Asia/Seoul"))
+                .andExpect(jsonPath("$.data.recurrence.recurrenceStartAt").value("2026-07-07T09:00:00"))
+                .andExpect(jsonPath("$.data.recurrence.recurrenceCount").value(3))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -188,6 +194,7 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data[0].startAt").value("2026-07-07T09:00:00"))
                 .andExpect(jsonPath("$.data[1].startAt").value("2026-07-14T09:00:00"))
                 .andExpect(jsonPath("$.data[1].recurrenceSeriesId").value(recurrenceSeriesId.longValue()))
+                .andExpect(jsonPath("$.data[1].recurrence.frequency").value("WEEKLY"))
                 .andExpect(jsonPath("$.data[1].occurrenceDate").value("2026-07-14"))
                 .andExpect(jsonPath("$.data[2].startAt").value("2026-07-21T09:00:00"));
     }
