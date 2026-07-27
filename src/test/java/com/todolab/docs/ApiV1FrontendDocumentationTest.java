@@ -31,6 +31,7 @@ class ApiV1FrontendDocumentationTest {
 
         assertThat(content).contains("GET /api/v1/tasks/search");
         assertThat(content).contains("PUT /api/v1/tasks/today-order");
+        assertThat(content).contains("GET /api/v1/tasks/notification-candidates");
         assertThat(content).contains("반복 생성 UI는 `POST /api/v1/tasks`의 `recurrence` 하위 객체 사용");
         assertThat(content).contains("반복 기존 rule 수정 UI는 숨기고 일반 필드 수정 scope만 노출");
         assertThat(content).contains("현재 cursor는 마지막으로 받은 항목의 `task.id` 문자열이다.");

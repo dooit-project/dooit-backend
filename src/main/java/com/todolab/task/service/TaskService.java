@@ -12,6 +12,7 @@ import com.todolab.task.domain.query.TaskSearchDateField;
 import com.todolab.task.domain.query.TaskSearchDateSource;
 import com.todolab.task.domain.query.TaskSearchSort;
 import com.todolab.task.dto.TaskCategoryGroupResponse;
+import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskRecommendationResponse;
@@ -217,6 +218,23 @@ public class TaskService {
                         .thenComparing(candidate -> candidate.task().id(), Comparator.nullsLast(Comparator.naturalOrder())))
                 .limit(5)
                 .map(candidate -> new TaskRecommendationResponse(candidate.task(), candidate.reason()))
+                .toList();
+    }
+
+    public List<TaskNotificationCandidateResponse> getNotificationCandidatesForOwner(
+            LocalDate fromInclusive,
+            LocalDate toInclusive,
+            User owner
+    ) {
+        validateNotificationCandidateRange(fromInclusive, toInclusive);
+        Long ownerId = ownerId(owner);
+        recurrenceOccurrenceMaterializer.materializeForOwner(ownerId, fromInclusive, toInclusive.plusDays(1));
+        return taskRepository.findPlannedTasks(ownerId, fromInclusive, toInclusive.plusDays(1)).stream()
+                .filter(task -> task.getStartAt() != null)
+                .filter(task -> task.getCompletedAt() == null)
+                .filter(task -> task.getRecurrenceException() != com.todolab.task.domain.RecurrenceExceptionType.SKIPPED)
+                .sorted(Comparator.comparing(Task::getStartAt).thenComparing(Task::getId))
+                .map(TaskNotificationCandidateResponse::from)
                 .toList();
     }
 
@@ -516,6 +534,18 @@ public class TaskService {
                     .comparing(SearchCandidate::relevantDate, Comparator.nullsLast(Comparator.naturalOrder()))
                     .thenComparing(idAsc);
         };
+    }
+
+    private void validateNotificationCandidateRange(LocalDate fromInclusive, LocalDate toInclusive) {
+        if (fromInclusive == null || toInclusive == null) {
+            throw new TaskValidationException("알림 후보 조회 날짜 범위가 필요합니다.");
+        }
+        if (toInclusive.isBefore(fromInclusive)) {
+            throw new TaskValidationException("알림 후보 조회 종료일은 시작일보다 빠를 수 없습니다.");
+        }
+        if (ChronoUnit.DAYS.between(fromInclusive, toInclusive) > 30) {
+            throw new TaskValidationException("알림 후보 조회 범위는 최대 31일입니다.");
+        }
     }
 
     private record RecommendationCandidate(TaskResponse task, String reason, int priority, long sortKey) {

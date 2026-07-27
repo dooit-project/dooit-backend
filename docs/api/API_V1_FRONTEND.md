@@ -215,6 +215,15 @@ type TaskRecurrenceRequest = {
   byDays?: string[] | null; // 예: ['TU']
   byMonthDays?: number[] | null; // 예: [15], 월말은 [-1]
 };
+
+type TaskNotificationCandidateResponse = {
+  notificationKey: string;
+  taskId: number;
+  scheduledAt: string;
+  recurrenceSeriesId: number | null;
+  occurrenceDate: string | null;
+  task: TaskResponse;
+};
 ```
 
 Task 생성 규칙:
@@ -349,6 +358,23 @@ type TaskRecommendationResponse = {
   reason: string;
 };
 ```
+
+### 로컬 알림 후보
+
+```http
+GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
+```
+
+Response: `TaskNotificationCandidateResponse[]`
+
+조건:
+
+- `from`, `to`는 필수이며 양끝 날짜를 포함한다.
+- 조회 범위는 최대 31일이다.
+- 범위 안의 반복 occurrence는 백엔드가 materialize한 뒤 반환한다.
+- `status=TODAY`, `startAt != null`, `completedAt == null`, `recurrenceException != SKIPPED`인 Task만 반환한다.
+- `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
+- 실제 알림 예약/취소는 모바일 로컬 알림 책임이다.
 
 ### 지난 미완료
 
@@ -655,7 +681,6 @@ Cursor 기준:
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
-- 알림 예약 후보 API
 - refresh token API
 - 서버 push 알림 API
 
@@ -671,9 +696,10 @@ Cursor 기준:
 - [ ] Today drag-and-drop 저장은 `PUT /api/v1/tasks/today-order` 사용
 - [ ] 반복 생성 UI는 `POST /api/v1/tasks`의 `recurrence` 하위 객체 사용
 - [ ] 반복 기존 rule 수정 UI는 숨기고 일반 필드 수정 scope만 노출
+- [ ] 로컬 알림 예약은 `GET /api/v1/tasks/notification-candidates` 응답만 기준으로 구성
 - [ ] 401 응답 시 로그인 화면으로 이동하거나 세션 만료 안내
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
-- [ ] 알림 UI는 알림 예약 후보 API 구현 전까지 실제 저장 기능처럼 열지 않음
+- [ ] 서버 push 알림 UI는 push API 구현 전까지 실제 저장 기능처럼 열지 않음
 
 ## 9. Legacy API 정책
 

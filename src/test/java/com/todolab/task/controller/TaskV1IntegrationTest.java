@@ -233,6 +233,87 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 알림 후보 조회는 반복 occurrence를 생성하고 완료/삭제 항목을 제외한다")
+    void getNotificationCandidates_materializesRecurrenceAndExcludesDoneOrSkipped() throws Exception {
+        String accessToken = accessToken("task-notification-candidates@example.com");
+        Long normalTaskId = createTask(accessToken, new TaskRequest(
+                "단건 알림",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 28, 14, 0),
+                LocalDateTime.of(2026, 7, 28, 15, 0),
+                "업무",
+                false
+        ));
+        createTask(accessToken, new TaskRequest("인박스 제외", null, TaskType.TODO, null, null, null, false));
+
+        TaskRequest recurrenceRequest = new TaskRequest(
+                "반복 알림",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 28, 9, 0),
+                LocalDateTime.of(2026, 7, 28, 10, 0),
+                "업무",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        2,
+                        List.of("TU"),
+                        null
+                )
+        );
+        String recurrenceResponse = mockMvc.perform(post("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(recurrenceRequest)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number recurrenceSeriesId = JsonPath.read(recurrenceResponse, "$.data.recurrenceSeriesId");
+
+        mockMvc.perform(get("/api/v1/tasks/notification-candidates")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("from", "2026-07-28")
+                        .param("to", "2026-08-04"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].notificationKey").value("recurrence:%d:2026-07-28".formatted(recurrenceSeriesId.longValue())))
+                .andExpect(jsonPath("$.data[0].scheduledAt").value("2026-07-28T09:00:00"))
+                .andExpect(jsonPath("$.data[0].task.title").value("반복 알림"))
+                .andExpect(jsonPath("$.data[1].notificationKey").value("task:%d".formatted(normalTaskId)))
+                .andExpect(jsonPath("$.data[1].scheduledAt").value("2026-07-28T14:00:00"))
+                .andExpect(jsonPath("$.data[2].notificationKey").value("recurrence:%d:2026-08-04".formatted(recurrenceSeriesId.longValue())))
+                .andExpect(jsonPath("$.data[2].scheduledAt").value("2026-08-04T09:00:00"));
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done", normalTaskId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("completedAt", "2026-07-28T18:00:00"))
+                .andExpect(status().isOk());
+        Long secondOccurrenceId = taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(
+                        recurrenceSeriesId.longValue(),
+                        userRepository.findByEmail("task-notification-candidates@example.com").orElseThrow().getId()
+                )
+                .get(1)
+                .getId();
+        mockMvc.perform(delete("/api/v1/tasks/{id}", secondOccurrenceId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/tasks/notification-candidates")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("from", "2026-07-28")
+                        .param("to", "2026-08-04"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].notificationKey").value("recurrence:%d:2026-07-28".formatted(recurrenceSeriesId.longValue())));
+    }
+
+    @Test
     @DisplayName("v1 MONTH Task 조회는 YYYY-MM을 바인딩하고 owner 범위 월간 일정을 반환한다")
     void getTasks_month_success_yearMonthBindingAndOwnerScope() throws Exception {
         String ownerToken = accessToken("task-month-owner@example.com");

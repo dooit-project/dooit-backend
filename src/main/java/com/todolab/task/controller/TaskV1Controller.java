@@ -7,6 +7,7 @@ import com.todolab.task.domain.DeferReason;
 import com.todolab.task.domain.RecurrenceEditScope;
 import com.todolab.task.domain.TodayOrderDirection;
 import com.todolab.task.dto.TaskQueryRequest;
+import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.dto.TaskRecommendationResponse;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskResponse;
@@ -87,6 +88,19 @@ public class TaskV1Controller {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "로컬 알림 후보 조회", description = "로그인 사용자의 지정 날짜 범위 Task/occurrence 중 모바일 로컬 알림 예약 후보를 조회합니다.")
+    @GetMapping("/notification-candidates")
+    public ResponseEntity<ApiResponse<List<TaskNotificationCandidateResponse>>> getNotificationCandidates(
+            @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "알림 후보 조회 시작일", schema = @Schema(type = "string", format = "date", example = "2026-07-28"))
+            @RequestParam LocalDate from,
+            @Parameter(description = "알림 후보 조회 종료일. 시작일 포함 최대 31일까지 조회할 수 있습니다.", schema = @Schema(type = "string", format = "date", example = "2026-08-03"))
+            @RequestParam LocalDate to
+    ) {
+        User owner = currentUserService.requireUser(jwt);
+        return ResponseEntity.ok(ApiResponse.success(taskService.getNotificationCandidatesForOwner(from, to, owner)));
     }
 
     @Operation(summary = "Task 단건 조회", description = "로그인 사용자의 Task를 단건 조회합니다.")

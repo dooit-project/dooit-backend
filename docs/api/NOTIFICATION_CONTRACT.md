@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-25
 
-이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 알림 예약 후보 API와 서버 push API를 제공하지 않으며, 반복 occurrence와 Task 상태 계약을 먼저 고정한다.
+이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API를 제공하며, 서버 push API는 제공하지 않는다.
 
 ## 책임 분리
 
@@ -13,12 +13,13 @@ Last updated: 2026-07-25
 - occurrence별 완료, 미룸, 삭제, 이동 상태를 Task row에 저장한다.
 - 반복 예외는 `recurrenceException`으로 표현한다.
 - 모바일이 동기화할 수 있도록 Task 응답에 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`, `recurrenceException`, `status`, `completedAt`, `startAt`, `endAt`, `targetDate`를 내려준다.
+- `GET /api/v1/tasks/notification-candidates`로 지정 범위의 로컬 알림 예약 후보를 내려준다.
 
 ### 모바일 책임
 
-- 현재는 백엔드 응답에 포함된 가까운 미래 Task/occurrence만 로컬 알림 후보로 사용한다.
+- 현재는 백엔드 알림 후보 API에 포함된 가까운 미래 Task/occurrence만 로컬 알림 후보로 사용한다.
 - 로컬 알림 예약 범위는 모바일이 정하되, 서버에서 조회한 범위 밖 occurrence를 자체 생성하지 않는다.
-- 로컬 알림 예약 key는 `task.id`를 우선 사용한다.
+- 로컬 알림 예약 key는 백엔드가 내려준 `notificationKey`를 사용한다.
 - 같은 `recurrenceSeriesId + occurrenceDate` 조합이 다시 내려오면 기존 예약을 갱신한다.
 - `DONE`, `SKIPPED`, 삭제/미노출된 occurrence는 로컬 예약에서 제거한다.
 
@@ -34,6 +35,18 @@ Last updated: 2026-07-25
 - 모바일이 정한 로컬 예약 윈도우 안에 있음
 
 날짜 없는 `INBOX` Task와 완료된 `DONE` Task는 로컬 알림 후보가 아니다.
+
+## 로컬 알림 후보 API
+
+```http
+GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
+```
+
+- `from`, `to`는 필수이며 양끝 날짜를 포함한다.
+- 조회 범위는 최대 31일이다.
+- 백엔드는 조회 범위의 반복 occurrence를 materialize한 뒤 후보를 산출한다.
+- 응답의 `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
+- 응답에는 후보 판단 원본인 `task: TaskResponse`를 포함한다.
 
 ## 상태 변경 후 갱신 규칙
 
@@ -64,6 +77,5 @@ Last updated: 2026-07-25
 
 ## 아직 제공하지 않는 API
 
-- 알림 예약 후보 전용 API
 - 서버 push 등록/해제 API
 - 알림 전송 이력 API
