@@ -62,6 +62,9 @@ Last updated: 2026-07-23
 - `recurrence.timeZone`은 생략하면 `Asia/Seoul`이다.
 - `recurrence.interval`은 생략하면 `1`이다.
 - `recurrence.recurrenceRule`을 직접 보내거나, `frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`로 RRULE을 생성할 수 있다.
+- `BYDAY`를 지정한 `WEEKLY` 반복은 시작일 요일이 `BYDAY`에 포함되어야 한다.
+- `BYMONTHDAY`를 지정한 `MONTHLY`, `YEARLY` 반복은 시작일 일자가 `BYMONTHDAY`에 포함되어야 한다.
+- `BYDAY`는 `WEEKLY`, `BYMONTHDAY`는 `MONTHLY` 또는 `YEARLY`에서만 지원한다.
 - 반복 수정/삭제 API는 기존 `PUT /api/v1/tasks/{id}`, `DELETE /api/v1/tasks/{id}`의 `recurrenceScope` query parameter를 사용한다.
 - 기존 series의 반복 규칙 자체를 바꾸는 API는 아직 제공하지 않는다. `PUT /api/v1/tasks/{id}`에 `recurrence`를 보내면 HTTP 400이다.
 - Today/Calendar owner 조회는 연결된 반복 series와 template Task를 기준으로 조회 범위의 누락 occurrence Task를 materialize한다.

@@ -6,11 +6,14 @@ import com.todolab.task.domain.RecurrenceRuleValidator;
 import com.todolab.task.exception.TaskValidationException;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Schema(description = "반복 Task 생성 요청")
@@ -47,15 +50,18 @@ public record TaskRecurrenceRequest(
             throw new TaskValidationException("반복 Task는 시작 일시가 필요합니다.");
         }
 
+        RecurrenceFrequency effectiveFrequency = normalizedFrequency();
+        String effectiveRule = normalizedRecurrenceRule();
         try {
             RecurrenceRuleValidator.validate(
-                    normalizedFrequency(),
+                    effectiveFrequency,
                     normalizedInterval(),
-                    normalizedRecurrenceRule(),
+                    effectiveRule,
                     normalizedTimeZone(),
                     recurrenceUntil,
                     recurrenceCount
             );
+            validateStartAtMatchesRule(taskStartAt.toLocalDate(), effectiveFrequency, effectiveRule);
         } catch (IllegalArgumentException e) {
             throw new TaskValidationException(e.getMessage());
         }
@@ -116,5 +122,58 @@ public record TaskRecurrenceRequest(
         return byMonthDays.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
+    }
+
+    private void validateStartAtMatchesRule(LocalDate startDate, RecurrenceFrequency frequency, String rule) {
+        Map<String, String> parts = parseRule(rule);
+        String byDay = parts.get("BYDAY");
+        String byMonthDay = parts.get("BYMONTHDAY");
+
+        if (byDay != null && frequency != RecurrenceFrequency.WEEKLY) {
+            throw new IllegalArgumentException("RRULE BYDAY는 WEEKLY 반복에서만 지원합니다.");
+        }
+        if (byMonthDay != null && frequency != RecurrenceFrequency.MONTHLY && frequency != RecurrenceFrequency.YEARLY) {
+            throw new IllegalArgumentException("RRULE BYMONTHDAY는 MONTHLY 또는 YEARLY 반복에서만 지원합니다.");
+        }
+        if (frequency == RecurrenceFrequency.WEEKLY && byDay != null && !splitValues(byDay).contains(dayCode(startDate.getDayOfWeek()))) {
+            throw new IllegalArgumentException("반복 시작일은 RRULE BYDAY에 포함되어야 합니다.");
+        }
+        if ((frequency == RecurrenceFrequency.MONTHLY || frequency == RecurrenceFrequency.YEARLY)
+                && byMonthDay != null
+                && splitValues(byMonthDay).stream().map(Integer::parseInt).noneMatch(day -> matchesMonthDay(startDate, day))) {
+            throw new IllegalArgumentException("반복 시작일은 RRULE BYMONTHDAY에 포함되어야 합니다.");
+        }
+    }
+
+    private Map<String, String> parseRule(String rule) {
+        return Arrays.stream(rule.split(";"))
+                .map(token -> token.split("=", 2))
+                .filter(parts -> parts.length == 2)
+                .collect(Collectors.toMap(parts -> parts[0].trim().toUpperCase(Locale.ROOT), parts -> parts[1].trim().toUpperCase(Locale.ROOT)));
+    }
+
+    private List<String> splitValues(String value) {
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(part -> !part.isBlank())
+                .toList();
+    }
+
+    private boolean matchesMonthDay(LocalDate startDate, int day) {
+        int lengthOfMonth = startDate.lengthOfMonth();
+        int effectiveDay = day < 0 ? lengthOfMonth + day + 1 : day;
+        return effectiveDay >= 1 && effectiveDay <= lengthOfMonth && startDate.getDayOfMonth() == effectiveDay;
+    }
+
+    private String dayCode(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY -> "MO";
+            case TUESDAY -> "TU";
+            case WEDNESDAY -> "WE";
+            case THURSDAY -> "TH";
+            case FRIDAY -> "FR";
+            case SATURDAY -> "SA";
+            case SUNDAY -> "SU";
+        };
     }
 }

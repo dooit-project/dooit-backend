@@ -200,6 +200,39 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 반복 Task 생성은 시작일이 반복 규칙과 맞지 않으면 거부한다")
+    void create_recurringSchedule_fail_startDateMismatch() throws Exception {
+        String accessToken = accessToken("task-recurrence-start-mismatch@example.com");
+        TaskRequest request = new TaskRequest(
+                "잘못된 반복 회의",
+                "화요일 반복인데 수요일 시작",
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 8, 9, 0),
+                LocalDateTime.of(2026, 7, 8, 10, 0),
+                "업무",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("TU"),
+                        null
+                )
+        );
+
+        mockMvc.perform(post("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("fail"))
+                .andExpect(jsonPath("$.error.code").value(10001));
+    }
+
+    @Test
     @DisplayName("v1 MONTH Task 조회는 YYYY-MM을 바인딩하고 owner 범위 월간 일정을 반환한다")
     void getTasks_month_success_yearMonthBindingAndOwnerScope() throws Exception {
         String ownerToken = accessToken("task-month-owner@example.com");

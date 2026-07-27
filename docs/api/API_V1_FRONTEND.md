@@ -230,6 +230,9 @@ Task 생성 규칙:
 - `recurrence.timeZone`은 생략하면 `Asia/Seoul`이다.
 - `recurrence.recurrenceUntil`과 `recurrence.recurrenceCount`는 함께 사용할 수 없다.
 - `recurrence.recurrenceRule`을 생략하면 `frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`로 RRULE을 생성한다.
+- `byDays`를 지정한 `WEEKLY` 반복은 `startAt` 날짜의 요일이 `byDays`에 포함되어야 한다.
+- `byMonthDays`를 지정한 `MONTHLY`, `YEARLY` 반복은 `startAt` 날짜가 `byMonthDays`에 포함되어야 한다. 월말은 `-1`이다.
+- `BYDAY`는 `WEEKLY`, `BYMONTHDAY`는 `MONTHLY` 또는 `YEARLY`에서만 지원한다.
 
 Task 응답 nullable/default 규칙:
 
