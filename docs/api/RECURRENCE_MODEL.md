@@ -63,6 +63,7 @@ Last updated: 2026-07-23
 - `recurrence.interval`은 생략하면 `1`이다.
 - `recurrence.recurrenceRule`을 직접 보내거나, `frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`로 RRULE을 생성할 수 있다.
 - 반복 수정/삭제 API는 기존 `PUT /api/v1/tasks/{id}`, `DELETE /api/v1/tasks/{id}`의 `recurrenceScope` query parameter를 사용한다.
+- 기존 series의 반복 규칙 자체를 바꾸는 API는 아직 제공하지 않는다. `PUT /api/v1/tasks/{id}`에 `recurrence`를 보내면 HTTP 400이다.
 - Today/Calendar owner 조회는 연결된 반복 series와 template Task를 기준으로 조회 범위의 누락 occurrence Task를 materialize한다.
 - materialize는 `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`와 검증된 `BYDAY`, `BYMONTHDAY`, `COUNT`, `UNTIL` 범위를 사용한다.
 - 현재 materialize 기준 template은 같은 series에 연결된 가장 이른 non-exception Task다.

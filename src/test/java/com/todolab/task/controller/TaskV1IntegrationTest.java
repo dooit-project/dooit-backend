@@ -734,6 +734,58 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Task 수정은 반복 규칙 자체 변경을 거부한다")
+    void recurrenceRuleUpdate_fail_notSupported() throws Exception {
+        String accessToken = accessToken("task-recurrence-rule-update@example.com");
+        Long taskId = createTask(accessToken, new TaskRequest(
+                "규칙 수정 대상",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 7, 9, 0),
+                LocalDateTime.of(2026, 7, 7, 10, 0),
+                null,
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("TU"),
+                        null
+                )
+        ));
+        TaskRequest updateRequest = new TaskRequest(
+                "규칙 수정 요청",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 7, 11, 0),
+                LocalDateTime.of(2026, 7, 7, 12, 0),
+                null,
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("WE"),
+                        null
+                )
+        );
+
+        mockMvc.perform(put("/api/v1/tasks/{id}", taskId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("fail"))
+                .andExpect(jsonPath("$.error.code").value(10001));
+    }
+
+    @Test
     @DisplayName("v1 반복 Task 전체 수정은 기존 완료 occurrence의 완료 기록을 보존한다")
     void recurrenceScope_updateAll_preservesCompletedOccurrence() throws Exception {
         String accessToken = accessToken("task-recurrence-preserve-done@example.com");

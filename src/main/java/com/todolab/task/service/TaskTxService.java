@@ -38,6 +38,7 @@ public class TaskTxService {
 
     @Transactional
     public Task updateTx(Long id, TaskRequest req) {
+        validateNoRecurrenceRuleUpdate(req);
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
@@ -52,6 +53,7 @@ public class TaskTxService {
 
     @Transactional
     public Task updateTxForOwner(Long id, TaskRequest req, User owner, RecurrenceEditScope recurrenceScope) {
+        validateNoRecurrenceRuleUpdate(req);
         Task task = findTaskForOwner(id, owner);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
@@ -437,6 +439,12 @@ public class TaskTxService {
                 .toList();
         if (!new LinkedHashSet<>(currentIds).equals(new LinkedHashSet<>(orderedTaskIds))) {
             throw new TaskOrderConflictException("요청한 Today Task 목록이 현재 재정렬 대상과 일치하지 않습니다.");
+        }
+    }
+
+    private void validateNoRecurrenceRuleUpdate(TaskRequest req) {
+        if (req.recurrence() != null) {
+            throw new TaskValidationException("반복 규칙 수정은 아직 지원하지 않습니다.");
         }
     }
 }

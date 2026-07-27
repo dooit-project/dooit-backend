@@ -379,6 +379,7 @@ Response: `TaskResponse`
 
 반복 Task 수정 범위:
 
+- `recurrence`는 생성 전용 필드다. 기존 Task의 반복 규칙 자체를 바꾸는 요청은 현재 HTTP 400이다.
 - `recurrenceScope`를 생략하면 `THIS`다.
 - 반복 Task가 아니면 `recurrenceScope`는 무시된다.
 - `THIS`는 해당 occurrence row만 수정하고 `recurrenceException=MODIFIED`로 표시한다.
