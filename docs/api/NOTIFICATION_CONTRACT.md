@@ -98,6 +98,21 @@ DELETE /api/v1/push-tokens/{id}
 - 기본값은 `enabled=false`, `provider=EXPO`, `endpoint=https://exp.host/--/api/v2/push/send`다.
 - provider 설정은 발송 준비 계약이며, `enabled=true`만으로 발송 스케줄러가 동작하지는 않는다.
 
+## 서버 Push 발송 스케줄러 설계
+
+서버 push 발송은 아래 단계로 구현한다.
+
+- scheduler는 `app.notification.push.enabled=true`일 때만 동작한다.
+- scheduler는 1분 주기로 실행한다.
+- 발송 후보 window는 현재 시각부터 10분 뒤까지다.
+- 후보 산출은 `GET /api/v1/tasks/notification-candidates`와 같은 기준을 사용한다.
+- 서버 push는 활성 push token이 있는 사용자만 대상으로 한다.
+- idempotency key는 `SERVER:{task.id}` 또는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
+- 같은 idempotency key의 성공 이력이 있으면 다시 발송하지 않는다.
+- 발송 결과는 성공/실패 모두 전송 이력으로 저장한다.
+- 실패한 token이 provider에서 영구 invalid로 판정되면 해당 push token을 비활성화한다.
+- 외부 provider 호출은 짧은 timeout과 제한된 retry만 허용한다.
+
 ## 아직 제공하지 않는 API
 
 - 서버 push 발송 API

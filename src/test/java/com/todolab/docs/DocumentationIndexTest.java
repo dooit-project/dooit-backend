@@ -75,6 +75,8 @@ class DocumentationIndexTest {
 
         assertThat(notification).contains("1차 provider는 `EXPO`");
         assertThat(notification).contains("TODOLAB_PUSH_ENABLED");
+        assertThat(notification).contains("서버 Push 발송 스케줄러 설계");
+        assertThat(notification).contains("idempotency key는 `SERVER:{task.id}`");
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
     }
 
