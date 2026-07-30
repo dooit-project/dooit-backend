@@ -163,7 +163,9 @@ Response: `UserResponse`
 주의:
 
 - `timeZone`은 `Asia/Seoul`, `America/New_York` 같은 유효한 IANA Zone ID여야 한다.
-- 저장된 사용자 timezone은 프로필 설정값이다. Today/Calendar/반복 occurrence 날짜 경계는 별도 계약 변경 전까지 기존처럼 `Asia/Seoul` 기준이다.
+- 저장된 사용자 timezone은 Today/Calendar/알림 후보 조회의 일정 overlap 날짜 경계에 적용된다.
+- `targetDate`, D-Day 날짜처럼 날짜만 저장되는 필드는 요청 날짜 값 자체로 비교한다.
+- timezone 변경 시 기존 반복 occurrence를 재계산하지는 않는다.
 
 ## 3. Task 타입
 
@@ -369,7 +371,7 @@ Response: `TaskResponse[]`
 현재 동작:
 
 - `targetDate`가 요청 날짜인 `TODAY` Task를 반환한다.
-- 요청 날짜와 겹치는 `SCHEDULE`도 반환한다.
+- 요청 날짜의 사용자 timezone 경계와 겹치는 `SCHEDULE`도 반환한다.
 - 여러 날 일정은 날짜별 복제 row가 아니라 원본 `id`로 한 번 반환한다.
 - `endAt`은 exclusive 경계로 처리한다. 예: `endAt=2026-07-14T00:00:00`이면 7월 14일에는 점유하지 않는다.
 
@@ -416,7 +418,7 @@ Response: `TaskNotificationCandidateResponse[]`
 
 - `from`, `to`는 필수이며 양끝 날짜를 포함한다.
 - 조회 범위는 최대 31일이다.
-- 범위 안의 반복 occurrence는 백엔드가 materialize한 뒤 반환한다.
+- 사용자 timezone 기준 범위 안의 반복 occurrence는 백엔드가 materialize한 뒤 반환한다.
 - `status=TODAY`, `startAt != null`, `completedAt == null`, `recurrenceException != SKIPPED`인 Task만 반환한다.
 - `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
 - 실제 알림 예약/취소는 모바일 로컬 알림 책임이다.

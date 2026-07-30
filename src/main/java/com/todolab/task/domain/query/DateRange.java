@@ -1,10 +1,13 @@
 package com.todolab.task.domain.query;
 
+import com.todolab.Constant;
 import lombok.Getter;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 
@@ -17,6 +20,13 @@ public class DateRange {
     private DateRange(LocalDateTime start, LocalDateTime end) {
         this.start = start;
         this.end = end;
+    }
+
+    public static DateRange of(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null || !start.isBefore(end)) {
+            throw new IllegalArgumentException("DateRange는 start < end 이어야 합니다.");
+        }
+        return new DateRange(start, end);
     }
 
     public static DateRange ofDay(String date) {
@@ -39,5 +49,28 @@ public class DateRange {
         LocalDateTime start = ym.atDay(1).atStartOfDay();                           // 1일 00:00
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();   // 다음달 1일 00:00 (Exclusive)
         return new DateRange(start, end);
+    }
+
+    public DateRange toServiceZone(ZoneId sourceZone) {
+        if (sourceZone == null || Constant.ZONE.equals(sourceZone)) {
+            return this;
+        }
+        LocalDateTime serviceStart = start.atZone(sourceZone)
+                .withZoneSameInstant(Constant.ZONE)
+                .toLocalDateTime();
+        LocalDateTime serviceEnd = end.atZone(sourceZone)
+                .withZoneSameInstant(Constant.ZONE)
+                .toLocalDateTime();
+        return new DateRange(serviceStart, serviceEnd);
+    }
+
+    public LocalDate materializeFromInclusive() {
+        return start.toLocalDate();
+    }
+
+    public LocalDate materializeToExclusive() {
+        return end.toLocalTime().equals(LocalTime.MIDNIGHT)
+                ? end.toLocalDate()
+                : end.toLocalDate().plusDays(1);
     }
 }

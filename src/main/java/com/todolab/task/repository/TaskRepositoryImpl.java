@@ -139,9 +139,17 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
 
     @Override
     public List<Task> findTodayTasks(Long ownerId, LocalDate targetDate) {
+        return findTodayTasks(
+                ownerId,
+                targetDate,
+                targetDate.atStartOfDay(),
+                targetDate.plusDays(1).atStartOfDay()
+        );
+    }
+
+    @Override
+    public List<Task> findTodayTasks(Long ownerId, LocalDate targetDate, LocalDateTime scheduleStart, LocalDateTime scheduleEnd) {
         QTask t = QTask.task;
-        LocalDateTime start = targetDate.atStartOfDay();
-        LocalDateTime end = targetDate.plusDays(1).atStartOfDay();
 
         return queryFactory
                 .selectFrom(t)
@@ -152,7 +160,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                         t.targetDate.eq(targetDate)
                                 .or(t.type.eq(TaskType.SCHEDULE)
                                         .and(t.startAt.isNotNull())
-                                        .and(overlapsRange(t, start, end)))
+                                        .and(overlapsRange(t, scheduleStart, scheduleEnd)))
                 )
                 .orderBy(
                         executableTaskFirst(t).asc(),
@@ -161,6 +169,23 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                         t.createdAt.asc(),
                         t.id.asc()
                 )
+                .fetch();
+    }
+
+    @Override
+    public List<Task> findNotificationCandidateTasks(Long ownerId, LocalDateTime start, LocalDateTime end) {
+        QTask t = QTask.task;
+
+        return queryFactory
+                .selectFrom(t)
+                .leftJoin(t.ddayGoal).fetchJoin()
+                .where(
+                        ownerIdEq(t, ownerId),
+                        t.status.eq(TaskStatus.TODAY),
+                        t.startAt.isNotNull(),
+                        overlapsRange(t, start, end)
+                )
+                .orderBy(t.startAt.asc(), t.id.asc())
                 .fetch();
     }
 

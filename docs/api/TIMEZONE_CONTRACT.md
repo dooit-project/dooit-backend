@@ -16,15 +16,15 @@ Last updated: 2026-07-26
 ## 현재 백엔드 책임
 
 - 오늘 날짜, 기본 완료 시각, D-Day 남은 일수, 응답 timestamp는 `Constant.ZONE` 기준으로 계산한다.
-- Today, Calendar, 반복 occurrence 조회는 `Asia/Seoul` 기준 날짜 경계로 계산한다.
+- Today, Calendar, 알림 후보 조회의 일정 overlap 경계는 저장된 사용자 timezone 기준 날짜를 서비스 기준 `Asia/Seoul` `LocalDateTime` 범위로 변환해 계산한다.
 - 모바일은 서버 응답의 날짜/시간 값을 임의 timezone으로 재해석하지 않는다.
-- `PATCH /api/v1/users/me/time-zone`은 사용자 timezone 설정값만 저장한다. 저장 직후 Today/Calendar 계산 기준을 바꾸지는 않는다.
+- 날짜만 저장되는 `targetDate`, D-Day 날짜는 요청 날짜 값 자체로 비교한다.
+- `PATCH /api/v1/users/me/time-zone`은 사용자 timezone 설정값을 저장한다.
 
 ## 사용자 Timezone 도입 조건
 
-사용자 timezone 저장은 제공하지만, 사용자별 날짜 경계 계산은 아직 도입하지 않았다. 사용자별 계산을 도입하려면 아래 변경을 하나의 계약 변경으로 처리한다.
+사용자 timezone별 조회 경계는 제공하지만, timezone 변경에 따른 기존 반복 occurrence 재계산은 아직 도입하지 않았다. 재계산을 도입하려면 아래 변경을 하나의 계약 변경으로 처리한다.
 
-- Today/Calendar 조회 기준 날짜를 사용자 timezone으로 계산
 - 반복 series의 `recurrenceTimeZone`과 사용자 timezone 변경 정책 분리
 - 기존 offset 없는 `LocalDateTime` 응답의 호환성 정책 확정
 - 모바일 앱 버전별 마이그레이션 계획 확정
@@ -38,6 +38,5 @@ Last updated: 2026-07-26
 
 ## 아직 제공하지 않는 기능
 
-- 사용자 timezone별 Today/Calendar 조회
 - timezone 변경 migration API
 - offset 또는 timezone 포함 `ZonedDateTime` 응답

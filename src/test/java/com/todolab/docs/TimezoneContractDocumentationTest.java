@@ -20,6 +20,7 @@ class TimezoneContractDocumentationTest {
         assertThat(content).contains("offset 없는 `LocalDateTime`");
         assertThat(content).contains("사용자 profile에는 IANA timezone ID를 저장할 수 있으며 기본값은 `Asia/Seoul`이다.");
         assertThat(content).contains("PATCH /api/v1/users/me/time-zone");
-        assertThat(content).contains("사용자별 날짜 경계 계산은 아직 도입하지 않았다.");
+        assertThat(content).contains("Today, Calendar, 알림 후보 조회의 일정 overlap 경계");
+        assertThat(content).contains("timezone 변경에 따른 기존 반복 occurrence 재계산은 아직 도입하지 않았다.");
     }
 }

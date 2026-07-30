@@ -1290,20 +1290,113 @@ class TaskServiceTest {
     void getTodayTasksForOwner_success_ownerScoped() {
         User owner = persistedOwner(1L);
         LocalDate date = LocalDate.of(2026, 7, 13);
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime nextDayStart = date.plusDays(1).atStartOfDay();
         Task task = Task.builder()
                 .title("today")
                 .status(TaskStatus.TODAY)
                 .targetDate(date)
                 .owner(owner)
                 .build();
-        given(taskRepository.findTodayTasks(1L, date)).willReturn(List.of(task));
+        given(taskRepository.findTodayTasks(1L, date, dayStart, nextDayStart)).willReturn(List.of(task));
 
         List<TaskResponse> result = taskService.getTodayTasksForOwner(date, owner);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().title()).isEqualTo("today");
-        then(taskRepository).should().findTodayTasks(1L, date);
+        then(taskRepository).should().findTodayTasks(1L, date, dayStart, nextDayStart);
         then(taskTxService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("인증 사용자용 Calendar 조회는 사용자 timezone 날짜 경계를 서비스 기준으로 변환한다")
+    void getTasksForOwner_success_userTimeZoneRange() {
+        User owner = persistedOwner(1L);
+        owner.updateTimeZone("America/New_York");
+        TaskQueryRequest request = TaskQueryRequest.builder()
+                .rawType("DAY")
+                .rawTaskType("SCHEDULE")
+                .rawDate("2026-07-13")
+                .build();
+        LocalDateTime serviceStart = LocalDateTime.of(2026, 7, 13, 13, 0);
+        LocalDateTime serviceEnd = LocalDateTime.of(2026, 7, 14, 13, 0);
+        Task task = Task.builder()
+                .title("ny-day")
+                .type(TaskType.SCHEDULE)
+                .startAt(serviceStart.plusHours(1))
+                .owner(owner)
+                .build();
+        given(taskRepository.findByDateRangeAndType(1L, serviceStart, serviceEnd, TaskType.SCHEDULE))
+                .willReturn(List.of(task));
+
+        List<TaskResponse> result = taskService.getTasksForOwner(request, owner);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().title()).isEqualTo("ny-day");
+        then(recurrenceOccurrenceMaterializer).should().materializeForOwner(
+                1L,
+                LocalDate.of(2026, 7, 13),
+                LocalDate.of(2026, 7, 15)
+        );
+        then(taskRepository).should().findByDateRangeAndType(1L, serviceStart, serviceEnd, TaskType.SCHEDULE);
+    }
+
+    @Test
+    @DisplayName("인증 사용자용 Today 조회는 일정 overlap 범위에 사용자 timezone 날짜 경계를 적용한다")
+    void getTodayTasksForOwner_success_userTimeZoneScheduleRange() {
+        User owner = persistedOwner(1L);
+        owner.updateTimeZone("America/New_York");
+        LocalDate date = LocalDate.of(2026, 7, 13);
+        LocalDateTime serviceStart = LocalDateTime.of(2026, 7, 13, 13, 0);
+        LocalDateTime serviceEnd = LocalDateTime.of(2026, 7, 14, 13, 0);
+        Task task = Task.builder()
+                .title("ny-today")
+                .status(TaskStatus.TODAY)
+                .targetDate(date)
+                .owner(owner)
+                .build();
+        given(taskRepository.findTodayTasks(1L, date, serviceStart, serviceEnd)).willReturn(List.of(task));
+
+        List<TaskResponse> result = taskService.getTodayTasksForOwner(date, owner);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().title()).isEqualTo("ny-today");
+        then(recurrenceOccurrenceMaterializer).should().materializeForOwner(
+                1L,
+                LocalDate.of(2026, 7, 13),
+                LocalDate.of(2026, 7, 15)
+        );
+        then(taskRepository).should().findTodayTasks(1L, date, serviceStart, serviceEnd);
+    }
+
+    @Test
+    @DisplayName("인증 사용자용 알림 후보 조회는 사용자 timezone 날짜 경계를 적용한다")
+    void getNotificationCandidatesForOwner_success_userTimeZoneRange() {
+        User owner = persistedOwner(1L);
+        owner.updateTimeZone("America/New_York");
+        LocalDate from = LocalDate.of(2026, 7, 13);
+        LocalDate to = LocalDate.of(2026, 7, 14);
+        LocalDateTime serviceStart = LocalDateTime.of(2026, 7, 13, 13, 0);
+        LocalDateTime serviceEnd = LocalDateTime.of(2026, 7, 15, 13, 0);
+        Task task = Task.builder()
+                .title("ny-notification")
+                .status(TaskStatus.TODAY)
+                .startAt(serviceStart.plusHours(1))
+                .targetDate(from)
+                .owner(owner)
+                .build();
+        given(taskRepository.findNotificationCandidateTasks(1L, serviceStart, serviceEnd)).willReturn(List.of(task));
+
+        var result = taskService.getNotificationCandidatesForOwner(from, to, owner);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().task().title()).isEqualTo("ny-notification");
+        then(recurrenceOccurrenceMaterializer).should().materializeForOwner(
+                1L,
+                LocalDate.of(2026, 7, 13),
+                LocalDate.of(2026, 7, 16)
+        );
+        then(taskRepository).should().findNotificationCandidateTasks(1L, serviceStart, serviceEnd);
     }
 
     private User persistedOwner(Long id) {

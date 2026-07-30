@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -90,5 +91,18 @@ class DateRangeTest {
 
         assertThat(range.getStart()).isEqualTo(LocalDateTime.of(2025, 12, 1, 0, 0));
         assertThat(range.getEnd()).isEqualTo(LocalDateTime.of(2026, 1, 1, 0, 0));
+    }
+
+    @Test
+    @DisplayName("사용자 timezone 날짜 경계를 서비스 timezone LocalDateTime 범위로 변환한다")
+    void toServiceZone_success() {
+        DateRange range = DateRange.ofDay("2026-07-13");
+
+        DateRange serviceRange = range.toServiceZone(ZoneId.of("America/New_York"));
+
+        assertThat(serviceRange.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 13, 13, 0));
+        assertThat(serviceRange.getEnd()).isEqualTo(LocalDateTime.of(2026, 7, 14, 13, 0));
+        assertThat(serviceRange.materializeFromInclusive()).isEqualTo(java.time.LocalDate.of(2026, 7, 13));
+        assertThat(serviceRange.materializeToExclusive()).isEqualTo(java.time.LocalDate.of(2026, 7, 15));
     }
 }

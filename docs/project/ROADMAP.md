@@ -180,11 +180,11 @@ Last updated: 2026-07-30
 
 - [x] User profile timezone 저장
 - [x] `PATCH /api/v1/users/me/time-zone`
-- [ ] 사용자 timezone 기준 Today 조회
-- [ ] 사용자 timezone 기준 Calendar 조회
-- [ ] 사용자 timezone 기준 알림 후보 조회
+- [x] 사용자 timezone 기준 Today 조회
+- [x] 사용자 timezone 기준 Calendar 조회
+- [x] 사용자 timezone 기준 알림 후보 조회
 - [ ] 사용자 timezone 변경 시 기존 반복 occurrence 재계산/보존 정책 확정
-- [ ] timezone별 날짜 경계 회귀 테스트
+- [x] timezone별 날짜 경계 회귀 테스트
 
 착수 조건:
 

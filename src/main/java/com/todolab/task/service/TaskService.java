@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
@@ -110,7 +111,7 @@ public class TaskService {
     }
 
     public List<TaskResponse> getTasksForOwner(TaskQueryRequest request, User owner) {
-        return findTasks(request, ownerId(owner));
+        return findTasks(request, ownerId(owner), owner);
     }
 
     public List<TaskCategoryGroupResponse> getGroupedTasks(TaskQueryRequest request) {
@@ -228,8 +229,14 @@ public class TaskService {
     ) {
         validateNotificationCandidateRange(fromInclusive, toInclusive);
         Long ownerId = ownerId(owner);
-        recurrenceOccurrenceMaterializer.materializeForOwner(ownerId, fromInclusive, toInclusive.plusDays(1));
-        return taskRepository.findPlannedTasks(ownerId, fromInclusive, toInclusive.plusDays(1)).stream()
+        DateRange serviceRange = DateRange.of(fromInclusive.atStartOfDay(), toInclusive.plusDays(1).atStartOfDay())
+                .toServiceZone(ZoneId.of(owner.getTimeZone()));
+        recurrenceOccurrenceMaterializer.materializeForOwner(
+                ownerId,
+                serviceRange.materializeFromInclusive(),
+                serviceRange.materializeToExclusive()
+        );
+        return taskRepository.findNotificationCandidateTasks(ownerId, serviceRange.getStart(), serviceRange.getEnd()).stream()
                 .filter(task -> task.getStartAt() != null)
                 .filter(task -> task.getCompletedAt() == null)
                 .filter(task -> task.getRecurrenceException() != com.todolab.task.domain.RecurrenceExceptionType.SKIPPED)
@@ -246,8 +253,13 @@ public class TaskService {
 
     public List<TaskResponse> getTodayTasksForOwner(LocalDate targetDate, User owner) {
         Long ownerId = ownerId(owner);
-        recurrenceOccurrenceMaterializer.materializeForOwner(ownerId, targetDate, targetDate.plusDays(1));
-        return taskRepository.findTodayTasks(ownerId, targetDate).stream()
+        DateRange serviceRange = DateRange.ofDay(targetDate.toString()).toServiceZone(ZoneId.of(owner.getTimeZone()));
+        recurrenceOccurrenceMaterializer.materializeForOwner(
+                ownerId,
+                serviceRange.materializeFromInclusive(),
+                serviceRange.materializeToExclusive()
+        );
+        return taskRepository.findTodayTasks(ownerId, targetDate, serviceRange.getStart(), serviceRange.getEnd()).stream()
                 .map(TaskResponse::from)
                 .toList();
     }
@@ -447,17 +459,26 @@ public class TaskService {
     }
 
     private List<TaskResponse> findTasks(TaskQueryRequest request, Long ownerId) {
+        return findTasks(request, ownerId, null);
+    }
+
+    private List<TaskResponse> findTasks(TaskQueryRequest request, Long ownerId, User owner) {
         final TaskQueryType type = request.getType();
         final String strDate = request.getDate();
 
         DateRange range = type.calculate(strDate);
+        DateRange serviceRange = owner == null ? range : range.toServiceZone(ZoneId.of(owner.getTimeZone()));
         if (ownerId != null) {
-            recurrenceOccurrenceMaterializer.materializeForOwner(ownerId, range.getStart().toLocalDate(), range.getEnd().toLocalDate());
+            recurrenceOccurrenceMaterializer.materializeForOwner(
+                    ownerId,
+                    serviceRange.materializeFromInclusive(),
+                    serviceRange.materializeToExclusive()
+            );
         }
 
         List<Task> tasks = ownerId == null
                 ? taskRepository.findByDateRangeAndType(range.getStart(), range.getEnd(), request.getTaskType())
-                : taskRepository.findByDateRangeAndType(ownerId, range.getStart(), range.getEnd(), request.getTaskType());
+                : taskRepository.findByDateRangeAndType(ownerId, serviceRange.getStart(), serviceRange.getEnd(), request.getTaskType());
 
         return tasks
                 .stream()

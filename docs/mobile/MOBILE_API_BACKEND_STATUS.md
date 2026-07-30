@@ -176,12 +176,13 @@ Last audited: 2026-07-25
 | `LocalDateTime`은 offset 없는 `YYYY-MM-DDTHH:mm:ss` | [x] | Java `LocalDateTime` 사용 |
 | 모바일이 서울 기준으로 해석 가능 | [x] | 현재 날짜/시간 계산은 `Constant.ZONE` 기준으로 통일 |
 | 사용자 time zone 저장 API | [x] | `PATCH /api/v1/users/me/time-zone`으로 IANA timezone 설정값 저장 |
-| 사용자 time zone별 날짜 경계 계산 | [ ] | `docs/api/TIMEZONE_CONTRACT.md` 기준으로 별도 계약 변경 필요 |
+| 사용자 time zone별 날짜 경계 계산 | [x] | Today/Calendar/알림 후보 일정 overlap 조회에 사용자 timezone 경계 적용 |
 
 필요 작업:
 
 - [x] `LocalDate.now()` 직접 사용 지점은 `Constant.ZONE_ID` 기준 clock으로 정리
 - [x] 사용자 time zone 도입 전까지 API 문서에 “서버/서비스 기준은 Asia/Seoul” 명시 유지
+- [ ] timezone 변경 시 기존 반복 occurrence 재계산/보존 정책 확정
 
 ## 8. 기존 백엔드 이슈와 운영 확인
 
