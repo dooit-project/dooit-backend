@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-25
 
-이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API를 제공하며, 서버 push API는 제공하지 않는다.
+이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API와 서버 push token 등록 API를 제공하며, 서버 push 발송 API는 제공하지 않는다.
 
 ## 책임 분리
 
@@ -14,6 +14,7 @@ Last updated: 2026-07-25
 - 반복 예외는 `recurrenceException`으로 표현한다.
 - 모바일이 동기화할 수 있도록 Task 응답에 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`, `recurrenceException`, `status`, `completedAt`, `startAt`, `endAt`, `targetDate`를 내려준다.
 - `GET /api/v1/tasks/notification-candidates`로 지정 범위의 로컬 알림 예약 후보를 내려준다.
+- `POST /api/v1/push-tokens`, `DELETE /api/v1/push-tokens/{id}`로 서버 push token 등록/해제 상태를 저장한다.
 
 ### 모바일 책임
 
@@ -62,9 +63,23 @@ GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
 
 ## 서버 Push 도입 전 정책
 
-- 서버 push가 도입되기 전까지 백엔드는 알림 발송 책임을 갖지 않는다.
+- 서버 push 발송 API가 도입되기 전까지 백엔드는 알림 발송 책임을 갖지 않는다.
 - 모바일 로컬 알림은 best-effort UX로 취급한다.
 - 백엔드는 Task/occurrence 상태를 원본 데이터로 제공하고, 모바일은 동기화 결과를 기준으로 로컬 예약을 재구성한다.
+- 서버 push token 등록/해제는 가능하지만, 등록된 token으로 알림을 발송하지는 않는다.
+
+## 서버 Push Token API
+
+```http
+POST /api/v1/push-tokens
+GET /api/v1/push-tokens
+DELETE /api/v1/push-tokens/{id}
+```
+
+- `platform`은 `IOS`, `ANDROID`, `EXPO` 중 하나다.
+- 같은 사용자와 `deviceToken` 조합을 다시 등록하면 기존 row를 갱신하고 활성화한다.
+- 응답은 실제 token 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
+- `DELETE`는 물리 삭제가 아니라 비활성화다.
 
 ## 서버 Push 도입 후 중복 방지
 
@@ -77,5 +92,5 @@ GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
 
 ## 아직 제공하지 않는 API
 
-- 서버 push 등록/해제 API
+- 서버 push 발송 API
 - 알림 전송 이력 API

@@ -138,6 +138,9 @@ Last audited: 2026-07-25
 - [x] time zone 변경 시 과거/미래 occurrence 재계산 방식
 - [x] 향후 서버 push 알림과 로컬 알림 중복 방지 방식
 - [x] `GET /api/v1/tasks/notification-candidates`
+- [x] `POST /api/v1/push-tokens`
+- [x] `GET /api/v1/push-tokens`
+- [x] `DELETE /api/v1/push-tokens/{id}`
 
 세부 계약은 `docs/api/NOTIFICATION_CONTRACT.md`에서 관리한다.
 

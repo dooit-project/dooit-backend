@@ -224,6 +224,27 @@ type TaskNotificationCandidateResponse = {
   occurrenceDate: string | null;
   task: TaskResponse;
 };
+
+type PushPlatform = 'IOS' | 'ANDROID' | 'EXPO';
+
+type PushDeviceTokenRequest = {
+  platform: PushPlatform;
+  deviceToken: string; // 512자 이하
+  appVersion?: string | null; // 50자 이하
+  deviceName?: string | null; // 100자 이하
+};
+
+type PushDeviceTokenResponse = {
+  id: number;
+  platform: PushPlatform;
+  tokenSuffix: string;
+  appVersion: string | null;
+  deviceName: string | null;
+  active: boolean;
+  lastRegisteredAt: string;
+  createdAt: string;
+  updatedAt: string | null;
+};
 ```
 
 Task 생성 규칙:
@@ -375,6 +396,29 @@ Response: `TaskNotificationCandidateResponse[]`
 - `status=TODAY`, `startAt != null`, `completedAt == null`, `recurrenceException != SKIPPED`인 Task만 반환한다.
 - `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
 - 실제 알림 예약/취소는 모바일 로컬 알림 책임이다.
+
+### Push Token 등록/조회/해제
+
+```http
+POST /api/v1/push-tokens
+GET /api/v1/push-tokens
+DELETE /api/v1/push-tokens/{id}
+```
+
+Request: `PushDeviceTokenRequest`
+
+Response:
+
+- `POST`: `PushDeviceTokenResponse`
+- `GET`: `PushDeviceTokenResponse[]`
+- `DELETE`: `data: null`
+
+규칙:
+
+- 같은 사용자와 `deviceToken` 조합을 다시 등록하면 기존 row를 갱신하고 활성화한다.
+- 응답은 실제 `deviceToken` 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
+- `DELETE`는 물리 삭제가 아니라 비활성화다.
+- 이 API는 서버 push 발송을 수행하지 않는다. 발송, 전송 이력, 실패 토큰 정리는 별도 계약이다.
 
 ### 지난 미완료
 
@@ -682,7 +726,8 @@ Cursor 기준:
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
 - refresh token API
-- 서버 push 알림 API
+- 서버 push 알림 발송 API
+- 알림 전송 이력 API
 
 ## 8. 모바일 전환 체크리스트
 
