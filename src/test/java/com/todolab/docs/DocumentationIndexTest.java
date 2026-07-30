@@ -80,6 +80,8 @@ class DocumentationIndexTest {
         assertThat(notification).contains("전송 실패 Token 비활성화 정책");
         assertThat(notification).contains("DeviceNotRegistered");
         assertThat(notification).contains("suppressLocalNotification=true");
+        assertThat(notification).contains("GET /api/v1/push-notification-histories");
+        assertThat(notification).contains("PUSH_NOTIFICATION_HISTORY");
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
     }
 

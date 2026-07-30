@@ -82,6 +82,19 @@ DELETE /api/v1/push-tokens/{id}
 - 응답은 실제 token 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
 - `DELETE`는 물리 삭제가 아니라 비활성화다.
 
+## 서버 Push 전송 이력 API
+
+```http
+GET /api/v1/push-notification-histories?limit=50
+```
+
+- 백엔드는 서버 push 전송 시도 결과를 `PUSH_NOTIFICATION_HISTORY`에 저장한다.
+- 이력은 로그인 사용자 본인 범위로만 조회한다.
+- `limit`은 1 이상 100 이하이며 기본값은 50이다.
+- 응답은 `SUCCESS`와 `FAILED`를 모두 포함한다.
+- 실제 device token 전체는 반환하지 않고 `tokenSuffix`만 반환한다.
+- `idempotencyKey`는 성공 이력 중복 방지 기준으로 사용한다.
+
 ## 서버 Push 도입 후 중복 방지
 
 향후 서버 push를 도입할 때는 아래 정책을 먼저 구현한다.
@@ -111,7 +124,7 @@ DELETE /api/v1/push-tokens/{id}
 - 서버 push는 활성 push token이 있는 사용자만 대상으로 한다.
 - idempotency key는 `SERVER:{task.id}` 또는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
 - 같은 idempotency key의 성공 이력이 있으면 다시 발송하지 않는다.
-- 발송 결과는 성공/실패 모두 전송 이력으로 저장한다.
+- 발송 결과는 성공/실패 모두 `PUSH_NOTIFICATION_HISTORY` 전송 이력으로 저장한다.
 - 실패한 token이 provider에서 영구 invalid로 판정되면 해당 push token을 비활성화한다.
 - 외부 provider 호출은 짧은 timeout과 제한된 retry만 허용한다.
 
@@ -129,4 +142,3 @@ Expo provider 기준 실패 처리는 아래처럼 구분한다.
 ## 아직 제공하지 않는 API
 
 - 서버 push 발송 API
-- 알림 전송 이력 API

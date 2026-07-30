@@ -272,6 +272,28 @@ type PushDeviceTokenResponse = {
   createdAt: string;
   updatedAt: string | null;
 };
+
+type PushNotificationSource = 'SERVER';
+type PushNotificationStatus = 'SUCCESS' | 'FAILED';
+
+type PushNotificationHistoryResponse = {
+  id: number;
+  source: PushNotificationSource;
+  provider: 'EXPO';
+  status: PushNotificationStatus;
+  pushDeviceTokenId: number | null;
+  tokenSuffix: string | null;
+  taskId: number | null;
+  recurrenceSeriesId: number | null;
+  occurrenceDate: string | null;
+  notificationKey: string;
+  idempotencyKey: string;
+  providerMessageId: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  attemptedAt: string;
+  createdAt: string;
+};
 ```
 
 Task 생성 규칙:
@@ -446,7 +468,22 @@ Response:
 - 같은 사용자와 `deviceToken` 조합을 다시 등록하면 기존 row를 갱신하고 활성화한다.
 - 응답은 실제 `deviceToken` 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
 - `DELETE`는 물리 삭제가 아니라 비활성화다.
-- 이 API는 서버 push 발송을 수행하지 않는다. 발송, 전송 이력, 실패 토큰 정리는 별도 계약이다.
+- 이 API는 서버 push 발송을 수행하지 않는다. 발송과 실패 토큰 정리는 별도 계약이다.
+
+### Push 알림 전송 이력 조회
+
+```http
+GET /api/v1/push-notification-histories?limit=50
+```
+
+Response: `PushNotificationHistoryResponse[]`
+
+규칙:
+
+- `limit`은 선택이며 1 이상 100 이하이다. 기본값은 50이다.
+- 로그인 사용자 본인의 서버 push 전송 이력만 최신순으로 반환한다.
+- 응답은 실제 `deviceToken` 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
+- `idempotencyKey`는 서버 push 중복 발송 방지 기준이며, 단건 Task는 `SERVER:{taskId}`, 반복 occurrence는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` 형식을 사용한다.
 
 ### 지난 미완료
 

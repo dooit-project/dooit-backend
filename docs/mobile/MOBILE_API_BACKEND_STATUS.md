@@ -142,6 +142,7 @@ Last audited: 2026-07-25
 - [x] `POST /api/v1/push-tokens`
 - [x] `GET /api/v1/push-tokens`
 - [x] `DELETE /api/v1/push-tokens/{id}`
+- [x] `GET /api/v1/push-notification-histories`
 
 세부 계약은 `docs/api/NOTIFICATION_CONTRACT.md`에서 관리한다.
 
