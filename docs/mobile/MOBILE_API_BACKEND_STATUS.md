@@ -137,6 +137,7 @@ Last audited: 2026-07-25
 - [x] `SKIPPED`, `MOVED`, `MODIFIED` 예외 처리
 - [x] time zone 변경 시 과거/미래 occurrence 재계산 방식
 - [x] 향후 서버 push 알림과 로컬 알림 중복 방지 방식
+- [x] 서버 push 활성화 시 로컬 알림 억제 플래그
 - [x] `GET /api/v1/tasks/notification-candidates`
 - [x] `POST /api/v1/push-tokens`
 - [x] `GET /api/v1/push-tokens`

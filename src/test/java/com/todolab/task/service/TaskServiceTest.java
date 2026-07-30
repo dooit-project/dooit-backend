@@ -2,6 +2,8 @@ package com.todolab.task.service;
 
 import com.todolab.common.api.ErrorCode;
 import com.todolab.dday.domain.DdayGoal;
+import com.todolab.notification.config.PushNotificationProperties;
+import com.todolab.notification.config.PushNotificationProvider;
 import com.todolab.task.domain.DeferReason;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskStatus;
@@ -69,7 +71,8 @@ class TaskServiceTest {
                 taskRepository,
                 recurrenceSeriesRepository,
                 taskCategoryGrouper,
-                recurrenceOccurrenceMaterializer
+                recurrenceOccurrenceMaterializer,
+                new PushNotificationProperties(false, PushNotificationProvider.EXPO, null)
         );
     }
 
@@ -1391,12 +1394,45 @@ class TaskServiceTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().task().title()).isEqualTo("ny-notification");
+        assertThat(result.getFirst().suppressLocalNotification()).isFalse();
         then(recurrenceOccurrenceMaterializer).should().materializeForOwner(
                 1L,
                 LocalDate.of(2026, 7, 13),
                 LocalDate.of(2026, 7, 16)
         );
         then(taskRepository).should().findNotificationCandidateTasks(1L, serviceStart, serviceEnd);
+    }
+
+    @Test
+    @DisplayName("서버 push가 활성화되면 알림 후보는 로컬 알림 억제 플래그를 반환한다")
+    void getNotificationCandidatesForOwner_success_suppressLocalNotification() {
+        taskService = new TaskService(
+                taskTxService,
+                taskRepository,
+                recurrenceSeriesRepository,
+                taskCategoryGrouper,
+                recurrenceOccurrenceMaterializer,
+                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null)
+        );
+        User owner = persistedOwner(1L);
+        LocalDate date = LocalDate.of(2026, 7, 13);
+        Task task = Task.builder()
+                .title("server-push")
+                .status(TaskStatus.TODAY)
+                .startAt(date.atTime(9, 0))
+                .targetDate(date)
+                .owner(owner)
+                .build();
+        given(taskRepository.findNotificationCandidateTasks(
+                1L,
+                date.atStartOfDay(),
+                date.plusDays(1).atStartOfDay()
+        )).willReturn(List.of(task));
+
+        var result = taskService.getNotificationCandidatesForOwner(date, date, owner);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().suppressLocalNotification()).isTrue();
     }
 
     private User persistedOwner(Long id) {

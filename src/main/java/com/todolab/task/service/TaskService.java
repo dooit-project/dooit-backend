@@ -1,5 +1,6 @@
 package com.todolab.task.service;
 
+import com.todolab.notification.config.PushNotificationProperties;
 import com.todolab.task.domain.DeferReason;
 import com.todolab.task.domain.RecurrenceEditScope;
 import com.todolab.task.domain.RecurrenceSeries;
@@ -47,6 +48,7 @@ public class TaskService {
     private final RecurrenceSeriesRepository recurrenceSeriesRepository;
     private final TaskCategoryGrouper taskCategoryGrouper;
     private final RecurrenceOccurrenceMaterializer recurrenceOccurrenceMaterializer;
+    private final PushNotificationProperties pushNotificationProperties;
 
     @Transactional
     public TaskResponse create(TaskRequest req) {
@@ -241,7 +243,7 @@ public class TaskService {
                 .filter(task -> task.getCompletedAt() == null)
                 .filter(task -> task.getRecurrenceException() != com.todolab.task.domain.RecurrenceExceptionType.SKIPPED)
                 .sorted(Comparator.comparing(Task::getStartAt).thenComparing(Task::getId))
-                .map(TaskNotificationCandidateResponse::from)
+                .map(task -> TaskNotificationCandidateResponse.from(task, pushNotificationProperties.enabled()))
                 .toList();
     }
 

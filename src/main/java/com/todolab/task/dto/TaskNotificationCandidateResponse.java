@@ -18,11 +18,17 @@ public record TaskNotificationCandidateResponse(
         Long recurrenceSeriesId,
         @Schema(description = "반복 occurrence 날짜. 반복 Task가 아니면 null입니다.", example = "2026-07-28", nullable = true)
         LocalDate occurrenceDate,
+        @Schema(description = "서버 push 활성화로 모바일 로컬 알림 예약을 억제해야 하는지 여부", example = "false")
+        boolean suppressLocalNotification,
         @Schema(description = "Task 응답 원본")
         TaskResponse task
 ) {
 
     public static TaskNotificationCandidateResponse from(Task task) {
+        return from(task, false);
+    }
+
+    public static TaskNotificationCandidateResponse from(Task task, boolean suppressLocalNotification) {
         Long recurrenceSeriesId = task.getRecurrenceSeries() == null ? null : task.getRecurrenceSeries().getId();
         LocalDate occurrenceDate = task.getOccurrenceDate();
         return new TaskNotificationCandidateResponse(
@@ -31,6 +37,7 @@ public record TaskNotificationCandidateResponse(
                 task.getStartAt(),
                 recurrenceSeriesId,
                 occurrenceDate,
+                suppressLocalNotification,
                 TaskResponse.from(task)
         );
     }

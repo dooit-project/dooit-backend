@@ -34,6 +34,7 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("GET /api/v1/tasks/search");
         assertThat(content).contains("PUT /api/v1/tasks/today-order");
         assertThat(content).contains("GET /api/v1/tasks/notification-candidates");
+        assertThat(content).contains("suppressLocalNotification");
         assertThat(content).contains("POST /api/v1/push-tokens");
         assertThat(content).contains("DELETE /api/v1/push-tokens/{id}");
         assertThat(content).contains("반복 생성 UI는 `POST /api/v1/tasks`의 `recurrence` 하위 객체 사용");

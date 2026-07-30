@@ -248,6 +248,7 @@ type TaskNotificationCandidateResponse = {
   scheduledAt: string;
   recurrenceSeriesId: number | null;
   occurrenceDate: string | null;
+  suppressLocalNotification: boolean;
   task: TaskResponse;
 };
 
@@ -421,6 +422,7 @@ Response: `TaskNotificationCandidateResponse[]`
 - 사용자 timezone 기준 범위 안의 반복 occurrence는 백엔드가 materialize한 뒤 반환한다.
 - `status=TODAY`, `startAt != null`, `completedAt == null`, `recurrenceException != SKIPPED`인 Task만 반환한다.
 - `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
+- `suppressLocalNotification=true`면 서버 push가 활성화된 상태이므로 모바일은 해당 후보의 로컬 알림 예약을 건너뛴다.
 - 실제 알림 예약/취소는 모바일 로컬 알림 책임이다.
 
 ### Push Token 등록/조회/해제

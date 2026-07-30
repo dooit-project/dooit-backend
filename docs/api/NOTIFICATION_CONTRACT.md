@@ -47,6 +47,7 @@ GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
 - 조회 범위는 최대 31일이다.
 - 백엔드는 조회 범위의 반복 occurrence를 materialize한 뒤 후보를 산출한다.
 - 응답의 `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
+- 응답의 `suppressLocalNotification`은 서버 push 활성화 여부에 따라 내려준다.
 - 응답에는 후보 판단 원본인 `task: TaskResponse`를 포함한다.
 
 ## 상태 변경 후 갱신 규칙
@@ -87,7 +88,8 @@ DELETE /api/v1/push-tokens/{id}
 
 - 알림 source를 `LOCAL` 또는 `SERVER`로 구분한다.
 - 동일 `task.id` 또는 `recurrenceSeriesId + occurrenceDate`에 대해 source별 중복 발송을 막는다.
-- 서버 push가 활성화된 사용자는 모바일 로컬 알림 예약을 끄거나, 서버가 내려주는 suppress flag를 따른다.
+- 서버 push가 활성화되면 백엔드는 알림 후보 응답의 `suppressLocalNotification=true`를 내려준다.
+- 모바일은 `suppressLocalNotification=true`인 후보를 로컬 알림으로 예약하지 않는다.
 - 서버 push 전환은 앱 버전별로 점진 적용한다.
 
 ## 서버 Push Provider 설정

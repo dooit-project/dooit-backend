@@ -79,6 +79,7 @@ class DocumentationIndexTest {
         assertThat(notification).contains("idempotency key는 `SERVER:{task.id}`");
         assertThat(notification).contains("전송 실패 Token 비활성화 정책");
         assertThat(notification).contains("DeviceNotRegistered");
+        assertThat(notification).contains("suppressLocalNotification=true");
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
     }
 
