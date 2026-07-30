@@ -39,6 +39,7 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("DELETE /api/v1/push-tokens/{id}");
         assertThat(content).contains("GET /api/v1/push-notification-histories");
         assertThat(content).contains("PushNotificationHistoryResponse");
+        assertThat(content).doesNotContain("- 알림 전송 이력 API");
         assertThat(content).contains("반복 생성 UI는 `POST /api/v1/tasks`의 `recurrence` 하위 객체 사용");
         assertThat(content).contains("반복 기존 rule 수정 UI는 숨기고 일반 필드 수정 scope만 노출");
         assertThat(content).contains("현재 cursor는 마지막으로 받은 항목의 `task.id` 문자열이다.");

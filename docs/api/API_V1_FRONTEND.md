@@ -792,7 +792,6 @@ Cursor 기준:
 
 - refresh token API
 - 서버 push 알림 발송 API
-- 알림 전송 이력 API
 
 ## 8. 모바일 전환 체크리스트
 
