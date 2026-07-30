@@ -105,6 +105,7 @@ TODOLAB_PUSH_ENDPOINT=https://exp.host/--/api/v2/push/send
 
 운영 원칙:
 
+- local 프로필은 프론트 연동 디버깅을 위해 `payload-enabled=true`이고, header/query/payload 마스킹과 payload 제외 path를 비워 요청/응답 전문을 그대로 남긴다.
 - production의 전문 로깅은 장애 재현이나 제한된 점검 시간에만 켠다.
 - `Authorization`, `Cookie`, `Set-Cookie`, `email`, `name`, `password`, `token`, `secret`, `jwt`, `title`, `category`, `description`, `content`, `memo`, `note`, `query`, `keyword`, `subject`, `body`, `to`, `from` 계열 값은 로그에 `[MASKED]`로 남긴다.
 - header는 `Authorization`, `Cookie`, `Set-Cookie`, `Proxy-Authorization`, `X-Api-Key`만 마스킹해 `Content-Type`, `Content-Length` 같은 운영 진단용 값은 보존한다.

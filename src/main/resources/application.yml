@@ -21,11 +21,12 @@ app:
 
   api-logging:
     enabled: true
-    payload-enabled: false
-    max-payload-length: 4096
-    payload-excluded-paths:
-      - /api/auth
-      - /api/v1/auth
+    payload-enabled: true
+    max-payload-length: 65536
+    sensitive-headers: []
+    sensitive-query-parameters: []
+    sensitive-payload-fields: []
+    payload-excluded-paths: []
 
   notification:
     push:

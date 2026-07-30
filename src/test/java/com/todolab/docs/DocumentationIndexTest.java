@@ -88,6 +88,7 @@ class DocumentationIndexTest {
         assertThat(notification).contains("PUSH_NOTIFICATION_HISTORY");
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
         assertThat(environment).contains("TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED");
+        assertThat(environment).contains("local 프로필은 프론트 연동 디버깅을 위해 `payload-enabled=true`");
     }
 
     private record DocumentLink(String rootPath, String docsPath) {
