@@ -6,6 +6,7 @@ import com.todolab.mail.MailService;
 import com.todolab.task.domain.RecurrenceFrequency;
 import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
+import com.todolab.task.domain.TaskStatus;
 import com.todolab.task.domain.TaskType;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskRecurrenceRequest;
@@ -25,6 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -907,6 +909,94 @@ class TaskV1IntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("fail"))
                 .andExpect(jsonPath("$.error.code").value(10001));
+    }
+
+    @Test
+    @DisplayName("v1 반복 Rule 변경은 선택 occurrence 이후 일반 미래 occurrence를 새 rule 기준으로 정리한다")
+    void recurrenceRuleUpdate_success_recreatesFuturePlainOccurrences() throws Exception {
+        String accessToken = accessToken("task-recurrence-rule-update-success@example.com");
+        User owner = userRepository.findByEmail("task-recurrence-rule-update-success@example.com").orElseThrow();
+        Long firstTaskId = createTask(accessToken, new TaskRequest(
+                "규칙 변경 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 7, 9, 0),
+                LocalDateTime.of(2026, 7, 7, 10, 0),
+                "업무",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        4,
+                        List.of("TU"),
+                        null
+                )
+        ));
+        Long recurrenceSeriesId = taskRepository.findById(firstTaskId).orElseThrow().getRecurrenceSeries().getId();
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-07"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(4));
+
+        List<Task> before = taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(
+                recurrenceSeriesId,
+                owner.getId()
+        );
+        Long secondOccurrenceId = before.get(1).getId();
+        Long thirdOccurrenceId = before.get(2).getId();
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done", secondOccurrenceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("completedAt", "2026-07-14T18:00:00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("DONE"));
+
+        mockMvc.perform(put("/api/v1/tasks/{id}/recurrence-rule", thirdOccurrenceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskRecurrenceRequest(
+                                RecurrenceFrequency.WEEKLY,
+                                2,
+                                null,
+                                null,
+                                null,
+                                2,
+                                List.of("TU"),
+                                null
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.recurrence.interval").value(2))
+                .andExpect(jsonPath("$.data.recurrence.recurrenceCount").value(2));
+
+        RecurrenceSeries updatedSeries = recurrenceSeriesRepository.findById(recurrenceSeriesId).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(updatedSeries.getInterval()).isEqualTo(2);
+        org.assertj.core.api.Assertions.assertThat(updatedSeries.getRecurrenceStartAt()).isEqualTo(LocalDateTime.of(2026, 7, 21, 9, 0));
+        org.assertj.core.api.Assertions.assertThat(updatedSeries.getRecurrenceRule()).isEqualTo("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;COUNT=2");
+
+        List<Task> afterUpdate = taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(
+                recurrenceSeriesId,
+                owner.getId()
+        );
+        org.assertj.core.api.Assertions.assertThat(afterUpdate)
+                .extracting(Task::getOccurrenceDate)
+                .containsExactly(LocalDate.of(2026, 7, 7), LocalDate.of(2026, 7, 14), LocalDate.of(2026, 7, 21));
+        org.assertj.core.api.Assertions.assertThat(afterUpdate.get(1).getStatus()).isEqualTo(TaskStatus.DONE);
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-04"));
     }
 
     @Test

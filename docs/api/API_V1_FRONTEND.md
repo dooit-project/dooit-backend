@@ -517,7 +517,8 @@ Response: `TaskResponse`
 
 반복 Task 수정 범위:
 
-- `recurrence`는 생성 전용 필드다. 기존 Task의 반복 규칙 자체를 바꾸는 요청은 현재 HTTP 400이다.
+- `recurrence`는 생성 전용 필드다. 기존 Task의 반복 규칙 자체를 바꾸는 요청은 이 API에서 HTTP 400이다.
+- 기존 series rule 자체 변경은 `PUT /api/v1/tasks/{id}/recurrence-rule`을 사용한다.
 - `recurrenceScope`를 생략하면 `THIS`다.
 - 반복 Task가 아니면 `recurrenceScope`는 무시된다.
 - `THIS`는 해당 occurrence row만 수정하고 `recurrenceException=MODIFIED`로 표시한다.
@@ -525,6 +526,25 @@ Response: `TaskResponse`
 - `ALL`은 materialize된 같은 series occurrence 전체를 수정한다.
 - `THIS_AND_FUTURE`, `ALL`은 occurrence 날짜별로 요청 `startAt`/`endAt`의 시간을 유지해 날짜를 이동한다. 따라서 `startAt`이 필요하다.
 - `THIS_AND_FUTURE`, `ALL` 범위에 이미 완료된 occurrence가 포함되면 제목/시간 등 일반 필드는 수정되지만 `status=DONE`, `completedAt`은 유지된다.
+
+### 반복 Rule 변경
+
+```http
+PUT /api/v1/tasks/{id}/recurrence-rule
+```
+
+Request: `TaskRecurrenceRequest`
+
+Response: `TaskResponse`
+
+규칙:
+
+- `{id}`는 변경 기준이 되는 반복 occurrence Task ID다.
+- 선택 occurrence의 `occurrenceDate`를 `effectiveDate`로 사용한다.
+- 선택 occurrence 이전 완료/예외 occurrence는 보존된다.
+- 선택 occurrence 이후 일반 materialized occurrence는 새 rule 기준 재생성을 위해 정리된다.
+- 완료 또는 `SKIPPED`, `MOVED`, `MODIFIED` 예외 occurrence는 임의 삭제하지 않는다.
+- `PUT /api/v1/tasks/{id}`에 `recurrence`를 포함한 기존 요청은 계속 HTTP 400이다.
 
 ### 삭제
 
@@ -804,7 +824,7 @@ Cursor 기준:
 - [ ] 검색 UI는 `GET /api/v1/tasks/search` 사용
 - [ ] Today drag-and-drop 저장은 `PUT /api/v1/tasks/today-order` 사용
 - [ ] 반복 생성 UI는 `POST /api/v1/tasks`의 `recurrence` 하위 객체 사용
-- [ ] 반복 기존 rule 수정 UI는 숨기고 일반 필드 수정 scope만 노출
+- [ ] 반복 기존 rule 수정 UI는 `PUT /api/v1/tasks/{id}/recurrence-rule`로 분리
 - [ ] 로컬 알림 예약은 `GET /api/v1/tasks/notification-candidates` 응답만 기준으로 구성
 - [ ] 401 응답 시 로그인 화면으로 이동하거나 세션 만료 안내
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시

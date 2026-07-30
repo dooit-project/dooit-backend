@@ -59,6 +59,9 @@ class TaskServiceTest {
     @Mock
     RecurrenceOccurrenceMaterializer recurrenceOccurrenceMaterializer;
 
+    @Mock
+    RecurrenceRuleUpdateService recurrenceRuleUpdateService;
+
     TaskCategoryGrouper taskCategoryGrouper;
 
     TaskService taskService;
@@ -72,7 +75,8 @@ class TaskServiceTest {
                 recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
-                new PushNotificationProperties(false, PushNotificationProvider.EXPO, null)
+                new PushNotificationProperties(false, PushNotificationProvider.EXPO, null),
+                recurrenceRuleUpdateService
         );
     }
 
@@ -1412,7 +1416,8 @@ class TaskServiceTest {
                 recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
-                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null)
+                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null),
+                recurrenceRuleUpdateService
         );
         User owner = persistedOwner(1L);
         LocalDate date = LocalDate.of(2026, 7, 13);

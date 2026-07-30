@@ -121,8 +121,8 @@ Last audited: 2026-07-25
 제품 주의:
 
 - 반복 생성 UI는 실제 저장 기능으로 열 수 있다.
-- 기존 반복 series의 rule 자체 수정은 아직 지원하지 않는다. 모바일은 rule 변경 요청 대신 새 반복 생성 또는 일반 필드 수정 scope만 노출한다.
-- 기존 반복 series rule 변경이 도입되면 `effectiveDate` 이전 완료/예외 occurrence는 보존하고, 이후 일반 materialized occurrence만 새 rule 기준으로 정리한다.
+- 기존 반복 series의 rule 자체 수정은 `PUT /api/v1/tasks/{id}/recurrence-rule`로 일반 필드 수정과 분리해서 요청한다.
+- 기존 반복 series rule 변경은 `effectiveDate` 이전 완료/예외 occurrence를 보존하고, 이후 일반 materialized occurrence만 새 rule 기준으로 정리한다.
 
 ## 5. 반복 일정과 알림 책임
 

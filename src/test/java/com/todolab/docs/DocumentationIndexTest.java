@@ -66,6 +66,7 @@ class DocumentationIndexTest {
         assertThat(recurrence).contains("사용자 timezone 변경은 기존 `RecurrenceSeries.timeZone`");
         assertThat(recurrence).contains("TIMEZONE_CONTRACT.md");
         assertThat(recurrence).contains("## 반복 Rule 변경 정책");
+        assertThat(recurrence).contains("PUT /api/v1/tasks/{id}/recurrence-rule");
         assertThat(recurrence).contains("`effectiveDate` 이전 완료 occurrence");
         assertThat(recurrence).contains("새 rule 범위 밖이 된 미래 일반 occurrence는 삭제 대상");
     }

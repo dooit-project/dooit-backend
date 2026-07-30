@@ -66,7 +66,7 @@ Last updated: 2026-07-23
 - `BYMONTHDAY`를 지정한 `MONTHLY`, `YEARLY` 반복은 시작일 일자가 `BYMONTHDAY`에 포함되어야 한다.
 - `BYDAY`는 `WEEKLY`, `BYMONTHDAY`는 `MONTHLY` 또는 `YEARLY`에서만 지원한다.
 - 반복 수정/삭제 API는 기존 `PUT /api/v1/tasks/{id}`, `DELETE /api/v1/tasks/{id}`의 `recurrenceScope` query parameter를 사용한다.
-- 기존 series의 반복 규칙 자체를 바꾸는 API는 아직 제공하지 않는다. `PUT /api/v1/tasks/{id}`에 `recurrence`를 보내면 HTTP 400이다.
+- 기존 series의 반복 규칙 자체는 `PUT /api/v1/tasks/{id}/recurrence-rule`로 변경한다. `PUT /api/v1/tasks/{id}`에 `recurrence`를 보내면 HTTP 400이다.
 - Today/Calendar owner 조회는 연결된 반복 series와 template Task를 기준으로 조회 범위의 누락 occurrence Task를 materialize한다.
 - materialize는 `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`와 검증된 `BYDAY`, `BYMONTHDAY`, `COUNT`, `UNTIL` 범위를 사용한다.
 - 현재 materialize 기준 template은 같은 series에 연결된 가장 이른 non-exception Task다.
@@ -79,11 +79,11 @@ Last updated: 2026-07-23
 - 반복 occurrence 삭제는 재생성을 막기 위해 row를 보존하고 `SKIPPED` marker로 표시한다.
 - `THIS_AND_FUTURE`, `ALL` 삭제는 아직 materialize되지 않은 미래 occurrence 재생성을 막기 위해 series 종료일을 함께 줄인다.
 - 사용자 timezone 변경은 기존 `RecurrenceSeries.timeZone`과 이미 materialize된 occurrence를 자동 재계산하지 않는다. timezone 변경 정책은 [`TIMEZONE_CONTRACT.md`](./TIMEZONE_CONTRACT.md)를 따른다.
-- 모바일은 반복 생성 UI를 열 수 있다. 다만 반복 rule 편집 UI는 현재 지원 필드(`frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`) 범위 안에서만 노출한다.
+- 모바일은 반복 생성과 rule 편집 UI를 열 수 있다. rule 편집 UI는 현재 지원 필드(`frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`) 범위 안에서만 노출한다.
 
 ## 반복 Rule 변경 정책
 
-기존 series rule 변경 API는 아직 제공하지 않는다. 구현 시 아래 정책을 따른다.
+기존 series rule 변경 API는 아래 정책을 따른다.
 
 - rule 변경은 `effectiveDate` 기준으로 적용한다. `THIS_AND_FUTURE` 편집에서 선택한 occurrence의 `occurrenceDate`를 기본 `effectiveDate`로 사용한다.
 - `effectiveDate` 이전 occurrence row는 삭제하거나 새 rule로 재계산하지 않는다.
@@ -95,7 +95,7 @@ Last updated: 2026-07-23
 - 새 rule materialize 과정은 같은 `recurrenceSeriesId + occurrenceDate` row가 있으면 중복 생성하지 않는다.
 - rule 변경 후 새 rule 범위 밖이 된 미래 일반 occurrence는 삭제 대상이다. 완료 또는 예외 row는 삭제 대상에서 제외한다.
 - `COUNT` 기반 rule을 변경하면 `effectiveDate` 이후 새 occurrence 산출 개수는 변경된 `COUNT`와 보존 row를 함께 고려해 별도 테스트로 검증한다.
-- 모바일은 API가 제공되기 전까지 기존 series rule 편집 UI를 노출하지 않는다.
+- 모바일은 기존 occurrence의 일반 필드 편집과 rule 편집을 다른 액션으로 분리한다.
 
 ## 생성 예시
 

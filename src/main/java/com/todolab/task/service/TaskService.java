@@ -17,6 +17,7 @@ import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskRecommendationResponse;
+import com.todolab.task.dto.TaskRecurrenceRequest;
 import com.todolab.task.dto.TaskResponse;
 import com.todolab.task.dto.TaskSearchItemResponse;
 import com.todolab.task.dto.TaskSearchRequest;
@@ -49,6 +50,7 @@ public class TaskService {
     private final TaskCategoryGrouper taskCategoryGrouper;
     private final RecurrenceOccurrenceMaterializer recurrenceOccurrenceMaterializer;
     private final PushNotificationProperties pushNotificationProperties;
+    private final RecurrenceRuleUpdateService recurrenceRuleUpdateService;
 
     @Transactional
     public TaskResponse create(TaskRequest req) {
@@ -327,6 +329,11 @@ public class TaskService {
 
     public TaskResponse updateForOwner(Long id, TaskRequest taskRequest, User owner, RecurrenceEditScope recurrenceScope) {
         Task updated = taskTxService.updateTxForOwner(id, taskRequest, owner, recurrenceScope);
+        return TaskResponse.from(updated);
+    }
+
+    public TaskResponse updateRecurrenceRuleForOwner(Long id, TaskRecurrenceRequest request, User owner) {
+        Task updated = recurrenceRuleUpdateService.updateRuleFromOccurrenceForOwner(id, request, owner);
         return TaskResponse.from(updated);
     }
 

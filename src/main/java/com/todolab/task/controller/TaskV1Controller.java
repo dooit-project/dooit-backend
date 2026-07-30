@@ -9,6 +9,7 @@ import com.todolab.task.domain.TodayOrderDirection;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.dto.TaskRecommendationResponse;
+import com.todolab.task.dto.TaskRecurrenceRequest;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskResponse;
 import com.todolab.task.dto.TaskSearchRequest;
@@ -282,6 +283,17 @@ public class TaskV1Controller {
         request.validate();
         User owner = currentUserService.requireUser(jwt);
         return ResponseEntity.ok(ApiResponse.success(taskService.updateForOwner(id, request, owner, recurrenceScope)));
+    }
+
+    @Operation(summary = "반복 Rule 변경", description = "선택한 반복 occurrence 기준으로 해당 series의 반복 규칙을 변경합니다.")
+    @PutMapping("/{id}/recurrence-rule")
+    public ResponseEntity<ApiResponse<TaskResponse>> updateRecurrenceRule(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id,
+            @Valid @RequestBody TaskRecurrenceRequest request
+    ) {
+        User owner = currentUserService.requireUser(jwt);
+        return ResponseEntity.ok(ApiResponse.success(taskService.updateRecurrenceRuleForOwner(id, request, owner)));
     }
 
     @Operation(summary = "Task Today 이동", description = "로그인 사용자의 Task를 요청 날짜의 Today로 이동합니다.")
