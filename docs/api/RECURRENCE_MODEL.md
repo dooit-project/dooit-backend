@@ -81,6 +81,22 @@ Last updated: 2026-07-23
 - 사용자 timezone 변경은 기존 `RecurrenceSeries.timeZone`과 이미 materialize된 occurrence를 자동 재계산하지 않는다. timezone 변경 정책은 [`TIMEZONE_CONTRACT.md`](./TIMEZONE_CONTRACT.md)를 따른다.
 - 모바일은 반복 생성 UI를 열 수 있다. 다만 반복 rule 편집 UI는 현재 지원 필드(`frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`) 범위 안에서만 노출한다.
 
+## 반복 Rule 변경 정책
+
+기존 series rule 변경 API는 아직 제공하지 않는다. 구현 시 아래 정책을 따른다.
+
+- rule 변경은 `effectiveDate` 기준으로 적용한다. `THIS_AND_FUTURE` 편집에서 선택한 occurrence의 `occurrenceDate`를 기본 `effectiveDate`로 사용한다.
+- `effectiveDate` 이전 occurrence row는 삭제하거나 새 rule로 재계산하지 않는다.
+- `effectiveDate` 이전 완료 occurrence는 `status=DONE`, `completedAt`, `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`를 그대로 보존한다.
+- `effectiveDate` 이전 `SKIPPED`, `MOVED`, `MODIFIED` 예외 row도 사용자가 명시적으로 만든 이력으로 보고 그대로 보존한다.
+- `effectiveDate` 이후 일반 materialized occurrence row는 새 rule 기준 재생성을 위해 정리할 수 있다.
+- `effectiveDate` 이후 이미 완료된 occurrence는 완료 이력을 보존한다. 새 rule에 포함되지 않더라도 임의 삭제하지 않는다.
+- `effectiveDate` 이후 `SKIPPED`, `MOVED`, `MODIFIED` 예외 row는 사용자가 명시적으로 변경한 데이터이므로 기본적으로 보존한다.
+- 새 rule materialize 과정은 같은 `recurrenceSeriesId + occurrenceDate` row가 있으면 중복 생성하지 않는다.
+- rule 변경 후 새 rule 범위 밖이 된 미래 일반 occurrence는 삭제 대상이다. 완료 또는 예외 row는 삭제 대상에서 제외한다.
+- `COUNT` 기반 rule을 변경하면 `effectiveDate` 이후 새 occurrence 산출 개수는 변경된 `COUNT`와 보존 row를 함께 고려해 별도 테스트로 검증한다.
+- 모바일은 API가 제공되기 전까지 기존 series rule 편집 UI를 노출하지 않는다.
+
 ## 생성 예시
 
 매주 화요일 9시 회의:

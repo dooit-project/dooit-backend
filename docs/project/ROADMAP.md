@@ -216,8 +216,8 @@ Last updated: 2026-07-30
 - [x] 반복 occurrence 일반 필드 scope 수정/삭제
 - [x] 기존 rule 수정 요청 400 방어
 - [ ] 기존 series rule 변경 API
-- [ ] rule 변경 시 과거 완료 occurrence 보존 정책
-- [ ] rule 변경 시 미래 materialized occurrence 재생성/정리 정책
+- [x] rule 변경 시 과거 완료 occurrence 보존 정책
+- [x] rule 변경 시 미래 materialized occurrence 재생성/정리 정책
 - [ ] 모바일 rule 편집 UI와 migration 안내
 
 착수 조건:

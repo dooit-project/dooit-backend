@@ -59,12 +59,15 @@ class DocumentationIndexTest {
     }
 
     @Test
-    @DisplayName("반복 모델 문서는 timezone 변경 시 occurrence 보존 정책을 안내한다")
+    @DisplayName("반복 모델 문서는 timezone과 rule 변경 시 occurrence 보존 정책을 안내한다")
     void recurrenceModelDocumentsTimeZonePolicy() throws Exception {
         String recurrence = Files.readString(Path.of("docs/api/RECURRENCE_MODEL.md"));
 
         assertThat(recurrence).contains("사용자 timezone 변경은 기존 `RecurrenceSeries.timeZone`");
         assertThat(recurrence).contains("TIMEZONE_CONTRACT.md");
+        assertThat(recurrence).contains("## 반복 Rule 변경 정책");
+        assertThat(recurrence).contains("`effectiveDate` 이전 완료 occurrence");
+        assertThat(recurrence).contains("새 rule 범위 밖이 된 미래 일반 occurrence는 삭제 대상");
     }
 
     @Test
