@@ -87,6 +87,7 @@ class DocumentationIndexTest {
         assertThat(notification).contains("GET /api/v1/push-notification-histories");
         assertThat(notification).contains("PUSH_NOTIFICATION_HISTORY");
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
+        assertThat(environment).contains("TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED");
     }
 
     private record DocumentLink(String rootPath, String docsPath) {

@@ -72,7 +72,7 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 | staging | 제한 공개 | 제한 공개 | `TODOLAB_DOCS_PUBLIC_ENABLED=true`일 때만 공개하고 접근 제어 또는 네트워크 제한 적용 |
 | production | 비공개 기본 | 비공개 기본 | `TODOLAB_DOCS_PUBLIC_ENABLED=false` 기본값 유지 |
 
-현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다.
+현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다. prod 설정의 `TODOLAB_DOCS_PUBLIC_ENABLED`, `TODOLAB_SPRINGDOC_API_DOCS_ENABLED`, `TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED` 기본값은 테스트로 검증한다.
 
 ## 5. API 로그 운영 기준
 

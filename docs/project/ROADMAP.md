@@ -233,7 +233,7 @@ Last updated: 2026-07-30
 - [ ] staging API URL 확정
 - [ ] production API URL 확정
 - [ ] staging/production CORS origin 확정
-- [ ] Swagger UI/Scalar 공개 설정 운영 검증
+- [x] Swagger UI/Scalar 공개 설정 운영 검증
 
 착수 조건:
 
