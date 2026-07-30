@@ -11,19 +11,19 @@ Last updated: 2026-07-26
 - API의 `LocalDate`는 `YYYY-MM-DD` 형식이다.
 - API의 `LocalDateTime`은 offset 없는 `YYYY-MM-DDTHH:mm:ss` 형식이다.
 - offset 없는 `LocalDateTime`은 사용자 timezone 도입 전까지 `Asia/Seoul` 기준 wall-clock time으로 해석한다.
+- 사용자 profile에는 IANA timezone ID를 저장할 수 있으며 기본값은 `Asia/Seoul`이다.
 
 ## 현재 백엔드 책임
 
 - 오늘 날짜, 기본 완료 시각, D-Day 남은 일수, 응답 timestamp는 `Constant.ZONE` 기준으로 계산한다.
 - Today, Calendar, 반복 occurrence 조회는 `Asia/Seoul` 기준 날짜 경계로 계산한다.
 - 모바일은 서버 응답의 날짜/시간 값을 임의 timezone으로 재해석하지 않는다.
+- `PATCH /api/v1/users/me/time-zone`은 사용자 timezone 설정값만 저장한다. 저장 직후 Today/Calendar 계산 기준을 바꾸지는 않는다.
 
 ## 사용자 Timezone 도입 조건
 
-사용자별 timezone을 도입하려면 아래 변경을 하나의 계약 변경으로 처리한다.
+사용자 timezone 저장은 제공하지만, 사용자별 날짜 경계 계산은 아직 도입하지 않았다. 사용자별 계산을 도입하려면 아래 변경을 하나의 계약 변경으로 처리한다.
 
-- User profile에 IANA timezone 필드 추가
-- 신규/수정 API에서 timezone 저장 및 검증
 - Today/Calendar 조회 기준 날짜를 사용자 timezone으로 계산
 - 반복 series의 `recurrenceTimeZone`과 사용자 timezone 변경 정책 분리
 - 기존 offset 없는 `LocalDateTime` 응답의 호환성 정책 확정
@@ -38,7 +38,6 @@ Last updated: 2026-07-26
 
 ## 아직 제공하지 않는 기능
 
-- 사용자 timezone 저장 API
 - 사용자 timezone별 Today/Calendar 조회
 - timezone 변경 migration API
 - offset 또는 timezone 포함 `ZonedDateTime` 응답

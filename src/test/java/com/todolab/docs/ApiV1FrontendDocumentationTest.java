@@ -22,6 +22,8 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("AUTH_CONTRACT.md");
         assertThat(content).contains("401은 토큰 없음/만료/위변조");
         assertThat(content).contains("403은 인증 후 권한 부족");
+        assertThat(content).contains("PATCH /api/v1/users/me/time-zone");
+        assertThat(content).contains("Today/Calendar/반복 occurrence 날짜 경계는 별도 계약 변경 전까지 기존처럼 `Asia/Seoul` 기준");
     }
 
     @Test

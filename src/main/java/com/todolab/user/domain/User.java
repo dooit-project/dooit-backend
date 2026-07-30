@@ -34,6 +34,9 @@ public class User {
     @Column(name = "`DISPLAY_NAME`", nullable = false, length = 50)
     private String displayName;
 
+    @Column(name = "`TIME_ZONE`", nullable = false, length = 50)
+    private String timeZone = Constant.ZONE_ID;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "`ROLE`", nullable = false, length = 30)
     private UserRole role;
@@ -81,6 +84,17 @@ public class User {
         this.email = normalizedEmail;
         this.passwordHash = normalizedPasswordHash;
         this.displayName = normalizedDisplayName;
+        if (this.timeZone == null) {
+            this.timeZone = Constant.ZONE_ID;
+        }
+    }
+
+    public void updateTimeZone(String timeZone) {
+        String normalizedTimeZone = normalizeRequired(timeZone);
+        if (normalizedTimeZone == null) {
+            throw new IllegalArgumentException("timeZone은 필수입니다.");
+        }
+        this.timeZone = normalizedTimeZone;
     }
 
     private String normalizeEmail(String email) {

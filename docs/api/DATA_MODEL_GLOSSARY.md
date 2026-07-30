@@ -13,6 +13,7 @@ Last updated: 2026-07-25
 | `passwordHash` | BCrypt password hash. API 응답과 로그에 노출하지 않는다. |
 | `displayName` | 표시 이름. 50자 이하 |
 | `role` | `USER`, `ADMIN` |
+| `timeZone` | 사용자 IANA timezone 설정값. 기본값은 `Asia/Seoul` |
 | `createdAt` | 사용자 생성 시각 |
 | `updatedAt` | 사용자 수정 시각. 생성 직후 null일 수 있다. |
 

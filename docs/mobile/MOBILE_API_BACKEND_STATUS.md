@@ -175,7 +175,8 @@ Last audited: 2026-07-25
 | `LocalDate`는 `YYYY-MM-DD` | [x] | Spring `LocalDate` binding/JSON 기본 형식 |
 | `LocalDateTime`은 offset 없는 `YYYY-MM-DDTHH:mm:ss` | [x] | Java `LocalDateTime` 사용 |
 | 모바일이 서울 기준으로 해석 가능 | [x] | 현재 날짜/시간 계산은 `Constant.ZONE` 기준으로 통일 |
-| 향후 사용자 time zone 계약 | [x] | `docs/api/TIMEZONE_CONTRACT.md`에 사용자 timezone 도입 조건과 호환성 원칙 정리 |
+| 사용자 time zone 저장 API | [x] | `PATCH /api/v1/users/me/time-zone`으로 IANA timezone 설정값 저장 |
+| 사용자 time zone별 날짜 경계 계산 | [ ] | `docs/api/TIMEZONE_CONTRACT.md` 기준으로 별도 계약 변경 필요 |
 
 필요 작업:
 

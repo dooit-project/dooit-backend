@@ -3,6 +3,7 @@ package com.todolab.user.service;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.user.domain.User;
 import com.todolab.user.dto.UserResponse;
+import com.todolab.user.dto.UserTimeZoneRequest;
 import com.todolab.user.exception.UserEmailAlreadyExistsException;
 import com.todolab.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,15 @@ public class UserService {
         ));
 
         return UserResponse.from(saved);
+    }
+
+    @Transactional
+    public UserResponse updateTimeZoneForOwner(User owner, UserTimeZoneRequest request) {
+        if (owner == null || owner.getId() == null) {
+            throw new IllegalArgumentException("owner는 영속화된 사용자여야 합니다.");
+        }
+        owner.updateTimeZone(request.normalizedTimeZone());
+        return UserResponse.from(userRepository.save(owner));
     }
 
     private String normalizeEmail(String email) {

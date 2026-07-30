@@ -30,6 +30,7 @@ class DataModelGlossaryDocumentationTest {
         String content = Files.readString(GLOSSARY);
 
         assertThat(content).contains("## User");
+        assertThat(content).contains("`timeZone`");
         assertThat(content).contains("## D-Day");
         assertThat(content).contains("## 반복 모델");
         assertThat(content).contains("## Owner Scope");

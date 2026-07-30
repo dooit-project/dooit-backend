@@ -92,6 +92,7 @@ type UserResponse = {
   email: string;
   displayName: string;
   role: 'USER' | 'ADMIN';
+  timeZone: string;
   createdAt: string;
   updatedAt: string | null;
 };
@@ -140,6 +141,29 @@ type AuthenticatedUserResponse = {
   role: string;
 };
 ```
+
+### 내 timezone 변경
+
+```http
+PATCH /api/v1/users/me/time-zone
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+```
+
+Request:
+
+```ts
+type UserTimeZoneRequest = {
+  timeZone: string; // IANA timezone ID, 50자 이하
+};
+```
+
+Response: `UserResponse`
+
+주의:
+
+- `timeZone`은 `Asia/Seoul`, `America/New_York` 같은 유효한 IANA Zone ID여야 한다.
+- 저장된 사용자 timezone은 프로필 설정값이다. Today/Calendar/반복 occurrence 날짜 경계는 별도 계약 변경 전까지 기존처럼 `Asia/Seoul` 기준이다.
 
 ## 3. Task 타입
 

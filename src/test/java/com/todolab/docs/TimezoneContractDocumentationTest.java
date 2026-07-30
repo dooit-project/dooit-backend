@@ -18,7 +18,8 @@ class TimezoneContractDocumentationTest {
         assertThat(content).contains("Asia/Seoul");
         assertThat(content).contains("Constant.ZONE");
         assertThat(content).contains("offset 없는 `LocalDateTime`");
-        assertThat(content).contains("사용자별 timezone을 도입하려면");
-        assertThat(content).contains("User profile에 IANA timezone 필드 추가");
+        assertThat(content).contains("사용자 profile에는 IANA timezone ID를 저장할 수 있으며 기본값은 `Asia/Seoul`이다.");
+        assertThat(content).contains("PATCH /api/v1/users/me/time-zone");
+        assertThat(content).contains("사용자별 날짜 경계 계산은 아직 도입하지 않았다.");
     }
 }

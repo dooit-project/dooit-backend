@@ -17,6 +17,7 @@ class UserTest {
         assertThat(user.getPasswordHash()).isEqualTo("encoded-password");
         assertThat(user.getDisplayName()).isEqualTo("테스터");
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
+        assertThat(user.getTimeZone()).isEqualTo("Asia/Seoul");
     }
 
     @Test
@@ -41,5 +42,15 @@ class UserTest {
         assertThatThrownBy(() -> new User("test@example.com", "encoded-password", " "))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("displayName은 필수입니다.");
+    }
+
+    @Test
+    @DisplayName("사용자 timezone을 변경한다")
+    void updateTimeZone_success() {
+        User user = new User("test@example.com", "encoded-password", "테스터");
+
+        user.updateTimeZone(" America/New_York ");
+
+        assertThat(user.getTimeZone()).isEqualTo("America/New_York");
     }
 }

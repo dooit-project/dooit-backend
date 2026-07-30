@@ -10,9 +10,21 @@ public record UserResponse(
         String email,
         String displayName,
         UserRole role,
+        String timeZone,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
+
+    public UserResponse(
+            Long id,
+            String email,
+            String displayName,
+            UserRole role,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        this(id, email, displayName, role, null, createdAt, updatedAt);
+    }
 
     public static UserResponse from(User user) {
         return new UserResponse(
@@ -20,6 +32,7 @@ public record UserResponse(
                 user.getEmail(),
                 user.getDisplayName(),
                 user.getRole(),
+                user.getTimeZone(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
