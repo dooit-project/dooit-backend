@@ -77,6 +77,8 @@ class DocumentationIndexTest {
         assertThat(notification).contains("TODOLAB_PUSH_ENABLED");
         assertThat(notification).contains("서버 Push 발송 스케줄러 설계");
         assertThat(notification).contains("idempotency key는 `SERVER:{task.id}`");
+        assertThat(notification).contains("전송 실패 Token 비활성화 정책");
+        assertThat(notification).contains("DeviceNotRegistered");
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
     }
 
