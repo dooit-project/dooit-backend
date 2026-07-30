@@ -98,6 +98,9 @@ TODOLAB_LOG_TOTAL_SIZE_CAP=1GB
 TODOLAB_LOG_MAX_FILE_SIZE=100MB
 TODOLAB_SPRINGDOC_API_DOCS_ENABLED=false
 TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED=false
+TODOLAB_PUSH_ENABLED=false
+TODOLAB_PUSH_PROVIDER=EXPO
+TODOLAB_PUSH_ENDPOINT=https://exp.host/--/api/v2/push/send
 ```
 
 운영 원칙:
@@ -112,3 +115,4 @@ TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED=false
 - production에서는 `${TODOLAB_LOG_PATH}/todolab-backend.log`와 `${TODOLAB_LOG_PATH}/todolab-backend-error.log`를 파일로 남긴다.
 - archive 파일은 일 단위와 크기 단위로 끊고 `${TODOLAB_LOG_PATH}/archive/*.log.gz`로 압축한다.
 - Logback 기본 기능은 압축 시점을 롤오버 시점으로 처리한다. 정확히 3일 지난 파일만 지연 압축해야 하면 운영 환경의 `logrotate` 또는 cron 정책을 추가한다.
+- 서버 push 1차 provider는 `EXPO`이며, `TODOLAB_PUSH_ENABLED=false`가 기본값이다. 발송 스케줄러가 구현되기 전에는 enabled 값을 켜도 실제 발송하지 않는다.

@@ -67,6 +67,17 @@ class DocumentationIndexTest {
         assertThat(recurrence).contains("TIMEZONE_CONTRACT.md");
     }
 
+    @Test
+    @DisplayName("알림 계약과 운영 문서는 서버 push provider 설정을 안내한다")
+    void notificationDocsDocumentPushProvider() throws Exception {
+        String notification = Files.readString(Path.of("docs/api/NOTIFICATION_CONTRACT.md"));
+        String environment = Files.readString(Path.of("docs/ops/ENVIRONMENT_INTEGRATION.md"));
+
+        assertThat(notification).contains("1차 provider는 `EXPO`");
+        assertThat(notification).contains("TODOLAB_PUSH_ENABLED");
+        assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
+    }
+
     private record DocumentLink(String rootPath, String docsPath) {
     }
 }

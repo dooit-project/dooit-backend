@@ -90,6 +90,14 @@ DELETE /api/v1/push-tokens/{id}
 - 서버 push가 활성화된 사용자는 모바일 로컬 알림 예약을 끄거나, 서버가 내려주는 suppress flag를 따른다.
 - 서버 push 전환은 앱 버전별로 점진 적용한다.
 
+## 서버 Push Provider 설정
+
+- 1차 provider는 `EXPO`로 확정한다.
+- 운영 설정 prefix는 `app.notification.push`다.
+- production 환경변수는 `TODOLAB_PUSH_ENABLED`, `TODOLAB_PUSH_PROVIDER`, `TODOLAB_PUSH_ENDPOINT`를 사용한다.
+- 기본값은 `enabled=false`, `provider=EXPO`, `endpoint=https://exp.host/--/api/v2/push/send`다.
+- provider 설정은 발송 준비 계약이며, `enabled=true`만으로 발송 스케줄러가 동작하지는 않는다.
+
 ## 아직 제공하지 않는 API
 
 - 서버 push 발송 API
