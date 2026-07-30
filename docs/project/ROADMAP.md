@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-07-25
+Last updated: 2026-07-30
 
 이 문서는 완료 이력보다 **앞으로 백엔드에서 닫아야 할 작업**을 관리한다. 이미 구현된 인증, v1 경로, owner scope, OpenAPI/Swagger/Scalar 문서 UI는 기준 상태로 보고, 아래 항목은 모바일 실사용과 운영 안정성에 필요한 후속 작업이다.
 
@@ -170,7 +170,76 @@ Last updated: 2026-07-25
 
 상세 목록과 우선순위는 [`BACKEND_DOCUMENTATION_PLAN.md`](./BACKEND_DOCUMENTATION_PLAN.md)에서 관리한다.
 
-## 6. 개발 원칙
+## 6. 다음 백로그
+
+기존 2-5번 로드맵 항목은 현재 기준으로 닫힌 상태다. 앞으로의 작업은 아래 백로그에서 하나의 커밋 단위로 고른다.
+
+### 6.1 사용자 timezone 날짜 경계 적용
+
+현재 상태:
+
+- [x] User profile timezone 저장
+- [x] `PATCH /api/v1/users/me/time-zone`
+- [ ] 사용자 timezone 기준 Today 조회
+- [ ] 사용자 timezone 기준 Calendar 조회
+- [ ] 사용자 timezone 기준 알림 후보 조회
+- [ ] 사용자 timezone 변경 시 기존 반복 occurrence 재계산/보존 정책 확정
+- [ ] timezone별 날짜 경계 회귀 테스트
+
+착수 조건:
+
+- 모바일이 사용자 timezone 설정을 실제로 노출할지 결정한다.
+- 기존 `Asia/Seoul` 기준 데이터와 사용자 timezone 기준 조회의 호환 정책을 먼저 확정한다.
+
+### 6.2 서버 push 발송
+
+현재 상태:
+
+- [x] push token 등록/조회/해제
+- [x] 로컬 알림 후보 API
+- [ ] push provider 선택 및 설정 방식 확정
+- [ ] 알림 발송 요청/스케줄러 설계
+- [ ] 전송 실패 token 비활성화 정책
+- [ ] 로컬 알림과 서버 push 중복 방지 플래그
+- [ ] 알림 전송 이력 저장/조회
+
+착수 조건:
+
+- APNs/FCM/Expo 중 사용할 provider와 운영 credential 관리 방식을 확정한다.
+- 서버가 어떤 시점에 어떤 Task/occurrence를 발송할지 제품 정책을 확정한다.
+
+### 6.3 반복 rule 수정
+
+현재 상태:
+
+- [x] 반복 생성
+- [x] 반복 occurrence 일반 필드 scope 수정/삭제
+- [x] 기존 rule 수정 요청 400 방어
+- [ ] 기존 series rule 변경 API
+- [ ] rule 변경 시 과거 완료 occurrence 보존 정책
+- [ ] rule 변경 시 미래 materialized occurrence 재생성/정리 정책
+- [ ] 모바일 rule 편집 UI와 migration 안내
+
+착수 조건:
+
+- 기존 occurrence 중 완료/수정/삭제된 항목을 rule 변경 후 어떻게 보존할지 정책을 확정한다.
+
+### 6.4 운영 환경 확정
+
+현재 상태:
+
+- [x] local 환경 문서화
+- [x] CORS 운영 값 관리 방식 정리
+- [ ] staging API URL 확정
+- [ ] production API URL 확정
+- [ ] staging/production CORS origin 확정
+- [ ] Swagger UI/Scalar 공개 설정 운영 검증
+
+착수 조건:
+
+- 실제 staging/production 도메인과 모바일 배포 origin을 확정한다.
+
+## 7. 개발 원칙
 
 - 모바일과 웹의 인증 방식은 분리하되 사용자 데이터 격리는 동일하게 유지한다.
 - 새 모바일 API는 `/api/v1/**`에 추가한다.

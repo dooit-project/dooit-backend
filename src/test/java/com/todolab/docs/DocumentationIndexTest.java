@@ -46,6 +46,18 @@ class DocumentationIndexTest {
         assertThat(plan).contains("## 커밋 전 점검");
     }
 
+    @Test
+    @DisplayName("로드맵은 닫힌 기존 범위 이후의 다음 백로그를 관리한다")
+    void roadmapDocumentsNextBacklog() throws Exception {
+        String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
+
+        assertThat(roadmap).contains("## 6. 다음 백로그");
+        assertThat(roadmap).contains("사용자 timezone 날짜 경계 적용");
+        assertThat(roadmap).contains("서버 push 발송");
+        assertThat(roadmap).contains("반복 rule 수정");
+        assertThat(roadmap).contains("운영 환경 확정");
+    }
+
     private record DocumentLink(String rootPath, String docsPath) {
     }
 }
