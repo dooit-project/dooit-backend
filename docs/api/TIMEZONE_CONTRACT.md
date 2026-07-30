@@ -23,7 +23,17 @@ Last updated: 2026-07-26
 
 ## 사용자 Timezone 도입 조건
 
-사용자 timezone별 조회 경계는 제공하지만, timezone 변경에 따른 기존 반복 occurrence 재계산은 아직 도입하지 않았다. 재계산을 도입하려면 아래 변경을 하나의 계약 변경으로 처리한다.
+사용자 timezone별 조회 경계는 제공하지만, timezone 변경은 기존 반복 series/occurrence를 자동 재계산하지 않는다.
+
+정책:
+
+- `RecurrenceSeries.timeZone`은 series 생성 시점의 반복 계산 기준으로 유지한다.
+- 사용자 `timeZone` 변경은 Today/Calendar/알림 후보의 조회 경계에만 영향을 준다.
+- 이미 materialize된 occurrence Task의 `startAt`, `endAt`, `targetDate`, `occurrenceDate`는 자동 변경하지 않는다.
+- 완료된 occurrence와 `MODIFIED`, `SKIPPED`, `MOVED` 예외는 그대로 보존한다.
+- 사용자가 새 timezone 기준으로 반복 일정을 다시 만들고 싶으면 기존 series를 종료하거나 삭제한 뒤 새 series를 생성한다.
+
+향후 자동 재계산을 도입하려면 아래 변경을 하나의 계약 변경으로 처리한다.
 
 - 반복 series의 `recurrenceTimeZone`과 사용자 timezone 변경 정책 분리
 - 기존 offset 없는 `LocalDateTime` 응답의 호환성 정책 확정
@@ -39,4 +49,5 @@ Last updated: 2026-07-26
 ## 아직 제공하지 않는 기능
 
 - timezone 변경 migration API
+- timezone 변경에 따른 반복 occurrence 자동 재계산 API
 - offset 또는 timezone 포함 `ZonedDateTime` 응답
