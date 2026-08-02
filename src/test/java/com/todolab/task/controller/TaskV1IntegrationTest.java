@@ -3,6 +3,7 @@ package com.todolab.task.controller;
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
 import com.todolab.mail.MailService;
+import com.todolab.task.domain.RecurrenceExceptionType;
 import com.todolab.task.domain.RecurrenceFrequency;
 import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
@@ -955,6 +956,84 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data[0].originalOccurrenceDate").value("2026-08-04"))
                 .andExpect(jsonPath("$.data[0].recurrence.frequency").value("WEEKLY"))
                 .andExpect(jsonPath("$.data[0].recurrence.recurrenceRule").value("FREQ=WEEKLY;INTERVAL=1;BYDAY=TU;COUNT=3"));
+    }
+
+    @Test
+    @DisplayName("v1 반복 occurrence 건너뛰기는 DELETE THIS로 SKIPPED marker를 남기고 조회와 알림 후보에서 제외한다")
+    void deleteRecurringOccurrence_thisScope_marksSkippedAndExcludesFromQueries() throws Exception {
+        String accessToken = accessToken("task-recurrence-skip-this@example.com");
+        User owner = userRepository.findByEmail("task-recurrence-skip-this@example.com").orElseThrow();
+        Long firstTaskId = createTask(accessToken, new TaskRequest(
+                "반복 건너뛰기",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 4, 9, 0),
+                LocalDateTime.of(2026, 8, 4, 10, 0),
+                "업무",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("TU"),
+                        null
+                )
+        ));
+        Long recurrenceSeriesId = taskRepository.findById(firstTaskId).orElseThrow().getRecurrenceSeries().getId();
+
+        String secondTodayResponse = mockMvc.perform(get("/api/v1/tasks/today")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-08-11"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-11"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number secondOccurrenceId = JsonPath.read(secondTodayResponse, "$.data[0].id");
+
+        mockMvc.perform(delete("/api/v1/tasks/{id}", secondOccurrenceId.longValue())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("recurrenceScope", "THIS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        Task skipped = taskRepository.findById(secondOccurrenceId.longValue()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(skipped.getRecurrenceException()).isEqualTo(RecurrenceExceptionType.SKIPPED);
+        org.assertj.core.api.Assertions.assertThat(skipped.getOccurrenceDate()).isEqualTo(LocalDate.of(2026, 8, 11));
+        org.assertj.core.api.Assertions.assertThat(skipped.getOwner().getId()).isEqualTo(owner.getId());
+
+        mockMvc.perform(get("/api/v1/tasks/today")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-08-11"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-04"))
+                .andExpect(jsonPath("$.data[1].occurrenceDate").value("2026-08-18"));
+
+        mockMvc.perform(get("/api/v1/tasks/notification-candidates")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("from", "2026-08-04")
+                        .param("to", "2026-08-18"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-04"))
+                .andExpect(jsonPath("$.data[1].occurrenceDate").value("2026-08-18"));
+
+        org.assertj.core.api.Assertions.assertThat(
+                taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(recurrenceSeriesId, owner.getId())
+        ).hasSize(3);
     }
 
     @Test

@@ -43,6 +43,8 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("반복 생성 UI는 `POST /api/v1/tasks`의 `recurrence` 하위 객체 사용");
         assertThat(content).contains("PUT /api/v1/tasks/{id}/recurrence-rule");
         assertThat(content).contains("반복 기존 rule 수정 UI는 `PUT /api/v1/tasks/{id}/recurrence-rule`로 분리");
+        assertThat(content).contains("DELETE /api/v1/tasks/{occurrenceId}?recurrenceScope=THIS");
+        assertThat(content).contains("별도 `skip` endpoint 없이");
         assertThat(content).contains("현재 cursor는 마지막으로 받은 항목의 `task.id` 문자열이다.");
         assertThat(content).contains("Today drag-and-drop 저장은 `PUT /api/v1/tasks/today-order` 사용");
     }

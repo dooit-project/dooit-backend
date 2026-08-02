@@ -76,7 +76,9 @@ Last updated: 2026-07-23
 - `THIS` 수정은 해당 occurrence만 `MODIFIED`로 표시한다.
 - `THIS_AND_FUTURE`, `ALL` 수정은 materialize된 occurrence row 범위에 적용한다.
 - `THIS_AND_FUTURE`, `ALL` 수정은 완료된 occurrence의 `status=DONE`, `completedAt`을 보존한다.
+- 반복 occurrence 단건 건너뛰기는 `DELETE /api/v1/tasks/{occurrenceId}?recurrenceScope=THIS`를 사용한다. 별도 `skip` endpoint는 제공하지 않는다.
 - 반복 occurrence 삭제는 재생성을 막기 위해 row를 보존하고 `SKIPPED` marker로 표시한다.
+- `SKIPPED` occurrence는 Today/Calendar 조회와 notification candidates에서 제외한다.
 - `THIS_AND_FUTURE`, `ALL` 삭제는 아직 materialize되지 않은 미래 occurrence 재생성을 막기 위해 series 종료일을 함께 줄인다.
 - 사용자 timezone 변경은 기존 `RecurrenceSeries.timeZone`과 이미 materialize된 occurrence를 자동 재계산하지 않는다. timezone 변경 정책은 [`TIMEZONE_CONTRACT.md`](./TIMEZONE_CONTRACT.md)를 따른다.
 - 모바일은 반복 생성과 rule 편집 UI를 열 수 있다. rule 편집 UI는 현재 지원 필드(`frequency`, `interval`, `byDays`, `byMonthDays`, `recurrenceUntil`, `recurrenceCount`) 범위 안에서만 노출한다.

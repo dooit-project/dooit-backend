@@ -69,6 +69,8 @@ class DocumentationIndexTest {
         assertThat(recurrence).contains("PUT /api/v1/tasks/{id}/recurrence-rule");
         assertThat(recurrence).contains("`effectiveDate` 이전 완료 occurrence");
         assertThat(recurrence).contains("새 rule 범위 밖이 된 미래 일반 occurrence는 삭제 대상");
+        assertThat(recurrence).contains("DELETE /api/v1/tasks/{occurrenceId}?recurrenceScope=THIS");
+        assertThat(recurrence).contains("별도 `skip` endpoint는 제공하지 않는다");
     }
 
     @Test

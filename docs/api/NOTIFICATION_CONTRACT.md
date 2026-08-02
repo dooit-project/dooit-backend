@@ -59,7 +59,7 @@ GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
 | Inbox 이동 | `status=INBOX`, 일정 제거 | 예약 제거 |
 | Today 이동/이월 | `status=TODAY`, `targetDate`, `startAt`, `endAt` 변경 | 기존 예약 취소 후 새 시간 예약 |
 | 반복 occurrence 단건 수정 | `recurrenceException=MODIFIED` | 같은 occurrence 예약 갱신 |
-| 반복 occurrence 삭제 | `recurrenceException=SKIPPED`, 일정 제거 | 예약 제거 |
+| 반복 occurrence 건너뛰기 | `DELETE /api/v1/tasks/{occurrenceId}?recurrenceScope=THIS`, `recurrenceException=SKIPPED`, 일정 제거 | 예약 제거 |
 | 반복 occurrence 이동 | 향후 `recurrenceException=MOVED` | 원래 occurrence 예약 제거 후 이동된 occurrence 예약 |
 
 ## 서버 Push 도입 전 정책
