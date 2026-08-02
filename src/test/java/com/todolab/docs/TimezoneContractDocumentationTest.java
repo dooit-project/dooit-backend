@@ -24,4 +24,14 @@ class TimezoneContractDocumentationTest {
         assertThat(content).contains("사용자 timezone별 조회 경계는 제공하지만, timezone 변경은 기존 반복 series/occurrence를 자동 재계산하지 않는다.");
         assertThat(content).contains("이미 materialize된 occurrence Task의 `startAt`, `endAt`, `targetDate`, `occurrenceDate`는 자동 변경하지 않는다.");
     }
+
+    @Test
+    @DisplayName("모바일 상태 문서는 timezone 변경 정책 확정 상태를 추적한다")
+    void mobileStatusTracksTimeZoneChangePolicy() throws Exception {
+        String content = Files.readString(Path.of("docs/mobile/MOBILE_API_BACKEND_STATUS.md"));
+
+        assertThat(content).contains("[x] timezone 변경 시 기존 반복 occurrence 재계산/보존 정책 확정");
+        assertThat(content).contains("사용자 timezone 변경은 조회 경계에만 영향을 주며, 기존 반복 series/occurrence는 자동 재계산하지 않는다.");
+        assertThat(content).contains("docs/api/TIMEZONE_CONTRACT.md");
+    }
 }

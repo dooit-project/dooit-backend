@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-07-25
+Last audited: 2026-08-02
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -185,7 +185,9 @@ Last audited: 2026-07-25
 
 - [x] `LocalDate.now()` 직접 사용 지점은 `Constant.ZONE_ID` 기준 clock으로 정리
 - [x] 사용자 time zone 도입 전까지 API 문서에 “서버/서비스 기준은 Asia/Seoul” 명시 유지
-- [ ] timezone 변경 시 기존 반복 occurrence 재계산/보존 정책 확정
+- [x] timezone 변경 시 기존 반복 occurrence 재계산/보존 정책 확정
+  - 정책: 사용자 timezone 변경은 조회 경계에만 영향을 주며, 기존 반복 series/occurrence는 자동 재계산하지 않는다.
+  - 문서: `docs/api/TIMEZONE_CONTRACT.md`
 
 ## 8. 기존 백엔드 이슈와 운영 확인
 
