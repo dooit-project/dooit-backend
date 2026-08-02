@@ -1,6 +1,6 @@
 # ToDoLab Environment Integration
 
-Last updated: 2026-07-25
+Last updated: 2026-08-02
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
@@ -64,7 +64,27 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 - Expo Web은 브라우저 CORS 대상이므로 실제 접속 origin을 `TODOLAB_ALLOWED_ORIGINS`에 추가한다.
 - production에서는 `TODOLAB_DOCS_PUBLIC_ENABLED=false`를 기본값으로 유지한다.
 
-## 4. 문서 UI 공개 기준
+## 4. 운영 환경 확정 입력값
+
+staging/production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 secret이나 private URL은 이 문서에 기록하지 않고 배포 환경 변수로만 관리한다.
+
+| 항목 | staging | production | 검증 기준 |
+| --- | --- | --- | --- |
+| API base URL | 미정 | 미정 | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
+| Expo Web origin | 미정 | 미정 | `Authorization` header 포함 preflight 성공 |
+| Native 앱 API 접근 | 미정 | 미정 | iOS/Android 실제 기기에서 HTTPS API 접근 가능 |
+| 문서 UI 공개 여부 | 제한 공개 기본 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 공개 정책 확인 |
+| CORS 환경변수 | `TODOLAB_ALLOWED_ORIGINS` | `TODOLAB_ALLOWED_ORIGINS` | 쉼표 구분 origin 목록 적용 |
+
+확정 후 반영 순서:
+
+1. `TODOLAB_ALLOWED_ORIGINS`에 Expo Web origin만 추가한다.
+2. Native 앱은 CORS 대상이 아니므로 API URL 접근성과 인증 흐름만 확인한다.
+3. staging에서 `OPTIONS /api/v1/auth/me` preflight와 `GET /api/v1/auth/me` 401/200 흐름을 확인한다.
+4. production은 문서 UI 비공개 상태를 먼저 확인한 뒤 모바일 smoke test를 진행한다.
+5. 확정된 public URL만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.
+
+## 5. 문서 UI 공개 기준
 
 | 환경 | Swagger UI `/swagger-ui` | Scalar `/scalar.html` | 비고 |
 | --- | --- | --- | --- |
@@ -74,7 +94,7 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 
 현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다. prod 설정의 `TODOLAB_DOCS_PUBLIC_ENABLED`, `TODOLAB_SPRINGDOC_API_DOCS_ENABLED`, `TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED` 기본값은 테스트로 검증한다.
 
-## 5. API 로그 운영 기준
+## 6. API 로그 운영 기준
 
 백엔드는 `/api/**` 요청에 공통 API 로그 필터를 적용한다. 서버 렌더링 화면과 정적 리소스는 이 필터 대상이 아니다.
 
