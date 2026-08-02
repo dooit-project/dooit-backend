@@ -728,6 +728,15 @@ class TaskV1IntegrationTest {
 
         Number occurrenceId = JsonPath.read(todayResponse, "$.data[0].id");
 
+        mockMvc.perform(patch("/api/v1/tasks/{id}/defer-reason", occurrenceId.longValue())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("reason", "WAITING_OTHER"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.deferReason").value("WAITING_OTHER"))
+                .andExpect(jsonPath("$.data.recurrenceSeriesId").value(series.getId()))
+                .andExpect(jsonPath("$.data.occurrenceDate").value("2026-07-13"))
+                .andExpect(jsonPath("$.data.recurrence.frequency").value("WEEKLY"));
+
         mockMvc.perform(patch("/api/v1/tasks/{id}/done", occurrenceId.longValue())
                         .header("Authorization", "Bearer " + accessToken)
                         .param("completedAt", "2026-07-13T18:00:00"))
@@ -735,7 +744,8 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.status").value("DONE"))
                 .andExpect(jsonPath("$.data.completedAt").value("2026-07-13T18:00:00"))
                 .andExpect(jsonPath("$.data.recurrenceSeriesId").value(series.getId()))
-                .andExpect(jsonPath("$.data.occurrenceDate").value("2026-07-13"));
+                .andExpect(jsonPath("$.data.occurrenceDate").value("2026-07-13"))
+                .andExpect(jsonPath("$.data.recurrence.frequency").value("WEEKLY"));
 
         mockMvc.perform(get("/api/v1/tasks/done")
                         .header("Authorization", "Bearer " + accessToken)
@@ -744,7 +754,8 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].id").value(occurrenceId.longValue()))
                 .andExpect(jsonPath("$.data[0].recurrenceSeriesId").value(series.getId()))
-                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-07-13"));
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-07-13"))
+                .andExpect(jsonPath("$.data[0].recurrence.frequency").value("WEEKLY"));
 
         mockMvc.perform(get("/api/v1/tasks")
                         .header("Authorization", "Bearer " + accessToken)
@@ -909,6 +920,41 @@ class TaskV1IntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("fail"))
                 .andExpect(jsonPath("$.error.code").value(10001));
+    }
+
+    @Test
+    @DisplayName("v1 Today 조회는 반복 생성 직후 첫 occurrence의 반복 상세를 반환한다")
+    void getTodayTasks_success_recurringOccurrenceAfterCreate() throws Exception {
+        String accessToken = accessToken("task-recurrence-today-after-create@example.com");
+        Long taskId = createTask(accessToken, new TaskRequest(
+                "반복 Today 조회",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 4, 9, 0),
+                LocalDateTime.of(2026, 8, 4, 10, 0),
+                "업무",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("TU"),
+                        null
+                )
+        ));
+
+        mockMvc.perform(get("/api/v1/tasks/today")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-08-04"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(taskId))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-04"))
+                .andExpect(jsonPath("$.data[0].originalOccurrenceDate").value("2026-08-04"))
+                .andExpect(jsonPath("$.data[0].recurrence.frequency").value("WEEKLY"))
+                .andExpect(jsonPath("$.data[0].recurrence.recurrenceRule").value("FREQ=WEEKLY;INTERVAL=1;BYDAY=TU;COUNT=3"));
     }
 
     @Test

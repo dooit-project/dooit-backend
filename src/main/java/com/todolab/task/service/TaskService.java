@@ -96,6 +96,7 @@ public class TaskService {
         return TaskResponse.from(saved);
     }
 
+    @Transactional(readOnly = true)
     public TaskResponse getTask(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
@@ -103,6 +104,7 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
+    @Transactional(readOnly = true)
     public TaskResponse getTaskForOwner(Long id, User owner) {
         Task task = taskRepository.findByIdAndOwnerId(id, ownerId(owner))
                 .orElseThrow(() -> new TaskNotFoundException(id));
@@ -114,6 +116,7 @@ public class TaskService {
         return findTasks(request);
     }
 
+    @Transactional
     public List<TaskResponse> getTasksForOwner(TaskQueryRequest request, User owner) {
         return findTasks(request, ownerId(owner), owner);
     }
@@ -226,6 +229,7 @@ public class TaskService {
                 .toList();
     }
 
+    @Transactional
     public List<TaskNotificationCandidateResponse> getNotificationCandidatesForOwner(
             LocalDate fromInclusive,
             LocalDate toInclusive,
@@ -255,6 +259,7 @@ public class TaskService {
                 .toList();
     }
 
+    @Transactional
     public List<TaskResponse> getTodayTasksForOwner(LocalDate targetDate, User owner) {
         Long ownerId = ownerId(owner);
         DateRange serviceRange = DateRange.ofDay(targetDate.toString()).toServiceZone(ZoneId.of(owner.getTimeZone()));
@@ -274,6 +279,7 @@ public class TaskService {
                 .toList();
     }
 
+    @Transactional
     public List<TaskResponse> getPlannedTasksBetweenForOwner(LocalDate startDate, LocalDate endDate, User owner) {
         Long ownerId = ownerId(owner);
         recurrenceOccurrenceMaterializer.materializeForOwner(ownerId, startDate, endDate.plusDays(1));
@@ -300,6 +306,7 @@ public class TaskService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<TaskResponse> getDoneTasksForOwner(LocalDate completedDate, User owner) {
         return taskRepository.findDoneTasks(ownerId(owner), completedDate).stream()
                 .map(TaskResponse::from)
@@ -362,6 +369,7 @@ public class TaskService {
         return TaskResponse.from(completed);
     }
 
+    @Transactional
     public TaskResponse completeForOwner(Long id, LocalDateTime completedAt, User owner) {
         Task completed = taskTxService.completeTxForOwner(id, completedAt, owner);
         return TaskResponse.from(completed);
@@ -408,6 +416,7 @@ public class TaskService {
         return TaskResponse.from(updated);
     }
 
+    @Transactional
     public TaskResponse setDeferReasonForOwner(Long id, DeferReason reason, User owner) {
         Task updated = taskTxService.setDeferReasonTxForOwner(id, reason, owner);
         return TaskResponse.from(updated);
