@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-07-30
+Last updated: 2026-08-02
 
 이 문서는 완료 이력보다 **앞으로 백엔드에서 닫아야 할 작업**을 관리한다. 이미 구현된 인증, v1 경로, owner scope, OpenAPI/Swagger/Scalar 문서 UI는 기준 상태로 보고, 아래 항목은 모바일 실사용과 운영 안정성에 필요한 후속 작업이다.
 
@@ -238,6 +238,82 @@ Last updated: 2026-07-30
 착수 조건:
 
 - 실제 staging/production 도메인과 모바일 배포 origin을 확정한다.
+
+### 6.5 로컬 PC 단일 production 운영
+
+목표: 별도 서버 없이 이 PC의 Docker Compose를 ToDoLab의 유일한 production 환경으로 사용하고, Android 앱이 Tailscale을 통해 안전하게 접근할 수 있게 한다. 이 환경에서는 staging을 따로 만들지 않고 `local 개발 환경`과 `이 PC의 production 환경`만 구분한다.
+
+현재 확인된 상태:
+
+- [x] MySQL 데이터는 external named volume `todolab-mysql-data`에 저장한다.
+- [x] app과 MySQL 컨테이너에 `restart: unless-stopped`가 설정되어 있다.
+- [x] MySQL health check와 app의 MySQL healthy 대기가 설정되어 있다.
+- [x] production profile은 DB, JWT, 문서 비공개, payload logging 비활성화 설정을 환경변수로 받는다.
+- [ ] app 컨테이너 자체 health check와 production readiness endpoint가 없다.
+- [ ] MySQL `3306`과 app `8080`이 모두 호스트 전체 interface에 공개되어 있다.
+- [ ] DB 정기 백업, 복구 연습, 보관 주기와 백업 실패 확인 절차가 없다.
+- [ ] `schema.sql`은 새 volume 최초 초기화에만 적용되므로 기존 production DB의 migration 실행·검증 절차가 필요하다.
+- [ ] Dockerfile은 빌드된 JAR을 전제로 하므로 clean checkout에서 JAR build부터 Compose 기동까지 재현하는 release 절차가 필요하다.
+- [ ] PC 재부팅, Docker Desktop 재시작, 절전과 네트워크 변경 뒤 자동 복구를 검증하지 않았다.
+
+#### A. production 접근 경로와 노출 범위
+
+- [ ] PC와 Android 기기에 Tailscale을 설치하고 동일 tailnet에서 연결한다.
+- [ ] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
+- [ ] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 app `8080`에 연결한다.
+- [ ] Android 앱에서 `/api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
+- [ ] Tailscale 경로만 사용할 경우 app port를 `127.0.0.1:8080:8080`으로 제한할지 결정하고 적용한다.
+- [ ] MySQL은 호스트 외부에서 직접 접근할 필요가 없으므로 `3306:3306` 공개를 제거하거나 `127.0.0.1`로 제한한다.
+- [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
+
+완료 기준:
+
+- 공용 인터넷 포트포워딩 없이 Android 앱에서 production API에 접근한다.
+- DB port는 LAN 또는 tailnet에 불필요하게 노출되지 않는다.
+- 모바일 production API URL이 재부팅이나 LAN IP 변경에도 바뀌지 않는다.
+
+#### B. Compose와 release 재현성
+
+- [ ] production 전용 `.env.example`을 만들고 필수 환경변수, 생성 방법, 선택값을 설명한다.
+- [ ] `TODOLAB_JWT_SECRET`은 32바이트 이상의 무작위 값으로 생성하고 저장소 밖에 보관한다.
+- [ ] 사용하지 않는 mail/batch 설정 때문에 app 기동이 막히지 않도록 필수·선택 환경변수를 정리한다.
+- [ ] `./gradlew clean test bootJar`부터 `docker compose up -d --build`까지 release 명령을 문서화한다.
+- [ ] app image에 version 또는 git commit tag를 남기고 이전 정상 image로 rollback하는 절차를 정한다.
+- [ ] app health check를 추가하고 MySQL 연결, schema, API readiness를 구분해 확인한다.
+- [ ] log volume/path와 Docker log rotation을 확정해 디스크 무한 증가를 방지한다.
+
+완료 기준:
+
+- clean checkout과 production 환경 파일만으로 같은 PC에서 배포를 재현할 수 있다.
+- 새 버전 실패 시 DB를 손상시키지 않고 직전 app image로 되돌릴 수 있다.
+
+#### C. 데이터 보존과 복구
+
+- [ ] `mysqldump` 기반 자동 백업 job 또는 host 스케줄을 구성한다.
+- [ ] 백업 파일은 DB volume과 다른 경로에 저장하고 보관 개수·기간을 정한다.
+- [ ] 최소 1회 빈 임시 DB에 백업을 복원해 로그인, Today, Calendar 데이터를 확인한다.
+- [ ] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.
+- [ ] migration 파일의 적용 이력을 관리할 도구(Flyway 등) 도입 여부를 결정한다.
+- [ ] Docker volume 삭제·재생성, PC 디스크 장애 시 복구 가능한 외부 백업 위치를 결정한다.
+
+완료 기준:
+
+- 컨테이너와 PC가 재시작되어도 데이터가 유지된다.
+- 실수로 volume을 잃어도 마지막 정상 백업에서 복원하는 절차가 검증되어 있다.
+
+#### D. 상시 운영 검증
+
+- [ ] Docker Desktop 로그인 시 자동 시작과 Compose 자동 복구를 확인한다.
+- [ ] PC 절전 중에는 앱을 사용할 수 없다는 점을 전제로 절전 정책을 확정한다.
+- [ ] 재부팅 후 MySQL → app → Tailscale HTTPS 경로가 자동으로 복구되는지 확인한다.
+- [ ] `/api/v1/auth/login`, Today 조회·생성·완료를 Android production build에서 smoke test한다.
+- [ ] 401, 5xx, DB 중단, Tailscale 연결 끊김을 재현하고 로그와 복구 절차를 확인한다.
+- [ ] 월 1회 backup restore와 디스크 여유 공간을 확인하는 운영 루틴을 정한다.
+
+완료 기준:
+
+- PC 재부팅 후 수동 코드 실행 없이 Android 앱이 다시 접속된다.
+- 장애 시 request id, container 상태, app/MySQL log, Tailscale 상태 순서로 원인을 확인할 수 있다.
 
 ## 7. 개발 원칙
 
