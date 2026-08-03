@@ -7,6 +7,7 @@ import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfigur
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceInitializationAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
@@ -20,7 +21,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = MvcVirtualThreadIntegrationTest.TestApp.class,
-        properties = "spring.threads.virtual.enabled=true"
+        properties = {
+                "spring.threads.virtual.enabled=true",
+                "spring.autoconfigure.exclude=org.springframework.boot.security.autoconfigure.actuate.web.servlet.ManagementWebSecurityAutoConfiguration"
+        }
 )
 class MvcVirtualThreadIntegrationTest {
 
@@ -44,6 +48,7 @@ class MvcVirtualThreadIntegrationTest {
             DataSourceInitializationAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class,
             SecurityAutoConfiguration.class,
+            ManagementWebSecurityAutoConfiguration.class,
             SecurityFilterAutoConfiguration.class,
             ServletWebSecurityAutoConfiguration.class,
             UserDetailsServiceAutoConfiguration.class

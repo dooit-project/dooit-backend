@@ -63,7 +63,7 @@ app:
 
   batch:
     scheduler:
-      enabled: true
+      enabled: ${APP_BATCH_SCHEDULER_ENABLED:false}
 
   mail:
     daily-summary:

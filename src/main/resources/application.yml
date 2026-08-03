@@ -45,3 +45,21 @@ springdoc:
     path: /swagger-ui
     display-request-duration: true
     operations-sorter: method
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      validate-group-membership: false
+      probes:
+        enabled: true
+      show-components: always
+      show-details: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,schema

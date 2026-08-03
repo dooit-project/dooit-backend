@@ -35,13 +35,23 @@ public class SecurityConfig {
             "/scalar.html"
     };
 
-    static final String[] WEB_PUBLIC_MATCHERS = {
+    static final String[] ACTUATOR_HEALTH_MATCHERS = {
+            "/actuator/health",
+            "/actuator/health/**"
+    };
+
+    private static final String[] WEB_STATIC_PUBLIC_MATCHERS = {
             "/login",
             "/favicon.ico",
             "/css/**",
             "/js/**",
             "/images/**"
     };
+
+    static final String[] WEB_PUBLIC_MATCHERS = combine(
+            WEB_STATIC_PUBLIC_MATCHERS,
+            ACTUATOR_HEALTH_MATCHERS
+    );
 
     private final ApiAuthenticationEntryPoint apiAuthenticationEntryPoint;
     private final ApiAccessDeniedHandler apiAccessDeniedHandler;
@@ -107,6 +117,13 @@ public class SecurityConfig {
                 DOCUMENTATION_MATCHERS.length
         );
         return matchers;
+    }
+
+    private static String[] combine(String[] first, String[] second) {
+        String[] combined = new String[first.length + second.length];
+        System.arraycopy(first, 0, combined, 0, first.length);
+        System.arraycopy(second, 0, combined, first.length, second.length);
+        return combined;
     }
 
     @Bean

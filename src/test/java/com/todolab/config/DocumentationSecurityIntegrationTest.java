@@ -39,4 +39,14 @@ class DocumentationSecurityIntegrationTest {
         mockMvc.perform(get("/scalar.html"))
                 .andExpect(status().is3xxRedirection());
     }
+
+    @Test
+    @DisplayName("문서 공개 설정을 꺼도 actuator health endpoint는 공개한다")
+    void actuatorHealthEndpointsArePublicWhenDocumentationIsDisabled() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/actuator/health/readiness"))
+                .andExpect(status().isOk());
+    }
 }

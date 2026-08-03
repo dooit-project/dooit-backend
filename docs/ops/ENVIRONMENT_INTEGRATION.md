@@ -4,6 +4,8 @@ Last updated: 2026-08-02
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
+이 PC를 단일 production으로 운영하는 실제 명령과 백업·복구 절차는 [`LOCAL_PRODUCTION_RUNBOOK.md`](./LOCAL_PRODUCTION_RUNBOOK.md)를 따른다.
+
 ## 1. 환경별 API URL
 
 | 환경 | API URL | 상태 | 비고 |
@@ -84,7 +86,26 @@ staging/production 환경을 확정할 때는 아래 값을 먼저 결정한다.
 4. production은 문서 UI 비공개 상태를 먼저 확인한 뒤 모바일 smoke test를 진행한다.
 5. 확정된 public URL만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.
 
-## 5. 문서 UI 공개 기준
+## 5. Production Health Check
+
+운영 readiness endpoint는 `/actuator/health/readiness`다. 이 endpoint는 인증 없이 접근 가능하지만, Actuator 노출 범위는 `health`로만 제한한다.
+
+확인 항목:
+
+- `readinessState`: Spring Boot application readiness
+- `db`: datasource 연결 상태
+- `schema`: 운영에 필요한 핵심 table 존재 여부
+
+Docker image와 Compose의 app service health check는 모두 `/actuator/health/readiness`를 호출한다. readiness가 `UP`이 아니면 app container는 healthy 상태가 아니다.
+
+상세 점검 endpoint:
+
+- `/actuator/health/liveness`: JVM/application liveness
+- `/actuator/health/readiness`: API readiness, DB 연결, schema 상태
+- `/actuator/health/db`: datasource 연결 상태
+- `/actuator/health/schema`: 핵심 table 존재 여부
+
+## 6. 문서 UI 공개 기준
 
 | 환경 | Swagger UI `/swagger-ui` | Scalar `/scalar.html` | 비고 |
 | --- | --- | --- | --- |
@@ -94,7 +115,7 @@ staging/production 환경을 확정할 때는 아래 값을 먼저 결정한다.
 
 현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다. prod 설정의 `TODOLAB_DOCS_PUBLIC_ENABLED`, `TODOLAB_SPRINGDOC_API_DOCS_ENABLED`, `TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED` 기본값은 테스트로 검증한다.
 
-## 6. API 로그 운영 기준
+## 7. API 로그 운영 기준
 
 백엔드는 `/api/**` 요청에 공통 API 로그 필터를 적용한다. 서버 렌더링 화면과 정적 리소스는 이 필터 대상이 아니다.
 

@@ -29,4 +29,13 @@ class SecurityConfigTest {
         assertThat(SecurityConfig.WEB_PUBLIC_MATCHERS)
                 .doesNotContain(SecurityConfig.DOCUMENTATION_MATCHERS);
     }
+
+    @Test
+    @DisplayName("actuator health endpoint는 문서 공개 설정과 별도로 공개한다")
+    void actuatorHealthMatchersArePublic() {
+        assertThat(SecurityConfig.ACTUATOR_HEALTH_MATCHERS)
+                .contains("/actuator/health", "/actuator/health/**");
+        assertThat(SecurityConfig.WEB_PUBLIC_MATCHERS)
+                .contains(SecurityConfig.ACTUATOR_HEALTH_MATCHERS);
+    }
 }

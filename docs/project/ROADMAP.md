@@ -249,9 +249,9 @@ Last updated: 2026-08-02
 - [x] app과 MySQL 컨테이너에 `restart: unless-stopped`가 설정되어 있다.
 - [x] MySQL health check와 app의 MySQL healthy 대기가 설정되어 있다.
 - [x] production profile은 DB, JWT, 문서 비공개, payload logging 비활성화 설정을 환경변수로 받는다.
-- [ ] app 컨테이너 자체 health check와 production readiness endpoint가 없다.
-- [ ] MySQL `3306`과 app `8080`이 모두 호스트 전체 interface에 공개되어 있다.
-- [ ] DB 정기 백업, 복구 연습, 보관 주기와 백업 실패 확인 절차가 없다.
+- [x] app 컨테이너 자체 health check와 production readiness endpoint를 추가했다.
+- [x] MySQL host port를 제거하고 app은 `127.0.0.1:8080`에만 공개한다.
+- [ ] DB 백업·복구 스크립트와 보관 주기는 마련했지만 자동 실행과 실제 복구 연습이 남아 있다.
 - [ ] `schema.sql`은 새 volume 최초 초기화에만 적용되므로 기존 production DB의 migration 실행·검증 절차가 필요하다.
 - [ ] Dockerfile은 빌드된 JAR을 전제로 하므로 clean checkout에서 JAR build부터 Compose 기동까지 재현하는 release 절차가 필요하다.
 - [ ] PC 재부팅, Docker Desktop 재시작, 절전과 네트워크 변경 뒤 자동 복구를 검증하지 않았다.
@@ -262,8 +262,8 @@ Last updated: 2026-08-02
 - [ ] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
 - [ ] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 app `8080`에 연결한다.
 - [ ] Android 앱에서 `/api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
-- [ ] Tailscale 경로만 사용할 경우 app port를 `127.0.0.1:8080:8080`으로 제한할지 결정하고 적용한다.
-- [ ] MySQL은 호스트 외부에서 직접 접근할 필요가 없으므로 `3306:3306` 공개를 제거하거나 `127.0.0.1`로 제한한다.
+- [x] Tailscale 경로만 사용하도록 app port를 `127.0.0.1:8080:8080`으로 제한한다.
+- [x] MySQL은 host port 공개를 제거하고 Compose 내부 network에서만 접근한다.
 - [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
 
 완료 기준:
@@ -274,12 +274,12 @@ Last updated: 2026-08-02
 
 #### B. Compose와 release 재현성
 
-- [ ] production 전용 `.env.example`을 만들고 필수 환경변수, 생성 방법, 선택값을 설명한다.
+- [x] production 전용 `.env.example`을 만들고 필수 환경변수, 생성 방법, 선택값을 설명한다.
 - [ ] `TODOLAB_JWT_SECRET`은 32바이트 이상의 무작위 값으로 생성하고 저장소 밖에 보관한다.
-- [ ] 사용하지 않는 mail/batch 설정 때문에 app 기동이 막히지 않도록 필수·선택 환경변수를 정리한다.
-- [ ] `./gradlew clean test bootJar`부터 `docker compose up -d --build`까지 release 명령을 문서화한다.
+- [x] 사용하지 않는 mail/batch 설정 때문에 app 기동이 막히지 않도록 필수·선택 환경변수를 정리한다.
+- [x] `./gradlew clean test bootJar`부터 `docker compose up -d --build`까지 release 명령을 문서화한다.
 - [ ] app image에 version 또는 git commit tag를 남기고 이전 정상 image로 rollback하는 절차를 정한다.
-- [ ] app health check를 추가하고 MySQL 연결, schema, API readiness를 구분해 확인한다.
+- [x] app health check를 추가하고 MySQL 연결, schema, API readiness를 구분해 확인한다.
 - [ ] log volume/path와 Docker log rotation을 확정해 디스크 무한 증가를 방지한다.
 
 완료 기준:
@@ -289,10 +289,10 @@ Last updated: 2026-08-02
 
 #### C. 데이터 보존과 복구
 
-- [ ] `mysqldump` 기반 자동 백업 job 또는 host 스케줄을 구성한다.
-- [ ] 백업 파일은 DB volume과 다른 경로에 저장하고 보관 개수·기간을 정한다.
+- [ ] `mysqldump` 백업 명령은 구현했으며 검증 후 host scheduler에 연결한다.
+- [x] 백업 파일은 DB volume과 다른 경로에 저장하고 기본 보관 기간을 14일로 정한다.
 - [ ] 최소 1회 빈 임시 DB에 백업을 복원해 로그인, Today, Calendar 데이터를 확인한다.
-- [ ] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.
+- [x] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.
 - [ ] migration 파일의 적용 이력을 관리할 도구(Flyway 등) 도입 여부를 결정한다.
 - [ ] Docker volume 삭제·재생성, PC 디스크 장애 시 복구 가능한 외부 백업 위치를 결정한다.
 

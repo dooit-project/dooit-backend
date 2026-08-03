@@ -9,8 +9,6 @@ services:
       MYSQL_USER: ${TODOLAB_DB_USERNAME:?TODOLAB_DB_USERNAME is required}
       MYSQL_PASSWORD: ${TODOLAB_DB_PASSWORD:?TODOLAB_DB_PASSWORD is required}
       TZ: Asia/Seoul
-    ports:
-      - "3306:3306"
     volumes:
       - todolab-mysql-data:/var/lib/mysql
       - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
@@ -35,15 +33,32 @@ services:
       TODOLAB_DB_URL: ${TODOLAB_DB_URL:?TODOLAB_DB_URL is required}
       TODOLAB_DB_USERNAME: ${TODOLAB_DB_USERNAME:?TODOLAB_DB_USERNAME is required}
       TODOLAB_DB_PASSWORD: ${TODOLAB_DB_PASSWORD:?TODOLAB_DB_PASSWORD is required}
-      TODOLAB_MAIL_USERNAME: ${TODOLAB_MAIL_USERNAME:?TODOLAB_MAIL_USERNAME is required}
-      TODOLAB_MAIL_PASSWORD: ${TODOLAB_MAIL_PASSWORD:?TODOLAB_MAIL_PASSWORD is required}
-      TODOLAB_DAILY_SUMMARY_TO: ${TODOLAB_DAILY_SUMMARY_TO:?TODOLAB_DAILY_SUMMARY_TO is required}
-      APP_BATCH_SCHEDULER_ENABLED: ${APP_BATCH_SCHEDULER_ENABLED:?APP_BATCH_SCHEDULER_ENABLED is required}
+      TODOLAB_JWT_ISSUER: ${TODOLAB_JWT_ISSUER:?TODOLAB_JWT_ISSUER is required}
+      TODOLAB_JWT_SECRET: ${TODOLAB_JWT_SECRET:?TODOLAB_JWT_SECRET is required}
+      TODOLAB_JWT_ACCESS_TOKEN_TTL: ${TODOLAB_JWT_ACCESS_TOKEN_TTL:-PT24H}
+      TODOLAB_MAIL_USERNAME: ${TODOLAB_MAIL_USERNAME:-}
+      TODOLAB_MAIL_PASSWORD: ${TODOLAB_MAIL_PASSWORD:-}
+      TODOLAB_DAILY_SUMMARY_TO: ${TODOLAB_DAILY_SUMMARY_TO:-}
+      APP_BATCH_SCHEDULER_ENABLED: ${APP_BATCH_SCHEDULER_ENABLED:-false}
+      TODOLAB_ALLOWED_ORIGINS: ${TODOLAB_ALLOWED_ORIGINS:-}
+      TODOLAB_DOCS_PUBLIC_ENABLED: "false"
+      TODOLAB_API_LOGGING_ENABLED: "true"
+      TODOLAB_API_LOGGING_PAYLOAD_ENABLED: "false"
+      TODOLAB_LOG_PATH: /app/logs
       TZ: Asia/Seoul
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - todolab-app-logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health/readiness >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
 
 volumes:
   todolab-mysql-data:
     external: true
     name: todolab-mysql-data
+  todolab-app-logs:

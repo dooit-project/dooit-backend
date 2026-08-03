@@ -91,6 +91,9 @@ class DocumentationIndexTest {
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
         assertThat(environment).contains("TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED");
         assertThat(environment).contains("local 프로필은 프론트 연동 디버깅을 위해 `payload-enabled=true`");
+        assertThat(environment).contains("## 5. Production Health Check");
+        assertThat(environment).contains("/actuator/health/readiness");
+        assertThat(environment).contains("`schema`: 운영에 필요한 핵심 table 존재 여부");
     }
 
     @Test

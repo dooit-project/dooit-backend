@@ -1,6 +1,6 @@
 # ToDoLab Backend Docs
 
-Last updated: 2026-07-27
+Last updated: 2026-08-03
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
 
@@ -34,6 +34,7 @@ Last updated: 2026-07-27
 | 문서 | 용도 |
 | --- | --- |
 | [`api/API_COMPATIBILITY_POLICY.md`](./api/API_COMPATIBILITY_POLICY.md) | v1 호환성, breaking change, deprecation 기준 |
+| [`ops/LOCAL_PRODUCTION_RUNBOOK.md`](./ops/LOCAL_PRODUCTION_RUNBOOK.md) | 로컬 PC production 기동, Tailscale HTTPS, DB 백업·복구 절차 |
 | [`project/BACKEND_DOCUMENTATION_PLAN.md`](./project/BACKEND_DOCUMENTATION_PLAN.md) | 문서 소유권과 유지 기준 |
 | [`project/ROADMAP.md`](./project/ROADMAP.md) | 완료된 기준 상태와 다음 백엔드 우선순위 |
 
