@@ -252,7 +252,7 @@ Last updated: 2026-08-02
 - [x] app 컨테이너 자체 health check와 production readiness endpoint를 추가했다.
 - [x] MySQL host port를 제거하고 app은 `127.0.0.1:8080`에만 공개한다.
 - [ ] DB 백업·복구 스크립트와 보관 주기는 마련했지만 자동 실행과 실제 복구 연습이 남아 있다.
-- [ ] `schema.sql`은 새 volume 최초 초기화에만 적용되므로 기존 production DB의 migration 실행·검증 절차가 필요하다.
+- [x] `schema.sql`은 새 volume 최초 초기화에만 적용되므로 기존 production DB의 migration 실행·검증 절차가 필요하다.
 - [ ] Dockerfile은 빌드된 JAR을 전제로 하므로 clean checkout에서 JAR build부터 Compose 기동까지 재현하는 release 절차가 필요하다.
 - [ ] PC 재부팅, Docker Desktop 재시작, 절전과 네트워크 변경 뒤 자동 복구를 검증하지 않았다.
 
@@ -275,7 +275,7 @@ Last updated: 2026-08-02
 #### B. Compose와 release 재현성
 
 - [x] production 전용 `.env.example`을 만들고 필수 환경변수, 생성 방법, 선택값을 설명한다.
-- [ ] `TODOLAB_JWT_SECRET`은 32바이트 이상의 무작위 값으로 생성하고 저장소 밖에 보관한다.
+- [x] `TODOLAB_JWT_SECRET`은 32바이트 이상의 무작위 값으로 생성하고 저장소 밖에 보관한다.
 - [x] 사용하지 않는 mail/batch 설정 때문에 app 기동이 막히지 않도록 필수·선택 환경변수를 정리한다.
 - [x] `./gradlew clean test bootJar`부터 `docker compose up -d --build`까지 release 명령을 문서화한다.
 - [ ] app image에 version 또는 git commit tag를 남기고 이전 정상 image로 rollback하는 절차를 정한다.

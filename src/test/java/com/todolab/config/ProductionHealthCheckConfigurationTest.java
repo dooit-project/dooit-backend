@@ -73,4 +73,32 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(restore).contains("docker compose stop app");
         assertThat(restore).contains("gzip -dc \"$backup_file\"");
     }
+
+    @Test
+    @DisplayName("production 환경 초기화 스크립트는 JWT secret을 생성하고 기존 값을 덮어쓰지 않는다")
+    void productionEnvironmentScriptGeneratesJwtSecretWithoutOverwritingExistingValues() throws Exception {
+        String script = Files.readString(Path.of("scripts/configure-production-env.sh"));
+
+        assertThat(script).contains("openssl rand -base64 48");
+        assertThat(script).contains("set_env_value \"TODOLAB_JWT_ISSUER\"");
+        assertThat(script).contains("set_env_value \"TODOLAB_JWT_SECRET\"");
+        assertThat(script).contains("already has a non-placeholder value; refusing to overwrite .env");
+        assertThat(script).contains("https://*.ts.net");
+        assertThat(script).doesNotContain("printf 'TODOLAB_JWT_SECRET=%s\\n' \"$jwt_secret\"");
+    }
+
+    @Test
+    @DisplayName("로컬 production migration 문서는 기존 DB 수동 적용 절차를 안내한다")
+    void localProductionMigrationDocumentsManualApplication() throws Exception {
+        String migration = Files.readString(Path.of("docs/db/migrations/20260803_prepare_local_production.sql"));
+        String runbook = Files.readString(Path.of("docs/ops/LOCAL_PRODUCTION_RUNBOOK.md"));
+
+        assertThat(migration).contains("START TRANSACTION;");
+        assertThat(migration).contains("CREATE TABLE APP_USER");
+        assertThat(migration).contains("ALTER TABLE TASK");
+        assertThat(migration).contains("CREATE TABLE PUSH_NOTIFICATION_HISTORY");
+        assertThat(migration).contains("COMMIT;");
+        assertThat(runbook).contains("docs/db/migrations/20260803_prepare_local_production.sql");
+        assertThat(runbook).contains("이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.");
+    }
 }

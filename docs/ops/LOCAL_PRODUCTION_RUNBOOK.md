@@ -90,6 +90,18 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 
 현재 schema 변경은 자동 migration 도구로 추적되지 않는다. 기존 volume에는 `docker-entrypoint-initdb.d`의 `schema.sql`이 다시 적용되지 않으므로, migration SQL 적용과 백업을 release의 필수 수동 단계로 유지한다. Flyway 도입 전에는 schema 변경이 있는 release를 자동 배포하지 않는다.
 
+기존 production DB가 현재 schema보다 오래된 경우에는 app 업데이트 전에 백업 후 필요한 migration SQL을 수동 적용한다.
+
+```bash
+./scripts/backup-db.sh
+docker compose stop app
+docker compose exec -T mysql sh -c 'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < docs/db/migrations/20260803_prepare_local_production.sql
+docker compose up -d app
+curl --fail http://127.0.0.1:8080/actuator/health/readiness
+```
+
+`docs/db/migrations/20260803_prepare_local_production.sql`은 local production으로 전환하기 전 legacy DB를 현재 app schema에 맞추는 일회성 수동 migration이다. 이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.
+
 ## 7. 장애 확인 순서
 
 ```bash
