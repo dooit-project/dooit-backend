@@ -278,9 +278,9 @@ Last updated: 2026-08-02
 - [x] `TODOLAB_JWT_SECRET`은 32바이트 이상의 무작위 값으로 생성하고 저장소 밖에 보관한다.
 - [x] 사용하지 않는 mail/batch 설정 때문에 app 기동이 막히지 않도록 필수·선택 환경변수를 정리한다.
 - [x] `./gradlew clean test bootJar`부터 `docker compose up -d --build`까지 release 명령을 문서화한다.
-- [ ] app image에 version 또는 git commit tag를 남기고 이전 정상 image로 rollback하는 절차를 정한다.
+- [x] app image에 version 또는 git commit tag를 남기고 이전 정상 image로 rollback하는 절차를 정한다.
 - [x] app health check를 추가하고 MySQL 연결, schema, API readiness를 구분해 확인한다.
-- [ ] log volume/path와 Docker log rotation을 확정해 디스크 무한 증가를 방지한다.
+- [x] log volume/path와 Docker log rotation을 확정해 디스크 무한 증가를 방지한다.
 
 완료 기준:
 

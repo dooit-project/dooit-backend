@@ -84,8 +84,7 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 
 1. `./scripts/backup-db.sh`
 2. migration SQL과 API 호환성 확인
-3. `./gradlew clean test bootJar`
-4. `docker compose up -d --build app`
+3. `./scripts/release-production.sh`
 5. readiness와 Android smoke test
 
 현재 schema 변경은 자동 migration 도구로 추적되지 않는다. 기존 volume에는 `docker-entrypoint-initdb.d`의 `schema.sql`이 다시 적용되지 않으므로, migration SQL 적용과 백업을 release의 필수 수동 단계로 유지한다. Flyway 도입 전에는 schema 변경이 있는 release를 자동 배포하지 않는다.
@@ -101,6 +100,21 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ```
 
 `docs/db/migrations/20260803_prepare_local_production.sql`은 local production으로 전환하기 전 legacy DB를 현재 app schema에 맞추는 일회성 수동 migration이다. 이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.
+
+app image tag는 기본적으로 현재 git short SHA를 사용한다. 특정 tag로 release하려면 `TODOLAB_APP_IMAGE_TAG`를 지정한다.
+
+```bash
+TODOLAB_APP_IMAGE_TAG=$(git rev-parse --short HEAD) ./scripts/release-production.sh
+docker images todolab-backend
+```
+
+새 버전 문제가 확인되면 직전 tag로 되돌린다. rollback은 DB를 변경하지 않고 app container만 기존 image로 재기동한다.
+
+```bash
+./scripts/rollback-production.sh <previous-image-tag>
+```
+
+Docker stdout/stderr log는 Compose에서 `json-file` driver, `max-size=10m`, `max-file=5`로 제한한다. application log는 `todolab-app-logs` volume의 `/app/logs`에 저장하고 Logback 보관 정책을 따른다.
 
 ## 7. 장애 확인 순서
 

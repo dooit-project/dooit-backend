@@ -34,6 +34,21 @@ class ProductionHealthCheckConfigurationTest {
     }
 
     @Test
+    @DisplayName("Compose와 Dockerfile은 app image tag와 Docker log rotation을 설정한다")
+    void composeAndDockerfileConfigureImageTagAndLogRotation() throws Exception {
+        String dockerfile = Files.readString(Path.of("Dockerfile"));
+        String compose = Files.readString(Path.of("docker-compose.yml"));
+
+        assertThat(dockerfile).contains("ARG APP_VERSION=local");
+        assertThat(dockerfile).contains("org.opencontainers.image.revision");
+        assertThat(compose).contains("image: todolab-backend:${TODOLAB_APP_IMAGE_TAG:-local}");
+        assertThat(compose).contains("APP_VERSION: ${TODOLAB_APP_IMAGE_TAG:-local}");
+        assertThat(compose).contains("driver: json-file");
+        assertThat(compose).contains("max-size: \"10m\"");
+        assertThat(compose).contains("max-file: \"5\"");
+    }
+
+    @Test
     @DisplayName("Actuator health 설정은 readiness에 DB와 schema indicator를 포함한다")
     void actuatorReadinessIncludesDatabaseAndSchema() throws Exception {
         String application = Files.readString(Path.of("src/main/resources/application.yml"));
@@ -56,6 +71,9 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(runbook).contains("tailscale serve --bg http://127.0.0.1:8080");
         assertThat(runbook).contains("./scripts/backup-db.sh");
         assertThat(runbook).contains("TODOLAB_CONFIRM_RESTORE=RESTORE ./scripts/restore-db.sh");
+        assertThat(runbook).contains("./scripts/release-production.sh");
+        assertThat(runbook).contains("./scripts/rollback-production.sh <previous-image-tag>");
+        assertThat(runbook).contains("max-size=10m");
     }
 
     @Test
@@ -100,5 +118,20 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(migration).contains("COMMIT;");
         assertThat(runbook).contains("docs/db/migrations/20260803_prepare_local_production.sql");
         assertThat(runbook).contains("이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.");
+    }
+
+    @Test
+    @DisplayName("release와 rollback 스크립트는 git tag image 배포와 이전 image 재기동을 지원한다")
+    void releaseAndRollbackScriptsSupportTaggedImages() throws Exception {
+        String release = Files.readString(Path.of("scripts/release-production.sh"));
+        String rollback = Files.readString(Path.of("scripts/rollback-production.sh"));
+
+        assertThat(release).contains("git rev-parse --short HEAD");
+        assertThat(release).contains("TODOLAB_APP_IMAGE_TAG=\"$image_tag\" docker compose build app");
+        assertThat(release).contains("./gradlew clean test bootJar");
+        assertThat(release).contains("Rollback command: ./scripts/rollback-production.sh <previous-image-tag>");
+        assertThat(rollback).contains("docker image inspect \"$image_name\"");
+        assertThat(rollback).contains("TODOLAB_APP_IMAGE_TAG=\"$image_tag\" docker compose up -d --no-build app");
+        assertThat(rollback).contains("/actuator/health/readiness");
     }
 }

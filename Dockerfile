@@ -7,7 +7,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ARG JAR_FILE=build/libs/*.jar
+ARG APP_VERSION=local
 COPY ${JAR_FILE} /app/todolab.jar
+
+LABEL org.opencontainers.image.title="todolab-backend"
+LABEL org.opencontainers.image.revision="${APP_VERSION}"
 
 EXPOSE 8080
 
