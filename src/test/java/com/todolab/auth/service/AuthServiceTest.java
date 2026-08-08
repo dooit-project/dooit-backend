@@ -3,6 +3,7 @@ package com.todolab.auth.service;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
+import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,10 +61,38 @@ class AuthServiceTest {
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.expiresAt()).isEqualTo(accessToken.expiresAt());
         assertThat(response.user().email()).isEqualTo("test@example.com");
+        assertThat(response.user().accountType()).isEqualTo(AccountType.REGISTERED);
 
         then(userRepository).should().findByEmail("test@example.com");
         then(passwordEncoder).should().matches("password123", "encoded-password");
         then(jwtTokenService).should().createAccessToken(user);
+    }
+
+    @Test
+    @DisplayName("게스트 계정을 생성하고 게스트 access token을 반환한다")
+    void createGuest_success() {
+        JwtTokenService.AccessToken accessToken = new JwtTokenService.AccessToken(
+                "guest-token",
+                LocalDateTime.of(2026, 9, 9, 0, 0)
+        );
+
+        given(userRepository.save(org.mockito.ArgumentMatchers.any(User.class)))
+                .willAnswer(invocation -> {
+                    User guest = invocation.getArgument(0);
+                    org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 10L);
+                    return guest;
+                });
+        given(jwtTokenService.guestAccessTokenTtl()).willReturn(java.time.Duration.ofDays(31));
+        given(jwtTokenService.createGuestAccessToken(org.mockito.ArgumentMatchers.any(User.class))).willReturn(accessToken);
+
+        TokenResponse response = authService.createGuest();
+
+        assertThat(response.tokenType()).isEqualTo("Bearer");
+        assertThat(response.accessToken()).isEqualTo("guest-token");
+        assertThat(response.user().id()).isEqualTo(10L);
+        assertThat(response.user().accountType()).isEqualTo(AccountType.GUEST);
+        assertThat(response.user().email()).isNull();
+        assertThat(response.user().displayName()).isNull();
     }
 
     @Test

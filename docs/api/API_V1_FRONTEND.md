@@ -89,14 +89,50 @@ Response:
 ```ts
 type UserResponse = {
   id: number;
-  email: string;
-  displayName: string;
+  accountType: 'GUEST' | 'REGISTERED';
+  email: string | null;
+  displayName: string | null;
   role: 'USER' | 'ADMIN';
   timeZone: string;
   createdAt: string;
   updatedAt: string | null;
 };
 ```
+
+### 게스트 계정 생성
+
+```http
+POST /api/v1/auth/guest
+```
+
+Request body는 없다. 서버가 새 `GUEST` 사용자와 access token을 발급한다.
+
+Response:
+
+```ts
+type TokenResponse = {
+  tokenType: 'Bearer';
+  accessToken: string;
+  expiresAt: string; // 기본 31일 뒤
+  user: {
+    id: number;
+    accountType: 'GUEST';
+    email: null;
+    displayName: null;
+    role: 'USER';
+    timeZone: string;
+    createdAt: string;
+    updatedAt: string | null;
+  };
+};
+```
+
+주의:
+
+- 서버가 사용자 id를 생성하며 클라이언트가 지정할 수 없다.
+- IP나 단말 정보가 같다는 이유로 기존 게스트 계정을 반환하지 않는다.
+- 게스트 token에는 `accountType=GUEST` claim이 포함된다.
+- 게스트 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.
 
 ### 로그인
 
@@ -137,7 +173,9 @@ Response:
 ```ts
 type AuthenticatedUserResponse = {
   id: number;
-  email: string;
+  accountType: 'GUEST' | 'REGISTERED';
+  email: string | null;
+  displayName: string | null;
   role: string;
 };
 ```

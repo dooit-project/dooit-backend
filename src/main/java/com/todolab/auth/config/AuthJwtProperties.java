@@ -8,6 +8,7 @@ import java.time.Duration;
 public record AuthJwtProperties(
         String issuer,
         String secret,
-        Duration accessTokenTtl
+        Duration accessTokenTtl,
+        Duration guestAccessTokenTtl
 ) {
 }

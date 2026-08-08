@@ -24,6 +24,9 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("403은 인증 후 권한 부족");
         assertThat(content).contains("PATCH /api/v1/users/me/time-zone");
         assertThat(content).contains("Today/Calendar/알림 후보 조회의 일정 overlap 날짜 경계에 적용");
+        assertThat(content).contains("POST /api/v1/auth/guest");
+        assertThat(content).contains("accountType: 'GUEST' | 'REGISTERED'");
+        assertThat(content).contains("게스트 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.");
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.todolab.auth.service;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
+import com.todolab.Constant;
 import com.todolab.user.domain.User;
 import com.todolab.user.dto.UserResponse;
 import com.todolab.user.repository.UserRepository;
@@ -11,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 @Service
@@ -36,6 +38,20 @@ public class AuthService {
                 accessToken.tokenValue(),
                 accessToken.expiresAt(),
                 UserResponse.from(user)
+        );
+    }
+
+    @Transactional
+    public TokenResponse createGuest() {
+        User guest = userRepository.save(User.guest(
+                LocalDateTime.now(Constant.ZONE).plus(jwtTokenService.guestAccessTokenTtl())
+        ));
+        JwtTokenService.AccessToken accessToken = jwtTokenService.createGuestAccessToken(guest);
+        return new TokenResponse(
+                "Bearer",
+                accessToken.tokenValue(),
+                accessToken.expiresAt(),
+                UserResponse.from(guest)
         );
     }
 

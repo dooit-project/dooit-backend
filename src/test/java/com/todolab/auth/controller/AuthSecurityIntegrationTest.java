@@ -52,7 +52,27 @@ class AuthSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.id").value(7))
+                .andExpect(jsonPath("$.data.accountType").value("REGISTERED"))
                 .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                .andExpect(jsonPath("$.data.displayName").value("테스터"))
+                .andExpect(jsonPath("$.data.role").value("USER"));
+    }
+
+    @Test
+    @DisplayName("내 인증 정보 조회 성공 - 게스트 Bearer 토큰이면 GUEST 계정 정보를 반환한다")
+    void me_guestSuccess() throws Exception {
+        User user = User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0));
+        ReflectionTestUtils.setField(user, "id", 8L);
+        String accessToken = jwtTokenService.createGuestAccessToken(user).tokenValue();
+
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.id").value(8))
+                .andExpect(jsonPath("$.data.accountType").value("GUEST"))
+                .andExpect(jsonPath("$.data.email").doesNotExist())
+                .andExpect(jsonPath("$.data.displayName").doesNotExist())
                 .andExpect(jsonPath("$.data.role").value("USER"));
     }
 

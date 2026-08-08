@@ -66,6 +66,13 @@ public class AuthController {
                 .body(ApiResponse.success(response));
     }
 
+    @Operation(summary = "게스트 계정 생성", description = "로그인 없이 사용할 수 있는 서버 발급형 게스트 계정과 Bearer access token을 생성합니다.")
+    @PostMapping("/guest")
+    public ResponseEntity<ApiResponse<TokenResponse>> guest() {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(authService.createGuest()));
+    }
+
     @Operation(summary = "로그인", description = "이메일과 비밀번호로 Bearer access token을 발급합니다.")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
@@ -81,7 +88,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthenticatedUserResponse>> me(@AuthenticationPrincipal Jwt jwt) {
         AuthenticatedUserResponse response = new AuthenticatedUserResponse(
                 Long.valueOf(jwt.getSubject()),
+                jwt.getClaimAsString("accountType") == null
+                        ? com.todolab.user.domain.AccountType.REGISTERED
+                        : com.todolab.user.domain.AccountType.valueOf(jwt.getClaimAsString("accountType")),
                 jwt.getClaimAsString("email"),
+                jwt.getClaimAsString("displayName"),
                 jwt.getClaimAsString("role")
         );
 

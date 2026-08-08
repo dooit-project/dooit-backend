@@ -109,11 +109,13 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ./scripts/backup-db.sh
 docker compose stop app
 docker compose exec -T mysql sh -c 'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < docs/db/migrations/20260803_prepare_local_production.sql
+docker compose exec -T mysql sh -c 'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < docs/db/migrations/20260809_add_guest_account_columns.sql
 docker compose up -d app
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ```
 
 `docs/db/migrations/20260803_prepare_local_production.sql`은 local production으로 전환하기 전 legacy DB를 현재 app schema에 맞추는 일회성 수동 migration이다. 이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.
+`docs/db/migrations/20260809_add_guest_account_columns.sql`은 게스트 계정 도입을 위해 `APP_USER`에 `accountType`, 병합 상태, 게스트 만료 필드를 추가하고 이메일/비밀번호/표시 이름을 nullable로 전환한다.
 
 app image tag는 기본적으로 현재 git short SHA를 사용한다. 특정 tag로 release하려면 `TODOLAB_APP_IMAGE_TAG`를 지정한다.
 

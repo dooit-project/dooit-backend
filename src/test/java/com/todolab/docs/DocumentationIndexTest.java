@@ -40,10 +40,14 @@ class DocumentationIndexTest {
     @DisplayName("문서 유지 계획은 문서 그룹과 커밋 전 점검 기준을 안내한다")
     void documentationPlanDefinesMaintenanceRules() throws Exception {
         String plan = Files.readString(Path.of("docs/project/BACKEND_DOCUMENTATION_PLAN.md"));
+        String auth = Files.readString(Path.of("docs/api/AUTH_CONTRACT.md"));
 
         assertThat(plan).contains("## 문서 그룹");
         assertThat(plan).contains("## 유지 원칙");
         assertThat(plan).contains("## 커밋 전 점검");
+        assertThat(auth).contains("POST /api/v1/auth/guest");
+        assertThat(auth).contains("게스트 access token TTL은 31일");
+        assertThat(auth).contains("`accountType` claim은 `GUEST`");
     }
 
     @Test

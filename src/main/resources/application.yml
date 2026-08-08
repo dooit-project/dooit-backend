@@ -12,6 +12,7 @@ app:
       issuer: https://todolab.local
       secret: ${TODOLAB_JWT_SECRET:dev-only-not-for-production-jwt-secret}
       access-token-ttl: PT1H
+      guest-access-token-ttl: P31D
 
   cors:
     allowed-origins: http://localhost:8081,http://localhost:8090

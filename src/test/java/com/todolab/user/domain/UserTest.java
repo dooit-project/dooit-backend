@@ -16,8 +16,23 @@ class UserTest {
         assertThat(user.getEmail()).isEqualTo("test@example.com");
         assertThat(user.getPasswordHash()).isEqualTo("encoded-password");
         assertThat(user.getDisplayName()).isEqualTo("테스터");
+        assertThat(user.getAccountType()).isEqualTo(AccountType.REGISTERED);
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
         assertThat(user.getTimeZone()).isEqualTo("Asia/Seoul");
+    }
+
+    @Test
+    @DisplayName("게스트 사용자는 이메일과 비밀번호 없이 생성한다")
+    void createGuest() {
+        User user = User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0));
+
+        assertThat(user.getAccountType()).isEqualTo(AccountType.GUEST);
+        assertThat(user.getEmail()).isNull();
+        assertThat(user.getPasswordHash()).isNull();
+        assertThat(user.getDisplayName()).isNull();
+        assertThat(user.getRole()).isEqualTo(UserRole.USER);
+        assertThat(user.getGuestExpiresAt()).isEqualTo(java.time.LocalDateTime.of(2026, 9, 9, 0, 0));
+        assertThat(user.getLastActiveAt()).isNotNull();
     }
 
     @Test

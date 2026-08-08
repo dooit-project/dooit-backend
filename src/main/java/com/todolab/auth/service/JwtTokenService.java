@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -22,17 +23,37 @@ public class JwtTokenService {
     private final AuthJwtProperties authJwtProperties;
 
     public AccessToken createAccessToken(User user) {
-        Instant issuedAt = Instant.now();
-        Instant expiresAt = issuedAt.plus(authJwtProperties.accessTokenTtl());
+        return createAccessToken(user, authJwtProperties.accessTokenTtl());
+    }
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+    public AccessToken createGuestAccessToken(User user) {
+        return createAccessToken(user, authJwtProperties.guestAccessTokenTtl());
+    }
+
+    public Duration guestAccessTokenTtl() {
+        return authJwtProperties.guestAccessTokenTtl();
+    }
+
+    private AccessToken createAccessToken(User user, Duration tokenTtl) {
+        Instant issuedAt = Instant.now();
+        Instant expiresAt = issuedAt.plus(tokenTtl);
+
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer(authJwtProperties.issuer())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .subject(String.valueOf(user.getId()))
-                .claim("email", user.getEmail())
-                .claim("role", user.getRole().name())
-                .build();
+                .claim("accountType", user.getAccountType().name())
+                .claim("role", user.getRole().name());
+
+        if (user.getEmail() != null) {
+            claimsBuilder.claim("email", user.getEmail());
+        }
+        if (user.getDisplayName() != null) {
+            claimsBuilder.claim("displayName", user.getDisplayName());
+        }
+
+        JwtClaimsSet claims = claimsBuilder.build();
 
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
         String tokenValue = jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();

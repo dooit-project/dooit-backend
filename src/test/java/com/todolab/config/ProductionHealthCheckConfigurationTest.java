@@ -31,6 +31,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(compose).contains("\"127.0.0.1:8080:8080\"");
         assertThat(compose).contains("TODOLAB_JWT_SECRET");
         assertThat(compose).contains("APP_BATCH_SCHEDULER_ENABLED: ${APP_BATCH_SCHEDULER_ENABLED:-false}");
+        assertThat(Files.readString(Path.of(".env.example"))).contains("TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL=P31D");
     }
 
     @Test
@@ -117,6 +118,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(migration).contains("CREATE TABLE PUSH_NOTIFICATION_HISTORY");
         assertThat(migration).contains("COMMIT;");
         assertThat(runbook).contains("docs/db/migrations/20260803_prepare_local_production.sql");
+        assertThat(runbook).contains("docs/db/migrations/20260809_add_guest_account_columns.sql");
         assertThat(runbook).contains("이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.");
     }
 

@@ -25,14 +25,30 @@ public class User {
     @Column(name = "`ID`")
     private Long id;
 
-    @Column(name = "`EMAIL`", nullable = false, length = 255)
+    @Column(name = "`EMAIL`", length = 255)
     private String email;
 
-    @Column(name = "`PASSWORD_HASH`", nullable = false, length = 255)
+    @Column(name = "`PASSWORD_HASH`", length = 255)
     private String passwordHash;
 
-    @Column(name = "`DISPLAY_NAME`", nullable = false, length = 50)
+    @Column(name = "`DISPLAY_NAME`", length = 50)
     private String displayName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`ACCOUNT_TYPE`", nullable = false, length = 30)
+    private AccountType accountType = AccountType.REGISTERED;
+
+    @Column(name = "`MERGED_INTO_USER_ID`")
+    private Long mergedIntoUserId;
+
+    @Column(name = "`MERGED_AT`")
+    private LocalDateTime mergedAt;
+
+    @Column(name = "`LAST_ACTIVE_AT`")
+    private LocalDateTime lastActiveAt;
+
+    @Column(name = "`GUEST_EXPIRES_AT`")
+    private LocalDateTime guestExpiresAt;
 
     @Column(name = "`TIME_ZONE`", nullable = false, length = 50)
     private String timeZone = Constant.ZONE_ID;
@@ -54,6 +70,17 @@ public class User {
     public User(String email, String passwordHash, String displayName, UserRole role) {
         update(email, passwordHash, displayName);
         this.role = role == null ? UserRole.USER : role;
+        this.accountType = AccountType.REGISTERED;
+    }
+
+    public static User guest(LocalDateTime guestExpiresAt) {
+        User user = new User();
+        user.role = UserRole.USER;
+        user.accountType = AccountType.GUEST;
+        user.timeZone = Constant.ZONE_ID;
+        user.lastActiveAt = LocalDateTime.now(Constant.ZONE);
+        user.guestExpiresAt = guestExpiresAt;
+        return user;
     }
 
     @PrePersist
@@ -84,6 +111,7 @@ public class User {
         this.email = normalizedEmail;
         this.passwordHash = normalizedPasswordHash;
         this.displayName = normalizedDisplayName;
+        this.accountType = AccountType.REGISTERED;
         if (this.timeZone == null) {
             this.timeZone = Constant.ZONE_ID;
         }

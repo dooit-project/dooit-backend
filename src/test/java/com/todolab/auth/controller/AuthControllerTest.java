@@ -7,6 +7,7 @@ import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.service.AuthService;
 import com.todolab.common.api.ApiExceptionHandler;
 import com.todolab.common.api.ErrorCode;
+import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.UserRole;
 import com.todolab.user.dto.UserResponse;
 import com.todolab.user.exception.UserEmailAlreadyExistsException;
@@ -68,6 +69,7 @@ class AuthControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.accountType").value("REGISTERED"))
                 .andExpect(jsonPath("$.data.email").value("test@example.com"))
                 .andExpect(jsonPath("$.data.displayName").value("테스터"))
                 .andExpect(jsonPath("$.data.role").value("USER"))
@@ -138,6 +140,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.data.user.accountType").value("REGISTERED"))
                 .andExpect(jsonPath("$.data.user.email").value("test@example.com"));
 
         then(authService).should().login(any(LoginRequest.class));
@@ -159,5 +162,41 @@ class AuthControllerTest {
 
         then(authService).should().login(any(LoginRequest.class));
         then(authService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    @DisplayName("게스트 계정 생성 성공 - Bearer access token과 GUEST 사용자를 반환한다")
+    void guest_success() throws Exception {
+        UserResponse user = new UserResponse(
+                10L,
+                AccountType.GUEST,
+                null,
+                null,
+                UserRole.USER,
+                "Asia/Seoul",
+                LocalDateTime.of(2026, 8, 9, 0, 0),
+                null
+        );
+        TokenResponse response = new TokenResponse(
+                "Bearer",
+                "guest-token",
+                LocalDateTime.of(2026, 9, 9, 0, 0),
+                user
+        );
+
+        given(authService.createGuest()).willReturn(response);
+
+        mockMvc.perform(post("/api/v1/auth/guest"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.accessToken").value("guest-token"))
+                .andExpect(jsonPath("$.data.user.id").value(10))
+                .andExpect(jsonPath("$.data.user.accountType").value("GUEST"))
+                .andExpect(jsonPath("$.data.user.email").doesNotExist())
+                .andExpect(jsonPath("$.data.user.displayName").doesNotExist())
+                .andExpect(jsonPath("$.data.user.role").value("USER"));
+
+        then(authService).should().createGuest();
     }
 }

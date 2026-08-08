@@ -1,6 +1,6 @@
 # Auth Contract
 
-Last updated: 2026-07-25
+Last updated: 2026-08-09
 
 이 문서는 ToDoLab 백엔드의 모바일 JWT 인증과 웹 세션 인증 책임을 정리한다.
 
@@ -9,17 +9,33 @@ Last updated: 2026-07-25
 - 모바일 API는 `/api/v1/**` 경로에서 `Authorization: Bearer <accessToken>` JWT를 사용한다.
 - 웹 화면은 세션 기반 form login을 사용한다.
 - 회원가입과 로그인은 인증 없이 호출할 수 있다.
+- 게스트 시작은 `POST /api/v1/auth/guest`로 인증 없이 호출할 수 있다.
 - 사용자 데이터 소유권 격리는 모바일 JWT와 웹 세션 모두 동일하게 적용한다.
+
+## 계정 유형
+
+사용자 계정 유형은 `accountType`으로 구분한다.
+
+| accountType | 설명 |
+| --- | --- |
+| `GUEST` | 서버가 발급한 임시 사용자. 이메일, 비밀번호, 표시 이름이 없을 수 있다. |
+| `REGISTERED` | 이메일과 비밀번호로 로그인하는 정식 사용자 |
+
+게스트도 인증된 사용자로 취급하며 Task, 일정, D-Day owner scope는 기존 사용자와 동일하게 적용한다.
 
 ## Access Token
 
 운영 access token TTL은 1시간이다.
+
+게스트 access token TTL은 31일이다.
 
 | 환경 | 설정 |
 | --- | --- |
 | local/test 기본값 | `PT1H` |
 | production 기본값 | `TODOLAB_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT1H` |
 | production override | `TODOLAB_JWT_ACCESS_TOKEN_TTL=PT1H` 형식의 ISO-8601 duration |
+| guest local/prod 기본값 | `P31D` |
+| guest production override | `TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL=P31D` 형식의 ISO-8601 duration |
 
 JWT claim:
 
@@ -27,12 +43,31 @@ JWT claim:
 | --- | --- |
 | `iss` | `app.auth.jwt.issuer` |
 | `sub` | 사용자 id 문자열 |
-| `email` | 사용자 email |
+| `accountType` | `GUEST` 또는 `REGISTERED` |
+| `email` | 정식 사용자 email. 게스트 token에는 없을 수 있음 |
+| `displayName` | 정식 사용자 표시 이름. 게스트 token에는 없을 수 있음 |
 | `role` | 사용자 role |
 | `iat` | 발급 시각 |
 | `exp` | 만료 시각 |
 
 `TokenResponse.expiresAt`은 access token 만료 시각을 `LocalDateTime`으로 내려준다.
+
+## 게스트 수명 주기
+
+현재 제공:
+
+- `POST /api/v1/auth/guest`: 새 게스트 사용자와 게스트 access token 발급
+- `GET /api/v1/auth/me`: `accountType`, nullable `email`, nullable `displayName` 반환
+- 게스트 token의 `accountType` claim은 `GUEST`
+- 게스트 계정 row에는 `guestExpiresAt`, `lastActiveAt`을 저장한다.
+
+후속 작업:
+
+- 게스트 상태 신규 회원가입 승격
+- 기존 정식 계정 로그인 시 게스트 데이터 병합
+- 병합 완료 guest token revoke
+- 만료 게스트 정리
+- 게스트 생성 rate limit
 
 ## Refresh Token
 
