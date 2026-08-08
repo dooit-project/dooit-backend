@@ -134,4 +134,20 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(rollback).contains("TODOLAB_APP_IMAGE_TAG=\"$image_tag\" docker compose up -d --no-build app");
         assertThat(rollback).contains("/actuator/health/readiness");
     }
+
+    @Test
+    @DisplayName("백업 launchd 설치 스크립트는 매일 백업 LaunchAgent를 생성한다")
+    void backupLaunchdInstallScriptCreatesDailyBackupAgent() throws Exception {
+        String script = Files.readString(Path.of("scripts/install-backup-launchd.sh"));
+        String runbook = Files.readString(Path.of("docs/ops/LOCAL_PRODUCTION_RUNBOOK.md"));
+
+        assertThat(script).contains("com.todolab.backend.backup");
+        assertThat(script).contains("StartCalendarInterval");
+        assertThat(script).contains("TODOLAB_BACKUP_HOUR:-3");
+        assertThat(script).contains("TODOLAB_BACKUP_MINUTE:-15");
+        assertThat(script).contains("plutil -lint \"$plist_file\"");
+        assertThat(script).contains("launchctl bootstrap");
+        assertThat(runbook).contains("./scripts/install-backup-launchd.sh");
+        assertThat(runbook).contains("launchctl print gui/$(id -u)/com.todolab.backend.backup");
+    }
 }

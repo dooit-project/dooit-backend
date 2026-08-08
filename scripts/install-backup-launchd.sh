@@ -1,0 +1,47 @@
+#!/bin/bash
+set -euo pipefail
+
+repo_root=$(cd "$(dirname "$0")/.." && pwd)
+label=${TODOLAB_BACKUP_LAUNCHD_LABEL:-com.todolab.backend.backup}
+backup_dir=${TODOLAB_BACKUP_DIR:-"$repo_root/backups"}
+backup_hour=${TODOLAB_BACKUP_HOUR:-3}
+backup_minute=${TODOLAB_BACKUP_MINUTE:-15}
+plist_dir="$HOME/Library/LaunchAgents"
+plist_file="${plist_dir}/${label}.plist"
+
+mkdir -p "$plist_dir" "$backup_dir"
+
+cat > "$plist_file" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${label}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>cd "${repo_root}" &amp;&amp; TODOLAB_BACKUP_DIR="${backup_dir}" ./scripts/backup-db.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>${backup_hour}</integer>
+    <key>Minute</key>
+    <integer>${backup_minute}</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>${backup_dir}/launchd-backup.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>${backup_dir}/launchd-backup.err.log</string>
+</dict>
+</plist>
+EOF
+
+plutil -lint "$plist_file"
+
+echo "LaunchAgent written: $plist_file"
+echo "Load command: launchctl bootstrap gui/$(id -u) \"$plist_file\""
+echo "Status command: launchctl print gui/$(id -u)/${label}"

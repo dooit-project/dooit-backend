@@ -253,7 +253,7 @@ Last updated: 2026-08-02
 - [x] MySQL host port를 제거하고 app은 `127.0.0.1:8080`에만 공개한다.
 - [ ] DB 백업·복구 스크립트와 보관 주기는 마련했지만 자동 실행과 실제 복구 연습이 남아 있다.
 - [x] `schema.sql`은 새 volume 최초 초기화에만 적용되므로 기존 production DB의 migration 실행·검증 절차가 필요하다.
-- [ ] Dockerfile은 빌드된 JAR을 전제로 하므로 clean checkout에서 JAR build부터 Compose 기동까지 재현하는 release 절차가 필요하다.
+- [x] Dockerfile은 빌드된 JAR을 전제로 하므로 clean checkout에서 JAR build부터 Compose 기동까지 재현하는 release 절차가 필요하다.
 - [ ] PC 재부팅, Docker Desktop 재시작, 절전과 네트워크 변경 뒤 자동 복구를 검증하지 않았다.
 
 #### A. production 접근 경로와 노출 범위
@@ -289,7 +289,7 @@ Last updated: 2026-08-02
 
 #### C. 데이터 보존과 복구
 
-- [ ] `mysqldump` 백업 명령은 구현했으며 검증 후 host scheduler에 연결한다.
+- [ ] `mysqldump` 백업 명령과 launchd 설치 스크립트는 마련했으며 실제 production 자동 실행 확인이 남아 있다.
 - [x] 백업 파일은 DB volume과 다른 경로에 저장하고 기본 보관 기간을 14일로 정한다.
 - [ ] 최소 1회 빈 임시 DB에 백업을 복원해 로그인, Today, Calendar 데이터를 확인한다.
 - [x] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.

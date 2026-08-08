@@ -65,6 +65,20 @@ TODOLAB_BACKUP_DIR=/absolute/backup/path TODOLAB_BACKUP_RETENTION_DAYS=30 ./scri
 
 릴리스 전과 최소 하루 1회 실행한다. macOS launchd 등 host scheduler 연결은 백업 명령을 수동으로 검증한 뒤 구성한다.
 
+수동 백업을 검증한 뒤 매일 자동 실행이 필요하면 LaunchAgent 파일을 생성한다. 기본 실행 시각은 매일 03:15다.
+
+```bash
+./scripts/install-backup-launchd.sh
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.todolab.backend.backup.plist
+launchctl print gui/$(id -u)/com.todolab.backend.backup
+```
+
+다른 시각이나 백업 경로를 쓰려면 환경변수로 지정한다.
+
+```bash
+TODOLAB_BACKUP_HOUR=4 TODOLAB_BACKUP_MINUTE=0 TODOLAB_BACKUP_DIR=/absolute/backup/path ./scripts/install-backup-launchd.sh
+```
+
 ## 5. 복구 연습
 
 복구는 현재 DB 내용을 교체하므로 먼저 app을 중단한다.
@@ -85,7 +99,7 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 1. `./scripts/backup-db.sh`
 2. migration SQL과 API 호환성 확인
 3. `./scripts/release-production.sh`
-5. readiness와 Android smoke test
+4. readiness와 Android smoke test
 
 현재 schema 변경은 자동 migration 도구로 추적되지 않는다. 기존 volume에는 `docker-entrypoint-initdb.d`의 `schema.sql`이 다시 적용되지 않으므로, migration SQL 적용과 백업을 release의 필수 수동 단계로 유지한다. Flyway 도입 전에는 schema 변경이 있는 release를 자동 배포하지 않는다.
 
