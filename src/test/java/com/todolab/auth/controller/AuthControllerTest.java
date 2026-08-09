@@ -3,9 +3,11 @@ package com.todolab.auth.controller;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
+import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.service.AuthService;
 import com.todolab.auth.service.CurrentUserService;
+import com.todolab.auth.service.GuestAccountRateLimiter;
 import com.todolab.common.api.ApiExceptionHandler;
 import com.todolab.common.api.ErrorCode;
 import com.todolab.user.domain.AccountType;
@@ -31,6 +33,7 @@ import java.time.LocalDateTime;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -56,6 +59,9 @@ class AuthControllerTest {
 
     @MockitoBean
     JwtDecoder jwtDecoder;
+
+    @MockitoBean
+    GuestAccountRateLimiter guestAccountRateLimiter;
 
     @Test
     @DisplayName("회원가입 성공")
@@ -249,5 +255,21 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.data.user.role").value("USER"));
 
         then(authService).should().createGuest();
+        then(guestAccountRateLimiter).should().assertGuestCreationAllowed(any());
+    }
+
+    @Test
+    @DisplayName("게스트 계정 생성 실패 - rate limit 초과 시 429를 반환한다")
+    void guest_rateLimitExceeded() throws Exception {
+        willThrow(new GuestCreationRateLimitExceededException())
+                .given(guestAccountRateLimiter)
+                .assertGuestCreationAllowed(any());
+
+        mockMvc.perform(post("/api/v1/auth/guest"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.status").value("fail"))
+                .andExpect(jsonPath("$.error.code").value(ErrorCode.GUEST_CREATION_RATE_LIMIT_EXCEEDED.getCode()));
+
+        then(authService).shouldHaveNoInteractions();
     }
 }

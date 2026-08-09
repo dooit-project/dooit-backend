@@ -55,6 +55,8 @@ class DocumentationIndexTest {
         assertThat(auth).contains("멱등 성공으로 처리한다");
         assertThat(auth).contains("게스트 만료 정리 정책");
         assertThat(auth).contains("TODOLAB_GUEST_CLEANUP_ENABLED");
+        assertThat(auth).contains("게스트 생성 Rate Limit");
+        assertThat(auth).contains("GUEST_CREATION_RATE_LIMIT_EXCEEDED(11004)");
     }
 
     @Test

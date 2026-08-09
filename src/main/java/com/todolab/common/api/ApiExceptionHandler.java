@@ -1,6 +1,7 @@
 package com.todolab.common.api;
 
 import com.todolab.auth.exception.InvalidCredentialsException;
+import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
 import com.todolab.task.exception.TaskOrderConflictException;
 import com.todolab.task.exception.TaskValidationException;
@@ -131,6 +132,15 @@ public class ApiExceptionHandler {
         log.warn("Authentication Failed");
         return ResponseEntity.status(ErrorCode.UNAUTHORIZED.getStatus())
                 .body(ApiResponse.failure(ErrorCode.UNAUTHORIZED));
+    }
+
+    @ExceptionHandler(GuestCreationRateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<?>> handleGuestCreationRateLimitExceededException(
+            GuestCreationRateLimitExceededException e
+    ) {
+        log.warn("Guest Creation Rate Limit Exceeded");
+        return ResponseEntity.status(ErrorCode.GUEST_CREATION_RATE_LIMIT_EXCEEDED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GUEST_CREATION_RATE_LIMIT_EXCEEDED));
     }
 
     @ExceptionHandler(Exception.class)

@@ -66,10 +66,11 @@ JWT claim:
 - 병합 완료 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 401로 거부한다.
 - `app.auth.guest.cleanup.enabled=true`이면 매일 03:30에 `guestExpiresAt`이 지난 미병합 게스트와 관련 owner 데이터를 삭제한다.
 - 만료된 guest token은 owner API와 `/auth/me`에서 401로 거부한다.
+- `POST /api/v1/auth/guest`는 클라이언트 신호별 기본 30건/1시간 rate limit을 적용하고 초과 시 429/`11004`를 반환한다.
 
 후속 작업:
 
-- 게스트 생성 rate limit
+- 게스트 생성 rate limit 저장소를 Redis 등 공유 저장소로 전환
 
 ## 게스트 만료 정리 정책
 
@@ -100,6 +101,25 @@ JWT claim:
 - 정식 계정으로 승격되었거나 병합 완료된 데이터는 삭제하지 않는다.
 - IP나 단말 식별 정보로 만료 게스트를 복구하지 않는다.
 - 정리 결과 count는 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
+
+## 게스트 생성 Rate Limit
+
+운영 기본값:
+
+| 항목 | 값 |
+| --- | --- |
+| 활성화 | `TODOLAB_GUEST_RATE_LIMIT_ENABLED=true` |
+| 한도 | `TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS=30` |
+| window | `TODOLAB_GUEST_RATE_LIMIT_WINDOW=PT1H` |
+| 추적 key 최대 수 | `TODOLAB_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS=10000` |
+
+정책:
+
+- 대상 endpoint는 `POST /api/v1/auth/guest`다.
+- `X-Forwarded-For` 첫 IP가 있으면 우선 사용하고, 없으면 `remoteAddr`를 사용한다.
+- 클라이언트 신호는 사용자 식별자나 owner scope로 사용하지 않고 abuse 방지용 해시 key로만 메모리에 저장한다.
+- 현재 구현은 단일 서버 인스턴스 기준 인메모리 fixed window다.
+- 초과 시 HTTP 429와 `GUEST_CREATION_RATE_LIMIT_EXCEEDED(11004)`를 반환한다.
 
 ## 게스트 병합 정책
 

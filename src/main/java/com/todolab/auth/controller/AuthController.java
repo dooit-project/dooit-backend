@@ -7,6 +7,7 @@ import com.todolab.auth.dto.TokenResponse;
 import com.todolab.common.api.ApiResponse;
 import com.todolab.auth.service.AuthService;
 import com.todolab.auth.service.CurrentUserService;
+import com.todolab.auth.service.GuestAccountRateLimiter;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.dto.UserResponse;
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -64,6 +66,7 @@ public class AuthController {
     private final AuthService authService;
     private final CurrentUserService currentUserService;
     private final JwtDecoder jwtDecoder;
+    private final GuestAccountRateLimiter guestAccountRateLimiter;
 
     @Operation(summary = "회원가입", description = "이메일, 비밀번호, 표시 이름으로 모바일 API 사용자를 생성합니다.")
     @PostMapping("/register")
@@ -86,7 +89,8 @@ public class AuthController {
 
     @Operation(summary = "게스트 계정 생성", description = "로그인 없이 사용할 수 있는 서버 발급형 게스트 계정과 Bearer access token을 생성합니다.")
     @PostMapping("/guest")
-    public ResponseEntity<ApiResponse<TokenResponse>> guest() {
+    public ResponseEntity<ApiResponse<TokenResponse>> guest(HttpServletRequest request) {
+        guestAccountRateLimiter.assertGuestCreationAllowed(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(authService.createGuest()));
     }

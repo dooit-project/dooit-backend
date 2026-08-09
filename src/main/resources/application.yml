@@ -17,6 +17,11 @@ app:
       cleanup:
         enabled: false
         cron: "0 30 3 * * *"
+      rate-limit:
+        enabled: true
+        max-requests: 30
+        window: PT1H
+        max-tracked-keys: 10000
 
   cors:
     allowed-origins: http://localhost:8081,http://localhost:8090

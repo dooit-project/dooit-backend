@@ -1,6 +1,7 @@
 package com.todolab.config;
 
 import com.todolab.auth.config.AuthJwtProperties;
+import com.todolab.auth.config.GuestAccountRateLimitProperties;
 import com.todolab.auth.security.ApiAccessDeniedHandler;
 import com.todolab.auth.security.ApiAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,11 @@ import java.nio.charset.StandardCharsets;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties({AuthJwtProperties.class, DocumentationProperties.class})
+@EnableConfigurationProperties({
+        AuthJwtProperties.class,
+        DocumentationProperties.class,
+        GuestAccountRateLimitProperties.class
+})
 public class SecurityConfig {
 
     static final String[] DOCUMENTATION_MATCHERS = {

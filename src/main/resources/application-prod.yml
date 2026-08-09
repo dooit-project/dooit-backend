@@ -45,6 +45,11 @@ app:
       cleanup:
         enabled: ${TODOLAB_GUEST_CLEANUP_ENABLED:false}
         cron: ${TODOLAB_GUEST_CLEANUP_CRON:0 30 3 * * *}
+      rate-limit:
+        enabled: ${TODOLAB_GUEST_RATE_LIMIT_ENABLED:true}
+        max-requests: ${TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS:30}
+        window: ${TODOLAB_GUEST_RATE_LIMIT_WINDOW:PT1H}
+        max-tracked-keys: ${TODOLAB_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS:10000}
 
   cors:
     allowed-origins: ${TODOLAB_ALLOWED_ORIGINS:}
