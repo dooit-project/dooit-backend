@@ -1,5 +1,7 @@
 package com.todolab.auth.service;
 
+import com.todolab.Constant;
+import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,11 @@ public class CurrentUserService {
             throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
         }
         if (user.getMergedIntoUserId() != null) {
+            throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
+        }
+        if (user.getAccountType() == AccountType.GUEST
+                && user.getGuestExpiresAt() != null
+                && user.getGuestExpiresAt().isBefore(java.time.LocalDateTime.now(Constant.ZONE))) {
             throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
         }
         return user;

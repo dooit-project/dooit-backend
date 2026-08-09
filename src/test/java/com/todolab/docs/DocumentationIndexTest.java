@@ -53,6 +53,8 @@ class DocumentationIndexTest {
         assertThat(auth).contains("게스트 병합 정책");
         assertThat(auth).contains("push device token, push notification history");
         assertThat(auth).contains("멱등 성공으로 처리한다");
+        assertThat(auth).contains("게스트 만료 정리 정책");
+        assertThat(auth).contains("TODOLAB_GUEST_CLEANUP_ENABLED");
     }
 
     @Test

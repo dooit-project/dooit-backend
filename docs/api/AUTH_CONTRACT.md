@@ -64,11 +64,42 @@ JWT claim:
 - 승격 성공 후 기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 401로 거부한다.
 - `POST /api/v1/auth/login`에 유효한 게스트 Bearer token을 보내고 정식 계정 이메일/비밀번호 검증이 성공하면 게스트 owner 데이터를 정식 계정으로 병합한다.
 - 병합 완료 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 401로 거부한다.
+- `app.auth.guest.cleanup.enabled=true`이면 매일 03:30에 `guestExpiresAt`이 지난 미병합 게스트와 관련 owner 데이터를 삭제한다.
+- 만료된 guest token은 owner API와 `/auth/me`에서 401로 거부한다.
 
 후속 작업:
 
-- 만료 게스트 정리
 - 게스트 생성 rate limit
+
+## 게스트 만료 정리 정책
+
+운영 기본값:
+
+| 항목 | 값 |
+| --- | --- |
+| 게스트 계정 미사용 만료 기간 | 게스트 access token TTL과 같은 31일 |
+| 정리 스케줄 활성화 | `TODOLAB_GUEST_CLEANUP_ENABLED=false` 기본값 |
+| 정리 cron | `TODOLAB_GUEST_CLEANUP_CRON=0 30 3 * * *` |
+
+정리 대상:
+
+- `accountType=GUEST`
+- `guestExpiresAt < now`
+- `mergedIntoUserId IS NULL`
+
+삭제 대상:
+
+- Task와 일정, Today 순서, 완료 상태, 미룸 사유
+- 반복 series, materialized occurrence, recurrence exception
+- D-Day 목표와 Task-D-Day 연결 관계
+- push device token, push notification history
+- 게스트 user row
+
+정책:
+
+- 정식 계정으로 승격되었거나 병합 완료된 데이터는 삭제하지 않는다.
+- IP나 단말 식별 정보로 만료 게스트를 복구하지 않는다.
+- 정리 결과 count는 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
 
 ## 게스트 병합 정책
 

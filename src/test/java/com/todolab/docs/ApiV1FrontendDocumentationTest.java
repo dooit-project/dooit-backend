@@ -28,6 +28,7 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("accountType: 'GUEST' | 'REGISTERED'");
         assertThat(content).contains("게스트 상태 회원가입 승격은 지원한다.");
         assertThat(content).contains("기존 계정 로그인 병합은 지원한다.");
+        assertThat(content).contains("만료 게스트와 관련 owner 데이터 정리는 운영 스케줄러로 지원한다.");
         assertThat(content).contains("Authorization: Bearer <guest-access-token>");
         assertThat(content).contains("기존 게스트 user id를 유지한 채 `REGISTERED`로 승격한다.");
         assertThat(content).contains("기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 owner API와 `/auth/me`에서 401 처리된다.");

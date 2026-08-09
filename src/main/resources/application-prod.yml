@@ -41,6 +41,10 @@ app:
       secret: ${TODOLAB_JWT_SECRET}
       access-token-ttl: ${TODOLAB_JWT_ACCESS_TOKEN_TTL:PT1H}
       guest-access-token-ttl: ${TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL:P31D}
+    guest:
+      cleanup:
+        enabled: ${TODOLAB_GUEST_CLEANUP_ENABLED:false}
+        cron: ${TODOLAB_GUEST_CLEANUP_CRON:0 30 3 * * *}
 
   cors:
     allowed-origins: ${TODOLAB_ALLOWED_ORIGINS:}

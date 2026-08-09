@@ -134,7 +134,8 @@ type TokenResponse = {
 - 게스트 token에는 `accountType=GUEST` claim이 포함된다.
 - 게스트 상태 회원가입 승격은 지원한다.
 - 기존 계정 로그인 병합은 지원한다.
-- 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.
+- 만료 게스트와 관련 owner 데이터 정리는 운영 스케줄러로 지원한다.
+- 생성 rate limit은 후속 API 계약에서 확정한다.
 
 ### 로그인
 
