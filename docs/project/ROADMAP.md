@@ -12,6 +12,7 @@ Last updated: 2026-08-02
 - API 문서 원본은 `/v3/api-docs` OpenAPI JSON이다.
 - 개발 확인용 문서 UI는 `/swagger-ui`, 읽기용 문서 UI는 `/scalar.html`을 사용한다.
 - 모바일 연동 요약 문서는 [`../api/API_V1_FRONTEND.md`](../api/API_V1_FRONTEND.md)에 둔다.
+- 게스트 계정 연동 전달 문서는 [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md)에 둔다.
 - 모바일 연동 상태 관리는 [`../mobile/MOBILE_API_BACKEND_STATUS.md`](../mobile/MOBILE_API_BACKEND_STATUS.md)에 둔다.
 
 ## 2. 최우선 작업
@@ -88,7 +89,30 @@ Last updated: 2026-08-02
 
 - 모바일 real mode에서 검색 화면을 준비 중 상태가 아니라 실제 검색으로 열 수 있다.
 
-### 3.2 Today 일괄 재정렬 API
+### 3.2 게스트 계정 및 정식 계정 연동
+
+문서: `docs/api/GUEST_ACCOUNT_HANDOFF.md`
+
+- [x] 게스트 인증 주체와 수명 주기 모델
+- [x] `POST /api/v1/auth/guest`
+- [x] `/api/v1/auth/me`와 token 응답의 `accountType`
+- [x] 신규 회원가입 시 게스트 계정 승격
+- [x] 기존 계정 로그인 시 게스트 데이터 병합
+- [x] 병합 완료 guest token 401 처리
+- [x] 만료 guest token 401 처리
+- [x] 만료 게스트와 관련 owner 데이터 정리 스케줄러
+- [x] 게스트 생성 rate limit 429/`11004`
+- [x] API 계약, 오류 코드, 통합 테스트, 모바일 전달 문서
+
+후속 운영 확장:
+
+- [ ] 다중 서버 배포 시 게스트 생성 rate limit 저장소를 Redis 등 공유 저장소로 전환
+
+완료 기준:
+
+- 모바일 첫 실행에서 로그인 없이 Task, 반복 일정, D-Day를 생성하고 이후 회원가입 또는 기존 계정 로그인으로 데이터 유실 없이 정식 계정에 연결할 수 있다.
+
+### 3.3 Today 일괄 재정렬 API
 
 문서: `todolab-mobile/docs/API_TODAY_REORDER.md`
 
@@ -103,7 +127,7 @@ Last updated: 2026-08-02
 
 - 모바일 drag-and-drop 재정렬이 한 번의 요청으로 안정적으로 저장된다.
 
-### 3.3 반복 Task / 반복 일정
+### 3.4 반복 Task / 반복 일정
 
 문서: `todolab-mobile/docs/API_RECURRENCE.md`
 
@@ -119,7 +143,7 @@ Last updated: 2026-08-02
 
 - 모바일이 반복 UI를 실제 저장 기능처럼 열 수 있다.
 
-### 3.4 알림 책임 계약
+### 3.5 알림 책임 계약
 
 문서: `todolab-mobile/docs/API_NOTIFICATIONS.md`
 

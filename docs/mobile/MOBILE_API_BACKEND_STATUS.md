@@ -28,6 +28,7 @@ Last audited: 2026-08-02
 - [x] 2026-07-22 v1 MONTH Task 조회 기준: `date=YYYY-MM` 바인딩, `YYYY-MM-DD` 거부, owner scope 검증
 - [x] 2026-07-22 v1 리소스 삭제 응답 기준: Task/D-Day 삭제 성공 envelope의 `data`는 `null`
 - [x] 2026-07-22 legacy 정책 기준: `/api/tasks/**`, `/api/ddays/**`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않음
+- [x] 2026-08-09 게스트 계정 기준: 생성, `/auth/me`, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약 구현
 
 1. [x] 인증 사용자 소유권
    - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
@@ -53,6 +54,15 @@ Last audited: 2026-08-02
    - 완료: v1 기준 `GET /api/v1/dday-goals/{id}`와 `POST /api/v1/dday-goals/{id}/tasks` 추가.
    - 완료: legacy `/api/ddays/**` alias는 추가하지 않고 모바일을 v1 계약으로 전환하기로 결정.
    - 완료: v1 D-Day 연결 Task Today 이동 회귀 테스트 추가.
+
+5. [x] 게스트 계정 및 정식 계정 연동
+   - 완료: `POST /api/v1/auth/guest` 서버 발급형 게스트 사용자와 token 발급
+   - 완료: `/api/v1/auth/me`와 token claim에 `accountType=GUEST|REGISTERED` 반영
+   - 완료: 게스트 상태 `POST /api/v1/auth/register`는 같은 user id를 유지하고 `REGISTERED`로 승격
+   - 완료: 기존 계정 `POST /api/v1/auth/login`에 guest Bearer token을 보내면 Task/D-Day/반복/알림 owner 데이터를 정식 계정으로 병합
+   - 완료: 병합 완료 guest token, 만료 guest token은 owner API와 `/auth/me`에서 401 처리
+   - 완료: 만료 게스트 정리 스케줄러와 게스트 생성 rate limit 429/`11004` 구현
+   - 문서: `docs/api/GUEST_ACCOUNT_HANDOFF.md`
 
 ## 2. 여러 날 일정 / Calendar 범위 조회
 
@@ -197,6 +207,7 @@ Last audited: 2026-08-02
 | --- | --- | --- |
 | 개발 / 스테이징 / 운영 API URL | [x] | `docs/ops/ENVIRONMENT_INTEGRATION.md`에 local 기준, staging/production 미정 상태, CORS 운영 값 관리, 문서 UI 공개 제어 방식 정리 |
 | 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. access token TTL, refresh token 미도입, 로그아웃 책임, 401/403 계약은 `docs/api/AUTH_CONTRACT.md` 기준 |
+| 게스트 계정 bootstrap과 정식 계정 연동 | [x] | `POST /api/v1/auth/guest`, 게스트 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약은 `docs/api/GUEST_ACCOUNT_HANDOFF.md` 기준 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
 | 오류 코드와 장애 대응 | [x] | `docs/api/API_ERROR_CODES.md`와 `docs/mobile/MOBILE_INCIDENT_RUNBOOK.md`에 오류 코드, retry, logging/masking, 장애 확인 순서 정리 |
 | 데이터 모델 사전 | [x] | `docs/api/DATA_MODEL_GLOSSARY.md`에 Task, D-Day, User 주요 필드, 상태 전이, owner scope 정리 |

@@ -73,6 +73,8 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("서버 push 발송");
         assertThat(roadmap).contains("반복 rule 수정");
         assertThat(roadmap).contains("운영 환경 확정");
+        assertThat(roadmap).contains("게스트 계정 및 정식 계정 연동");
+        assertThat(roadmap).contains("게스트 생성 rate limit 저장소를 Redis");
     }
 
     @Test
