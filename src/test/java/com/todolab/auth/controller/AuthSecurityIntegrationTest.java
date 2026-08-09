@@ -222,6 +222,48 @@ class AuthSecurityIntegrationTest {
     }
 
     @Test
+    @DisplayName("게스트 병합 로그인을 재시도해도 owner 데이터는 중복 이전되지 않는다")
+    void login_mergeRetryIsIdempotent() throws Exception {
+        User registered = userRepository.save(new User(
+                "merge-retry@example.com",
+                passwordEncoder.encode("password123"),
+                "정식 사용자"
+        ));
+        User guest = userRepository.save(User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0)));
+        Task task = taskRepository.save(Task.builder()
+                .title("재시도 게스트 할 일")
+                .type(TaskType.TODO)
+                .targetDate(java.time.LocalDate.of(2026, 8, 9))
+                .owner(guest)
+                .build());
+        String guestAccessToken = jwtTokenService.createGuestAccessToken(guest).tokenValue();
+        LoginRequest request = new LoginRequest("merge-retry@example.com", "password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header("Authorization", "Bearer " + guestAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user.id").value(registered.getId()));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header("Authorization", "Bearer " + guestAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user.id").value(registered.getId()));
+
+        assertThat(taskRepository.findById(task.getId())).get()
+                .extracting(saved -> saved.getOwner().getId())
+                .isEqualTo(registered.getId());
+        assertThat(taskRepository.findByOwnerId(registered.getId()))
+                .extracting(Task::getId)
+                .containsExactly(task.getId());
+        assertThat(userRepository.findById(guest.getId())).get()
+                .satisfies(savedGuest -> assertThat(savedGuest.getMergedIntoUserId()).isEqualTo(registered.getId()));
+    }
+
+    @Test
     @DisplayName("기존 계정 로그인 실패 시 게스트 owner 데이터는 변경되지 않는다")
     void login_mergeKeepsGuestDataWhenPasswordInvalid() throws Exception {
         userRepository.save(new User(
