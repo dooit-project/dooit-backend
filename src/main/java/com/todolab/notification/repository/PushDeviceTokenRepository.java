@@ -10,6 +10,8 @@ public interface PushDeviceTokenRepository extends JpaRepository<PushDeviceToken
 
     List<PushDeviceToken> findByOwnerIdAndActiveTrueOrderByLastRegisteredAtDescIdDesc(Long ownerId);
 
+    List<PushDeviceToken> findByOwnerId(Long ownerId);
+
     Optional<PushDeviceToken> findByOwnerIdAndDeviceToken(Long ownerId, String deviceToken);
 
     Optional<PushDeviceToken> findByIdAndOwnerId(Long id, Long ownerId);

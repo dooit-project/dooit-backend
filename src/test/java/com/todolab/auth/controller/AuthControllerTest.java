@@ -182,7 +182,7 @@ class AuthControllerTest {
                 user
         );
 
-        given(authService.login(any(LoginRequest.class))).willReturn(response);
+        given(authService.login(any(), any(LoginRequest.class))).willReturn(response);
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -194,7 +194,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.data.user.accountType").value("REGISTERED"))
                 .andExpect(jsonPath("$.data.user.email").value("test@example.com"));
 
-        then(authService).should().login(any(LoginRequest.class));
+        then(authService).should().login(any(), any(LoginRequest.class));
         then(authService).shouldHaveNoMoreInteractions();
     }
 
@@ -202,7 +202,7 @@ class AuthControllerTest {
     @DisplayName("로그인 실패 - 인증 정보가 올바르지 않으면 401을 반환한다")
     void login_invalidCredentials() throws Exception {
         LoginRequest request = new LoginRequest("test@example.com", "wrong-password");
-        given(authService.login(any(LoginRequest.class))).willThrow(new InvalidCredentialsException());
+        given(authService.login(any(), any(LoginRequest.class))).willThrow(new InvalidCredentialsException());
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -211,7 +211,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.status").value("fail"))
                 .andExpect(jsonPath("$.error.code").value(ErrorCode.INVALID_CREDENTIALS.getCode()));
 
-        then(authService).should().login(any(LoginRequest.class));
+        then(authService).should().login(any(), any(LoginRequest.class));
         then(authService).shouldHaveNoMoreInteractions();
     }
 

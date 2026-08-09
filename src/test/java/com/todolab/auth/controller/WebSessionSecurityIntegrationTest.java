@@ -1,6 +1,9 @@
 package com.todolab.auth.controller;
 
 import com.todolab.mail.MailService;
+import com.todolab.dday.repository.DdayGoalRepository;
+import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +37,23 @@ class WebSessionSecurityIntegrationTest {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    TaskRepository taskRepository;
+
+    @Autowired
+    RecurrenceSeriesRepository recurrenceSeriesRepository;
+
+    @Autowired
+    DdayGoalRepository ddayGoalRepository;
+
     @MockitoBean
     MailService mailService;
 
     @BeforeEach
     void setUp() {
+        taskRepository.deleteAll();
+        recurrenceSeriesRepository.deleteAll();
+        ddayGoalRepository.deleteAll();
         userRepository.deleteAll();
     }
 

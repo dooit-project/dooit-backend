@@ -62,13 +62,34 @@ JWT claim:
 - 게스트 계정 row에는 `guestExpiresAt`, `lastActiveAt`을 저장한다.
 - `POST /api/v1/auth/register`에 유효한 게스트 Bearer token을 보내면 같은 user id를 유지하고 `REGISTERED`로 승격한다.
 - 승격 성공 후 기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 401로 거부한다.
+- `POST /api/v1/auth/login`에 유효한 게스트 Bearer token을 보내고 정식 계정 이메일/비밀번호 검증이 성공하면 게스트 owner 데이터를 정식 계정으로 병합한다.
+- 병합 완료 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 401로 거부한다.
 
 후속 작업:
 
-- 기존 정식 계정 로그인 시 게스트 데이터 병합
-- 병합 완료 guest token revoke
 - 만료 게스트 정리
 - 게스트 생성 rate limit
+
+## 게스트 병합 정책
+
+기존 정식 계정 로그인 시 `Authorization: Bearer <guest-access-token>`이 있으면 자격 증명 검증 후 하나의 트랜잭션에서 병합한다.
+
+병합 대상:
+
+- Task와 일정, Today 순서, 완료 상태, 미룸 사유
+- 반복 series, materialized occurrence, recurrence exception
+- D-Day 목표와 Task-D-Day 연결 관계
+- push device token, push notification history
+
+병합 정책:
+
+- 정식 계정 콘텐츠는 유지하고 게스트 콘텐츠를 추가한다.
+- 제목이나 날짜가 같다는 이유로 자동 중복 제거하지 않는다.
+- target 계정에 같은 push device token이 이미 있으면 guest token row는 비활성화하고 중복 이전하지 않는다.
+- 이메일/비밀번호 검증 실패 시 게스트 데이터는 변경하지 않는다.
+- 같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 다시 반환하는 멱등 성공으로 처리한다.
+- 병합 완료 후 기존 guest token은 owner API와 `/auth/me`에서 401 처리된다.
+- 병합 결과 count는 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
 
 ## Refresh Token
 

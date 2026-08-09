@@ -93,8 +93,11 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "이메일과 비밀번호로 Bearer access token을 발급합니다.")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
+    public ResponseEntity<ApiResponse<TokenResponse>> login(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody LoginRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(authService.login(guestPrincipal(authorization), request)));
     }
 
     @Operation(

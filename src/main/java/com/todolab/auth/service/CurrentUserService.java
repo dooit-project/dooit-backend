@@ -28,6 +28,9 @@ public class CurrentUserService {
                 && !jwt.getClaimAsString("accountType").equals(user.getAccountType().name())) {
             throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
         }
+        if (user.getMergedIntoUserId() != null) {
+            throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
+        }
         return user;
     }
 

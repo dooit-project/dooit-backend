@@ -11,5 +11,7 @@ public interface PushNotificationHistoryRepository extends JpaRepository<PushNot
 
     List<PushNotificationHistory> findByOwnerIdOrderByAttemptedAtDescIdDesc(Long ownerId, Pageable pageable);
 
+    List<PushNotificationHistory> findByOwnerId(Long ownerId);
+
     boolean existsByOwnerIdAndIdempotencyKeyAndStatus(Long ownerId, String idempotencyKey, PushNotificationStatus status);
 }

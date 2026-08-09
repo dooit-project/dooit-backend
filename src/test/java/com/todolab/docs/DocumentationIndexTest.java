@@ -50,6 +50,9 @@ class DocumentationIndexTest {
         assertThat(auth).contains("`accountType` claim은 `GUEST`");
         assertThat(auth).contains("같은 user id를 유지하고 `REGISTERED`로 승격한다");
         assertThat(auth).contains("token claim이 불일치하므로 401로 거부한다");
+        assertThat(auth).contains("게스트 병합 정책");
+        assertThat(auth).contains("push device token, push notification history");
+        assertThat(auth).contains("멱등 성공으로 처리한다");
     }
 
     @Test

@@ -133,7 +133,8 @@ type TokenResponse = {
 - IP나 단말 정보가 같다는 이유로 기존 게스트 계정을 반환하지 않는다.
 - 게스트 token에는 `accountType=GUEST` claim이 포함된다.
 - 게스트 상태 회원가입 승격은 지원한다.
-- 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.
+- 기존 계정 로그인 병합은 지원한다.
+- 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.
 
 ### 로그인
 
@@ -161,6 +162,32 @@ type TokenResponse = {
   user: UserResponse;
 };
 ```
+
+게스트 데이터 병합 로그인:
+
+```http
+POST /api/v1/auth/login
+Authorization: Bearer <guest-access-token>
+Content-Type: application/json
+```
+
+유효한 게스트 token이 있고 이메일/비밀번호 검증이 성공하면 게스트 owner 데이터를 대상 정식 계정으로 병합하고 정식 계정 `TokenResponse`를 반환한다.
+
+병합 대상:
+
+- Task와 일정, Today 순서, 완료 상태, 미룸 사유
+- 반복 series, materialized occurrence, recurrence exception
+- D-Day 목표와 Task-D-Day 연결 관계
+- push device token, push notification history
+
+정책:
+
+- 정식 계정 콘텐츠는 유지하고 게스트 콘텐츠를 추가한다.
+- 제목이나 날짜가 같다는 이유로 자동 중복 제거하지 않는다.
+- target 계정에 같은 push device token이 이미 있으면 guest token row는 비활성화하고 중복 이전하지 않는다.
+- 이메일/비밀번호 검증 실패 시 게스트 데이터는 변경하지 않는다.
+- 같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 다시 반환한다.
+- 병합 완료 후 기존 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 owner API와 `/auth/me`에서 401 처리된다.
 
 게스트 상태 회원가입:
 

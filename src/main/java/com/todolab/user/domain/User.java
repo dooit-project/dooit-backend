@@ -128,6 +128,19 @@ public class User {
         this.lastActiveAt = LocalDateTime.now(Constant.ZONE);
     }
 
+    public void markMergedInto(User target) {
+        if (target == null || target.getId() == null) {
+            throw new IllegalArgumentException("target은 영속화된 사용자여야 합니다.");
+        }
+        if (this.accountType != AccountType.GUEST) {
+            throw new IllegalStateException("게스트 계정만 병합할 수 있습니다.");
+        }
+        this.mergedIntoUserId = target.getId();
+        this.mergedAt = LocalDateTime.now(Constant.ZONE);
+        this.guestExpiresAt = null;
+        this.lastActiveAt = LocalDateTime.now(Constant.ZONE);
+    }
+
     public void updateTimeZone(String timeZone) {
         String normalizedTimeZone = normalizeRequired(timeZone);
         if (normalizedTimeZone == null) {

@@ -4,6 +4,11 @@ import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
+import com.todolab.dday.repository.DdayGoalRepository;
+import com.todolab.notification.repository.PushDeviceTokenRepository;
+import com.todolab.notification.repository.PushNotificationHistoryRepository;
+import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
@@ -35,11 +40,35 @@ class AuthServiceTest {
     @Mock
     JwtTokenService jwtTokenService;
 
+    @Mock
+    TaskRepository taskRepository;
+
+    @Mock
+    DdayGoalRepository ddayGoalRepository;
+
+    @Mock
+    RecurrenceSeriesRepository recurrenceSeriesRepository;
+
+    @Mock
+    PushDeviceTokenRepository pushDeviceTokenRepository;
+
+    @Mock
+    PushNotificationHistoryRepository pushNotificationHistoryRepository;
+
     AuthService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, passwordEncoder, jwtTokenService);
+        authService = new AuthService(
+                userRepository,
+                passwordEncoder,
+                jwtTokenService,
+                taskRepository,
+                ddayGoalRepository,
+                recurrenceSeriesRepository,
+                pushDeviceTokenRepository,
+                pushNotificationHistoryRepository
+        );
     }
 
     @Test

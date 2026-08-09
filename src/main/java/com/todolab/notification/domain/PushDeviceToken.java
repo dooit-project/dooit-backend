@@ -111,6 +111,13 @@ public class PushDeviceToken {
         this.active = false;
     }
 
+    public void assignOwner(User owner) {
+        if (owner == null) {
+            throw new IllegalArgumentException("owner는 필수입니다.");
+        }
+        this.owner = owner;
+    }
+
     private String normalizeRequired(String value) {
         String normalized = normalizeOptional(value);
         return normalized == null ? null : normalized;

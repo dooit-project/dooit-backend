@@ -123,6 +123,13 @@ public class PushNotificationHistory {
         this.createdAt = LocalDateTime.now(Constant.ZONE);
     }
 
+    public void assignOwner(User owner) {
+        if (owner == null) {
+            throw new IllegalArgumentException("owner는 필수입니다.");
+        }
+        this.owner = owner;
+    }
+
     private <T> T require(T value, String fieldName) {
         if (value == null) {
             throw new IllegalArgumentException(fieldName + "은 필수입니다.");
