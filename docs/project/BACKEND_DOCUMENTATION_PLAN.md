@@ -11,6 +11,7 @@ Last updated: 2026-07-27
 | 문서 | 갱신 조건 |
 | --- | --- |
 | [`../api/API_V1_FRONTEND.md`](../api/API_V1_FRONTEND.md) | v1 endpoint, request/response, pagination, 삭제 응답, 오류 계약 변경 |
+| [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 계정 bootstrap, 승격, 병합, 만료, rate limit 전달 계약 변경 |
 | [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md) | JWT claim, TTL, refresh token, 로그아웃, 401/403 정책 변경 |
 | [`../api/API_ERROR_CODES.md`](../api/API_ERROR_CODES.md) | `ErrorCode` 추가/수정/삭제, retry 또는 사용자 노출 message 변경 |
 | [`../api/DATA_MODEL_GLOSSARY.md`](../api/DATA_MODEL_GLOSSARY.md) | Task, D-Day, User 주요 필드나 상태 전이 변경 |

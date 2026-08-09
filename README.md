@@ -75,6 +75,7 @@ src/main/java/com/todolab/
 프론트엔드/모바일 전달용 핵심 문서:
 
 - [`docs/api/API_V1_FRONTEND.md`](./docs/api/API_V1_FRONTEND.md)
+- [`docs/api/GUEST_ACCOUNT_HANDOFF.md`](./docs/api/GUEST_ACCOUNT_HANDOFF.md)
 - [`docs/ops/ENVIRONMENT_INTEGRATION.md`](./docs/ops/ENVIRONMENT_INTEGRATION.md)
 - [`docs/api/AUTH_CONTRACT.md`](./docs/api/AUTH_CONTRACT.md)
 - [`docs/api/API_ERROR_CODES.md`](./docs/api/API_ERROR_CODES.md)

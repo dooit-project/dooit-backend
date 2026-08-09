@@ -13,6 +13,7 @@ class DocumentationIndexTest {
 
     private static final List<DocumentLink> FRONTEND_DOCS = List.of(
             new DocumentLink("docs/api/API_V1_FRONTEND.md", "api/API_V1_FRONTEND.md"),
+            new DocumentLink("docs/api/GUEST_ACCOUNT_HANDOFF.md", "api/GUEST_ACCOUNT_HANDOFF.md"),
             new DocumentLink("docs/ops/ENVIRONMENT_INTEGRATION.md", "ops/ENVIRONMENT_INTEGRATION.md"),
             new DocumentLink("docs/api/AUTH_CONTRACT.md", "api/AUTH_CONTRACT.md"),
             new DocumentLink("docs/api/API_ERROR_CODES.md", "api/API_ERROR_CODES.md"),
@@ -41,6 +42,7 @@ class DocumentationIndexTest {
     void documentationPlanDefinesMaintenanceRules() throws Exception {
         String plan = Files.readString(Path.of("docs/project/BACKEND_DOCUMENTATION_PLAN.md"));
         String auth = Files.readString(Path.of("docs/api/AUTH_CONTRACT.md"));
+        String guest = Files.readString(Path.of("docs/api/GUEST_ACCOUNT_HANDOFF.md"));
 
         assertThat(plan).contains("## 문서 그룹");
         assertThat(plan).contains("## 유지 원칙");
@@ -57,6 +59,8 @@ class DocumentationIndexTest {
         assertThat(auth).contains("TODOLAB_GUEST_CLEANUP_ENABLED");
         assertThat(auth).contains("게스트 생성 Rate Limit");
         assertThat(auth).contains("GUEST_CREATION_RATE_LIMIT_EXCEEDED(11004)");
+        assertThat(guest).contains("기존 계정 로그인 및 게스트 병합");
+        assertThat(guest).contains("backend commit은 이 문서가 포함된 최신 `main` 커밋을 사용한다.");
     }
 
     @Test
