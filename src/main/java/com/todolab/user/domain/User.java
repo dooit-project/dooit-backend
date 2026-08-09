@@ -117,6 +117,17 @@ public class User {
         }
     }
 
+    public void promoteGuest(String email, String passwordHash, String displayName) {
+        if (this.accountType != AccountType.GUEST || this.mergedIntoUserId != null) {
+            throw new IllegalStateException("게스트 계정만 승격할 수 있습니다.");
+        }
+        update(email, passwordHash, displayName);
+        this.mergedAt = null;
+        this.mergedIntoUserId = null;
+        this.guestExpiresAt = null;
+        this.lastActiveAt = LocalDateTime.now(Constant.ZONE);
+    }
+
     public void updateTimeZone(String timeZone) {
         String normalizedTimeZone = normalizeRequired(timeZone);
         if (normalizedTimeZone == null) {

@@ -1,11 +1,14 @@
 package com.todolab.auth.service;
 
 import com.todolab.auth.dto.LoginRequest;
+import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.Constant;
+import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.dto.UserResponse;
+import com.todolab.user.exception.UserEmailAlreadyExistsException;
 import com.todolab.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -55,7 +58,42 @@ public class AuthService {
         );
     }
 
+    @Transactional
+    public TokenResponse promoteGuest(JwtTokenPrincipal guestPrincipal, RegisterRequest request) {
+        if (guestPrincipal == null || guestPrincipal.accountType() != AccountType.GUEST) {
+            throw new InvalidCredentialsException();
+        }
+
+        String email = normalizeEmail(request.email());
+        if (userRepository.existsByEmail(email)) {
+            throw new UserEmailAlreadyExistsException(email);
+        }
+
+        User guest = userRepository.findWithLockById(guestPrincipal.userId())
+                .orElseThrow(InvalidCredentialsException::new);
+        if (guest.getAccountType() != AccountType.GUEST) {
+            throw new InvalidCredentialsException();
+        }
+
+        guest.promoteGuest(
+                email,
+                passwordEncoder.encode(request.password()),
+                request.displayName()
+        );
+
+        JwtTokenService.AccessToken accessToken = jwtTokenService.createAccessToken(guest);
+        return new TokenResponse(
+                "Bearer",
+                accessToken.tokenValue(),
+                accessToken.expiresAt(),
+                UserResponse.from(guest)
+        );
+    }
+
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public record JwtTokenPrincipal(Long userId, AccountType accountType) {
     }
 }

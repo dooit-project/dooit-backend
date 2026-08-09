@@ -132,7 +132,8 @@ type TokenResponse = {
 - 서버가 사용자 id를 생성하며 클라이언트가 지정할 수 없다.
 - IP나 단말 정보가 같다는 이유로 기존 게스트 계정을 반환하지 않는다.
 - 게스트 token에는 `accountType=GUEST` claim이 포함된다.
-- 게스트 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.
+- 게스트 상태 회원가입 승격은 지원한다.
+- 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.
 
 ### 로그인
 
@@ -160,6 +161,26 @@ type TokenResponse = {
   user: UserResponse;
 };
 ```
+
+게스트 상태 회원가입:
+
+```http
+POST /api/v1/auth/register
+Authorization: Bearer <guest-access-token>
+Content-Type: application/json
+```
+
+유효한 게스트 token이 있으면 새 user row를 만들지 않고 기존 게스트 user id를 유지한 채 `REGISTERED`로 승격한다. 성공 응답은 추가 로그인이 필요 없도록 `TokenResponse`다.
+
+```ts
+type GuestPromotionRegisterResponse = TokenResponse & {
+  user: UserResponse & {
+    accountType: 'REGISTERED';
+  };
+};
+```
+
+검증 실패 또는 이메일 중복이면 게스트 상태와 데이터는 유지된다. 승격 성공 후 기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 owner API와 `/auth/me`에서 401 처리된다.
 
 ### 내 정보
 

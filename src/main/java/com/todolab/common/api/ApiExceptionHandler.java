@@ -8,6 +8,7 @@ import com.todolab.task.exception.TaskNotFoundException;
 import com.todolab.user.exception.UserEmailAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -123,6 +124,13 @@ public class ApiExceptionHandler {
         log.warn("Invalid Credentials");
         return ResponseEntity.status(ErrorCode.INVALID_CREDENTIALS.getStatus())
                 .body(ApiResponse.failure(ErrorCode.INVALID_CREDENTIALS));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<?>> handleAuthenticationException(AuthenticationException e) {
+        log.warn("Authentication Failed");
+        return ResponseEntity.status(ErrorCode.UNAUTHORIZED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.UNAUTHORIZED));
     }
 
     @ExceptionHandler(Exception.class)

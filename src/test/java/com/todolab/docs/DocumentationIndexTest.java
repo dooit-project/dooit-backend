@@ -48,6 +48,8 @@ class DocumentationIndexTest {
         assertThat(auth).contains("POST /api/v1/auth/guest");
         assertThat(auth).contains("게스트 access token TTL은 31일");
         assertThat(auth).contains("`accountType` claim은 `GUEST`");
+        assertThat(auth).contains("같은 user id를 유지하고 `REGISTERED`로 승격한다");
+        assertThat(auth).contains("token claim이 불일치하므로 401로 거부한다");
     }
 
     @Test

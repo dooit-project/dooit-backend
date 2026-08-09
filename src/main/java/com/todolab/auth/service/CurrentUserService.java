@@ -22,8 +22,13 @@ public class CurrentUserService {
         }
 
         Long userId = parseUserId(jwt.getSubject());
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        if (jwt.getClaimAsString("accountType") != null
+                && !jwt.getClaimAsString("accountType").equals(user.getAccountType().name())) {
+            throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
+        }
+        return user;
     }
 
     private Long parseUserId(String subject) {

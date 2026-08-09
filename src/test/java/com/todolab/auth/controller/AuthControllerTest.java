@@ -5,6 +5,7 @@ import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.service.AuthService;
+import com.todolab.auth.service.CurrentUserService;
 import com.todolab.common.api.ApiExceptionHandler;
 import com.todolab.common.api.ErrorCode;
 import com.todolab.user.domain.AccountType;
@@ -19,6 +20,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -47,6 +50,12 @@ class AuthControllerTest {
 
     @MockitoBean
     AuthService authService;
+
+    @MockitoBean
+    CurrentUserService currentUserService;
+
+    @MockitoBean
+    JwtDecoder jwtDecoder;
 
     @Test
     @DisplayName("회원가입 성공")
@@ -110,6 +119,48 @@ class AuthControllerTest {
 
         then(userService).should().register(any(RegisterRequest.class));
         then(userService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    @DisplayName("게스트 회원가입 승격 성공 - 같은 사용자 id의 정식 token을 반환한다")
+    void register_promoteGuest() throws Exception {
+        RegisterRequest request = new RegisterRequest("test@example.com", "password123", "테스터");
+        UserResponse user = new UserResponse(
+                10L,
+                "test@example.com",
+                "테스터",
+                UserRole.USER,
+                LocalDateTime.of(2026, 8, 9, 0, 0),
+                null
+        );
+        TokenResponse response = new TokenResponse(
+                "Bearer",
+                "registered-token",
+                LocalDateTime.of(2026, 8, 9, 1, 0),
+                user
+        );
+        given(authService.promoteGuest(any(AuthService.JwtTokenPrincipal.class), any(RegisterRequest.class)))
+                .willReturn(response);
+        given(jwtDecoder.decode("guest-token")).willReturn(Jwt.withTokenValue("guest-token")
+                .header("alg", "HS256")
+                .subject("10")
+                .claim("accountType", "GUEST")
+                .build());
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer guest-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.accessToken").value("registered-token"))
+                .andExpect(jsonPath("$.data.user.id").value(10))
+                .andExpect(jsonPath("$.data.user.accountType").value("REGISTERED"))
+                .andExpect(jsonPath("$.data.user.email").value("test@example.com"));
+
+        then(authService).should().promoteGuest(any(AuthService.JwtTokenPrincipal.class), any(RegisterRequest.class));
+        then(userService).shouldHaveNoInteractions();
     }
 
     @Test

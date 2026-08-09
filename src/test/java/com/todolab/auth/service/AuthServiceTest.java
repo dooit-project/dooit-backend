@@ -1,6 +1,7 @@
 package com.todolab.auth.service;
 
 import com.todolab.auth.dto.LoginRequest;
+import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.user.domain.AccountType;
@@ -93,6 +94,52 @@ class AuthServiceTest {
         assertThat(response.user().accountType()).isEqualTo(AccountType.GUEST);
         assertThat(response.user().email()).isNull();
         assertThat(response.user().displayName()).isNull();
+    }
+
+    @Test
+    @DisplayName("게스트 회원가입 승격은 같은 사용자 id를 유지하고 정식 token을 반환한다")
+    void promoteGuest_success() {
+        User guest = User.guest(LocalDateTime.of(2026, 9, 9, 0, 0));
+        org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 10L);
+        RegisterRequest request = new RegisterRequest(" TEST@Example.COM ", "password123", "테스터");
+        JwtTokenService.AccessToken accessToken = new JwtTokenService.AccessToken(
+                "registered-token",
+                LocalDateTime.of(2026, 8, 9, 1, 0)
+        );
+
+        given(userRepository.existsByEmail("test@example.com")).willReturn(false);
+        given(userRepository.findWithLockById(10L)).willReturn(Optional.of(guest));
+        given(passwordEncoder.encode("password123")).willReturn("encoded-password");
+        given(jwtTokenService.createAccessToken(guest)).willReturn(accessToken);
+
+        TokenResponse response = authService.promoteGuest(
+                new AuthService.JwtTokenPrincipal(10L, AccountType.GUEST),
+                request
+        );
+
+        assertThat(response.accessToken()).isEqualTo("registered-token");
+        assertThat(response.user().id()).isEqualTo(10L);
+        assertThat(response.user().accountType()).isEqualTo(AccountType.REGISTERED);
+        assertThat(response.user().email()).isEqualTo("test@example.com");
+        assertThat(guest.getGuestExpiresAt()).isNull();
+        assertThat(guest.getPasswordHash()).isEqualTo("encoded-password");
+    }
+
+    @Test
+    @DisplayName("게스트 승격 시 이메일 중복이면 게스트 상태와 데이터가 유지된다")
+    void promoteGuest_duplicateEmailKeepsGuest() {
+        RegisterRequest request = new RegisterRequest("test@example.com", "password123", "테스터");
+        given(userRepository.existsByEmail("test@example.com")).willReturn(true);
+
+        assertThatThrownBy(() -> authService.promoteGuest(
+                new AuthService.JwtTokenPrincipal(10L, AccountType.GUEST),
+                request
+        )).isInstanceOf(com.todolab.user.exception.UserEmailAlreadyExistsException.class);
+
+        then(userRepository).should().existsByEmail("test@example.com");
+        then(userRepository).shouldHaveNoMoreInteractions();
+        then(passwordEncoder).shouldHaveNoInteractions();
+        then(jwtTokenService).shouldHaveNoInteractions();
     }
 
     @Test

@@ -60,10 +60,11 @@ JWT claim:
 - `GET /api/v1/auth/me`: `accountType`, nullable `email`, nullable `displayName` 반환
 - 게스트 token의 `accountType` claim은 `GUEST`
 - 게스트 계정 row에는 `guestExpiresAt`, `lastActiveAt`을 저장한다.
+- `POST /api/v1/auth/register`에 유효한 게스트 Bearer token을 보내면 같은 user id를 유지하고 `REGISTERED`로 승격한다.
+- 승격 성공 후 기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 401로 거부한다.
 
 후속 작업:
 
-- 게스트 상태 신규 회원가입 승격
 - 기존 정식 계정 로그인 시 게스트 데이터 병합
 - 병합 완료 guest token revoke
 - 만료 게스트 정리

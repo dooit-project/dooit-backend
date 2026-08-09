@@ -26,7 +26,10 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("Today/Calendar/알림 후보 조회의 일정 overlap 날짜 경계에 적용");
         assertThat(content).contains("POST /api/v1/auth/guest");
         assertThat(content).contains("accountType: 'GUEST' | 'REGISTERED'");
-        assertThat(content).contains("게스트 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 후속 API 계약에서 확정한다.");
+        assertThat(content).contains("게스트 상태 회원가입 승격은 지원한다.");
+        assertThat(content).contains("Authorization: Bearer <guest-access-token>");
+        assertThat(content).contains("기존 게스트 user id를 유지한 채 `REGISTERED`로 승격한다.");
+        assertThat(content).contains("기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 owner API와 `/auth/me`에서 401 처리된다.");
     }
 
     @Test

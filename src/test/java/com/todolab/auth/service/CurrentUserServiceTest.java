@@ -31,9 +31,23 @@ class CurrentUserServiceTest {
         User user = new User("owner@example.com", "encoded-password", "Owner");
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
-        User result = service.requireUser(jwt("1"));
+        User result = service.requireUser(jwt("1", "REGISTERED"));
 
         assertThat(result).isSameAs(user);
+        then(userRepository).should().findById(1L);
+    }
+
+    @Test
+    @DisplayName("JWT accountType과 DB accountType이 다르면 인증 예외를 던진다")
+    void requireUser_fail_accountTypeMismatch() {
+        CurrentUserService service = new CurrentUserService(userRepository);
+        User user = new User("owner@example.com", "encoded-password", "Owner");
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.requireUser(jwt("1", "GUEST")))
+                .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
+                .hasMessage("인증 정보가 올바르지 않습니다.");
+
         then(userRepository).should().findById(1L);
     }
 
@@ -75,9 +89,16 @@ class CurrentUserServiceTest {
     }
 
     private Jwt jwt(String subject) {
-        return Jwt.withTokenValue("token")
+        return jwt(subject, null);
+    }
+
+    private Jwt jwt(String subject, String accountType) {
+        Jwt.Builder builder = Jwt.withTokenValue("token")
                 .header("alg", "none")
-                .subject(subject)
-                .build();
+                .subject(subject);
+        if (accountType != null) {
+            builder.claim("accountType", accountType);
+        }
+        return builder.build();
     }
 }

@@ -6,6 +6,9 @@ import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.common.api.ApiResponse;
 import com.todolab.auth.service.AuthService;
+import com.todolab.auth.service.CurrentUserService;
+import com.todolab.user.domain.AccountType;
+import com.todolab.user.domain.User;
 import com.todolab.user.dto.UserResponse;
 import com.todolab.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,10 +21,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,10 +62,22 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final CurrentUserService currentUserService;
+    private final JwtDecoder jwtDecoder;
 
     @Operation(summary = "회원가입", description = "이메일, 비밀번호, 표시 이름으로 모바일 API 사용자를 생성합니다.")
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<?>> register(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody RegisterRequest request
+    ) {
+        AuthService.JwtTokenPrincipal guestPrincipal = guestPrincipal(authorization);
+        if (guestPrincipal != null) {
+            TokenResponse response = authService.promoteGuest(guestPrincipal, request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(response));
+        }
+
         UserResponse response = userService.register(request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -86,16 +104,44 @@ public class AuthController {
     )
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AuthenticatedUserResponse>> me(@AuthenticationPrincipal Jwt jwt) {
+        User user = currentUserService.requireUser(jwt);
         AuthenticatedUserResponse response = new AuthenticatedUserResponse(
-                Long.valueOf(jwt.getSubject()),
-                jwt.getClaimAsString("accountType") == null
-                        ? com.todolab.user.domain.AccountType.REGISTERED
-                        : com.todolab.user.domain.AccountType.valueOf(jwt.getClaimAsString("accountType")),
-                jwt.getClaimAsString("email"),
-                jwt.getClaimAsString("displayName"),
-                jwt.getClaimAsString("role")
+                user.getId(),
+                user.getAccountType(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getRole().name()
         );
 
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    private AuthService.JwtTokenPrincipal guestPrincipal(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return null;
+        }
+        Jwt jwt;
+        try {
+            jwt = jwtDecoder.decode(authorization.substring("Bearer ".length()));
+        } catch (JwtException e) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                    "인증 정보가 올바르지 않습니다.",
+                    e
+            );
+        }
+        if (!"GUEST".equals(jwt.getClaimAsString("accountType"))) {
+            return null;
+        }
+        try {
+            return new AuthService.JwtTokenPrincipal(
+                    Long.valueOf(jwt.getSubject()),
+                    AccountType.valueOf(jwt.getClaimAsString("accountType"))
+            );
+        } catch (RuntimeException e) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                    "인증 정보가 올바르지 않습니다.",
+                    e
+            );
+        }
     }
 }
