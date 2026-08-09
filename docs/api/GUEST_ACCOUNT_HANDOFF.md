@@ -1,6 +1,6 @@
 # Guest Account Handoff
 
-Last updated: 2026-08-09
+Last updated: 2026-08-10
 
 이 문서는 모바일 게스트 계정 bootstrap, 정식 계정 승격, 기존 계정 병합 연동에 필요한 백엔드 확정 계약을 정리한다.
 
@@ -16,7 +16,7 @@ POST /api/v1/auth/guest
 
 Request body는 없다.
 
-성공 응답은 `TokenResponse`다.
+성공 HTTP status는 `201 Created`이고 응답은 `TokenResponse`다.
 
 ```json
 {
@@ -63,7 +63,7 @@ Content-Type: application/json
 }
 ```
 
-유효한 게스트 token이면 같은 user id를 유지한 채 `REGISTERED`로 승격하고 정식 `TokenResponse`를 반환한다.
+유효한 게스트 token이면 같은 user id를 유지한 채 `REGISTERED`로 승격하고 정식 `TokenResponse`를 반환한다. 성공 HTTP status는 `201 Created`다.
 
 ### 기존 계정 로그인 및 게스트 병합
 
@@ -158,9 +158,11 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 게스트 생성 제한:
 
 - `TODOLAB_GUEST_RATE_LIMIT_ENABLED=true`
+- `TODOLAB_GUEST_RATE_LIMIT_STORE=memory`
 - `TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS=30`
 - `TODOLAB_GUEST_RATE_LIMIT_WINDOW=PT1H`
-- 현재 구현은 단일 서버 인스턴스 기준 인메모리 fixed window다.
+- 단일 서버는 `memory`, 다중 서버는 `redis`를 사용한다.
+- Redis 저장소는 Spring Redis 접속 설정과 함께 `TODOLAB_GUEST_RATE_LIMIT_STORE=redis`로 활성화한다.
 
 ## 8. 테스트
 
@@ -178,6 +180,13 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 - `CurrentUserServiceTest`
 - `GuestAccountCleanupServiceIntegrationTest`
 - `GuestAccountRateLimiterTest`
+
+현재 미지원/후속 계약:
+
+- 같은 guest user id를 유지하는 게스트 token 갱신 또는 재발급 API
+- 병합 결과 개수의 API 응답 포함
+
+병합 결과 개수는 현재 내부 audit 로그에만 기록한다. 응답 확장 전까지 모바일은 일반적인 계정 연결 완료 문구를 사용한다.
 
 ## 9. 모바일 전달 기준
 

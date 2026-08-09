@@ -1,6 +1,6 @@
 # Auth Contract
 
-Last updated: 2026-08-09
+Last updated: 2026-08-10
 
 이 문서는 ToDoLab 백엔드의 모바일 JWT 인증과 웹 세션 인증 책임을 정리한다.
 
@@ -68,10 +68,6 @@ JWT claim:
 - 만료된 guest token은 owner API와 `/auth/me`에서 401로 거부한다.
 - `POST /api/v1/auth/guest`는 클라이언트 신호별 기본 30건/1시간 rate limit을 적용하고 초과 시 429/`11004`를 반환한다.
 
-후속 작업:
-
-- 게스트 생성 rate limit 저장소를 Redis 등 공유 저장소로 전환
-
 ## 게스트 만료 정리 정책
 
 운영 기본값:
@@ -109,6 +105,7 @@ JWT claim:
 | 항목 | 값 |
 | --- | --- |
 | 활성화 | `TODOLAB_GUEST_RATE_LIMIT_ENABLED=true` |
+| 저장소 | `TODOLAB_GUEST_RATE_LIMIT_STORE=memory` 기본값. 다중 서버는 `redis` |
 | 한도 | `TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS=30` |
 | window | `TODOLAB_GUEST_RATE_LIMIT_WINDOW=PT1H` |
 | 추적 key 최대 수 | `TODOLAB_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS=10000` |
@@ -118,7 +115,8 @@ JWT claim:
 - 대상 endpoint는 `POST /api/v1/auth/guest`다.
 - `X-Forwarded-For` 첫 IP가 있으면 우선 사용하고, 없으면 `remoteAddr`를 사용한다.
 - 클라이언트 신호는 사용자 식별자나 owner scope로 사용하지 않고 abuse 방지용 해시 key로만 메모리에 저장한다.
-- 현재 구현은 단일 서버 인스턴스 기준 인메모리 fixed window다.
+- `memory` 저장소는 단일 서버 인스턴스 기준 인메모리 fixed window다.
+- `redis` 저장소는 `StringRedisTemplate` 기반 atomic increment와 TTL을 사용해 다중 서버에서 공유 window를 적용한다.
 - 초과 시 HTTP 429와 `GUEST_CREATION_RATE_LIMIT_EXCEEDED(11004)`를 반환한다.
 
 ## 게스트 병합 정책
@@ -141,6 +139,7 @@ JWT claim:
 - 같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 다시 반환하는 멱등 성공으로 처리한다.
 - 병합 완료 후 기존 guest token은 owner API와 `/auth/me`에서 401 처리된다.
 - 병합 결과 count는 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
+- 현재 `POST /api/v1/auth/login` 응답에는 병합 결과 개수를 포함하지 않는다. 모바일은 일반적인 계정 연결 완료 문구를 사용한다.
 
 ## Refresh Token
 
@@ -149,6 +148,18 @@ JWT claim:
 - access token 만료 시 모바일은 다시 로그인한다.
 - silent refresh endpoint는 제공하지 않는다.
 - refresh token 저장소, rotation, reuse detection은 현재 백엔드 책임이 아니다.
+- 게스트 access token을 같은 guest user id로 갱신하거나 재발급하는 API는 아직 제공하지 않는다.
+
+게스트 token 갱신 API를 도입할 때는 다음 계약을 먼저 확정한다.
+
+- 같은 guest user id 유지 방식
+- 갱신 가능 기간
+- 만료 전/후 처리 기준
+- 이미 정리된 게스트의 오류 코드
+- 갱신 실패 시 기존 데이터 보존 정책
+- token 탈취 방지와 재발급 인증 방식
+
+새로운 guest id를 발급하는 방식은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
 
 refresh token을 도입할 때는 별도 endpoint, 저장소, 폐기 정책, 모바일 secure storage 정책을 먼저 확정한다.
 

@@ -1,6 +1,6 @@
 # ToDoLab Environment Integration
 
-Last updated: 2026-08-02
+Last updated: 2026-08-10
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
@@ -98,6 +98,8 @@ staging/production 환경을 확정할 때는 아래 값을 먼저 결정한다.
 
 Docker image와 Compose의 app service health check는 모두 `/actuator/health/readiness`를 호출한다. readiness가 `UP`이 아니면 app container는 healthy 상태가 아니다.
 
+Redis health indicator는 기본 비활성이다. 게스트 생성 rate limit 저장소를 Redis로 운영하고 Redis 접속 상태를 actuator health에 포함하려면 `TODOLAB_REDIS_HEALTH_ENABLED=true`를 함께 설정한다.
+
 상세 점검 endpoint:
 
 - `/actuator/health/liveness`: JVM/application liveness
@@ -142,6 +144,7 @@ TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED=false
 TODOLAB_PUSH_ENABLED=false
 TODOLAB_PUSH_PROVIDER=EXPO
 TODOLAB_PUSH_ENDPOINT=https://exp.host/--/api/v2/push/send
+TODOLAB_REDIS_HEALTH_ENABLED=false
 ```
 
 운영 원칙:

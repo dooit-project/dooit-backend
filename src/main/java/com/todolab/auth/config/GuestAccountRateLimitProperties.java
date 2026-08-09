@@ -7,12 +7,16 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "app.auth.guest.rate-limit")
 public record GuestAccountRateLimitProperties(
         boolean enabled,
+        Store store,
         int maxRequests,
         Duration window,
         int maxTrackedKeys
 ) {
 
     public GuestAccountRateLimitProperties {
+        if (store == null) {
+            store = Store.MEMORY;
+        }
         if (maxRequests <= 0) {
             maxRequests = 30;
         }
@@ -22,5 +26,10 @@ public record GuestAccountRateLimitProperties(
         if (maxTrackedKeys <= 0) {
             maxTrackedKeys = 10_000;
         }
+    }
+
+    public enum Store {
+        MEMORY,
+        REDIS
     }
 }

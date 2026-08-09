@@ -1,6 +1,6 @@
 # ToDoLab v1 Frontend API
 
-Last updated: 2026-07-25
+Last updated: 2026-08-10
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -105,7 +105,7 @@ type UserResponse = {
 POST /api/v1/auth/guest
 ```
 
-Request body는 없다. 서버가 새 `GUEST` 사용자와 access token을 발급한다.
+Request body는 없다. 서버가 새 `GUEST` 사용자와 access token을 발급한다. 성공 HTTP status는 `201 Created`다.
 
 Response:
 
@@ -136,6 +136,7 @@ type TokenResponse = {
 - 기존 계정 로그인 병합은 지원한다.
 - 만료 게스트와 관련 owner 데이터 정리는 운영 스케줄러로 지원한다.
 - 게스트 생성 rate limit은 기본 클라이언트 신호별 30건/1시간이며 초과 시 429/`11004`를 반환한다.
+- 같은 guest user id를 유지하는 게스트 token 갱신 또는 재발급 API는 아직 제공하지 않는다.
 
 ### 로그인
 
@@ -189,6 +190,7 @@ Content-Type: application/json
 - 이메일/비밀번호 검증 실패 시 게스트 데이터는 변경하지 않는다.
 - 같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 다시 반환한다.
 - 병합 완료 후 기존 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 owner API와 `/auth/me`에서 401 처리된다.
+- 병합 결과 개수는 현재 응답에 포함하지 않고 내부 audit 로그에만 기록한다.
 
 게스트 상태 회원가입:
 
@@ -198,7 +200,7 @@ Authorization: Bearer <guest-access-token>
 Content-Type: application/json
 ```
 
-유효한 게스트 token이 있으면 새 user row를 만들지 않고 기존 게스트 user id를 유지한 채 `REGISTERED`로 승격한다. 성공 응답은 추가 로그인이 필요 없도록 `TokenResponse`다.
+유효한 게스트 token이 있으면 새 user row를 만들지 않고 기존 게스트 user id를 유지한 채 `REGISTERED`로 승격한다. 성공 HTTP status는 `201 Created`이고 응답은 추가 로그인이 필요 없도록 `TokenResponse`다.
 
 ```ts
 type GuestPromotionRegisterResponse = TokenResponse & {

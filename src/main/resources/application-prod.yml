@@ -47,6 +47,7 @@ app:
         cron: ${TODOLAB_GUEST_CLEANUP_CRON:0 30 3 * * *}
       rate-limit:
         enabled: ${TODOLAB_GUEST_RATE_LIMIT_ENABLED:true}
+        store: ${TODOLAB_GUEST_RATE_LIMIT_STORE:memory}
         max-requests: ${TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS:30}
         window: ${TODOLAB_GUEST_RATE_LIMIT_WINDOW:PT1H}
         max-tracked-keys: ${TODOLAB_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS:10000}
@@ -91,3 +92,8 @@ springdoc:
     enabled: ${TODOLAB_SPRINGDOC_API_DOCS_ENABLED:false}
   swagger-ui:
     enabled: ${TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED:false}
+
+management:
+  health:
+    redis:
+      enabled: ${TODOLAB_REDIS_HEALTH_ENABLED:false}

@@ -19,6 +19,7 @@ app:
         cron: "0 30 3 * * *"
       rate-limit:
         enabled: true
+        store: memory
         max-requests: 30
         window: PT1H
         max-tracked-keys: 10000
@@ -57,6 +58,9 @@ springdoc:
     operations-sorter: method
 
 management:
+  health:
+    redis:
+      enabled: false
   endpoints:
     web:
       exposure:

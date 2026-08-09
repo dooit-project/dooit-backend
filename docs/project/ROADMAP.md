@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-02
+Last updated: 2026-08-10
 
 이 문서는 완료 이력보다 **앞으로 백엔드에서 닫아야 할 작업**을 관리한다. 이미 구현된 인증, v1 경로, owner scope, OpenAPI/Swagger/Scalar 문서 UI는 기준 상태로 보고, 아래 항목은 모바일 실사용과 운영 안정성에 필요한 후속 작업이다.
 
@@ -106,7 +106,9 @@ Last updated: 2026-08-02
 
 후속 운영 확장:
 
-- [ ] 다중 서버 배포 시 게스트 생성 rate limit 저장소를 Redis 등 공유 저장소로 전환
+- [x] 다중 서버 배포 시 게스트 생성 rate limit 저장소를 Redis 등 공유 저장소로 전환
+- [ ] production DB 백업, `20260809_add_guest_account_columns.sql` 적용, 최신 backend image 배포
+- [ ] production 게스트 발급, `/auth/me`, 회원가입 승격, 기존 계정 로그인 병합 smoke test 기록
 
 완료 기준:
 
@@ -263,7 +265,40 @@ Last updated: 2026-08-02
 
 - 실제 staging/production 도메인과 모바일 배포 origin을 확정한다.
 
-### 6.5 로컬 PC 단일 production 운영
+### 6.5 게스트 token 갱신 계약
+
+현재 상태:
+
+- [x] 게스트 access token TTL 31일
+- [x] 만료 guest token 401 처리
+- [x] 만료 게스트와 owner 데이터 정리 정책
+- [ ] 같은 guest user id를 유지하는 token 갱신 또는 재발급 API
+- [ ] 갱신 가능 기간
+- [ ] 만료 전/후 처리 기준
+- [ ] 이미 정리된 게스트의 오류 코드
+- [ ] 갱신 실패 시 기존 데이터 보존 정책
+- [ ] token 탈취 방지와 재발급 인증 방식
+
+착수 조건:
+
+- 모바일이 31일 이상 미접속 후 기존 게스트 데이터를 보존해야 하는 제품 정책을 확정한다.
+- 새로운 guest id 발급은 기존 데이터 복구 정책으로 사용하지 않는다.
+
+### 6.6 게스트 병합 결과 응답 확장
+
+현재 상태:
+
+- [x] 게스트 owner 데이터 병합
+- [x] 병합 결과 count 내부 audit 로그 기록
+- [ ] `POST /api/v1/auth/login` 병합 성공 응답에 병합 결과 개수 포함 여부 결정
+- [ ] 포함 시 `tasks`, `schedules`, `ddayGoals`, `recurrenceSeries` 등 count DTO 계약 확정
+- [ ] 기존 `TokenResponse` 호환성 유지 방식 확정
+
+착수 조건:
+
+- 모바일 연결 완료 화면에서 구체적인 이전 개수를 노출할지 결정한다.
+
+### 6.7 로컬 PC 단일 production 운영
 
 목표: 별도 서버 없이 이 PC의 Docker Compose를 ToDoLab의 유일한 production 환경으로 사용하고, Android 앱이 Tailscale을 통해 안전하게 접근할 수 있게 한다. 이 환경에서는 staging을 따로 만들지 않고 `local 개발 환경`과 `이 PC의 production 환경`만 구분한다.
 

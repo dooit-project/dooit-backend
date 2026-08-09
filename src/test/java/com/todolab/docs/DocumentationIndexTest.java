@@ -59,6 +59,7 @@ class DocumentationIndexTest {
         assertThat(auth).contains("TODOLAB_GUEST_CLEANUP_ENABLED");
         assertThat(auth).contains("게스트 생성 Rate Limit");
         assertThat(auth).contains("GUEST_CREATION_RATE_LIMIT_EXCEEDED(11004)");
+        assertThat(auth).contains("다중 서버에서 공유 window");
         assertThat(guest).contains("기존 계정 로그인 및 게스트 병합");
         assertThat(guest).contains("backend commit은 이 문서가 포함된 최신 `main` 커밋을 사용한다.");
     }
@@ -74,7 +75,7 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("반복 rule 수정");
         assertThat(roadmap).contains("운영 환경 확정");
         assertThat(roadmap).contains("게스트 계정 및 정식 계정 연동");
-        assertThat(roadmap).contains("게스트 생성 rate limit 저장소를 Redis");
+        assertThat(roadmap).contains("[x] 다중 서버 배포 시 게스트 생성 rate limit 저장소를 Redis");
     }
 
     @Test
