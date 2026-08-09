@@ -136,7 +136,24 @@ type TokenResponse = {
 - 기존 계정 로그인 병합은 지원한다.
 - 만료 게스트와 관련 owner 데이터 정리는 운영 스케줄러로 지원한다.
 - 게스트 생성 rate limit은 기본 클라이언트 신호별 30건/1시간이며 초과 시 429/`11004`를 반환한다.
-- 같은 guest user id를 유지하는 게스트 token 갱신 또는 재발급 API는 아직 제공하지 않는다.
+- 같은 guest user id를 유지하는 게스트 token 갱신은 만료 전 유효 token으로 지원한다.
+
+### 게스트 token 갱신
+
+```http
+POST /api/v1/auth/guest/refresh
+Authorization: Bearer <guest-access-token>
+```
+
+유효한 게스트 token이면 같은 guest user id를 유지하고 새 게스트 `TokenResponse`를 반환한다. 성공 HTTP status는 `200 OK`다.
+
+주의:
+
+- 갱신 가능 기간은 기존 guest token이 유효한 동안이다.
+- 성공 시 `guestExpiresAt`은 새 게스트 token TTL 기준으로 연장된다.
+- 만료된 guest token, 병합 완료 guest token, 정식 계정 token, 이미 정리된 guest는 401/`11002`로 처리한다.
+- 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
+- 새로운 guest id 발급은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
 
 ### 로그인
 

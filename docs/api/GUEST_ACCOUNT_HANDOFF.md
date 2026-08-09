@@ -49,6 +49,23 @@ Authorization: Bearer <access-token>
 
 `data.accountType`은 `GUEST` 또는 `REGISTERED`다. 게스트는 `email`, `displayName`이 `null`이다.
 
+### 게스트 token 갱신
+
+```http
+POST /api/v1/auth/guest/refresh
+Authorization: Bearer <guest-access-token>
+```
+
+유효한 게스트 token이면 같은 guest user id를 유지하고 새 게스트 `TokenResponse`를 반환한다. 성공 HTTP status는 `200 OK`다.
+
+정책:
+
+- 갱신 가능 기간은 기존 guest token이 유효한 동안이다.
+- 성공 시 `guestExpiresAt`은 새 게스트 token TTL 기준으로 연장된다.
+- 만료된 guest token, 병합 완료 guest token, 정식 계정 token, 이미 정리된 guest는 401/`11002`로 처리한다.
+- 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
+- 새로운 guest id 발급은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
+
 ### 게스트 상태 신규 회원가입
 
 ```http
@@ -183,7 +200,7 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 
 현재 미지원/후속 계약:
 
-- 같은 guest user id를 유지하는 게스트 token 갱신 또는 재발급 API
+- 만료 후 게스트 token 재발급
 - 병합 결과 개수의 API 응답 포함
 
 병합 결과 개수는 현재 내부 audit 로그에만 기록한다. 응답 확장 전까지 모바일은 일반적인 계정 연결 완료 문구를 사용한다.

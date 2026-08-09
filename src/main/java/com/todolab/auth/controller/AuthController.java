@@ -95,6 +95,14 @@ public class AuthController {
                 .body(ApiResponse.success(authService.createGuest()));
     }
 
+    @Operation(summary = "게스트 토큰 갱신", description = "유효한 게스트 Bearer token으로 같은 게스트 사용자 id의 access token을 재발급합니다.")
+    @PostMapping("/guest/refresh")
+    public ResponseEntity<ApiResponse<TokenResponse>> refreshGuest(
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(authService.refreshGuest(guestPrincipal(authorization))));
+    }
+
     @Operation(summary = "로그인", description = "이메일과 비밀번호로 Bearer access token을 발급합니다.")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<TokenResponse>> login(

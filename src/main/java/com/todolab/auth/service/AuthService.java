@@ -18,6 +18,7 @@ import com.todolab.user.exception.UserEmailAlreadyExistsException;
 import com.todolab.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,6 +83,30 @@ public class AuthService {
     }
 
     @Transactional
+    public TokenResponse refreshGuest(AuthService.JwtTokenPrincipal guestPrincipal) {
+        if (guestPrincipal == null || guestPrincipal.accountType() != AccountType.GUEST) {
+            throw new AuthenticationCredentialsNotFoundException("인증 정보가 필요합니다.");
+        }
+
+        User guest = userRepository.findWithLockById(guestPrincipal.userId())
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다."));
+        if (guest.getAccountType() != AccountType.GUEST
+                || guest.getMergedIntoUserId() != null
+                || isExpiredGuest(guest)) {
+            throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
+        }
+
+        guest.refreshGuestExpiration(LocalDateTime.now(Constant.ZONE).plus(jwtTokenService.guestAccessTokenTtl()));
+        JwtTokenService.AccessToken accessToken = jwtTokenService.createGuestAccessToken(guest);
+        return new TokenResponse(
+                "Bearer",
+                accessToken.tokenValue(),
+                accessToken.expiresAt(),
+                UserResponse.from(guest)
+        );
+    }
+
+    @Transactional
     public TokenResponse promoteGuest(JwtTokenPrincipal guestPrincipal, RegisterRequest request) {
         if (guestPrincipal == null || guestPrincipal.accountType() != AccountType.GUEST) {
             throw new InvalidCredentialsException();
@@ -115,6 +140,11 @@ public class AuthService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean isExpiredGuest(User guest) {
+        return guest.getGuestExpiresAt() != null
+                && guest.getGuestExpiresAt().isBefore(LocalDateTime.now(Constant.ZONE));
     }
 
     public record JwtTokenPrincipal(Long userId, AccountType accountType) {

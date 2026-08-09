@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -123,6 +124,40 @@ class AuthServiceTest {
         assertThat(response.user().accountType()).isEqualTo(AccountType.GUEST);
         assertThat(response.user().email()).isNull();
         assertThat(response.user().displayName()).isNull();
+    }
+
+    @Test
+    @DisplayName("게스트 token 갱신은 같은 사용자 id의 새 게스트 token을 반환하고 만료 시각을 연장한다")
+    void refreshGuest_success() {
+        User guest = User.guest(LocalDateTime.of(2026, 9, 9, 0, 0));
+        org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 10L);
+        JwtTokenService.AccessToken accessToken = new JwtTokenService.AccessToken(
+                "refreshed-guest-token",
+                LocalDateTime.of(2026, 9, 10, 0, 0)
+        );
+
+        given(userRepository.findWithLockById(10L)).willReturn(Optional.of(guest));
+        given(jwtTokenService.guestAccessTokenTtl()).willReturn(java.time.Duration.ofDays(31));
+        given(jwtTokenService.createGuestAccessToken(guest)).willReturn(accessToken);
+
+        TokenResponse response = authService.refreshGuest(new AuthService.JwtTokenPrincipal(10L, AccountType.GUEST));
+
+        assertThat(response.tokenType()).isEqualTo("Bearer");
+        assertThat(response.accessToken()).isEqualTo("refreshed-guest-token");
+        assertThat(response.user().id()).isEqualTo(10L);
+        assertThat(response.user().accountType()).isEqualTo(AccountType.GUEST);
+        assertThat(guest.getGuestExpiresAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("게스트 token 갱신은 정식 계정 principal이면 401 계약 예외를 던진다")
+    void refreshGuest_failsForRegisteredPrincipal() {
+        assertThatThrownBy(() -> authService.refreshGuest(
+                new AuthService.JwtTokenPrincipal(10L, AccountType.REGISTERED)
+        )).isInstanceOf(AuthenticationCredentialsNotFoundException.class);
+
+        then(userRepository).shouldHaveNoInteractions();
+        then(jwtTokenService).shouldHaveNoInteractions();
     }
 
     @Test

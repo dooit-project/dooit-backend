@@ -141,6 +141,14 @@ public class User {
         this.lastActiveAt = LocalDateTime.now(Constant.ZONE);
     }
 
+    public void refreshGuestExpiration(LocalDateTime guestExpiresAt) {
+        if (this.accountType != AccountType.GUEST || this.mergedIntoUserId != null) {
+            throw new IllegalStateException("게스트 계정만 갱신할 수 있습니다.");
+        }
+        this.guestExpiresAt = guestExpiresAt;
+        this.lastActiveAt = LocalDateTime.now(Constant.ZONE);
+    }
+
     public void updateTimeZone(String timeZone) {
         String normalizedTimeZone = normalizeRequired(timeZone);
         if (normalizedTimeZone == null) {

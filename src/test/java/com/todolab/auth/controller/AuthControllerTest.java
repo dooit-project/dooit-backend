@@ -259,6 +259,45 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("게스트 token 갱신 성공 - 같은 guest user id의 새 token을 반환한다")
+    void refreshGuest_success() throws Exception {
+        UserResponse user = new UserResponse(
+                10L,
+                AccountType.GUEST,
+                null,
+                null,
+                UserRole.USER,
+                "Asia/Seoul",
+                LocalDateTime.of(2026, 8, 9, 0, 0),
+                null
+        );
+        TokenResponse response = new TokenResponse(
+                "Bearer",
+                "refreshed-guest-token",
+                LocalDateTime.of(2026, 9, 10, 0, 0),
+                user
+        );
+
+        given(jwtDecoder.decode("guest-token")).willReturn(Jwt.withTokenValue("guest-token")
+                .header("alg", "HS256")
+                .subject("10")
+                .claim("accountType", "GUEST")
+                .build());
+        given(authService.refreshGuest(any(AuthService.JwtTokenPrincipal.class))).willReturn(response);
+
+        mockMvc.perform(post("/api/v1/auth/guest/refresh")
+                        .header("Authorization", "Bearer guest-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.accessToken").value("refreshed-guest-token"))
+                .andExpect(jsonPath("$.data.user.id").value(10))
+                .andExpect(jsonPath("$.data.user.accountType").value("GUEST"));
+
+        then(authService).should().refreshGuest(any(AuthService.JwtTokenPrincipal.class));
+    }
+
+    @Test
     @DisplayName("게스트 계정 생성 실패 - rate limit 초과 시 429를 반환한다")
     void guest_rateLimitExceeded() throws Exception {
         willThrow(new GuestCreationRateLimitExceededException())

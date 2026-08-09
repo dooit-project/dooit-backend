@@ -57,6 +57,7 @@ JWT claim:
 현재 제공:
 
 - `POST /api/v1/auth/guest`: 새 게스트 사용자와 게스트 access token 발급
+- `POST /api/v1/auth/guest/refresh`: 유효한 게스트 Bearer token으로 같은 guest user id의 게스트 access token 재발급
 - `GET /api/v1/auth/me`: `accountType`, nullable `email`, nullable `displayName` 반환
 - 게스트 token의 `accountType` claim은 `GUEST`
 - 게스트 계정 row에는 `guestExpiresAt`, `lastActiveAt`을 저장한다.
@@ -66,6 +67,7 @@ JWT claim:
 - 병합 완료 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 401로 거부한다.
 - `app.auth.guest.cleanup.enabled=true`이면 매일 03:30에 `guestExpiresAt`이 지난 미병합 게스트와 관련 owner 데이터를 삭제한다.
 - 만료된 guest token은 owner API와 `/auth/me`에서 401로 거부한다.
+- 게스트 token 갱신은 만료 전 유효한 guest token으로만 가능하며, 성공 시 같은 guest user id를 유지하고 `guestExpiresAt`을 새 게스트 token TTL 기준으로 연장한다.
 - `POST /api/v1/auth/guest`는 클라이언트 신호별 기본 30건/1시간 rate limit을 적용하고 초과 시 429/`11004`를 반환한다.
 
 ## 게스트 만료 정리 정책
@@ -148,16 +150,15 @@ JWT claim:
 - access token 만료 시 모바일은 다시 로그인한다.
 - silent refresh endpoint는 제공하지 않는다.
 - refresh token 저장소, rotation, reuse detection은 현재 백엔드 책임이 아니다.
-- 게스트 access token을 같은 guest user id로 갱신하거나 재발급하는 API는 아직 제공하지 않는다.
+- 게스트 access token은 `POST /api/v1/auth/guest/refresh`로 같은 guest user id를 유지하며 재발급할 수 있다.
 
-게스트 token 갱신 API를 도입할 때는 다음 계약을 먼저 확정한다.
+게스트 token 갱신 정책:
 
-- 같은 guest user id 유지 방식
-- 갱신 가능 기간
-- 만료 전/후 처리 기준
-- 이미 정리된 게스트의 오류 코드
-- 갱신 실패 시 기존 데이터 보존 정책
-- token 탈취 방지와 재발급 인증 방식
+- 갱신 가능 기간은 기존 guest token이 유효한 동안이다.
+- 만료 전 갱신 성공 시 HTTP 200과 새 `TokenResponse`를 반환한다.
+- 만료된 guest token, 병합 완료 guest token, 정식 계정 token, 이미 정리된 guest는 401/`11002`로 처리한다.
+- 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
+- refresh token이나 단말 인증 수단은 아직 도입하지 않았으므로, 만료 후 재발급은 지원하지 않는다.
 
 새로운 guest id를 발급하는 방식은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
 

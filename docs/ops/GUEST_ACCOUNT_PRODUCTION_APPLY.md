@@ -130,6 +130,8 @@ Content-Type: application/json
 
 병합 결과 개수는 현재 응답에 포함하지 않고 내부 audit 로그에만 기록한다. 응답 확장 전까지 모바일은 일반적인 계정 연결 완료 문구를 사용한다.
 
+게스트 token은 `POST /api/v1/auth/guest/refresh`로 만료 전 갱신할 수 있다. 만료 후 복구용 재발급은 아직 지원하지 않는다.
+
 ## 6. 완료 보고 항목
 
 완료 후 다음 항목만 공유한다. secret, access token, 비밀번호, 원본 DB dump 내용은 공유하지 않는다.
