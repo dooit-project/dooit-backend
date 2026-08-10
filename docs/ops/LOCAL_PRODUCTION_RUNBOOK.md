@@ -1,6 +1,6 @@
 # Local PC Production Runbook
 
-Last updated: 2026-08-03
+Last updated: 2026-08-10
 
 이 문서는 이 Mac의 Docker Compose를 ToDoLab의 단일 production 서버로 사용하고 Android APK에서 Tailscale HTTPS로 접근하는 절차다.
 
@@ -100,6 +100,8 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 2. migration SQL과 API 호환성 확인
 3. `./scripts/release-production.sh`
 4. readiness와 Android smoke test
+
+release script는 app 재기동 후 `/actuator/health/readiness`를 최대 60초 동안 재시도한다. 일시적인 기동 중 응답 실패는 최종 실패로 보지 않고, 제한 시간 안에 readiness가 `UP`이면 release 성공으로 처리한다.
 
 현재 schema 변경은 자동 migration 도구로 추적되지 않는다. 기존 volume에는 `docker-entrypoint-initdb.d`의 `schema.sql`이 다시 적용되지 않으므로, migration SQL 적용과 백업을 release의 필수 수동 단계로 유지한다. Flyway 도입 전에는 schema 변경이 있는 release를 자동 배포하지 않는다.
 
