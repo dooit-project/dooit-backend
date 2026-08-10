@@ -368,7 +368,7 @@ Last updated: 2026-08-10
 - [ ] 재부팅 후 MySQL → app → Tailscale HTTPS 경로가 자동으로 복구되는지 확인한다.
 - [ ] `/api/v1/auth/login`, Today 조회·생성·완료를 Android production build에서 smoke test한다.
 - [ ] 401, 5xx, DB 중단, Tailscale 연결 끊김을 재현하고 로그와 복구 절차를 확인한다.
-- [ ] 월 1회 backup restore와 디스크 여유 공간을 확인하는 운영 루틴을 정한다.
+- [x] 월 1회 backup 무결성, age, 디스크 여유 공간, readiness를 확인하는 운영 루틴을 정한다.
 
 완료 기준:
 

@@ -154,3 +154,22 @@ tailscale serve status
 - local readiness 실패: app/MySQL/schema 상태를 확인한다.
 - local readiness 성공, Android 실패: Android Tailscale 연결과 production API URL을 확인한다.
 - PC 절전·종료 중에는 앱을 사용할 수 없다. 상시 사용하려면 전원 연결 시 절전 정책을 별도로 정한다.
+
+## 8. 월간 운영 점검
+
+월 1회 또는 release 후 아래 점검을 실행한다.
+
+```bash
+./scripts/check-production-routine.sh
+TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-routine.sh
+```
+
+점검 항목:
+
+- 최신 backup gzip 무결성
+- 최신 backup age
+- backup 경로의 디스크 여유 공간
+- app/mysql container running 상태
+- `/actuator/health/readiness` `UP`
+
+임시 DB restore 연습은 schema 변경 release나 월간 점검 때 별도 임시 MySQL container/volume에서 수행한다. 현재 production DB를 직접 덮어쓰는 restore는 장애 복구 상황에서만 `TODOLAB_CONFIRM_RESTORE=RESTORE`와 함께 실행한다.
