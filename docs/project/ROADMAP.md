@@ -257,14 +257,15 @@ Last updated: 2026-08-10
 
 - [x] local 환경 문서화
 - [x] CORS 운영 값 관리 방식 정리
-- [ ] staging API URL 확정
-- [ ] production API URL 확정
-- [ ] staging/production CORS origin 확정
+- [x] staging API URL 확정: 이 PC 단일 production 운영에서는 staging 미사용
+- [x] production host 내부 API URL 확정: `http://127.0.0.1:8080`
+- [ ] production Android Tailscale HTTPS API URL 확정
+- [ ] production Expo Web CORS origin 확정
 - [x] Swagger UI/Scalar 공개 설정 운영 검증
 
 착수 조건:
 
-- 실제 staging/production 도메인과 모바일 배포 origin을 확정한다.
+- 실제 Android Tailscale HTTPS URL과 Expo Web production origin이 필요하면 모바일 배포 origin을 확정한다.
 
 ### 6.5 게스트 token 갱신 계약
 
