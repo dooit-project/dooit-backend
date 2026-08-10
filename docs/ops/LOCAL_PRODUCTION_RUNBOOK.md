@@ -104,6 +104,7 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 release script는 app 재기동 후 `/actuator/health/readiness`를 최대 60초 동안 재시도한다. 일시적인 기동 중 응답 실패는 최종 실패로 보지 않고, 제한 시간 안에 readiness가 `UP`이면 release 성공으로 처리한다.
 
 현재 schema 변경은 자동 migration 도구로 추적되지 않는다. 기존 volume에는 `docker-entrypoint-initdb.d`의 `schema.sql`이 다시 적용되지 않으므로, migration SQL 적용과 백업을 release의 필수 수동 단계로 유지한다. Flyway 도입 전에는 schema 변경이 있는 release를 자동 배포하지 않는다.
+수동 적용 이력은 [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)에 기록한다. 현재는 Flyway를 도입하지 않고, schema 변경 빈도나 다중 환경 순서 관리가 필요해질 때 별도 작업으로 전환한다.
 
 기존 production DB가 현재 schema보다 오래된 경우에는 app 업데이트 전에 백업 후 필요한 migration SQL을 수동 적용한다.
 

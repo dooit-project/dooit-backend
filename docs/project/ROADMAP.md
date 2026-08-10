@@ -351,7 +351,7 @@ Last updated: 2026-08-10
 - [x] 백업 파일은 DB volume과 다른 경로에 저장하고 기본 보관 기간을 14일로 정한다.
 - [x] 최소 1회 임시 DB에 백업을 복원해 핵심 테이블을 확인한다.
 - [x] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.
-- [ ] migration 파일의 적용 이력을 관리할 도구(Flyway 등) 도입 여부를 결정한다.
+- [x] migration 파일의 적용 이력 관리 방식 결정: Flyway는 보류하고 `docs/db/MIGRATION_HISTORY.md`로 수동 이력 관리
 - [ ] Docker volume 삭제·재생성, PC 디스크 장애 시 복구 가능한 외부 백업 위치를 결정한다.
 
 완료 기준:

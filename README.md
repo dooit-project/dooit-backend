@@ -84,6 +84,7 @@ src/main/java/com/todolab/
 - [`docs/api/RECURRENCE_MODEL.md`](./docs/api/RECURRENCE_MODEL.md)
 - [`docs/api/NOTIFICATION_CONTRACT.md`](./docs/api/NOTIFICATION_CONTRACT.md)
 - [`docs/ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md`](./docs/ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md)
+- [`docs/db/MIGRATION_HISTORY.md`](./docs/db/MIGRATION_HISTORY.md)
 
 ### API 로그
 

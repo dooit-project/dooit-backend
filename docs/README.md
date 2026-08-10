@@ -37,6 +37,7 @@ Last updated: 2026-08-10
 | [`api/API_COMPATIBILITY_POLICY.md`](./api/API_COMPATIBILITY_POLICY.md) | v1 호환성, breaking change, deprecation 기준 |
 | [`ops/LOCAL_PRODUCTION_RUNBOOK.md`](./ops/LOCAL_PRODUCTION_RUNBOOK.md) | 로컬 PC production 기동, Tailscale HTTPS, DB 백업·복구 절차 |
 | [`ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md`](./ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md) | 게스트 계정 production DB migration, 배포, smoke test 체크리스트 |
+| [`db/MIGRATION_HISTORY.md`](./db/MIGRATION_HISTORY.md) | Flyway 도입 전 수동 production DB migration 적용 이력 |
 | [`project/BACKEND_DOCUMENTATION_PLAN.md`](./project/BACKEND_DOCUMENTATION_PLAN.md) | 문서 소유권과 유지 기준 |
 | [`project/ROADMAP.md`](./project/ROADMAP.md) | 완료된 기준 상태와 다음 백엔드 우선순위 |
 
