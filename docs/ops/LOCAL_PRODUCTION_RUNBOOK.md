@@ -56,7 +56,7 @@ tailscale serve status
 
 ## 4. 백업
 
-기본 백업 위치는 저장소의 `backups/`, 기본 보관 기간은 14일이다. PC 자체 디스크 장애에 대비해 이 폴더를 별도 디스크나 신뢰할 수 있는 동기화 위치에 추가 복사한다.
+기본 백업 위치는 저장소의 `backups/`, 기본 보관 기간은 14일이다. production 자동 백업은 저장소와 Docker volume 삭제에 대비해 `/Users/hyunseung/todolab-backups`를 사용한다. PC 자체 디스크 장애에 대비해 이 폴더를 별도 디스크나 신뢰할 수 있는 동기화 위치에 추가 복사한다.
 
 ```bash
 ./scripts/backup-db.sh
@@ -68,7 +68,7 @@ TODOLAB_BACKUP_DIR=/absolute/backup/path TODOLAB_BACKUP_RETENTION_DAYS=30 ./scri
 수동 백업을 검증한 뒤 매일 자동 실행이 필요하면 LaunchAgent 파일을 생성한다. 기본 실행 시각은 매일 03:15다.
 
 ```bash
-./scripts/install-backup-launchd.sh
+TODOLAB_BACKUP_DIR=/Users/hyunseung/todolab-backups ./scripts/install-backup-launchd.sh
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.todolab.backend.backup.plist
 launchctl print gui/$(id -u)/com.todolab.backend.backup
 ```

@@ -352,7 +352,8 @@ Last updated: 2026-08-10
 - [x] 최소 1회 임시 DB에 백업을 복원해 핵심 테이블을 확인한다.
 - [x] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.
 - [x] migration 파일의 적용 이력 관리 방식 결정: Flyway는 보류하고 `docs/db/MIGRATION_HISTORY.md`로 수동 이력 관리
-- [ ] Docker volume 삭제·재생성, PC 디스크 장애 시 복구 가능한 외부 백업 위치를 결정한다.
+- [x] Docker volume 또는 저장소 삭제에 대비해 저장소 밖 백업 위치 `/Users/hyunseung/todolab-backups`를 결정하고 launchd 적용
+- [ ] PC 디스크 장애 시 복구 가능한 외부 매체 또는 동기화 백업 위치를 결정한다.
 
 완료 기준:
 
