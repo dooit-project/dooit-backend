@@ -38,6 +38,15 @@ wait_readiness_up() {
   return 1
 }
 
+compose_up_with_current_app_image() {
+  local current_app_image=$1
+  if [[ "$current_app_image" == todolab-backend:* ]]; then
+    TODOLAB_APP_IMAGE_TAG="${current_app_image#todolab-backend:}" docker compose up -d mysql app >/dev/null
+    return
+  fi
+  docker compose up -d mysql app >/dev/null
+}
+
 require_command curl
 require_command docker
 require_command jq
@@ -75,17 +84,18 @@ fi
 
 db_outage_result="skipped"
 if [ "$run_db_outage" = "STOP_MYSQL" ]; then
+  current_app_image=$(docker inspect todolab-app --format '{{.Config.Image}}')
   docker compose stop mysql >/dev/null
   set +e
   db_down_status=$(request "$db_down_json" "$base_url/actuator/health/readiness")
   set -e
   if [ "$db_down_status" = "200" ] && [ "$(jq -r '.status // ""' "$db_down_json")" = "UP" ]; then
     echo "DB outage drill failed: readiness stayed UP while mysql was stopped" >&2
-    docker compose up -d mysql app >/dev/null
+    compose_up_with_current_app_image "$current_app_image"
     wait_readiness_up "$recovered_json"
     exit 1
   fi
-  docker compose up -d mysql app >/dev/null
+  compose_up_with_current_app_image "$current_app_image"
   wait_readiness_up "$recovered_json"
   db_outage_result="recovered"
 elif [ -n "$run_db_outage" ]; then
