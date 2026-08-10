@@ -367,7 +367,8 @@ Last updated: 2026-08-10
 - [ ] PC 절전 중에는 앱을 사용할 수 없다는 점을 전제로 절전 정책을 확정한다.
 - [ ] 재부팅 후 MySQL → app → Tailscale HTTPS 경로가 자동으로 복구되는지 확인한다.
 - [ ] `/api/v1/auth/login`, Today 조회·생성·완료를 Android production build에서 smoke test한다.
-- [ ] 401, 5xx, DB 중단, Tailscale 연결 끊김을 재현하고 로그와 복구 절차를 확인한다.
+- [x] 401/404 비파괴 장애 리허설과 DB outage 리허설 스크립트 마련
+- [ ] DB 중단과 Tailscale 연결 끊김을 실제 점검 시간에 재현하고 로그와 복구 절차를 확인한다.
 - [x] 월 1회 backup 무결성, age, 디스크 여유 공간, readiness를 확인하는 운영 루틴을 정한다.
 
 완료 기준:

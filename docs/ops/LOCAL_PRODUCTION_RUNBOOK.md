@@ -173,3 +173,25 @@ TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-productio
 - `/actuator/health/readiness` `UP`
 
 임시 DB restore 연습은 schema 변경 release나 월간 점검 때 별도 임시 MySQL container/volume에서 수행한다. 현재 production DB를 직접 덮어쓰는 restore는 장애 복구 상황에서만 `TODOLAB_CONFIRM_RESTORE=RESTORE`와 함께 실행한다.
+
+## 9. 장애 리허설
+
+비파괴 리허설은 아래 명령으로 실행한다.
+
+```bash
+./scripts/drill-production-incident.sh
+```
+
+확인 항목:
+
+- readiness `UP`
+- 인증 없는 `/api/v1/auth/me` 401/`11002`
+- 존재하지 않는 API path 404/`10003`
+
+DB outage 리허설은 production API가 일시적으로 내려갈 수 있으므로 점검 시간에만 명시적으로 실행한다.
+
+```bash
+TODOLAB_CONFIRM_DB_OUTAGE=STOP_MYSQL ./scripts/drill-production-incident.sh
+```
+
+이 모드는 MySQL container를 중지해 readiness가 내려가는지 확인한 뒤 MySQL/app을 다시 올리고 readiness `UP`까지 대기한다. 실행 전 모바일 사용자가 없는지 확인한다. Tailscale 연결 끊김과 Android production build smoke는 실제 기기에서 별도로 검증한다.
