@@ -73,6 +73,8 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.todolab.backend.back
 launchctl print gui/$(id -u)/com.todolab.backend.backup
 ```
 
+LaunchAgent는 Docker CLI를 찾을 수 있도록 `/opt/homebrew/bin`, `/usr/local/bin`을 포함한 PATH를 명시한다. 설치 후 `launchctl kickstart -k gui/$(id -u)/com.todolab.backend.backup`으로 즉시 실행을 검증하고, `last exit code = 0`과 새 backup 파일 생성을 확인한다.
+
 다른 시각이나 백업 경로를 쓰려면 환경변수로 지정한다.
 
 ```bash

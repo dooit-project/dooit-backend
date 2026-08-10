@@ -25,6 +25,11 @@ cat > "$plist_file" <<EOF
     <string>-lc</string>
     <string>cd "${repo_root}" &amp;&amp; TODOLAB_BACKUP_DIR="${backup_dir}" ./scripts/backup-db.sh</string>
   </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
   <key>StartCalendarInterval</key>
   <dict>
     <key>Hour</key>
