@@ -140,8 +140,9 @@ JWT claim:
 - 이메일/비밀번호 검증 실패 시 게스트 데이터는 변경하지 않는다.
 - 같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 다시 반환하는 멱등 성공으로 처리한다.
 - 병합 완료 후 기존 guest token은 owner API와 `/auth/me`에서 401 처리된다.
-- 병합 결과 count는 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
-- 현재 `POST /api/v1/auth/login` 응답에는 병합 결과 개수를 포함하지 않는다. 모바일은 일반적인 계정 연결 완료 문구를 사용한다.
+- 병합 결과 count는 응답의 `mergeResult`와 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
+- `POST /api/v1/auth/login`에 유효한 게스트 token을 함께 보내 병합이 수행되면 `mergeResult.tasks`, `mergeResult.schedules`, `mergeResult.ddayGoals`, `mergeResult.recurrenceSeries`를 반환한다.
+- 일반 로그인처럼 병합이 없으면 `mergeResult`는 `null`이다.
 
 ## Refresh Token
 

@@ -179,6 +179,14 @@ type TokenResponse = {
   accessToken: string;
   expiresAt: string;
   user: UserResponse;
+  mergeResult: GuestMergeResultResponse | null;
+};
+
+type GuestMergeResultResponse = {
+  tasks: number;
+  schedules: number;
+  ddayGoals: number;
+  recurrenceSeries: number;
 };
 ```
 
@@ -207,7 +215,8 @@ Content-Type: application/json
 - 이메일/비밀번호 검증 실패 시 게스트 데이터는 변경하지 않는다.
 - 같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 다시 반환한다.
 - 병합 완료 후 기존 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 owner API와 `/auth/me`에서 401 처리된다.
-- 병합 결과 개수는 현재 응답에 포함하지 않고 내부 audit 로그에만 기록한다.
+- 병합 성공 응답은 `mergeResult.tasks`, `mergeResult.schedules`, `mergeResult.ddayGoals`, `mergeResult.recurrenceSeries`를 포함한다.
+- 일반 로그인처럼 병합이 없으면 `mergeResult`는 `null`이다.
 
 게스트 상태 회원가입:
 

@@ -8,6 +8,11 @@ public record TokenResponse(
         String tokenType,
         String accessToken,
         LocalDateTime expiresAt,
-        UserResponse user
+        UserResponse user,
+        GuestMergeResultResponse mergeResult
 ) {
+
+    public TokenResponse(String tokenType, String accessToken, LocalDateTime expiresAt, UserResponse user) {
+        this(tokenType, accessToken, expiresAt, user, null);
+    }
 }

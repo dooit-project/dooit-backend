@@ -1,5 +1,6 @@
 package com.todolab.auth.service;
 
+import com.todolab.auth.dto.GuestMergeResultResponse;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
@@ -11,6 +12,7 @@ import com.todolab.notification.repository.PushDeviceTokenRepository;
 import com.todolab.notification.repository.PushNotificationHistoryRepository;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
+import com.todolab.task.domain.TaskType;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.dto.UserResponse;
@@ -55,8 +57,11 @@ public class AuthService {
         }
 
         User target = user;
+        GuestMergeResultResponse mergeResult = null;
         if (guestPrincipal != null && guestPrincipal.accountType() == AccountType.GUEST) {
-            target = mergeGuestIntoRegisteredUser(guestPrincipal.userId(), user);
+            GuestMergeResult result = mergeGuestIntoRegisteredUser(guestPrincipal.userId(), user);
+            target = result.target();
+            mergeResult = result.mergeResult();
         }
 
         JwtTokenService.AccessToken accessToken = jwtTokenService.createAccessToken(target);
@@ -64,7 +69,8 @@ public class AuthService {
                 "Bearer",
                 accessToken.tokenValue(),
                 accessToken.expiresAt(),
-                UserResponse.from(target)
+                UserResponse.from(target),
+                mergeResult
         );
     }
 
@@ -150,7 +156,7 @@ public class AuthService {
     public record JwtTokenPrincipal(Long userId, AccountType accountType) {
     }
 
-    private User mergeGuestIntoRegisteredUser(Long guestUserId, User authenticatedTarget) {
+    private GuestMergeResult mergeGuestIntoRegisteredUser(Long guestUserId, User authenticatedTarget) {
         User target = userRepository.findWithLockById(authenticatedTarget.getId())
                 .orElseThrow(InvalidCredentialsException::new);
         User guest = userRepository.findWithLockById(guestUserId)
@@ -158,13 +164,13 @@ public class AuthService {
 
         if (guest.getAccountType() != AccountType.GUEST) {
             if (target.getId().equals(guest.getMergedIntoUserId())) {
-                return target;
+                return new GuestMergeResult(target, emptyMergeResult());
             }
             throw new InvalidCredentialsException();
         }
         if (guest.getMergedIntoUserId() != null) {
             if (target.getId().equals(guest.getMergedIntoUserId())) {
-                return target;
+                return new GuestMergeResult(target, emptyMergeResult());
             }
             throw new InvalidCredentialsException();
         }
@@ -172,7 +178,7 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        int taskCount = reassignTasks(guest, target);
+        TaskMergeCount taskMergeCount = reassignTasks(guest, target);
         int ddayCount = reassignDdayGoals(guest, target);
         int recurrenceSeriesCount = reassignRecurrenceSeries(guest, target);
         MergePushTokenResult pushTokenResult = reassignPushDeviceTokens(guest, target);
@@ -183,20 +189,34 @@ public class AuthService {
                 "Guest account merged: guestUserId={}, targetUserId={}, tasks={}, ddayGoals={}, recurrenceSeries={}, pushTokens={}, skippedPushTokens={}, pushHistories={}",
                 guest.getId(),
                 target.getId(),
-                taskCount,
+                taskMergeCount.totalCount(),
                 ddayCount,
                 recurrenceSeriesCount,
                 pushTokenResult.reassignedCount(),
                 pushTokenResult.skippedDuplicateCount(),
                 pushHistoryCount
         );
-        return target;
+        return new GuestMergeResult(target, new GuestMergeResultResponse(
+                taskMergeCount.taskCount(),
+                taskMergeCount.scheduleCount(),
+                ddayCount,
+                recurrenceSeriesCount
+        ));
     }
 
-    private int reassignTasks(User guest, User target) {
+    private TaskMergeCount reassignTasks(User guest, User target) {
         java.util.List<com.todolab.task.domain.Task> tasks = taskRepository.findByOwnerId(guest.getId());
+        int scheduleCount = 0;
+        int taskCount = 0;
+        for (com.todolab.task.domain.Task task : tasks) {
+            if (task.getType() == TaskType.SCHEDULE) {
+                scheduleCount++;
+            } else {
+                taskCount++;
+            }
+        }
         tasks.forEach(task -> task.assignOwner(target));
-        return tasks.size();
+        return new TaskMergeCount(taskCount, scheduleCount);
     }
 
     private int reassignDdayGoals(User guest, User target) {
@@ -236,5 +256,19 @@ public class AuthService {
     }
 
     private record MergePushTokenResult(int reassignedCount, int skippedDuplicateCount) {
+    }
+
+    private record GuestMergeResult(User target, GuestMergeResultResponse mergeResult) {
+    }
+
+    private record TaskMergeCount(int taskCount, int scheduleCount) {
+
+        int totalCount() {
+            return taskCount + scheduleCount;
+        }
+    }
+
+    private GuestMergeResultResponse emptyMergeResult() {
+        return new GuestMergeResultResponse(0, 0, 0, 0);
     }
 }

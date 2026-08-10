@@ -182,6 +182,13 @@ class AuthSecurityIntegrationTest {
                 .ddayGoal(ddayGoal)
                 .owner(guest)
                 .build());
+        Task schedule = taskRepository.save(Task.builder()
+                .title("게스트 일정")
+                .type(TaskType.SCHEDULE)
+                .startAt(java.time.LocalDateTime.of(2026, 8, 9, 9, 0))
+                .endAt(java.time.LocalDateTime.of(2026, 8, 9, 10, 0))
+                .owner(guest)
+                .build());
         RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
                 guest,
                 RecurrenceFrequency.WEEKLY,
@@ -201,9 +208,16 @@ class AuthSecurityIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.user.id").value(registered.getId()))
-                .andExpect(jsonPath("$.data.user.accountType").value("REGISTERED"));
+                .andExpect(jsonPath("$.data.user.accountType").value("REGISTERED"))
+                .andExpect(jsonPath("$.data.mergeResult.tasks").value(1))
+                .andExpect(jsonPath("$.data.mergeResult.schedules").value(1))
+                .andExpect(jsonPath("$.data.mergeResult.ddayGoals").value(1))
+                .andExpect(jsonPath("$.data.mergeResult.recurrenceSeries").value(1));
 
         assertThat(taskRepository.findById(task.getId())).get()
+                .extracting(saved -> saved.getOwner().getId())
+                .isEqualTo(registered.getId());
+        assertThat(taskRepository.findById(schedule.getId())).get()
                 .extracting(saved -> saved.getOwner().getId())
                 .isEqualTo(registered.getId());
         assertThat(ddayGoalRepository.findById(ddayGoal.getId())).get()

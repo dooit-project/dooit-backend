@@ -97,6 +97,17 @@ Content-Type: application/json
 
 이메일/비밀번호 검증 성공 후 게스트 owner 데이터를 대상 정식 계정으로 병합하고 정식 `TokenResponse`를 반환한다. Authorization이 없으면 기존 로그인과 동일하게 동작한다.
 
+병합 성공 응답의 `data.mergeResult`에는 이전된 개수가 포함된다.
+
+```json
+{
+  "tasks": 12,
+  "schedules": 3,
+  "ddayGoals": 2,
+  "recurrenceSeries": 1
+}
+```
+
 ## 2. DB Migration
 
 적용 파일:
@@ -201,9 +212,8 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 현재 미지원/후속 계약:
 
 - 만료 후 게스트 token 재발급
-- 병합 결과 개수의 API 응답 포함
 
-병합 결과 개수는 현재 내부 audit 로그에만 기록한다. 응답 확장 전까지 모바일은 일반적인 계정 연결 완료 문구를 사용한다.
+일반 로그인처럼 병합이 없으면 `mergeResult`는 `null`이다.
 
 ## 9. 모바일 전달 기준
 

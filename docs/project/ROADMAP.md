@@ -290,9 +290,9 @@ Last updated: 2026-08-10
 
 - [x] 게스트 owner 데이터 병합
 - [x] 병합 결과 count 내부 audit 로그 기록
-- [ ] `POST /api/v1/auth/login` 병합 성공 응답에 병합 결과 개수 포함 여부 결정
-- [ ] 포함 시 `tasks`, `schedules`, `ddayGoals`, `recurrenceSeries` 등 count DTO 계약 확정
-- [ ] 기존 `TokenResponse` 호환성 유지 방식 확정
+- [x] `POST /api/v1/auth/login` 병합 성공 응답에 병합 결과 개수 포함
+- [x] `tasks`, `schedules`, `ddayGoals`, `recurrenceSeries` count DTO 계약 확정
+- [x] 기존 `TokenResponse` 호환성 유지 방식 확정
 
 착수 조건:
 

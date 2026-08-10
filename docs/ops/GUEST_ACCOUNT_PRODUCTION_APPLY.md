@@ -128,7 +128,7 @@ Content-Type: application/json
 
 게스트 token 갱신 또는 재발급 API는 아직 제공하지 않는다. 같은 guest user id 유지 방식, 갱신 가능 기간, 만료 전/후 처리 기준, 이미 정리된 게스트의 오류 코드, 갱신 실패 시 기존 데이터 보존 정책, token 탈취 방지와 재발급 인증 방식을 확정한 뒤 구현한다.
 
-병합 결과 개수는 현재 응답에 포함하지 않고 내부 audit 로그에만 기록한다. 응답 확장 전까지 모바일은 일반적인 계정 연결 완료 문구를 사용한다.
+병합 결과 개수는 `POST /api/v1/auth/login` 병합 성공 응답의 `mergeResult`에 포함한다.
 
 게스트 token은 `POST /api/v1/auth/guest/refresh`로 만료 전 갱신할 수 있다. 만료 후 복구용 재발급은 아직 지원하지 않는다.
 
