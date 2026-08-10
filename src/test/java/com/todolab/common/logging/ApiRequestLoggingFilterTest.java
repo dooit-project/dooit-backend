@@ -40,7 +40,28 @@ class ApiRequestLoggingFilterTest {
         filter.doFilter(request, response, chain);
 
         assertThat(response.getHeader(ApiRequestLoggingFilter.REQUEST_ID_HEADER)).isNotBlank();
+        assertThat(response.getCharacterEncoding()).isEqualTo(StandardCharsets.UTF_8.name());
         assertThat(response.getContentAsString()).isEqualTo("{\"success\":true}");
+    }
+
+    @Test
+    @DisplayName("API 오류 응답 한글 payload는 UTF-8로 유지한다")
+    void doFilterInternal_keepsKoreanErrorPayloadAsUtf8(CapturedOutput output) throws Exception {
+        properties.setPayloadEnabled(true);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/tasks");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = (servletRequest, servletResponse) -> {
+            servletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            servletResponse.getWriter().write("{\"message\":\"서버 오류가 발생했습니다.\"}");
+        };
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getCharacterEncoding()).isEqualTo(StandardCharsets.UTF_8.name());
+        assertThat(response.getContentAsString(StandardCharsets.UTF_8))
+                .contains("서버 오류가 발생했습니다.");
+        assertThat(output).contains("서버 오류가 발생했습니다.");
+        assertThat(output).doesNotContain("ìë²");
     }
 
     @Test

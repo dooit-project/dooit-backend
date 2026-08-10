@@ -69,6 +69,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         String requestId = resolveRequestId(request);
         MDC.put(REQUEST_ID_MDC_KEY, requestId);
         response.setHeader(REQUEST_ID_HEADER, requestId);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
         ContentCachingRequestWrapper requestWrapper = null;
         ContentCachingResponseWrapper responseWrapper = null;
