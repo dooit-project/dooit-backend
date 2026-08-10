@@ -60,6 +60,13 @@ SHOW INDEX FROM APP_USER WHERE Key_name = 'IDX_APP_USER_ACCOUNT_TYPE_EXPIRES';
 
 ## 4. Smoke Test
 
+로컬 production API smoke는 아래 스크립트로 실행한다. 스크립트는 access token과 비밀번호를 출력하지 않는다.
+
+```bash
+./scripts/smoke-production-api.sh
+TODOLAB_SMOKE_BASE_URL=https://<device>.<tailnet>.ts.net ./scripts/smoke-production-api.sh
+```
+
 ### 게스트 발급
 
 ```http

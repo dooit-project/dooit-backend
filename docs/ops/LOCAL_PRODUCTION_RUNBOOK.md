@@ -32,6 +32,7 @@ docker compose config
 docker compose up -d --build
 docker compose ps
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
+./scripts/smoke-production-api.sh
 ```
 
 MySQL port는 host에 공개하지 않는다. app port도 `127.0.0.1:8080`에만 공개하고 Tailscale Serve가 HTTPS 진입점이 된다.
@@ -101,9 +102,11 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 1. `./scripts/backup-db.sh`
 2. migration SQL과 API 호환성 확인
 3. `./scripts/release-production.sh`
-4. readiness와 Android smoke test
+4. readiness와 production API smoke test
+5. Android smoke test
 
 release script는 app 재기동 후 `/actuator/health/readiness`를 최대 60초 동안 재시도한다. 일시적인 기동 중 응답 실패는 최종 실패로 보지 않고, 제한 시간 안에 readiness가 `UP`이면 release 성공으로 처리한다.
+release 후 `./scripts/smoke-production-api.sh`로 게스트 발급, `/auth/me`, 게스트 token 갱신, 회원가입 승격, 기존 계정 병합, 병합 재시도 멱등성을 확인한다. 기본 대상은 `http://127.0.0.1:8080`이며 다른 base URL은 `TODOLAB_SMOKE_BASE_URL`로 지정한다. 스크립트는 access token과 비밀번호를 출력하지 않는다.
 
 현재 schema 변경은 자동 migration 도구로 추적되지 않는다. 기존 volume에는 `docker-entrypoint-initdb.d`의 `schema.sql`이 다시 적용되지 않으므로, migration SQL 적용과 백업을 release의 필수 수동 단계로 유지한다. Flyway 도입 전에는 schema 변경이 있는 release를 자동 배포하지 않는다.
 수동 적용 이력은 [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)에 기록한다. 현재는 Flyway를 도입하지 않고, schema 변경 빈도나 다중 환경 순서 관리가 필요해질 때 별도 작업으로 전환한다.

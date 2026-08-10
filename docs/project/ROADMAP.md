@@ -109,6 +109,7 @@ Last updated: 2026-08-10
 - [x] 다중 서버 배포 시 게스트 생성 rate limit 저장소를 Redis 등 공유 저장소로 전환
 - [x] production DB 백업, `20260809_add_guest_account_columns.sql` 적용, 최신 backend image 배포
 - [x] production 게스트 발급, `/auth/me`, 회원가입 승격, 기존 계정 로그인 병합 smoke test 기록
+- [x] production API smoke script로 게스트 발급, 갱신, 승격, 병합, 재시도 검증 자동화
 
 완료 기준:
 
