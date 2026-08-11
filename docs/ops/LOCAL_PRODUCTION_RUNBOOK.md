@@ -204,6 +204,7 @@ tailscale serve status
 ./scripts/ensure-production-up.sh
 ./scripts/check-production-recovery.sh
 ./scripts/check-production-routine.sh
+./scripts/report-production-status.sh
 TODOLAB_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
 TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-routine.sh
 ```
@@ -222,6 +223,7 @@ TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-productio
 - AC 전원 sleep/disksleep/powernap 설정
 - app/mysql container running 상태
 - `/actuator/health/readiness` `UP`
+- 완료 보고용 backend commit, image tag, backup, readiness, routine/recovery 상태
 
 임시 DB restore 연습은 schema 변경 release나 월간 점검 때 별도 임시 MySQL container/volume에서 수행한다. 현재 production DB를 직접 덮어쓰는 restore는 장애 복구 상황에서만 `TODOLAB_CONFIRM_RESTORE=RESTORE`와 함께 실행한다.
 

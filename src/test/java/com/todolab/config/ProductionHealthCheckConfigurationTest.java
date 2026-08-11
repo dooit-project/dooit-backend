@@ -84,6 +84,7 @@ class ProductionHealthCheckConfigurationTest {
     void productionEnvironmentCheckScriptValidatesConfigurationWithoutPrintingSecrets() throws Exception {
         String script = Files.readString(Path.of("scripts/check-production-env.sh"));
         String routine = Files.readString(Path.of("scripts/check-production-routine.sh"));
+        String report = Files.readString(Path.of("scripts/report-production-status.sh"));
         String envExample = Files.readString(Path.of(".env.example"));
 
         assertThat(script).contains("TODOLAB_JWT_SECRET must be at least 32 bytes");
@@ -94,6 +95,10 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(script).contains("TODOLAB_REQUIRE_OFFSITE_BACKUP");
         assertThat(script).doesNotContain("echo \"$jwt_secret\"");
         assertThat(routine).contains("./scripts/check-production-env.sh");
+        assertThat(report).contains("backendCommit=");
+        assertThat(report).contains("guestRefreshApi=supported");
+        assertThat(report).contains("mergeResultCounts=supported");
+        assertThat(report).doesNotContain("TODOLAB_JWT_SECRET");
         assertThat(envExample).contains("TODOLAB_TAILSCALE_API_URL=");
         assertThat(envExample).contains("TODOLAB_TAILSCALE_CLI=tailscale");
         assertThat(envExample).contains("TODOLAB_OFFSITE_BACKUP_DIR=");

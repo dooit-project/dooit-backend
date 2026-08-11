@@ -152,3 +152,9 @@ Content-Type: application/json
 - 게스트 발급, 승격, 병합 smoke 결과
 - 게스트 token 갱신 API 지원 여부
 - 병합 결과 개수 응답 지원 여부
+
+아래 명령은 공유 가능한 완료 보고 초안을 출력한다. 출력에는 secret, access token, 비밀번호, DB dump 내용이 포함되지 않는다.
+
+```bash
+./scripts/report-production-status.sh
+```
