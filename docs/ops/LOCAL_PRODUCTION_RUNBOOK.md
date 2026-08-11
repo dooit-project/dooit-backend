@@ -31,6 +31,7 @@ docker volume create todolab-mysql-data
 docker compose config
 docker compose up -d --build
 docker compose ps
+./scripts/check-production-host.sh
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ./scripts/smoke-production-api.sh
 ```
@@ -160,6 +161,7 @@ tailscale serve status
 월 1회 또는 release 후 아래 점검을 실행한다.
 
 ```bash
+./scripts/check-production-host.sh
 ./scripts/check-production-routine.sh
 TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-routine.sh
 ```
@@ -169,6 +171,9 @@ TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-productio
 - 최신 backup gzip 무결성
 - 최신 backup age
 - backup 경로의 디스크 여유 공간
+- Docker Desktop running 상태
+- app/mysql restart policy
+- AC 전원 sleep/disksleep/powernap 설정
 - app/mysql container running 상태
 - `/actuator/health/readiness` `UP`
 
@@ -195,3 +200,22 @@ TODOLAB_CONFIRM_DB_OUTAGE=STOP_MYSQL ./scripts/drill-production-incident.sh
 ```
 
 이 모드는 MySQL container를 중지해 readiness가 내려가는지 확인한 뒤 MySQL/app을 다시 올리고 readiness `UP`까지 대기한다. 실행 전 모바일 사용자가 없는지 확인한다. Tailscale 연결 끊김과 Android production build smoke는 실제 기기에서 별도로 검증한다.
+
+## 10. 전원 정책
+
+이 PC를 production 서버로 사용할 때 AC 전원 연결 중 시스템 절전을 허용하면 API가 내려갈 수 있다. production 정책은 AC 전원에서 system sleep, disk sleep, power nap을 끄는 것이다.
+
+적용 명령:
+
+```bash
+sudo pmset -c sleep 0 disksleep 0 powernap 0
+```
+
+확인 명령:
+
+```bash
+pmset -g custom
+TODOLAB_STRICT_POWER=true ./scripts/check-production-host.sh
+```
+
+현재 권한 없는 shell에서는 `pmset` 변경이 실패할 수 있다. 이 경우 관리자 권한으로 위 명령을 한 번 적용한 뒤 strict check를 통과시킨다. display sleep은 API availability에 직접 영향을 주지 않으므로 별도 제품/운영 선호에 따라 조정한다.
