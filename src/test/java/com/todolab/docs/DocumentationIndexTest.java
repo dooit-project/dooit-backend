@@ -38,15 +38,16 @@ class DocumentationIndexTest {
     }
 
     @Test
-    @DisplayName("문서 유지 계획은 문서 그룹과 커밋 전 점검 기준을 안내한다")
-    void documentationPlanDefinesMaintenanceRules() throws Exception {
-        String plan = Files.readString(Path.of("docs/project/BACKEND_DOCUMENTATION_PLAN.md"));
+    @DisplayName("문서 인덱스는 유지 원칙과 핵심 계약 문서를 안내한다")
+    void docsIndexDefinesMaintenanceRules() throws Exception {
+        String docsIndex = Files.readString(Path.of("docs/README.md"));
         String auth = Files.readString(Path.of("docs/api/AUTH_CONTRACT.md"));
         String guest = Files.readString(Path.of("docs/api/GUEST_ACCOUNT_HANDOFF.md"));
 
-        assertThat(plan).contains("## 문서 그룹");
-        assertThat(plan).contains("## 유지 원칙");
-        assertThat(plan).contains("## 커밋 전 점검");
+        assertThat(docsIndex).contains("## 유지 원칙");
+        assertThat(docsIndex).contains("완료 이력만 남은 문서는 별도로 유지하지 않고");
+        assertThat(docsIndex).doesNotContain("history/TASK_DATE_MIGRATION.md");
+        assertThat(docsIndex).doesNotContain("BACKEND_DOCUMENTATION_PLAN.md");
         assertThat(auth).contains("POST /api/v1/auth/guest");
         assertThat(auth).contains("게스트 access token TTL은 31일");
         assertThat(auth).contains("`accountType` claim은 `GUEST`");
@@ -65,17 +66,18 @@ class DocumentationIndexTest {
     }
 
     @Test
-    @DisplayName("로드맵은 닫힌 기존 범위 이후의 다음 백로그를 관리한다")
+    @DisplayName("로드맵은 앞으로 닫아야 할 production 작업을 관리한다")
     void roadmapDocumentsNextBacklog() throws Exception {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
-        assertThat(roadmap).contains("## 6. 다음 백로그");
-        assertThat(roadmap).contains("사용자 timezone 날짜 경계 적용");
-        assertThat(roadmap).contains("서버 push 발송");
-        assertThat(roadmap).contains("반복 rule 수정");
-        assertThat(roadmap).contains("운영 환경 확정");
-        assertThat(roadmap).contains("게스트 계정 및 정식 계정 연동");
-        assertThat(roadmap).contains("[x] 다중 서버 배포 시 게스트 생성 rate limit 저장소를 Redis");
+        assertThat(roadmap).contains("## 2. 앞으로 할 일");
+        assertThat(roadmap).contains("### P0. production 접근 경로 확정");
+        assertThat(roadmap).contains("### P0. Android production smoke");
+        assertThat(roadmap).contains("### P0. host 상시 가용성 검증");
+        assertThat(roadmap).contains("### P1. offsite backup 확정");
+        assertThat(roadmap).contains("### P2. 제품 정책 후속 결정");
+        assertThat(roadmap).contains("TODOLAB_REQUIRE_TAILSCALE_URL=true");
+        assertThat(roadmap).contains("완료 이력은 로드맵에 길게 누적하지 않고");
     }
 
     @Test

@@ -1,6 +1,6 @@
 # ToDoLab Backend Docs
 
-Last updated: 2026-08-10
+Last updated: 2026-08-12
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
 
@@ -38,18 +38,7 @@ Last updated: 2026-08-10
 | [`ops/LOCAL_PRODUCTION_RUNBOOK.md`](./ops/LOCAL_PRODUCTION_RUNBOOK.md) | 로컬 PC production 기동, Tailscale HTTPS, DB 백업·복구 절차 |
 | [`ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md`](./ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md) | 게스트 계정 production DB migration, 배포, smoke test 체크리스트 |
 | [`db/MIGRATION_HISTORY.md`](./db/MIGRATION_HISTORY.md) | Flyway 도입 전 수동 production DB migration 적용 이력 |
-| [`project/BACKEND_DOCUMENTATION_PLAN.md`](./project/BACKEND_DOCUMENTATION_PLAN.md) | 문서 소유권과 유지 기준 |
-| [`project/ROADMAP.md`](./project/ROADMAP.md) | 완료된 기준 상태와 다음 백엔드 우선순위 |
-
-## 서버 화면/이력 문서
-
-아래 문서는 백엔드가 제공하는 서버 렌더링 화면 또는 과거 도메인 전환 이력을 다룬다. 모바일 API 전달 묶음에는 기본 포함하지 않는다.
-
-| 문서 | 용도 |
-| --- | --- |
-| [`history/TASK_DATE_MIGRATION.md`](./history/TASK_DATE_MIGRATION.md) | Task 날짜 도메인 전환 이력 |
-| [`history/UI_UX_BACKLOG.md`](./history/UI_UX_BACKLOG.md) | 서버 렌더링 화면 UI/UX 개선 이력 |
-| [`history/UI_UX_RESPONSIVE_CHECKLIST.md`](./history/UI_UX_RESPONSIVE_CHECKLIST.md) | 서버 렌더링 화면 반응형 점검 기준 |
+| [`project/ROADMAP.md`](./project/ROADMAP.md) | 앞으로 닫아야 할 백엔드/운영 작업 |
 
 ## 유지 원칙
 
@@ -57,3 +46,4 @@ Last updated: 2026-08-10
 - API 변경은 `API_V1_FRONTEND.md`, 관련 계약 문서, 테스트를 함께 갱신한다.
 - 운영 값 자체는 문서에 쓰지 않고 환경변수 이름과 예시만 남긴다.
 - 모바일 real-mode 실패는 원인과 검증 결과를 runbook 또는 status 문서에 남긴다.
+- 완료 이력만 남은 문서는 별도로 유지하지 않고 현재 계약 문서와 migration 이력만 남긴다.

@@ -1,395 +1,151 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-10
+Last updated: 2026-08-12
 
-이 문서는 완료 이력보다 **앞으로 백엔드에서 닫아야 할 작업**을 관리한다. 이미 구현된 인증, v1 경로, owner scope, OpenAPI/Swagger/Scalar 문서 UI는 기준 상태로 보고, 아래 항목은 모바일 실사용과 운영 안정성에 필요한 후속 작업이다.
+이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
 ## 1. 현재 기준
 
 - 모바일 API 기준 경로는 `/api/v1/**`다.
-- 모바일 API 인증은 `Authorization: Bearer <accessToken>` JWT 방식이다.
-- 웹 화면은 세션 기반 인증을 사용한다.
-- API 문서 원본은 `/v3/api-docs` OpenAPI JSON이다.
-- 개발 확인용 문서 UI는 `/swagger-ui`, 읽기용 문서 UI는 `/scalar.html`을 사용한다.
-- 모바일 연동 요약 문서는 [`../api/API_V1_FRONTEND.md`](../api/API_V1_FRONTEND.md)에 둔다.
-- 게스트 계정 연동 전달 문서는 [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md)에 둔다.
-- 모바일 연동 상태 관리는 [`../mobile/MOBILE_API_BACKEND_STATUS.md`](../mobile/MOBILE_API_BACKEND_STATUS.md)에 둔다.
+- 인증은 모바일 API는 Bearer JWT, 서버 렌더링 화면은 session login을 사용한다.
+- API 원본 계약은 실행 중인 백엔드의 `/v3/api-docs` OpenAPI JSON이다.
+- local production은 이 Mac의 Docker Compose와 external MySQL volume을 사용한다.
+- production app port는 `127.0.0.1:8080`에만 bind하고, Android 접근은 Tailscale HTTPS 경로로만 연다.
+- staging은 현재 운영하지 않는다. 환경은 local 개발 환경과 이 PC의 production 환경으로만 구분한다.
+- 실제 secret, access token, DB dump 내용, private production URL은 문서에 기록하지 않는다.
 
-## 2. 최우선 작업
+## 2. 앞으로 할 일
 
-### 2.1 모바일 real-mode smoke test 보강
+### P0. production 접근 경로 확정
 
-목표: 모바일이 실제 백엔드와 붙었을 때 로그인, Today, Calendar, D-Day 흐름이 안정적으로 동작하는지 자동/수동 검증한다.
+목표: 공용 인터넷 포트포워딩 없이 Android production build가 Tailscale HTTPS로 production API에 접근한다.
 
-- [x] Expo Web 인증 요청의 CORS preflight에서 `Authorization` 헤더 허용
-- [x] real-mode smoke test 결과를 `MOBILE_API_BACKEND_STATUS.md`에 날짜별로 기록
-- [x] 모바일에서 확인한 CORS origin 목록을 local/staging/prod 환경별로 정리
-- [x] `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 수동 검증 절차 문서화
-- [x] Today, Calendar, D-Day 생성/조회/삭제 real-mode 확인 절차 문서화
+- [ ] Mac에서 `tailscale` CLI를 PATH에 설치하거나 `TODOLAB_TAILSCALE_CLI`로 경로를 지정한다.
+- [ ] Mac과 Android 기기를 같은 tailnet에 연결한다.
+- [ ] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
+- [ ] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 `http://127.0.0.1:8080`에 연결한다.
+- [ ] `.env`에 `TODOLAB_TAILSCALE_API_URL`을 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`를 통과시킨다.
+- [ ] `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-tailscale-production.sh`를 통과시킨다.
+- [ ] Android 실제 기기에서 `GET /api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
+- [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
+
+증적:
+
+- `./scripts/check-production-env.sh`
+- `./scripts/check-tailscale-production.sh`
+- Android production build의 `/api/v1/auth/me` 결과
+
+### P0. Android production smoke
+
+목표: production API URL 확정 후 모바일 핵심 흐름을 실제 기기에서 검증한다.
+
+- [ ] Android production build에 Tailscale HTTPS API URL을 반영한다.
+- [ ] `/api/v1/auth/login` 성공과 401 실패 처리를 확인한다.
+- [ ] Today 조회, 생성, 완료를 확인한다.
+- [ ] 게스트 발급, 게스트 `/auth/me`, 게스트 승격 또는 기존 계정 병합 흐름을 확인한다.
+- [ ] 결과를 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 날짜와 범위만 기록한다. token, 비밀번호, private URL은 기록하지 않는다.
+
+증적:
+
+- `TODOLAB_SMOKE_BASE_URL=https://<device>.<tailnet>.ts.net ./scripts/smoke-production-api.sh`
+- `docs/mobile/MOBILE_INTEGRATION_RUNBOOK.md`의 production 결과 기록 템플릿
+
+### P0. host 상시 가용성 검증
+
+목표: 재부팅, 재로그인, Docker Desktop 재시작 뒤 수동 코드 실행 없이 production API가 복구된다.
+
+- [ ] `TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`를 관리자 권한으로 실행한다.
+- [ ] `TODOLAB_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
+- [ ] 실제 재부팅 또는 로그아웃/로그인 후 `./scripts/check-production-recovery.sh`를 통과시킨다.
+- [ ] Tailscale URL 확정 후 `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-production-recovery.sh`를 통과시킨다.
+- [ ] Docker Desktop 재시작, 네트워크 변경, 절전 복귀 뒤 readiness와 Android 접근을 확인한다.
+
+증적:
+
+- `./scripts/check-production-host.sh`
+- `./scripts/check-production-recovery.sh`
+- `./scripts/report-production-status.sh`
+
+### P1. offsite backup 확정
+
+목표: PC 디스크 장애에도 복구 가능한 외부 매체 또는 신뢰할 수 있는 동기화 위치를 운영 절차에 포함한다.
+
+- [ ] 외부 디스크, NAS, cloud sync 중 하나를 `TODOLAB_OFFSITE_BACKUP_DIR`로 결정한다.
+- [ ] `TODOLAB_OFFSITE_BACKUP_DIR=... ./scripts/sync-production-backup.sh`를 통과시킨다.
+- [ ] `TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh`를 통과시킨다.
+- [ ] `TODOLAB_OFFSITE_BACKUP_DIR=... ./scripts/check-production-routine.sh`를 통과시킨다.
+- [ ] offsite 복사본에서 임시 DB restore를 1회 검증한다.
+
+증적:
+
+- 최신 backup gzip 검증
+- SHA-256 checksum 일치
+- 임시 DB restore 결과
+
+### P1. Expo Web production origin 결정
+
+목표: Expo Web을 production API에 연결할 필요가 있는지 결정하고, 필요할 때만 CORS origin을 연다.
+
+- [ ] Expo Web production 배포 여부를 결정한다.
+- [ ] 사용하지 않으면 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다.
+- [ ] 사용하면 실제 origin만 `TODOLAB_ALLOWED_ORIGINS`에 추가한다.
+- [ ] `TODOLAB_EXPO_WEB_ORIGIN=... ./scripts/check-tailscale-production.sh`로 preflight를 확인한다.
+
+증적:
+
+- `TODOLAB_ALLOWED_ORIGINS` 설정 여부
+- `OPTIONS /api/v1/auth/me` preflight 결과
+
+### P2. 제품 정책 후속 결정
+
+- [ ] 모바일 연결 완료 화면에서 병합 결과 count를 구체적으로 노출할지 결정한다.
+- [ ] 게스트가 31일 이상 미접속한 뒤 기존 데이터를 복구해야 하는지 결정한다.
+- [ ] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
+- [ ] 서버 push를 실제 발송하려면 Expo/APNs/FCM credential 관리 방식과 발송 시점을 확정한다.
+
+## 3. 현재 완료된 기준
+
+아래 항목은 현재 코드와 문서 기준으로 닫힌 상태다. 상세 계약은 관련 문서에서 관리한다.
+
+- v1 Auth, Task, D-Day, 검색, Today 재정렬, 반복, timezone, 알림 후보 API 계약
+- owner scope와 JWT 인증/인가 계약
+- 게스트 계정 생성, refresh, 승격, 기존 계정 병합, 병합 결과 count, rate limit, 만료 정리
+- production DB migration 적용 이력과 수동 migration 관리 방식
+- local production Docker Compose, readiness, rollback, backup/restore, routine/recovery/status report 스크립트
+- API logging masking, UTF-8 response logging, 운영 문서 UI 비공개 기준
 
 관련 문서:
 
+- [`../api/API_V1_FRONTEND.md`](../api/API_V1_FRONTEND.md)
+- [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md)
+- [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md)
+- [`../ops/LOCAL_PRODUCTION_RUNBOOK.md`](../ops/LOCAL_PRODUCTION_RUNBOOK.md)
 - [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)
-- [`../mobile/MOBILE_INTEGRATION_RUNBOOK.md`](../mobile/MOBILE_INTEGRATION_RUNBOOK.md)
-
-완료 기준:
-
-- 모바일 앱에서 회원가입, 로그인, Today 조회, D-Day Today Task 생성까지 한 흐름으로 검증된다.
-- CORS 오류, 401 처리, 안전한 오류 message 노출 여부가 기록된다.
-
-### 2.2 v1 API 계약과 OpenAPI 품질 개선
-
-목표: OpenAPI JSON을 프론트/모바일이 신뢰할 수 있는 원본 계약으로 만든다.
-
-- [x] v1 controller에 operation summary, tag, security, error response schema 보강
-- [x] 공통 `ApiResponse<T>` envelope가 OpenAPI에서 읽기 쉽게 보이도록 schema 정리
-- [x] enum, 날짜 형식, validation 제약을 request schema에 노출
-- [x] Swagger UI에서 Bearer token 입력 후 v1 API 호출 확인
-- [x] Scalar에서 모바일 개발자가 읽기 쉬운 tag 순서 확인
-- [x] OpenAPI JSON diff를 CI 또는 릴리스 체크에 포함할지 결정
-
-완료 기준:
-
-- `/v3/api-docs`만 보고 모바일 request/response 타입을 재현할 수 있다.
-- 문서에 legacy `/api/**`와 v1 `/api/v1/**`가 혼동되지 않는다.
-
-### 2.3 API 계약 불일치 정리
-
-목표: 현재 문서, 모바일 타입, 실제 백엔드 응답의 차이를 없앤다.
-
-- [x] `UserResponse.updatedAt` 응답 필드 반영
-- [x] `DeferReason` enum 문서와 실제 응답/요청 계약 일치
-- [x] `DdayGoalResponse`의 nullable 필드와 실제 응답 확인
-- [x] `TaskResponse`의 nullable 필드, 생성/수정 시 기본값, 날짜 규칙 재확인
-- [x] `GET /api/v1/tasks?type=MONTH&date=YYYY-MM` 계약과 실제 binding 동작 검증
-- [x] 삭제 응답은 모든 v1 API에서 `data: null`로 통일
-- [x] legacy `/api/tasks`, `/api/ddays` 유지/제거 정책 확정
-
-완료 기준:
-
-- `API_V1_FRONTEND.md`, OpenAPI JSON, 모바일 타입이 같은 계약을 설명한다.
-
-## 3. 모바일 실사용 후속 기능
-
-### 3.1 통합 검색 API
-
-문서: `todolab-mobile/docs/API_SEARCH_FILTER.md`
-
-- [x] `GET /api/v1/tasks/search`
-- [x] `q` 제목/설명 검색
-- [x] `statuses`, `taskTypes`, `category`, `ddayGoalId`, `hasDday`, `allDay`
-- [x] `dateField`, `dateFrom`, `dateTo`
-- [x] `sort`, `cursor`, `limit`
-- [x] `relevantDate`, `dateSource` 반환
-- [x] 한글 검색, 영문 대소문자 검색 일관성
-- [x] 잘못된 enum, 날짜 범위, cursor는 HTTP 400
-- [x] owner scope 적용
-
-완료 기준:
-
-- 모바일 real mode에서 검색 화면을 준비 중 상태가 아니라 실제 검색으로 열 수 있다.
-
-### 3.2 게스트 계정 및 정식 계정 연동
-
-문서: `docs/api/GUEST_ACCOUNT_HANDOFF.md`
-
-- [x] 게스트 인증 주체와 수명 주기 모델
-- [x] `POST /api/v1/auth/guest`
-- [x] `/api/v1/auth/me`와 token 응답의 `accountType`
-- [x] 신규 회원가입 시 게스트 계정 승격
-- [x] 기존 계정 로그인 시 게스트 데이터 병합
-- [x] 병합 완료 guest token 401 처리
-- [x] 만료 guest token 401 처리
-- [x] 만료 게스트와 관련 owner 데이터 정리 스케줄러
-- [x] 게스트 생성 rate limit 429/`11004`
-- [x] API 계약, 오류 코드, 통합 테스트, 모바일 전달 문서
-
-후속 운영 확장:
-
-- [x] 다중 서버 배포 시 게스트 생성 rate limit 저장소를 Redis 등 공유 저장소로 전환
-- [x] production DB 백업, `20260809_add_guest_account_columns.sql` 적용, 최신 backend image 배포
-- [x] production 게스트 발급, `/auth/me`, 회원가입 승격, 기존 계정 로그인 병합 smoke test 기록
-- [x] production API smoke script로 게스트 발급, 갱신, 승격, 병합, 재시도 검증 자동화
-
-완료 기준:
-
-- 모바일 첫 실행에서 로그인 없이 Task, 반복 일정, D-Day를 생성하고 이후 회원가입 또는 기존 계정 로그인으로 데이터 유실 없이 정식 계정에 연결할 수 있다.
-
-### 3.3 Today 일괄 재정렬 API
-
-문서: `todolab-mobile/docs/API_TODAY_REORDER.md`
-
-- [x] `PUT /api/v1/tasks/today-order`
-- [x] request `{ date, orderedTaskIds }`
-- [x] 전체 순서를 transaction으로 저장
-- [x] 중복/누락/다른 날짜/완료/일정 Task ID 거부
-- [x] 동시 변경 시 HTTP 409
-- [x] 저장 직후 Today 조회 순서와 응답 순서 일치
-
-완료 기준:
-
-- 모바일 drag-and-drop 재정렬이 한 번의 요청으로 안정적으로 저장된다.
-
-### 3.4 반복 Task / 반복 일정
-
-문서: `todolab-mobile/docs/API_RECURRENCE.md`
-
-- [x] recurrence series 모델 설계
-- [x] RRULE validation 범위 확정
-- [x] Today/Calendar 조회 시 occurrence materialize
-- [x] occurrence별 완료 상태 저장
-- [x] `THIS`, `THIS_AND_FUTURE`, `ALL` 수정/삭제 scope
-- [x] 반복 전체 수정 후 기존 완료 기록 보존
-- [x] 월말, 윤년, 타임존 경계 테스트
-
-완료 기준:
-
-- 모바일이 반복 UI를 실제 저장 기능처럼 열 수 있다.
-
-### 3.5 알림 책임 계약
-
-문서: `todolab-mobile/docs/API_NOTIFICATIONS.md`
-
-- [x] 반복 occurrence 계산은 백엔드 책임으로 확정
-- [x] 모바일 로컬 알림 예약 후보 범위 정의
-- [x] 완료, 미룸, 삭제, 이동 후 알림 후보 갱신 규칙 정의
-- [x] 향후 서버 push와 로컬 알림 중복 방지 정책 정리
-
-완료 기준:
-
-- 모바일 알림 구현 전, 백엔드가 내려줄 occurrence/상태/예외 계약이 확정된다.
-
-## 4. 운영과 보안
-
-### 4.1 환경과 CORS
-
-- [x] local, staging, production API URL 문서화
-- [x] `TODOLAB_ALLOWED_ORIGINS` 운영 값 관리 방식 정리
-- [x] Expo Web, iOS Simulator, Android Emulator, 실제 기기 origin 차이 문서화
-- [x] staging/prod에서 Swagger UI와 Scalar 공개 범위 결정
-
-### 4.2 인증 토큰 정책
-
-- [x] access token TTL 운영값 확정
-- [x] refresh token 도입 여부 결정
-- [x] 토큰 폐기/로그아웃 서버 책임 범위 결정
-- [x] 401, 403 오류 message와 code 정리
-
-### 4.3 관측과 장애 대응
-
-- [x] API error code catalog 작성
-- [x] 4xx/5xx logging 기준 정리
-- [x] 개인정보가 포함될 수 있는 필드 masking 정책 정리
-- [x] `/api/**` 공통 request/response logging 필터 도입
-- [x] 모바일 연동 장애 대응 runbook 작성
-
-## 5. 백엔드 문서화 과제
-
-우선 작성할 문서:
-
-- [x] API 연동 규격서: v1 endpoint, 인증, envelope, 오류, 날짜 규칙
-- [x] 환경별 연동 가이드: local/staging/prod URL, CORS, 실행 순서
-- [x] 오류 코드 카탈로그: code, HTTP status, 사용자 노출 message
-- [x] 인증/인가 계약서: JWT claim, 만료, 401/403 처리
-- [x] 데이터 모델 사전: Task, D-Day, User 주요 필드와 상태 전이
-- [x] 릴리스/호환성 정책: v1 유지, deprecation, breaking change 기준
-- [x] 모바일 연동 테스트 runbook: smoke test 절차와 기록 방식
-
-상세 목록과 우선순위는 [`BACKEND_DOCUMENTATION_PLAN.md`](./BACKEND_DOCUMENTATION_PLAN.md)에서 관리한다.
-
-## 6. 다음 백로그
-
-기존 2-5번 로드맵 항목은 현재 기준으로 닫힌 상태다. 앞으로의 작업은 아래 백로그에서 하나의 커밋 단위로 고른다.
-
-### 6.1 사용자 timezone 날짜 경계 적용
-
-현재 상태:
-
-- [x] User profile timezone 저장
-- [x] `PATCH /api/v1/users/me/time-zone`
-- [x] 사용자 timezone 기준 Today 조회
-- [x] 사용자 timezone 기준 Calendar 조회
-- [x] 사용자 timezone 기준 알림 후보 조회
-- [x] 사용자 timezone 변경 시 기존 반복 occurrence 재계산/보존 정책 확정
-- [x] timezone별 날짜 경계 회귀 테스트
-
-착수 조건:
-
-- 모바일이 사용자 timezone 설정을 실제로 노출할지 결정한다.
-- 기존 `Asia/Seoul` 기준 데이터와 사용자 timezone 기준 조회의 호환 정책을 먼저 확정한다.
-
-### 6.2 서버 push 발송
-
-현재 상태:
-
-- [x] push token 등록/조회/해제
-- [x] 로컬 알림 후보 API
-- [x] push provider 선택 및 설정 방식 확정
-- [x] 알림 발송 요청/스케줄러 설계
-- [x] 전송 실패 token 비활성화 정책
-- [x] 로컬 알림과 서버 push 중복 방지 플래그
-- [x] 알림 전송 이력 저장/조회
-
-착수 조건:
-
-- APNs/FCM/Expo 중 사용할 provider와 운영 credential 관리 방식을 확정한다.
-- 서버가 어떤 시점에 어떤 Task/occurrence를 발송할지 제품 정책을 확정한다.
-
-### 6.3 반복 rule 수정
-
-현재 상태:
-
-- [x] 반복 생성
-- [x] 반복 occurrence 일반 필드 scope 수정/삭제
-- [x] 기존 rule 수정 요청 400 방어
-- [x] 기존 series rule 변경 API
-- [x] rule 변경 시 과거 완료 occurrence 보존 정책
-- [x] rule 변경 시 미래 materialized occurrence 재생성/정리 정책
-- [x] 모바일 rule 편집 UI와 migration 안내
-
-착수 조건:
-
-- 기존 occurrence 중 완료/수정/삭제된 항목을 rule 변경 후 어떻게 보존할지 정책을 확정한다.
-
-### 6.4 운영 환경 확정
-
-현재 상태:
-
-- [x] local 환경 문서화
-- [x] CORS 운영 값 관리 방식 정리
-- [x] staging API URL 확정: 이 PC 단일 production 운영에서는 staging 미사용
-- [x] production host 내부 API URL 확정: `http://127.0.0.1:8080`
-- [ ] production Android Tailscale HTTPS API URL 확정
-- [ ] production Expo Web CORS origin 확정
-- [x] Swagger UI/Scalar 공개 설정 운영 검증
-
-착수 조건:
-
-- 실제 Android Tailscale HTTPS URL과 Expo Web production origin이 필요하면 모바일 배포 origin을 확정한다.
-
-### 6.5 게스트 token 갱신 계약
-
-현재 상태:
-
-- [x] 게스트 access token TTL 31일
-- [x] 만료 guest token 401 처리
-- [x] 만료 게스트와 owner 데이터 정리 정책
-- [x] 같은 guest user id를 유지하는 token 갱신 API
-- [x] 갱신 가능 기간: 기존 guest token 유효 기간 안
-- [x] 만료 전/후 처리 기준: 만료 전 갱신, 만료 후 401
-- [x] 이미 정리된 게스트의 오류 코드: 401/`11002`
-- [x] 갱신 실패 시 기존 데이터 보존 정책
-- [x] token 탈취 방지와 만료 후 재발급 인증 방식: refresh token/device proof 미도입 상태에서는 만료 후 재발급 미지원
-
-착수 조건:
-
-- 모바일이 31일 이상 미접속 후 기존 게스트 데이터를 보존해야 하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 확정한다.
-
-### 6.6 게스트 병합 결과 응답 확장
-
-현재 상태:
-
-- [x] 게스트 owner 데이터 병합
-- [x] 병합 결과 count 내부 audit 로그 기록
-- [x] `POST /api/v1/auth/login` 병합 성공 응답에 병합 결과 개수 포함
-- [x] `tasks`, `schedules`, `ddayGoals`, `recurrenceSeries` count DTO 계약 확정
-- [x] 기존 `TokenResponse` 호환성 유지 방식 확정
-
-착수 조건:
-
-- 모바일 연결 완료 화면에서 구체적인 이전 개수를 노출할지 결정한다.
-
-### 6.7 로컬 PC 단일 production 운영
-
-목표: 별도 서버 없이 이 PC의 Docker Compose를 ToDoLab의 유일한 production 환경으로 사용하고, Android 앱이 Tailscale을 통해 안전하게 접근할 수 있게 한다. 이 환경에서는 staging을 따로 만들지 않고 `local 개발 환경`과 `이 PC의 production 환경`만 구분한다.
-
-현재 확인된 상태:
-
-- [x] MySQL 데이터는 external named volume `todolab-mysql-data`에 저장한다.
-- [x] app과 MySQL 컨테이너에 `restart: unless-stopped`가 설정되어 있다.
-- [x] MySQL health check와 app의 MySQL healthy 대기가 설정되어 있다.
-- [x] production profile은 DB, JWT, 문서 비공개, payload logging 비활성화 설정을 환경변수로 받는다.
-- [x] production `.env` 필수값, placeholder, Tailscale issuer, CORS origin, offsite backup 설정을 secret 출력 없이 점검하는 스크립트 마련
-- [x] app 컨테이너 자체 health check와 production readiness endpoint를 추가했다.
-- [x] MySQL host port를 제거하고 app은 `127.0.0.1:8080`에만 공개한다.
-- [x] DB 백업·복구 스크립트와 보관 주기, 실제 복구 연습, launchd 자동 실행 확인
-- [x] `schema.sql`은 새 volume 최초 초기화에만 적용되므로 기존 production DB의 migration 실행·검증 절차가 필요하다.
-- [x] Dockerfile은 빌드된 JAR을 전제로 하므로 clean checkout에서 JAR build부터 Compose 기동까지 재현하는 release 절차가 필요하다.
-- [x] Docker Desktop running, app/mysql restart policy, AC sleep 설정을 확인하는 host 점검 스크립트 마련
-- [x] 로그인 후 Docker Desktop과 Compose stack을 복구하는 LaunchAgent와 `ensure-production-up` 스크립트 마련
-- [x] 재부팅/재로그인 후 LaunchAgent, Compose, readiness, 선택적 Tailscale 복구 증적 수집 스크립트 마련
-- [ ] PC 재부팅, Docker Desktop 재시작, 절전과 네트워크 변경 뒤 자동 복구를 검증하지 않았다.
-
-#### A. production 접근 경로와 노출 범위
-
-- [ ] PC와 Android 기기에 Tailscale을 설치하고 동일 tailnet에서 연결한다.
-- [ ] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
-- [ ] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 app `8080`에 연결한다.
-- [ ] Android 앱에서 `/api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
-- [x] Tailscale 경로만 사용하도록 app port를 `127.0.0.1:8080:8080`으로 제한한다.
-- [x] MySQL은 host port 공개를 제거하고 Compose 내부 network에서만 접근한다.
-- [x] Tailscale HTTPS readiness, guest 발급, `/auth/me`, 선택적 Expo Web preflight 점검 스크립트 마련
-- [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
-
-완료 기준:
-
-- 공용 인터넷 포트포워딩 없이 Android 앱에서 production API에 접근한다.
-- DB port는 LAN 또는 tailnet에 불필요하게 노출되지 않는다.
-- 모바일 production API URL이 재부팅이나 LAN IP 변경에도 바뀌지 않는다.
-
-#### B. Compose와 release 재현성
-
-- [x] production 전용 `.env.example`을 만들고 필수 환경변수, 생성 방법, 선택값을 설명한다.
-- [x] `TODOLAB_JWT_SECRET`은 32바이트 이상의 무작위 값으로 생성하고 저장소 밖에 보관한다.
-- [x] 사용하지 않는 mail/batch 설정 때문에 app 기동이 막히지 않도록 필수·선택 환경변수를 정리한다.
-- [x] `./gradlew clean test bootJar`부터 `docker compose up -d --build`까지 release 명령을 문서화한다.
-- [x] app image에 version 또는 git commit tag를 남기고 이전 정상 image로 rollback하는 절차를 정한다.
-- [x] app health check를 추가하고 MySQL 연결, schema, API readiness를 구분해 확인한다.
-- [x] log volume/path와 Docker log rotation을 확정해 디스크 무한 증가를 방지한다.
-
-완료 기준:
-
-- clean checkout과 production 환경 파일만으로 같은 PC에서 배포를 재현할 수 있다.
-- 새 버전 실패 시 DB를 손상시키지 않고 직전 app image로 되돌릴 수 있다.
-
-#### C. 데이터 보존과 복구
-
-- [x] `mysqldump` 백업 명령과 launchd 설치 스크립트 마련 및 production 자동 실행 확인
-- [x] 백업 파일은 DB volume과 다른 경로에 저장하고 기본 보관 기간을 14일로 정한다.
-- [x] 최소 1회 임시 DB에 백업을 복원해 핵심 테이블을 확인한다.
-- [x] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.
-- [x] migration 파일의 적용 이력 관리 방식 결정: Flyway는 보류하고 `docs/db/MIGRATION_HISTORY.md`로 수동 이력 관리
-- [x] Docker volume 또는 저장소 삭제에 대비해 저장소 밖 백업 위치 `/Users/hyunseung/todolab-backups`를 결정하고 launchd 적용
-- [x] 최신 production 백업을 외부/동기화 경로로 복사하고 gzip/checksum을 검증하는 스크립트 마련
-- [ ] PC 디스크 장애 시 복구 가능한 외부 매체 또는 동기화 백업 위치를 결정한다.
-
-완료 기준:
-
-- 컨테이너와 PC가 재시작되어도 데이터가 유지된다.
-- 실수로 volume을 잃어도 마지막 정상 백업에서 복원하는 절차가 검증되어 있다.
-
-#### D. 상시 운영 검증
-
-- [ ] Docker Desktop 로그인 시 자동 시작과 Compose 자동 복구를 실제 로그인/재부팅 후 확인한다.
-- [x] PC 절전 정책 확정: AC 전원에서 `sleep=0`, `disksleep=0`, `powernap=0`
-- [x] AC 전원 production 절전 정책 적용과 strict host check를 묶은 관리자 실행 스크립트 마련
-- [ ] 관리자 권한으로 AC 전원 절전 정책을 실제 적용하고 `TODOLAB_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
-- [ ] 재부팅 후 MySQL → app → Tailscale HTTPS 경로가 자동으로 복구되는지 확인한다.
-- [ ] `/api/v1/auth/login`, Today 조회·생성·완료를 Android production build에서 smoke test한다.
-- [x] 401/404 비파괴 장애 리허설과 DB outage 리허설 스크립트 마련
-- [x] DB 중단을 실제 점검 시간에 재현하고 readiness 하락/복구 절차를 확인한다.
-- [ ] Tailscale 연결 끊김을 실제 기기에서 재현하고 로그와 복구 절차를 확인한다.
-- [x] 월 1회 backup 무결성, age, 디스크 여유 공간, readiness를 확인하는 운영 루틴을 정한다.
-
-완료 기준:
-
-- PC 재부팅 후 수동 코드 실행 없이 Android 앱이 다시 접속된다.
-- 장애 시 request id, container 상태, app/MySQL log, Tailscale 상태 순서로 원인을 확인할 수 있다.
-
-## 7. 개발 원칙
-
-- 모바일과 웹의 인증 방식은 분리하되 사용자 데이터 격리는 동일하게 유지한다.
-- 새 모바일 API는 `/api/v1/**`에 추가한다.
-- API 계약 변경은 OpenAPI JSON, `API_V1_FRONTEND.md`, 테스트를 함께 갱신한다.
-- 날짜/시간은 사용자 time zone 도입 전까지 `Asia/Seoul` 기준을 유지한다.
-- 알림처럼 계약이 확정되지 않은 기능은 실제 저장 기능처럼 열지 않는다.
+- [`../mobile/MOBILE_API_BACKEND_STATUS.md`](../mobile/MOBILE_API_BACKEND_STATUS.md)
+- [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)
+
+## 4. 기본 검증 명령
+
+```bash
+./gradlew test
+./scripts/check-production-env.sh
+./scripts/check-production-routine.sh
+./scripts/check-production-recovery.sh
+./scripts/report-production-status.sh
+```
+
+Tailscale URL과 offsite backup 경로가 확정된 뒤에는 strict 검증을 추가한다.
+
+```bash
+TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh
+TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
+TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh
+TODOLAB_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
+```
+
+## 5. 문서 유지 원칙
+
+- 완료 이력은 로드맵에 길게 누적하지 않고 관련 계약 문서 또는 migration 이력으로 이동한다.
+- 미정인 실제 값은 추측하지 않고 `미정` 또는 `확정 필요`로 둔다.
+- secret, access token, DB dump 내용, private production URL은 문서와 로그에 남기지 않는다.
+- API 계약 변경은 OpenAPI JSON, `API_V1_FRONTEND.md`, 관련 테스트를 함께 갱신한다.
