@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-02
+Last audited: 2026-08-11
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -29,6 +29,8 @@ Last audited: 2026-08-02
 - [x] 2026-07-22 v1 리소스 삭제 응답 기준: Task/D-Day 삭제 성공 envelope의 `data`는 `null`
 - [x] 2026-07-22 legacy 정책 기준: `/api/tasks/**`, `/api/ddays/**`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않음
 - [x] 2026-08-09 게스트 계정 기준: 생성, `/auth/me`, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약 구현
+- [x] 2026-08-11 production guest smoke 기준: `./scripts/smoke-production-api.sh`로 게스트 발급, `/auth/me`, token refresh, 회원가입 승격, 기존 계정 병합, 병합 재시도 멱등성 확인 가능
+- [x] 2026-08-11 production Tailscale smoke 기준: `./scripts/check-tailscale-production.sh`로 HTTPS readiness, guest 발급, `/auth/me`, 선택적 Expo Web CORS preflight 확인 가능
 
 1. [x] 인증 사용자 소유권
    - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
@@ -62,6 +64,8 @@ Last audited: 2026-08-02
    - 완료: 기존 계정 `POST /api/v1/auth/login`에 guest Bearer token을 보내면 Task/D-Day/반복/알림 owner 데이터를 정식 계정으로 병합
    - 완료: 병합 완료 guest token, 만료 guest token은 owner API와 `/auth/me`에서 401 처리
    - 완료: 만료 게스트 정리 스케줄러와 게스트 생성 rate limit 429/`11004` 구현
+   - 완료: `POST /api/v1/auth/guest/refresh`는 같은 guest user id를 유지하며 만료 전 token을 갱신
+   - 완료: 기존 계정 로그인 병합 성공 응답에 `mergeResult.tasks`, `schedules`, `ddayGoals`, `recurrenceSeries` 포함
    - 문서: `docs/api/GUEST_ACCOUNT_HANDOFF.md`
 
 ## 2. 여러 날 일정 / Calendar 범위 조회
@@ -205,7 +209,7 @@ Last audited: 2026-08-02
 
 | 항목 | 상태 | 메모 |
 | --- | --- | --- |
-| 개발 / 스테이징 / 운영 API URL | [x] | `docs/ops/ENVIRONMENT_INTEGRATION.md`에 local 기준, staging/production 미정 상태, CORS 운영 값 관리, 문서 UI 공개 제어 방식 정리 |
+| 개발 / 스테이징 / 운영 API URL | [~] | local과 host 내부 production은 확정. Android production Tailscale HTTPS URL과 Expo Web production origin은 실제 기기/배포 origin 확정 필요 |
 | 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. access token TTL, refresh token 미도입, 로그아웃 책임, 401/403 계약은 `docs/api/AUTH_CONTRACT.md` 기준 |
 | 게스트 계정 bootstrap과 정식 계정 연동 | [x] | `POST /api/v1/auth/guest`, 게스트 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약은 `docs/api/GUEST_ACCOUNT_HANDOFF.md` 기준 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
@@ -215,6 +219,13 @@ Last audited: 2026-08-02
 | `GET /api/ddays/{id}` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `GET /api/v1/dday-goals/{id}` 사용 |
 | `POST /api/ddays/{id}/tasks` HTTP 500 | [x] | legacy alias는 추가하지 않음. 모바일은 v1 `POST /api/v1/dday-goals/{id}/tasks` 사용 |
 | D-Day 연결 Task Today 이동 후 HTTP 500 | [x] | v1 `PATCH /api/v1/tasks/{id}/today`에서 D-Day 연결 필드를 유지하는 회귀 테스트 추가 |
+
+운영 연결 확인:
+
+- [x] host 내부 production API smoke: `./scripts/smoke-production-api.sh`
+- [x] Tailscale HTTPS host smoke 스크립트: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh`
+- [ ] Android 실제 기기 production smoke: Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
+- [ ] Expo Web production origin: 필요 시 `TODOLAB_ALLOWED_ORIGINS` 반영 후 preflight 확인
 
 ## 9. 추천 구현 순서
 
