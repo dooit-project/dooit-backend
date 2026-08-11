@@ -1,6 +1,6 @@
 # Local PC Production Runbook
 
-Last updated: 2026-08-10
+Last updated: 2026-08-11
 
 이 문서는 이 Mac의 Docker Compose를 ToDoLab의 단일 production 서버로 사용하고 Android APK에서 Tailscale HTTPS로 접근하는 절차다.
 
@@ -166,6 +166,17 @@ tailscale serve status
 - local readiness 실패: app/MySQL/schema 상태를 확인한다.
 - local readiness 성공, Android 실패: Android Tailscale 연결과 production API URL을 확인한다.
 - PC 절전·종료 중에는 앱을 사용할 수 없다. 상시 사용하려면 전원 연결 시 절전 정책을 별도로 정한다.
+
+### 로그 인코딩 깨짐
+
+`responseBody` 로그에서 `서버 오류가 발생했습니다.`가 `ìë² ì¤ë¥...`처럼 보이면 UTF-8 바이트를 Latin-1 계열 문자셋으로 잘못 읽은 상태다. `db52d6c` 이후 app은 API response logging 전에 response character encoding을 UTF-8로 고정한다.
+
+확인 순서:
+
+1. production app image tag가 `db52d6c` 이후 commit인지 확인한다.
+2. 수정 이전에 찍힌 오래된 Docker log인지 확인한다.
+3. 새 로그도 깨지면 Docker log viewer, terminal locale, 로그 수집기의 문자셋이 UTF-8인지 확인한다.
+4. 같은 request id로 app exception과 response envelope를 함께 확인하되 access token, 비밀번호, DB 비밀번호는 공유하지 않는다.
 
 ## 8. 월간 운영 점검
 

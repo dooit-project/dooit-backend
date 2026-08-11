@@ -1,6 +1,6 @@
 # Guest Account Production Apply Runbook
 
-Last updated: 2026-08-10
+Last updated: 2026-08-11
 
 이 문서는 모바일 게스트 계정 연동을 production에 적용하기 전후의 필수 확인 절차를 정리한다. 실제 secret, access token, DB 비밀번호, 백업 파일 내용은 문서와 공유 로그에 남기지 않는다.
 
@@ -131,13 +131,13 @@ Content-Type: application/json
 - 같은 guest token으로 재시도해도 중복 이전 없음
 - 병합 성공 후 정식 access token 반환
 
-## 5. 현재 미지원 계약
+## 5. 추가 API 계약 현황
 
-게스트 token 갱신 또는 재발급 API는 아직 제공하지 않는다. 같은 guest user id 유지 방식, 갱신 가능 기간, 만료 전/후 처리 기준, 이미 정리된 게스트의 오류 코드, 갱신 실패 시 기존 데이터 보존 정책, token 탈취 방지와 재발급 인증 방식을 확정한 뒤 구현한다.
+게스트 token은 `POST /api/v1/auth/guest/refresh`로 만료 전 갱신할 수 있다. refresh는 같은 guest user id를 유지하고, 성공하면 새 access token과 갱신된 만료 시각을 반환한다.
 
-병합 결과 개수는 `POST /api/v1/auth/login` 병합 성공 응답의 `mergeResult`에 포함한다.
+만료 후 복구용 재발급은 지원하지 않는다. token이 만료됐거나 이미 정리된 게스트는 인증 실패로 처리하고, 새 guest id 발급을 기존 데이터 복구 정책으로 사용하지 않는다.
 
-게스트 token은 `POST /api/v1/auth/guest/refresh`로 만료 전 갱신할 수 있다. 만료 후 복구용 재발급은 아직 지원하지 않는다.
+병합 결과 개수는 `POST /api/v1/auth/login` 병합 성공 응답의 `mergeResult`에 포함한다. 일반 로그인처럼 병합이 없으면 `mergeResult`는 `null`이다.
 
 ## 6. 완료 보고 항목
 
