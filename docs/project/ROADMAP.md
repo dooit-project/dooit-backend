@@ -371,6 +371,7 @@ Last updated: 2026-08-10
 
 - [ ] Docker Desktop 로그인 시 자동 시작과 Compose 자동 복구를 실제 로그인/재부팅 후 확인한다.
 - [x] PC 절전 정책 확정: AC 전원에서 `sleep=0`, `disksleep=0`, `powernap=0`
+- [x] AC 전원 production 절전 정책 적용과 strict host check를 묶은 관리자 실행 스크립트 마련
 - [ ] 관리자 권한으로 AC 전원 절전 정책을 실제 적용하고 `TODOLAB_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
 - [ ] 재부팅 후 MySQL → app → Tailscale HTTPS 경로가 자동으로 복구되는지 확인한다.
 - [ ] `/api/v1/auth/login`, Today 조회·생성·완료를 Android production build에서 smoke test한다.

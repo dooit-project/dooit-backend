@@ -250,7 +250,7 @@ TODOLAB_CONFIRM_DB_OUTAGE=STOP_MYSQL ./scripts/drill-production-incident.sh
 적용 명령:
 
 ```bash
-sudo pmset -c sleep 0 disksleep 0 powernap 0
+TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh
 ```
 
 확인 명령:
