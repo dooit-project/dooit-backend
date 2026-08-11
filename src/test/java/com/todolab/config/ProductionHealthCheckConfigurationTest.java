@@ -83,6 +83,7 @@ class ProductionHealthCheckConfigurationTest {
     @DisplayName("production 환경 점검 스크립트는 secret 출력 없이 필수 설정을 검증한다")
     void productionEnvironmentCheckScriptValidatesConfigurationWithoutPrintingSecrets() throws Exception {
         String script = Files.readString(Path.of("scripts/check-production-env.sh"));
+        String routine = Files.readString(Path.of("scripts/check-production-routine.sh"));
         String envExample = Files.readString(Path.of(".env.example"));
 
         assertThat(script).contains("TODOLAB_JWT_SECRET must be at least 32 bytes");
@@ -92,6 +93,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(script).contains("TODOLAB_REQUIRE_TAILSCALE_URL");
         assertThat(script).contains("TODOLAB_REQUIRE_OFFSITE_BACKUP");
         assertThat(script).doesNotContain("echo \"$jwt_secret\"");
+        assertThat(routine).contains("./scripts/check-production-env.sh");
         assertThat(envExample).contains("TODOLAB_TAILSCALE_API_URL=");
         assertThat(envExample).contains("TODOLAB_OFFSITE_BACKUP_DIR=");
     }

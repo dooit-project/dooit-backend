@@ -42,6 +42,8 @@ require_command jq
 require_command shasum
 require_command stat
 
+./scripts/check-production-env.sh >/dev/null
+
 if [ ! -d "$backup_dir" ]; then
   echo "Backup directory not found: $backup_dir" >&2
   exit 1
@@ -103,6 +105,7 @@ fi
 cat <<EOF
 Production routine check passed.
 baseUrl=$base_url
+env=valid
 backup=$backup_file
 backupAgeHours=$age_hours
 freeDiskGiB=$free_gb
