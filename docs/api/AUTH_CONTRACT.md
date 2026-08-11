@@ -1,6 +1,6 @@
 # Auth Contract
 
-Last updated: 2026-08-10
+Last updated: 2026-08-12
 
 이 문서는 ToDoLab 백엔드의 모바일 JWT 인증과 웹 세션 인증 책임을 정리한다.
 
@@ -25,15 +25,16 @@ Last updated: 2026-08-10
 
 ## Access Token
 
-운영 access token TTL은 1시간이다.
+이 PC의 Docker Compose production access token TTL 기본값은 24시간이다. 애플리케이션 prod profile 자체의 fallback은 `PT1H`이지만, local production은 Compose가 `TODOLAB_JWT_ACCESS_TOKEN_TTL:-PT24H`를 주입한다.
 
 게스트 access token TTL은 31일이다.
 
 | 환경 | 설정 |
 | --- | --- |
 | local/test 기본값 | `PT1H` |
-| production 기본값 | `TODOLAB_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT1H` |
-| production override | `TODOLAB_JWT_ACCESS_TOKEN_TTL=PT1H` 형식의 ISO-8601 duration |
+| application prod fallback | `TODOLAB_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT1H` |
+| local production Compose 기본값 | `TODOLAB_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT24H` |
+| production override | `TODOLAB_JWT_ACCESS_TOKEN_TTL=PT24H` 형식의 ISO-8601 duration |
 | guest local/prod 기본값 | `P31D` |
 | guest production override | `TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL=P31D` 형식의 ISO-8601 duration |
 

@@ -1,6 +1,6 @@
 # Guest Account Handoff
 
-Last updated: 2026-08-10
+Last updated: 2026-08-12
 
 이 문서는 모바일 게스트 계정 bootstrap, 정식 계정 승격, 기존 계정 병합 연동에 필요한 백엔드 확정 계약을 정리한다.
 
@@ -134,7 +134,7 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 
 유효기간:
 
-- 정식 access token: 기본 `PT1H`
+- 정식 access token: Docker Compose production 기본 `PT24H`, 애플리케이션 prod fallback `PT1H`
 - 게스트 access token: 기본 `P31D`
 - refresh token: 미지원
 
