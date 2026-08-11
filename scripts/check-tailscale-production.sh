@@ -3,6 +3,7 @@ set -euo pipefail
 
 base_url=${TODOLAB_TAILSCALE_API_URL:-${TODOLAB_SMOKE_BASE_URL:-}}
 expo_origin=${TODOLAB_EXPO_WEB_ORIGIN:-}
+tailscale_cli=${TODOLAB_TAILSCALE_CLI:-tailscale}
 tmpdir=$(mktemp -d)
 
 cleanup() {
@@ -18,15 +19,18 @@ require_command() {
 }
 
 require_tailscale_cli() {
-  if command -v tailscale >/dev/null 2>&1; then
+  if command -v "$tailscale_cli" >/dev/null 2>&1; then
+    return 0
+  fi
+  if [ -x "$tailscale_cli" ]; then
     return 0
   fi
   if [ -d /Applications/Tailscale.app ]; then
-    echo "Tailscale.app is installed, but the tailscale CLI is not available in PATH." >&2
-    echo "Install or link the CLI before running this check." >&2
+    echo "Tailscale.app is installed, but the tailscale CLI is not available." >&2
+    echo "Install or link the CLI, or set TODOLAB_TAILSCALE_CLI to its executable path." >&2
     exit 2
   fi
-  echo "Required command not found: tailscale" >&2
+  echo "Required command not found: $tailscale_cli" >&2
   exit 2
 }
 
@@ -68,13 +72,13 @@ require_command curl
 require_command jq
 require_tailscale_cli
 
-if ! tailscale status >/dev/null; then
+if ! "$tailscale_cli" status >/dev/null; then
   echo "Tailscale is not connected" >&2
   exit 1
 fi
 
 serve_status="$tmpdir/tailscale-serve.txt"
-if ! tailscale serve status >"$serve_status"; then
+if ! "$tailscale_cli" serve status >"$serve_status"; then
   echo "Tailscale Serve is not configured" >&2
   exit 1
 fi
@@ -134,6 +138,7 @@ cat <<EOF
 Tailscale production check passed.
 baseUrl=$base_url
 tailscaleStatus=connected
+tailscaleCli=$tailscale_cli
 serveTarget=127.0.0.1:8080
 readiness=UP
 guestCreate=201

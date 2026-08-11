@@ -95,6 +95,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(script).doesNotContain("echo \"$jwt_secret\"");
         assertThat(routine).contains("./scripts/check-production-env.sh");
         assertThat(envExample).contains("TODOLAB_TAILSCALE_API_URL=");
+        assertThat(envExample).contains("TODOLAB_TAILSCALE_CLI=tailscale");
         assertThat(envExample).contains("TODOLAB_OFFSITE_BACKUP_DIR=");
     }
 

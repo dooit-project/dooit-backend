@@ -65,6 +65,7 @@ TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tail
 
 명령이 출력한 `https://<device>.<tailnet>.ts.net` 주소를 모바일 `EXPO_PUBLIC_API_URL`로 사용한다. 공유기 포트포워딩은 사용하지 않는다.
 `Tailscale.app`만 설치되어 있고 `tailscale` CLI가 PATH에 없으면 Serve와 host smoke를 자동 검증할 수 없다. 이 경우 Tailscale CLI를 설치하거나 PATH에 연결한 뒤 위 명령을 실행한다.
+CLI가 다른 경로에 있으면 `TODOLAB_TAILSCALE_CLI=/absolute/path/to/tailscale`로 지정한다.
 
 확인 순서:
 
