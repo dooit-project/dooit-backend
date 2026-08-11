@@ -326,6 +326,7 @@ Last updated: 2026-08-10
 - [ ] Android 앱에서 `/api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
 - [x] Tailscale 경로만 사용하도록 app port를 `127.0.0.1:8080:8080`으로 제한한다.
 - [x] MySQL은 host port 공개를 제거하고 Compose 내부 network에서만 접근한다.
+- [x] Tailscale HTTPS readiness, guest 발급, `/auth/me`, 선택적 Expo Web preflight 점검 스크립트 마련
 - [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
 
 완료 기준:

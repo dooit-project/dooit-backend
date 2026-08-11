@@ -56,6 +56,7 @@ Tailscale의 HTTPS와 MagicDNS를 활성화한 뒤 Mac에서 다음과 같이 lo
 ```bash
 tailscale serve --bg http://127.0.0.1:8080
 tailscale serve status
+TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
 ```
 
 명령이 출력한 `https://<device>.<tailnet>.ts.net` 주소를 모바일 `EXPO_PUBLIC_API_URL`로 사용한다. 공유기 포트포워딩은 사용하지 않는다.
@@ -66,6 +67,12 @@ tailscale serve status
 2. Android 브라우저에서 `https://<device>.<tailnet>.ts.net/actuator/health/readiness`를 연다.
 3. APK에서 로그인, Today 조회·생성·완료를 확인한다.
 4. Wi-Fi를 끄고 모바일 데이터에서도 같은 주소로 확인한다.
+
+Expo Web production origin까지 함께 확인해야 하면 아래처럼 origin을 지정해 preflight를 점검한다.
+
+```bash
+TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net TODOLAB_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
+```
 
 ## 4. 백업
 
@@ -165,6 +172,7 @@ tailscale serve status
 
 - local readiness 실패: app/MySQL/schema 상태를 확인한다.
 - local readiness 성공, Android 실패: Android Tailscale 연결과 production API URL을 확인한다.
+- Tailscale CLI 또는 Serve 설정 실패: `tailscale status`, `tailscale serve status`, `./scripts/check-tailscale-production.sh` 순서로 확인한다.
 - PC 절전·종료 중에는 앱을 사용할 수 없다. 상시 사용하려면 전원 연결 시 절전 정책을 별도로 정한다.
 
 ### 로그 인코딩 깨짐

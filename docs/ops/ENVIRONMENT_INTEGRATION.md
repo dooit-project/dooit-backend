@@ -88,6 +88,13 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 4. production은 문서 UI 비공개 상태를 먼저 확인한 뒤 모바일 smoke test를 진행한다.
 5. 확정된 Tailscale HTTPS URL만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.
 
+Tailscale URL 확정 직후 host에서는 아래 점검을 실행한다. 이 점검은 Android 실기기 smoke를 대체하지 않고, Serve와 HTTPS API 계약이 host에서 재현되는지만 확인한다.
+
+```bash
+TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
+TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net TODOLAB_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
+```
+
 ## 5. Production Health Check
 
 운영 readiness endpoint는 `/actuator/health/readiness`다. 이 endpoint는 인증 없이 접근 가능하지만, Actuator 노출 범위는 `health`로만 제한한다.
