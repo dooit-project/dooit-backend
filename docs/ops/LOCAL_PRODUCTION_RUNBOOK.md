@@ -45,9 +45,11 @@ MySQL port는 host에 공개하지 않는다. app port도 `127.0.0.1:8080`에만
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.todolab.backend.production.plist
 launchctl kickstart -k gui/$(id -u)/com.todolab.backend.production
 launchctl print gui/$(id -u)/com.todolab.backend.production
+./scripts/check-production-recovery.sh
 ```
 
 이 LaunchAgent는 `RunAtLoad`와 5분 `StartInterval`로 `./scripts/ensure-production-up.sh`를 실행한다. 스크립트는 Docker Desktop을 시작하고 Docker engine 준비를 기다린 뒤 기존 app image tag를 보존해 `docker compose up -d mysql app`을 실행하고 readiness `UP`까지 대기한다.
+재부팅 또는 재로그인 뒤에는 `./scripts/check-production-recovery.sh`로 현재 부팅 시각, LaunchAgent 실행 이력, Docker/Compose 상태, readiness를 증적화한다. Tailscale URL까지 확정된 뒤에는 `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`로 HTTPS 경로까지 함께 확인한다.
 
 ## 3. Tailscale HTTPS
 
@@ -195,6 +197,7 @@ tailscale serve status
 ```bash
 ./scripts/check-production-host.sh
 ./scripts/ensure-production-up.sh
+./scripts/check-production-recovery.sh
 ./scripts/check-production-routine.sh
 TODOLAB_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
 TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-routine.sh
@@ -209,6 +212,7 @@ TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-productio
 - Docker Desktop running 상태
 - app/mysql restart policy
 - production LaunchAgent와 Compose stack 복구 스크립트
+- 재부팅/재로그인 후 LaunchAgent 실행 이력과 readiness 복구 상태
 - AC 전원 sleep/disksleep/powernap 설정
 - app/mysql container running 상태
 - `/actuator/health/readiness` `UP`
