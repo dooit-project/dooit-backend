@@ -30,6 +30,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(compose).doesNotContain("\"3306:3306\"");
         assertThat(compose).contains("\"127.0.0.1:8080:8080\"");
         assertThat(compose).contains("TODOLAB_JWT_SECRET");
+        assertThat(compose).contains("TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL: ${TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL:-P31D}");
         assertThat(compose).contains("APP_BATCH_SCHEDULER_ENABLED: ${APP_BATCH_SCHEDULER_ENABLED:-false}");
         assertThat(Files.readString(Path.of(".env.example"))).contains("TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL=P31D");
     }
@@ -69,12 +70,30 @@ class ProductionHealthCheckConfigurationTest {
 
         assertThat(docsIndex).contains("ops/LOCAL_PRODUCTION_RUNBOOK.md");
         assertThat(runbook).contains("docker compose up -d --build");
+        assertThat(runbook).contains("./scripts/check-production-env.sh");
         assertThat(runbook).contains("tailscale serve --bg http://127.0.0.1:8080");
         assertThat(runbook).contains("./scripts/backup-db.sh");
         assertThat(runbook).contains("TODOLAB_CONFIRM_RESTORE=RESTORE ./scripts/restore-db.sh");
         assertThat(runbook).contains("./scripts/release-production.sh");
         assertThat(runbook).contains("./scripts/rollback-production.sh <previous-image-tag>");
         assertThat(runbook).contains("max-size=10m");
+    }
+
+    @Test
+    @DisplayName("production 환경 점검 스크립트는 secret 출력 없이 필수 설정을 검증한다")
+    void productionEnvironmentCheckScriptValidatesConfigurationWithoutPrintingSecrets() throws Exception {
+        String script = Files.readString(Path.of("scripts/check-production-env.sh"));
+        String envExample = Files.readString(Path.of(".env.example"));
+
+        assertThat(script).contains("TODOLAB_JWT_SECRET must be at least 32 bytes");
+        assertThat(script).contains("jwtSecretBytes=valid");
+        assertThat(script).contains("TODOLAB_JWT_ISSUER must be a Tailscale HTTPS origin");
+        assertThat(script).contains("guestJwtTtl=");
+        assertThat(script).contains("TODOLAB_REQUIRE_TAILSCALE_URL");
+        assertThat(script).contains("TODOLAB_REQUIRE_OFFSITE_BACKUP");
+        assertThat(script).doesNotContain("echo \"$jwt_secret\"");
+        assertThat(envExample).contains("TODOLAB_TAILSCALE_API_URL=");
+        assertThat(envExample).contains("TODOLAB_OFFSITE_BACKUP_DIR=");
     }
 
     @Test

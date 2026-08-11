@@ -309,6 +309,7 @@ Last updated: 2026-08-10
 - [x] app과 MySQL 컨테이너에 `restart: unless-stopped`가 설정되어 있다.
 - [x] MySQL health check와 app의 MySQL healthy 대기가 설정되어 있다.
 - [x] production profile은 DB, JWT, 문서 비공개, payload logging 비활성화 설정을 환경변수로 받는다.
+- [x] production `.env` 필수값, placeholder, Tailscale issuer, CORS origin, offsite backup 설정을 secret 출력 없이 점검하는 스크립트 마련
 - [x] app 컨테이너 자체 health check와 production readiness endpoint를 추가했다.
 - [x] MySQL host port를 제거하고 app은 `127.0.0.1:8080`에만 공개한다.
 - [x] DB 백업·복구 스크립트와 보관 주기, 실제 복구 연습, launchd 자동 실행 확인

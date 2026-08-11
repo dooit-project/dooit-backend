@@ -28,6 +28,7 @@ docker volume create todolab-mysql-data
 
 ```bash
 ./gradlew clean test bootJar
+./scripts/check-production-env.sh
 docker compose config
 docker compose up -d --build
 docker compose ps
@@ -197,6 +198,7 @@ tailscale serve status
 월 1회 또는 release 후 아래 점검을 실행한다.
 
 ```bash
+./scripts/check-production-env.sh
 ./scripts/check-production-host.sh
 ./scripts/ensure-production-up.sh
 ./scripts/check-production-recovery.sh
@@ -207,6 +209,7 @@ TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-productio
 
 점검 항목:
 
+- production `.env` 필수값, placeholder 제거, JWT issuer/secret 형식
 - 최신 backup gzip 무결성
 - 최신 backup age
 - backup 경로의 디스크 여유 공간

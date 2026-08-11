@@ -88,6 +88,14 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 4. production은 문서 UI 비공개 상태를 먼저 확인한 뒤 모바일 smoke test를 진행한다.
 5. 확정된 Tailscale HTTPS URL만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.
 
+반영 전후에는 실제 값을 출력하지 않는 설정 점검을 실행한다.
+
+```bash
+./scripts/check-production-env.sh
+TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh
+TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh
+```
+
 Tailscale URL 확정 직후 host에서는 아래 점검을 실행한다. 이 점검은 Android 실기기 smoke를 대체하지 않고, Serve와 HTTPS API 계약이 host에서 재현되는지만 확인한다.
 
 ```bash
