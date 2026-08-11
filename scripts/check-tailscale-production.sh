@@ -17,6 +17,19 @@ require_command() {
   fi
 }
 
+require_tailscale_cli() {
+  if command -v tailscale >/dev/null 2>&1; then
+    return 0
+  fi
+  if [ -d /Applications/Tailscale.app ]; then
+    echo "Tailscale.app is installed, but the tailscale CLI is not available in PATH." >&2
+    echo "Install or link the CLI before running this check." >&2
+    exit 2
+  fi
+  echo "Required command not found: tailscale" >&2
+  exit 2
+}
+
 request() {
   local output_file=$1
   shift
@@ -53,7 +66,7 @@ base_url=${base_url%/}
 
 require_command curl
 require_command jq
-require_command tailscale
+require_tailscale_cli
 
 if ! tailscale status >/dev/null; then
   echo "Tailscale is not connected" >&2
