@@ -358,6 +358,7 @@ Last updated: 2026-08-10
 - [x] release 전 schema migration과 DB backup을 선행하는 순서를 문서화한다.
 - [x] migration 파일의 적용 이력 관리 방식 결정: Flyway는 보류하고 `docs/db/MIGRATION_HISTORY.md`로 수동 이력 관리
 - [x] Docker volume 또는 저장소 삭제에 대비해 저장소 밖 백업 위치 `/Users/hyunseung/todolab-backups`를 결정하고 launchd 적용
+- [x] 최신 production 백업을 외부/동기화 경로로 복사하고 gzip/checksum을 검증하는 스크립트 마련
 - [ ] PC 디스크 장애 시 복구 가능한 외부 매체 또는 동기화 백업 위치를 결정한다.
 
 완료 기준:

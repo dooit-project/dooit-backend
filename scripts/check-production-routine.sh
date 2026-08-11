@@ -2,6 +2,7 @@
 set -euo pipefail
 
 backup_dir=${TODOLAB_BACKUP_DIR:-/Users/hyunseung/todolab-backups}
+offsite_dir=${TODOLAB_OFFSITE_BACKUP_DIR:-}
 max_backup_age_hours=${TODOLAB_MAX_BACKUP_AGE_HOURS:-30}
 min_free_gb=${TODOLAB_MIN_FREE_GB:-10}
 base_url=${TODOLAB_SMOKE_BASE_URL:-http://127.0.0.1:8080}
@@ -38,6 +39,7 @@ require_command docker
 require_command find
 require_command gzip
 require_command jq
+require_command shasum
 require_command stat
 
 if [ ! -d "$backup_dir" ]; then
@@ -64,6 +66,23 @@ if [ "$free_gb" -lt "$min_free_gb" ]; then
   exit 1
 fi
 
+offsite_status=skipped
+if [ -n "$offsite_dir" ]; then
+  offsite_file="${offsite_dir}/$(basename "$backup_file")"
+  if [ ! -f "$offsite_file" ]; then
+    echo "Offsite backup copy not found: $offsite_file" >&2
+    exit 1
+  fi
+  gzip -t "$offsite_file"
+  source_sha=$(shasum -a 256 "$backup_file" | awk '{ print $1 }')
+  offsite_sha=$(shasum -a 256 "$offsite_file" | awk '{ print $1 }')
+  if [ "$source_sha" != "$offsite_sha" ]; then
+    echo "Offsite backup checksum mismatch: $offsite_file" >&2
+    exit 1
+  fi
+  offsite_status=verified
+fi
+
 docker compose ps --status running --services | grep -qx mysql
 docker compose ps --status running --services | grep -qx app
 
@@ -87,5 +106,6 @@ baseUrl=$base_url
 backup=$backup_file
 backupAgeHours=$age_hours
 freeDiskGiB=$free_gb
+offsiteBackup=$offsite_status
 readiness=UP
 EOF

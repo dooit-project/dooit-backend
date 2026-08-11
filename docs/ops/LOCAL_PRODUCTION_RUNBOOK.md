@@ -81,9 +81,11 @@ TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net TODOLAB_EXPO_WEB_ORI
 ```bash
 ./scripts/backup-db.sh
 TODOLAB_BACKUP_DIR=/absolute/backup/path TODOLAB_BACKUP_RETENTION_DAYS=30 ./scripts/backup-db.sh
+TODOLAB_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/sync-production-backup.sh
 ```
 
 릴리스 전과 최소 하루 1회 실행한다. macOS launchd 등 host scheduler 연결은 백업 명령을 수동으로 검증한 뒤 구성한다.
+`sync-production-backup.sh`는 최신 production backup을 외부/동기화 경로로 복사한 뒤 원본과 복사본의 gzip 무결성, SHA-256 checksum 일치를 확인한다. 출력되는 checksum은 dump 내용을 노출하지 않는다.
 
 수동 백업을 검증한 뒤 매일 자동 실행이 필요하면 LaunchAgent 파일을 생성한다. 기본 실행 시각은 매일 03:15다.
 
@@ -194,6 +196,7 @@ tailscale serve status
 ./scripts/check-production-host.sh
 ./scripts/ensure-production-up.sh
 ./scripts/check-production-routine.sh
+TODOLAB_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
 TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-routine.sh
 ```
 
@@ -202,6 +205,7 @@ TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-productio
 - 최신 backup gzip 무결성
 - 최신 backup age
 - backup 경로의 디스크 여유 공간
+- 외부/동기화 백업 복사본과 checksum
 - Docker Desktop running 상태
 - app/mysql restart policy
 - production LaunchAgent와 Compose stack 복구 스크립트
