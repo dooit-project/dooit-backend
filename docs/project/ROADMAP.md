@@ -315,6 +315,7 @@ Last updated: 2026-08-10
 - [x] `schema.sql`은 새 volume 최초 초기화에만 적용되므로 기존 production DB의 migration 실행·검증 절차가 필요하다.
 - [x] Dockerfile은 빌드된 JAR을 전제로 하므로 clean checkout에서 JAR build부터 Compose 기동까지 재현하는 release 절차가 필요하다.
 - [x] Docker Desktop running, app/mysql restart policy, AC sleep 설정을 확인하는 host 점검 스크립트 마련
+- [x] 로그인 후 Docker Desktop과 Compose stack을 복구하는 LaunchAgent와 `ensure-production-up` 스크립트 마련
 - [ ] PC 재부팅, Docker Desktop 재시작, 절전과 네트워크 변경 뒤 자동 복구를 검증하지 않았다.
 
 #### A. production 접근 경로와 노출 범위
@@ -365,7 +366,7 @@ Last updated: 2026-08-10
 
 #### D. 상시 운영 검증
 
-- [ ] Docker Desktop 로그인 시 자동 시작과 Compose 자동 복구를 확인한다.
+- [ ] Docker Desktop 로그인 시 자동 시작과 Compose 자동 복구를 실제 로그인/재부팅 후 확인한다.
 - [x] PC 절전 정책 확정: AC 전원에서 `sleep=0`, `disksleep=0`, `powernap=0`
 - [ ] 관리자 권한으로 AC 전원 절전 정책을 실제 적용하고 `TODOLAB_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
 - [ ] 재부팅 후 MySQL → app → Tailscale HTTPS 경로가 자동으로 복구되는지 확인한다.

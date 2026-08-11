@@ -38,6 +38,17 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 
 MySQL port는 host에 공개하지 않는다. app port도 `127.0.0.1:8080`에만 공개하고 Tailscale Serve가 HTTPS 진입점이 된다.
 
+로그인 후 Docker Desktop과 Compose stack 자동 복구가 필요하면 LaunchAgent를 설치한다.
+
+```bash
+./scripts/install-production-launchd.sh
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.todolab.backend.production.plist
+launchctl kickstart -k gui/$(id -u)/com.todolab.backend.production
+launchctl print gui/$(id -u)/com.todolab.backend.production
+```
+
+이 LaunchAgent는 `RunAtLoad`와 5분 `StartInterval`로 `./scripts/ensure-production-up.sh`를 실행한다. 스크립트는 Docker Desktop을 시작하고 Docker engine 준비를 기다린 뒤 기존 app image tag를 보존해 `docker compose up -d mysql app`을 실행하고 readiness `UP`까지 대기한다.
+
 ## 3. Tailscale HTTPS
 
 Tailscale의 HTTPS와 MagicDNS를 활성화한 뒤 Mac에서 다음과 같이 local app을 공개한다.
@@ -162,6 +173,7 @@ tailscale serve status
 
 ```bash
 ./scripts/check-production-host.sh
+./scripts/ensure-production-up.sh
 ./scripts/check-production-routine.sh
 TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-routine.sh
 ```
@@ -173,6 +185,7 @@ TODOLAB_MIN_FREE_GB=20 TODOLAB_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-productio
 - backup 경로의 디스크 여유 공간
 - Docker Desktop running 상태
 - app/mysql restart policy
+- production LaunchAgent와 Compose stack 복구 스크립트
 - AC 전원 sleep/disksleep/powernap 설정
 - app/mysql container running 상태
 - `/actuator/health/readiness` `UP`
