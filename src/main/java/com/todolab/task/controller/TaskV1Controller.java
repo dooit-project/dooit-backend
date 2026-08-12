@@ -8,6 +8,8 @@ import com.todolab.task.domain.RecurrenceEditScope;
 import com.todolab.task.domain.TodayOrderDirection;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskNotificationCandidateResponse;
+import com.todolab.task.dto.TaskQuickCaptureRequest;
+import com.todolab.task.dto.TaskQuickCaptureResponse;
 import com.todolab.task.dto.TaskRecommendationResponse;
 import com.todolab.task.dto.TaskRecurrenceRequest;
 import com.todolab.task.dto.TaskRequest;
@@ -86,6 +88,22 @@ public class TaskV1Controller {
         request.validate();
         User owner = currentUserService.requireUser(jwt);
         TaskResponse response = taskService.createForOwner(request, owner);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response));
+    }
+
+    @Operation(
+            summary = "Task 빠른 등록",
+            description = "원문 입력에서 날짜/시간/반복 후보를 보수적으로 파싱해 Task를 생성합니다. 파싱하지 못하면 Inbox TODO로 저장합니다."
+    )
+    @PostMapping("/quick-capture")
+    public ResponseEntity<ApiResponse<TaskQuickCaptureResponse>> quickCaptureTask(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody TaskQuickCaptureRequest request
+    ) {
+        User owner = currentUserService.requireUser(jwt);
+        TaskQuickCaptureResponse response = taskService.quickCaptureForOwner(request, owner);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response));

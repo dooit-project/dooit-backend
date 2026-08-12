@@ -14,6 +14,8 @@ import com.todolab.task.domain.query.TaskSearchDateSource;
 import com.todolab.task.domain.query.TaskSearchSort;
 import com.todolab.task.dto.TaskCategoryGroupResponse;
 import com.todolab.task.dto.TaskNotificationCandidateResponse;
+import com.todolab.task.dto.TaskQuickCaptureRequest;
+import com.todolab.task.dto.TaskQuickCaptureResponse;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskRecommendationResponse;
@@ -51,6 +53,7 @@ public class TaskService {
     private final RecurrenceOccurrenceMaterializer recurrenceOccurrenceMaterializer;
     private final PushNotificationProperties pushNotificationProperties;
     private final RecurrenceRuleUpdateService recurrenceRuleUpdateService;
+    private final TaskQuickCaptureParser taskQuickCaptureParser;
 
     @Transactional
     public TaskResponse create(TaskRequest req) {
@@ -63,6 +66,27 @@ public class TaskService {
             throw new IllegalArgumentException("owner는 필수입니다.");
         }
         return create(req, owner);
+    }
+
+    @Transactional
+    public TaskQuickCaptureResponse quickCaptureForOwner(TaskQuickCaptureRequest request, User owner) {
+        if (owner == null) {
+            throw new IllegalArgumentException("owner는 필수입니다.");
+        }
+
+        TaskQuickCaptureParser.ParsedQuickCapture parsed = taskQuickCaptureParser.parse(request, owner);
+        TaskResponse task = create(parsed.taskRequest(), owner);
+        return new TaskQuickCaptureResponse(
+                task,
+                parsed.parsed(),
+                parsed.originalText(),
+                parsed.parsedDate(),
+                parsed.parsedTime(),
+                parsed.parsedType(),
+                parsed.parsedRecurrenceFrequency(),
+                parsed.parsedByDays(),
+                parsed.timeZone()
+        );
     }
 
     private TaskResponse create(TaskRequest req, User owner) {

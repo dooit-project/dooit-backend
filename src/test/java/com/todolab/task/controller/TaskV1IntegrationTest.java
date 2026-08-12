@@ -9,6 +9,7 @@ import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskStatus;
 import com.todolab.task.domain.TaskType;
+import com.todolab.task.dto.TaskQuickCaptureRequest;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskRecurrenceRequest;
 import com.todolab.task.dto.TodayOrderRequest;
@@ -133,6 +134,94 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.completedAt").isEmpty())
                 .andExpect(jsonPath("$.data.createdAt").value(notNullValue()))
                 .andExpect(jsonPath("$.data.updatedAt").isEmpty());
+    }
+
+    @Test
+    @DisplayName("v1 Task 빠른 등록은 상대 날짜와 시간을 파싱해 일정을 생성한다")
+    void quickCapture_relativeDateAndTime_success() throws Exception {
+        String accessToken = accessToken("task-quick-capture-date@example.com");
+        TaskQuickCaptureRequest request = new TaskQuickCaptureRequest(
+                "내일 3시 출시 회의",
+                LocalDate.of(2026, 8, 13),
+                "Asia/Seoul",
+                "업무"
+        );
+
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.parsed").value(true))
+                .andExpect(jsonPath("$.data.originalText").value("내일 3시 출시 회의"))
+                .andExpect(jsonPath("$.data.parsedDate").value("2026-08-14"))
+                .andExpect(jsonPath("$.data.parsedTime").value("15:00:00"))
+                .andExpect(jsonPath("$.data.parsedType").value("SCHEDULE"))
+                .andExpect(jsonPath("$.data.timeZone").value("Asia/Seoul"))
+                .andExpect(jsonPath("$.data.task.title").value("출시 회의"))
+                .andExpect(jsonPath("$.data.task.type").value("SCHEDULE"))
+                .andExpect(jsonPath("$.data.task.startAt").value("2026-08-14T15:00:00"))
+                .andExpect(jsonPath("$.data.task.endAt").value("2026-08-14T16:00:00"))
+                .andExpect(jsonPath("$.data.task.allDay").value(false))
+                .andExpect(jsonPath("$.data.task.category").value("업무"))
+                .andExpect(jsonPath("$.data.task.status").value("TODAY"));
+    }
+
+    @Test
+    @DisplayName("v1 Task 빠른 등록은 파싱하지 못한 원문을 Inbox TODO로 저장한다")
+    void quickCapture_plainTextFallback_success() throws Exception {
+        String accessToken = accessToken("task-quick-capture-fallback@example.com");
+        TaskQuickCaptureRequest request = new TaskQuickCaptureRequest(
+                "그냥 메모",
+                LocalDate.of(2026, 8, 13),
+                null,
+                null
+        );
+
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.parsed").value(false))
+                .andExpect(jsonPath("$.data.originalText").value("그냥 메모"))
+                .andExpect(jsonPath("$.data.parsedDate").isEmpty())
+                .andExpect(jsonPath("$.data.parsedTime").isEmpty())
+                .andExpect(jsonPath("$.data.parsedType").value("TODO"))
+                .andExpect(jsonPath("$.data.task.title").value("그냥 메모"))
+                .andExpect(jsonPath("$.data.task.type").value("TODO"))
+                .andExpect(jsonPath("$.data.task.status").value("INBOX"))
+                .andExpect(jsonPath("$.data.task.unscheduled").value(true));
+    }
+
+    @Test
+    @DisplayName("v1 Task 빠른 등록은 매주 요일 입력을 반복 일정으로 저장한다")
+    void quickCapture_weeklyRecurrence_success() throws Exception {
+        String accessToken = accessToken("task-quick-capture-weekly@example.com");
+        TaskQuickCaptureRequest request = new TaskQuickCaptureRequest(
+                "매주 월요일 오전 9시 운동",
+                LocalDate.of(2026, 8, 13),
+                "Asia/Seoul",
+                null
+        );
+
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.parsed").value(true))
+                .andExpect(jsonPath("$.data.parsedDate").value("2026-08-17"))
+                .andExpect(jsonPath("$.data.parsedTime").value("09:00:00"))
+                .andExpect(jsonPath("$.data.parsedRecurrenceFrequency").value("WEEKLY"))
+                .andExpect(jsonPath("$.data.parsedByDays[0]").value("MO"))
+                .andExpect(jsonPath("$.data.task.title").value("운동"))
+                .andExpect(jsonPath("$.data.task.startAt").value("2026-08-17T09:00:00"))
+                .andExpect(jsonPath("$.data.task.endAt").value("2026-08-17T10:00:00"))
+                .andExpect(jsonPath("$.data.task.recurrenceSeriesId").value(notNullValue()))
+                .andExpect(jsonPath("$.data.task.recurrence.frequency").value("WEEKLY"))
+                .andExpect(jsonPath("$.data.task.recurrence.recurrenceRule").value("FREQ=WEEKLY;INTERVAL=1;BYDAY=MO"));
     }
 
     @Test

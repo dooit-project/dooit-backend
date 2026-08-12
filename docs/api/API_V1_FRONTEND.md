@@ -346,6 +346,25 @@ type TaskRequest = {
   recurrence?: TaskRecurrenceRequest | null;
 };
 
+type TaskQuickCaptureRequest = {
+  text: string; // 100자 이하
+  referenceDate?: string | null; // YYYY-MM-DD, 생략하면 사용자 timezone의 오늘
+  timeZone?: string | null; // IANA timezone, 생략하면 사용자 timezone
+  defaultCategory?: string | null; // 30자 이하
+};
+
+type TaskQuickCaptureResponse = {
+  task: TaskResponse;
+  parsed: boolean;
+  originalText: string;
+  parsedDate: string | null; // YYYY-MM-DD
+  parsedTime: string | null; // HH:mm:ss
+  parsedType: TaskType;
+  parsedRecurrenceFrequency: RecurrenceFrequency | null;
+  parsedByDays: string[];
+  timeZone: string;
+};
+
 type TaskRecurrenceRequest = {
   frequency: RecurrenceFrequency;
   interval?: number | null; // 생략하면 1
@@ -469,6 +488,38 @@ Response: `TaskResponse`
     "byDays": ["TU"],
     "recurrenceCount": 10
   }
+}
+```
+
+### 빠른 등록
+
+```http
+POST /api/v1/tasks/quick-capture
+```
+
+Request: `TaskQuickCaptureRequest`
+
+Response: `TaskQuickCaptureResponse`
+
+규칙:
+
+- 현재 지원 범위는 `오늘`, `내일`, `모레`, `YYYY-MM-DD`, `M/D`, `오전/오후 N시`, `N시`, `매주 요일` 기반 규칙 파싱이다.
+- 날짜 또는 시간이 파싱되면 `SCHEDULE`로 저장하고, 시간만 있으면 `referenceDate`를 날짜로 사용한다.
+- 오전/오후가 없는 `1시`부터 `7시`까지는 모바일 확인 화면에서 조정하기 쉬운 낮 시간으로 해석한다. 예: `3시`는 `15:00:00`.
+- 날짜만 있거나 시간 없는 반복은 종일 일정으로 저장한다.
+- `매주 월요일 운동`처럼 반복 요일이 있으면 기준 날짜 이후 가장 가까운 해당 요일을 시작일로 사용하고 `WEEKLY` 반복을 생성한다.
+- 파싱 가능한 날짜/시간/반복이 없으면 원문을 제목으로 하는 Inbox `TODO`로 저장하며 `parsed=false`를 반환한다.
+- 제목이 30자를 넘으면 제목은 30자로 줄이고 원문은 description에 보존한다.
+- 잘못된 날짜, 시간, timezone은 HTTP 400으로 응답한다.
+
+예시:
+
+```json
+{
+  "text": "내일 3시 출시 회의",
+  "referenceDate": "2026-08-13",
+  "timeZone": "Asia/Seoul",
+  "defaultCategory": "업무"
 }
 ```
 

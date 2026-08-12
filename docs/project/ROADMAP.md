@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-12
+Last updated: 2026-08-13
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -22,13 +22,15 @@ Last updated: 2026-08-12
 
 목표: 모바일과 서버 화면에서 같은 backend API로 빠르게 일정을 입력한다. 첫 버전은 실패해도 안전하게 Inbox Task로 저장되는 보수적 파싱을 기준으로 한다.
 
-- [ ] `POST /api/v1/tasks/quick-capture` 계약을 추가한다.
-- [ ] request는 원문 `text`, 기준 날짜, 사용자 timezone, 선택적 기본 category를 받는다.
-- [ ] “내일 3시 회의”, “금요일 병원”, “매주 월요일 운동” 같은 입력에서 title/date/time/recurrence 후보를 파싱한다.
-- [ ] 파싱 확신도가 낮으면 원문 title의 `IDEA` 또는 Inbox `TODO`로 저장한다.
-- [ ] 생성 결과에 `parsed` 여부와 적용된 date/time/type/recurrence 요약을 반환한다.
-- [ ] 모바일이 확인 화면을 띄울 수 있도록 원문과 서버 해석 결과를 함께 내려준다.
-- [ ] 파싱 실패가 데이터 손실이나 5xx로 이어지지 않도록 회귀 테스트를 추가한다.
+- [x] `POST /api/v1/tasks/quick-capture` 계약을 추가한다.
+- [x] request는 원문 `text`, 기준 날짜, 사용자 timezone, 선택적 기본 category를 받는다.
+- [x] “내일 3시 회의”, “매주 월요일 운동” 같은 입력에서 title/date/time/recurrence 후보를 파싱한다.
+- [x] 파싱 확신도가 낮으면 원문 title의 Inbox `TODO`로 저장한다.
+- [x] 생성 결과에 `parsed` 여부와 적용된 date/time/type/recurrence 요약을 반환한다.
+- [x] 모바일이 확인 화면을 띄울 수 있도록 원문과 서버 해석 결과를 함께 내려준다.
+- [x] 파싱 실패가 데이터 손실이나 5xx로 이어지지 않도록 회귀 테스트를 추가한다.
+- [ ] “금요일 병원”처럼 단독 요일 표현을 날짜로 해석하는 규칙을 추가한다.
+- [ ] 모바일 실제 입력 로그를 바탕으로 날짜/시간 표현 coverage를 확장한다.
 
 선행 조건:
 

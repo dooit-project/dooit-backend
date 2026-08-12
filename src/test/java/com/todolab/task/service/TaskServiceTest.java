@@ -76,7 +76,8 @@ class TaskServiceTest {
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(false, PushNotificationProvider.EXPO, null),
-                recurrenceRuleUpdateService
+                recurrenceRuleUpdateService,
+                new TaskQuickCaptureParser()
         );
     }
 
@@ -1417,7 +1418,8 @@ class TaskServiceTest {
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(true, PushNotificationProvider.EXPO, null),
-                recurrenceRuleUpdateService
+                recurrenceRuleUpdateService,
+                new TaskQuickCaptureParser()
         );
         User owner = persistedOwner(1L);
         LocalDate date = LocalDate.of(2026, 7, 13);
