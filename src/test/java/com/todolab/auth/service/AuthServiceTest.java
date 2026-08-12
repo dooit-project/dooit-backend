@@ -8,6 +8,7 @@ import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.notification.repository.PushDeviceTokenRepository;
 import com.todolab.notification.repository.PushNotificationHistoryRepository;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskTemplateRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
@@ -51,6 +52,9 @@ class AuthServiceTest {
     RecurrenceSeriesRepository recurrenceSeriesRepository;
 
     @Mock
+    TaskTemplateRepository taskTemplateRepository;
+
+    @Mock
     PushDeviceTokenRepository pushDeviceTokenRepository;
 
     @Mock
@@ -67,6 +71,7 @@ class AuthServiceTest {
                 taskRepository,
                 ddayGoalRepository,
                 recurrenceSeriesRepository,
+                taskTemplateRepository,
                 pushDeviceTokenRepository,
                 pushNotificationHistoryRepository
         );

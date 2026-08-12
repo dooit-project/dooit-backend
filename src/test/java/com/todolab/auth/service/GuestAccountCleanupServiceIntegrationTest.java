@@ -14,8 +14,10 @@ import com.todolab.notification.repository.PushNotificationHistoryRepository;
 import com.todolab.task.domain.RecurrenceFrequency;
 import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
+import com.todolab.task.domain.TaskTemplate;
 import com.todolab.task.domain.TaskType;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskTemplateRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
@@ -52,6 +54,9 @@ class GuestAccountCleanupServiceIntegrationTest {
     RecurrenceSeriesRepository recurrenceSeriesRepository;
 
     @Autowired
+    TaskTemplateRepository taskTemplateRepository;
+
+    @Autowired
     PushDeviceTokenRepository pushDeviceTokenRepository;
 
     @Autowired
@@ -64,6 +69,7 @@ class GuestAccountCleanupServiceIntegrationTest {
     void setUp() {
         pushNotificationHistoryRepository.deleteAll();
         pushDeviceTokenRepository.deleteAll();
+        taskTemplateRepository.deleteAll();
         taskRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();
         ddayGoalRepository.deleteAll();
@@ -89,6 +95,19 @@ class GuestAccountCleanupServiceIntegrationTest {
                 LocalDateTime.of(2026, 8, 1, 9, 0),
                 null,
                 2
+        ));
+        TaskTemplate template = taskTemplateRepository.save(new TaskTemplate(
+                expiredGuest,
+                "만료 게스트 템플릿",
+                null,
+                TaskType.TODO,
+                null,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null
         ));
         Task task = taskRepository.save(Task.builder()
                 .title("만료 게스트 할 일")
@@ -136,12 +155,14 @@ class GuestAccountCleanupServiceIntegrationTest {
         assertThat(result.deletedTasks()).isEqualTo(1);
         assertThat(result.deletedDdayGoals()).isEqualTo(1);
         assertThat(result.deletedRecurrenceSeries()).isEqualTo(1);
+        assertThat(result.deletedTaskTemplates()).isEqualTo(1);
         assertThat(result.deletedPushTokens()).isEqualTo(1);
         assertThat(result.deletedPushHistories()).isEqualTo(1);
         assertThat(userRepository.findById(expiredGuest.getId())).isEmpty();
         assertThat(taskRepository.findById(task.getId())).isEmpty();
         assertThat(ddayGoalRepository.findById(ddayGoal.getId())).isEmpty();
         assertThat(recurrenceSeriesRepository.findById(series.getId())).isEmpty();
+        assertThat(taskTemplateRepository.findById(template.getId())).isEmpty();
         assertThat(pushDeviceTokenRepository.findById(pushToken.getId())).isEmpty();
         assertThat(pushNotificationHistoryRepository.findById(history.getId())).isEmpty();
         assertThat(userRepository.findById(activeGuest.getId())).isPresent();

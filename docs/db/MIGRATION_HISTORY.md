@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-08-10
+Last updated: 2026-08-13
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -16,4 +16,5 @@ Last updated: 2026-08-10
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260813_add_task_template.sql` | local production Docker MySQL | 빠른 등록 템플릿 테이블 추가 예정 |
 | 2026-08-10 20:18 KST | `docs/db/migrations/20260809_add_guest_account_columns.sql` | local production Docker MySQL | 성공. `APP_USER` 게스트 컬럼 추가, email/password/displayName nullable 전환, `IDX_APP_USER_ACCOUNT_TYPE_EXPIRES` 생성 확인 |

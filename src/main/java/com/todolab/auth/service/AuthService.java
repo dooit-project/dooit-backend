@@ -11,6 +11,7 @@ import com.todolab.notification.domain.PushDeviceToken;
 import com.todolab.notification.repository.PushDeviceTokenRepository;
 import com.todolab.notification.repository.PushNotificationHistoryRepository;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskTemplateRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.task.domain.TaskType;
 import com.todolab.user.domain.AccountType;
@@ -39,6 +40,7 @@ public class AuthService {
     private final TaskRepository taskRepository;
     private final DdayGoalRepository ddayGoalRepository;
     private final RecurrenceSeriesRepository recurrenceSeriesRepository;
+    private final TaskTemplateRepository taskTemplateRepository;
     private final PushDeviceTokenRepository pushDeviceTokenRepository;
     private final PushNotificationHistoryRepository pushNotificationHistoryRepository;
 
@@ -181,6 +183,7 @@ public class AuthService {
         TaskMergeCount taskMergeCount = reassignTasks(guest, target);
         int ddayCount = reassignDdayGoals(guest, target);
         int recurrenceSeriesCount = reassignRecurrenceSeries(guest, target);
+        reassignTaskTemplates(guest, target);
         MergePushTokenResult pushTokenResult = reassignPushDeviceTokens(guest, target);
         int pushHistoryCount = reassignPushNotificationHistories(guest, target);
         guest.markMergedInto(target);
@@ -231,6 +234,10 @@ public class AuthService {
                 recurrenceSeriesRepository.findByOwnerId(guest.getId());
         recurrenceSeries.forEach(series -> series.assignOwner(target));
         return recurrenceSeries.size();
+    }
+
+    private void reassignTaskTemplates(User guest, User target) {
+        taskTemplateRepository.findByOwnerId(guest.getId()).forEach(template -> template.assignOwner(target));
     }
 
     private MergePushTokenResult reassignPushDeviceTokens(User guest, User target) {

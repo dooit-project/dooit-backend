@@ -4,6 +4,7 @@ import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
 import com.todolab.task.exception.TaskOrderConflictException;
+import com.todolab.task.exception.TaskTemplateNotFoundException;
 import com.todolab.task.exception.TaskValidationException;
 import com.todolab.task.exception.TaskNotFoundException;
 import com.todolab.user.exception.UserEmailAlreadyExistsException;
@@ -97,6 +98,13 @@ public class ApiExceptionHandler {
         log.warn("Task Order Conflict : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.TASK_ORDER_CONFLICT.getStatus())
                 .body(ApiResponse.failure(ErrorCode.TASK_ORDER_CONFLICT));
+    }
+
+    @ExceptionHandler(TaskTemplateNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleTaskTemplateNotFoundException(TaskTemplateNotFoundException e) {
+        log.warn("Task Template Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.TASK_TEMPLATE_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.TASK_TEMPLATE_NOT_FOUND));
     }
 
     @ExceptionHandler(DdayGoalNotFoundException.class)

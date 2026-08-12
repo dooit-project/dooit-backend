@@ -41,11 +41,13 @@ Last updated: 2026-08-13
 
 목표: 자주 쓰는 일정과 할 일을 한 번의 선택으로 생성할 수 있게 한다. 자연어 파싱보다 예측 가능하고 모바일 반복 사용성에 바로 도움을 준다.
 
-- [ ] `TASK_TEMPLATE` 모델을 추가한다.
-- [ ] `GET /api/v1/task-templates`, `POST /api/v1/task-templates`, `PUT /api/v1/task-templates/{id}`, `DELETE /api/v1/task-templates/{id}`를 추가한다.
-- [ ] template에는 title, type, category, allDay, default time, recurrence preset, dday 연결 없음/선택 정책을 둔다.
-- [ ] `POST /api/v1/task-templates/{id}/tasks`로 template 기반 Task를 생성한다.
-- [ ] owner scope와 guest 승격/병합 대상에 template을 포함할지 결정하고 구현한다.
+- [x] `TASK_TEMPLATE` 모델을 추가한다.
+- [x] `GET /api/v1/task-templates`, `POST /api/v1/task-templates`, `PUT /api/v1/task-templates/{id}`, `DELETE /api/v1/task-templates/{id}`를 추가한다.
+- [x] template에는 title, type, category, allDay, default time, recurrence preset을 둔다.
+- [x] `POST /api/v1/task-templates/{id}/tasks`로 template 기반 Task를 생성한다.
+- [x] owner scope와 guest 승격/병합/cleanup 대상에 template을 포함한다.
+- [ ] D-Day 연결 템플릿 정책을 결정한다.
+- [ ] 공유 workspace 템플릿 정책을 공유 설계 단계에서 결정한다.
 
 선행 조건:
 

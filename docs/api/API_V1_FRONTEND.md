@@ -365,6 +365,42 @@ type TaskQuickCaptureResponse = {
   timeZone: string;
 };
 
+type TaskTemplateRequest = {
+  title: string; // 30자 이하
+  description?: string | null; // 300자 이하
+  type?: TaskType | null; // 생략하면 TODO
+  category?: string | null; // 30자 이하
+  allDay: boolean;
+  defaultStartTime?: string | null; // HH:mm:ss
+  defaultDurationMinutes?: number | null; // 1-1440, 생략하면 Task 생성 시 60분
+  recurrenceFrequency?: RecurrenceFrequency | null;
+  recurrenceInterval?: number | null; // 생략하면 1
+  recurrenceByDays?: string[] | null; // 예: ['MO']
+};
+
+type TaskTemplateCreateTaskRequest = {
+  targetDate?: string | null; // YYYY-MM-DD, 일정/반복 템플릿에서는 필수
+  title?: string | null; // 30자 이하 override
+  description?: string | null; // 300자 이하 override
+  category?: string | null; // 30자 이하 override
+};
+
+type TaskTemplateResponse = {
+  id: number;
+  title: string;
+  description: string | null;
+  type: TaskType;
+  category: string | null;
+  allDay: boolean;
+  defaultStartTime: string | null;
+  defaultDurationMinutes: number | null;
+  recurrenceFrequency: RecurrenceFrequency | null;
+  recurrenceInterval: number;
+  recurrenceByDays: string[];
+  createdAt: string;
+  updatedAt: string | null;
+};
+
 type TaskRecurrenceRequest = {
   frequency: RecurrenceFrequency;
   interval?: number | null; // 생략하면 1
@@ -834,7 +870,86 @@ DELETE /api/v1/tasks/{id}/dday-goal
 
 Response: `TaskResponse`
 
-## 5. D-Day API
+## 5. Task 템플릿 API
+
+모든 `/api/v1/task-templates/**` 요청은 현재 로그인 사용자의 템플릿만 대상으로 한다. 다른 사용자의 템플릿 ID는 `TASK_TEMPLATE_NOT_FOUND`처럼 처리된다.
+
+### 템플릿 생성
+
+```http
+POST /api/v1/task-templates
+```
+
+Request: `TaskTemplateRequest`
+
+Response: `TaskTemplateResponse`
+
+규칙:
+
+- `type`을 생략하면 `TODO` 템플릿으로 저장한다.
+- `SCHEDULE` 또는 반복 템플릿으로 Task를 생성하려면 `targetDate`가 필요하다.
+- `allDay=true`이면 `defaultStartTime`을 함께 보낼 수 없다.
+- `defaultDurationMinutes`는 1분 이상 1440분 이하이며, Task 생성 시 생략되어 있으면 60분을 사용한다.
+- `recurrenceByDays`는 `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, `SU`만 허용한다.
+- 템플릿은 guest 승격 시 같은 사용자 ID로 유지되고, 기존 계정 로그인 병합과 만료 guest cleanup 대상에 포함된다.
+- D-Day 연결과 공유 workspace 템플릿 정책은 아직 지원하지 않는다.
+
+### 템플릿 목록
+
+```http
+GET /api/v1/task-templates
+```
+
+Response: `TaskTemplateResponse[]`
+
+### 템플릿 단건
+
+```http
+GET /api/v1/task-templates/{id}
+```
+
+Response: `TaskTemplateResponse`
+
+### 템플릿 수정
+
+```http
+PUT /api/v1/task-templates/{id}
+```
+
+Request: `TaskTemplateRequest`
+
+Response: `TaskTemplateResponse`
+
+### 템플릿 삭제
+
+```http
+DELETE /api/v1/task-templates/{id}
+```
+
+Response: `null`
+
+### 템플릿 기반 Task 생성
+
+```http
+POST /api/v1/task-templates/{id}/tasks
+```
+
+Request: `TaskTemplateCreateTaskRequest`
+
+Response: `TaskResponse`
+
+예시:
+
+```json
+{
+  "targetDate": "2026-08-17",
+  "title": "월요일 운동"
+}
+```
+
+응답은 기존 Task 생성과 동일한 `TaskResponse`다. 반복 템플릿이면 첫 occurrence에 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`, `recurrence`가 포함된다.
+
+## 6. D-Day API
 
 모든 `/api/v1/dday-goals/**` 요청은 현재 로그인 사용자의 D-Day 목표만 대상으로 한다.
 
@@ -926,7 +1041,7 @@ Response: `data: null`
 - v1 리소스 삭제 endpoint인 `DELETE /api/v1/tasks/{id}`, `DELETE /api/v1/dday-goals/{id}`는 성공 시 공통 envelope의 `data`를 `null`로 반환한다.
 - `DELETE /api/v1/tasks/{id}/defer-reason`, `DELETE /api/v1/tasks/{id}/dday-goal`은 Task 리소스 삭제가 아니라 Task 수정이므로 `TaskResponse`를 반환한다.
 
-## 6. Task 통합 검색
+## 7. Task 통합 검색
 
 ```http
 GET /api/v1/tasks/search
@@ -975,14 +1090,14 @@ Cursor 기준:
 - cursor Task가 더 이상 검색 조건에 포함되지 않으면 HTTP 400이다.
 - 중간에 Task가 생성/수정/삭제되어도 이전 페이지 마지막 항목 이후부터 이어서 조회하므로 offset shift 중복/누락을 피한다.
 
-## 7. 아직 프론트에서 의존하면 안 되는 계약
+## 8. 아직 프론트에서 의존하면 안 되는 계약
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
 - refresh token API
 - 서버 push 알림 발송 API
 
-## 8. 모바일 전환 체크리스트
+## 9. 모바일 전환 체크리스트
 
 - [ ] 로그인 성공 시 `accessToken` 저장
 - [ ] 모든 v1 요청에 `Authorization: Bearer <accessToken>` 추가
@@ -999,7 +1114,7 @@ Cursor 기준:
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
 - [ ] 서버 push 알림 UI는 push API 구현 전까지 실제 저장 기능처럼 열지 않음
 
-## 9. Legacy API 정책
+## 10. Legacy API 정책
 
 - 모바일 신규 연동 기준은 `/api/v1/**`다.
 - legacy `/api/tasks/**`, `/api/ddays/**`는 웹 화면과 과거 호환 범위로 유지한다.

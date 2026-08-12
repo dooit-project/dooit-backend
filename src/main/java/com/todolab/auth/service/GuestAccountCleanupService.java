@@ -8,7 +8,9 @@ import com.todolab.notification.repository.PushDeviceTokenRepository;
 import com.todolab.notification.repository.PushNotificationHistoryRepository;
 import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
+import com.todolab.task.domain.TaskTemplate;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskTemplateRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
@@ -30,6 +32,7 @@ public class GuestAccountCleanupService {
     private final TaskRepository taskRepository;
     private final DdayGoalRepository ddayGoalRepository;
     private final RecurrenceSeriesRepository recurrenceSeriesRepository;
+    private final TaskTemplateRepository taskTemplateRepository;
     private final PushDeviceTokenRepository pushDeviceTokenRepository;
     private final PushNotificationHistoryRepository pushNotificationHistoryRepository;
 
@@ -40,6 +43,7 @@ public class GuestAccountCleanupService {
         int deletedTasks = 0;
         int deletedDdayGoals = 0;
         int deletedRecurrenceSeries = 0;
+        int deletedTaskTemplates = 0;
         int deletedPushTokens = 0;
         int deletedPushHistories = 0;
 
@@ -60,6 +64,10 @@ public class GuestAccountCleanupService {
             recurrenceSeriesRepository.deleteAll(recurrenceSeries);
             deletedRecurrenceSeries += recurrenceSeries.size();
 
+            List<TaskTemplate> taskTemplates = taskTemplateRepository.findByOwnerId(guest.getId());
+            taskTemplateRepository.deleteAll(taskTemplates);
+            deletedTaskTemplates += taskTemplates.size();
+
             List<DdayGoal> ddayGoals = ddayGoalRepository.findAllByOwnerIdOrderByTargetDateAscIdAsc(guest.getId());
             ddayGoalRepository.deleteAll(ddayGoals);
             deletedDdayGoals += ddayGoals.size();
@@ -71,16 +79,18 @@ public class GuestAccountCleanupService {
                 deletedTasks,
                 deletedDdayGoals,
                 deletedRecurrenceSeries,
+                deletedTaskTemplates,
                 deletedPushTokens,
                 deletedPushHistories
         );
         if (result.deletedGuests() > 0) {
             log.info(
-                    "Expired guest accounts deleted: guests={}, tasks={}, ddayGoals={}, recurrenceSeries={}, pushTokens={}, pushHistories={}",
+                    "Expired guest accounts deleted: guests={}, tasks={}, ddayGoals={}, recurrenceSeries={}, taskTemplates={}, pushTokens={}, pushHistories={}",
                     result.deletedGuests(),
                     result.deletedTasks(),
                     result.deletedDdayGoals(),
                     result.deletedRecurrenceSeries(),
+                    result.deletedTaskTemplates(),
                     result.deletedPushTokens(),
                     result.deletedPushHistories()
             );
@@ -93,6 +103,7 @@ public class GuestAccountCleanupService {
             int deletedTasks,
             int deletedDdayGoals,
             int deletedRecurrenceSeries,
+            int deletedTaskTemplates,
             int deletedPushTokens,
             int deletedPushHistories
     ) {

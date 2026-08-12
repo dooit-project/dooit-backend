@@ -22,6 +22,7 @@ public enum ErrorCode {
     // Task
     TASK_NOT_FOUND(HttpStatus.NOT_FOUND, 20001, "일정을 찾을 수 없습니다."),
     TASK_ORDER_CONFLICT(HttpStatus.CONFLICT, 20002, "Today 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요."),
+    TASK_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, 20003, "Task 템플릿을 찾을 수 없습니다."),
 
     // D-Day
     DDAY_GOAL_NOT_FOUND(HttpStatus.NOT_FOUND, 30001, "D-Day 목표를 찾을 수 없습니다."),
