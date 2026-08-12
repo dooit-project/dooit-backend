@@ -20,7 +20,8 @@ class DocumentationIndexTest {
             new DocumentLink("docs/api/DATA_MODEL_GLOSSARY.md", "api/DATA_MODEL_GLOSSARY.md"),
             new DocumentLink("docs/api/TIMEZONE_CONTRACT.md", "api/TIMEZONE_CONTRACT.md"),
             new DocumentLink("docs/api/RECURRENCE_MODEL.md", "api/RECURRENCE_MODEL.md"),
-            new DocumentLink("docs/api/NOTIFICATION_CONTRACT.md", "api/NOTIFICATION_CONTRACT.md")
+            new DocumentLink("docs/api/NOTIFICATION_CONTRACT.md", "api/NOTIFICATION_CONTRACT.md"),
+            new DocumentLink("docs/api/SHARING_CONTRACT.md", "api/SHARING_CONTRACT.md")
     );
 
     @Test
@@ -87,6 +88,20 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("### P2. 제품 정책 후속 결정");
         assertThat(roadmap).contains("TODOLAB_REQUIRE_TAILSCALE_URL=true");
         assertThat(roadmap).contains("완료 이력은 로드맵에 길게 누적하지 않고");
+    }
+
+    @Test
+    @DisplayName("공유 설계 문서는 개인 owner scope 보존과 workspace API 분리를 안내한다")
+    void sharingContractDocumentsOwnerScopeInvariant() throws Exception {
+        String sharing = Files.readString(Path.of("docs/api/SHARING_CONTRACT.md"));
+
+        assertThat(sharing).contains("기존 `/api/v1/tasks/**`, `/api/v1/dday-goals/**` 개인 API에는 공유 데이터가 섞이지 않아야 한다.");
+        assertThat(sharing).contains("`PERSONAL`");
+        assertThat(sharing).contains("`WORKSPACE`");
+        assertThat(sharing).contains("SHARED_WORKSPACE");
+        assertThat(sharing).contains("WORKSPACE_MEMBER");
+        assertThat(sharing).contains("게스트 계정은 초대 대상과 workspace 생성 대상에서 제외한다.");
+        assertThat(sharing).contains("개인 Task API는 workspace Task를 반환하지 않는다.");
     }
 
     @Test

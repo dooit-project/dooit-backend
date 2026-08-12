@@ -1,6 +1,6 @@
 # ToDoLab Backend Docs
 
-Last updated: 2026-08-12
+Last updated: 2026-08-13
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
 
@@ -19,6 +19,7 @@ Last updated: 2026-08-12
 | [`api/TIMEZONE_CONTRACT.md`](./api/TIMEZONE_CONTRACT.md) | 현재 `Asia/Seoul` 기준과 사용자 timezone 도입 원칙 |
 | [`api/RECURRENCE_MODEL.md`](./api/RECURRENCE_MODEL.md) | 반복 series와 occurrence 모델 |
 | [`api/NOTIFICATION_CONTRACT.md`](./api/NOTIFICATION_CONTRACT.md) | 모바일 로컬 알림과 향후 서버 push 책임 경계 |
+| [`api/SHARING_CONTRACT.md`](./api/SHARING_CONTRACT.md) | 일정 공유 workspace 권한, scope, migration 설계 |
 
 실제 API 원본 계약은 실행 중인 백엔드의 `/v3/api-docs` OpenAPI JSON이다.
 

@@ -57,12 +57,13 @@ Last updated: 2026-08-13
 
 목표: 개인 owner 모델을 깨지 않고 공유 캘린더/공유 Task를 도입할 수 있는 권한 모델을 먼저 확정한다.
 
-- [ ] 공유 단위 결정: 개별 Task 공유, D-Day 공유, calendar/workspace 공유 중 1차 범위를 정한다.
-- [ ] 권한 모델 결정: owner, editor, viewer, invitee.
-- [ ] 초대 방식 결정: email 초대, invite link, 같은 tailnet 내부 초대 중 1차 범위를 정한다.
-- [ ] 공유된 Task의 반복 series, D-Day 연결, push token, 알림 이력 소유권 정책을 문서화한다.
-- [ ] 기존 owner scope API와 공유 조회 API를 분리할지 결정한다.
-- [ ] migration과 rollback 전략을 먼저 문서화한다.
+- [x] 공유 단위 결정: 1차 범위는 workspace 안의 Task/D-Day로 제한한다.
+- [x] 권한 모델 결정: OWNER, EDITOR, VIEWER와 PENDING/ACTIVE/REMOVED membership을 사용한다.
+- [x] 초대 방식 결정: 1차 범위는 email 초대이며 invite link는 제외한다.
+- [x] 공유된 Task의 반복 series, D-Day 연결, push token, 알림 이력 소유권 정책을 문서화한다.
+- [x] 기존 owner scope API와 공유 조회 API를 분리한다.
+- [x] migration과 rollback 전략을 먼저 문서화한다.
+- [ ] `docs/api/SHARING_CONTRACT.md` 기준으로 구현 전 invariant 테스트를 추가한다.
 
 선행 조건:
 

@@ -83,6 +83,7 @@ src/main/java/com/todolab/
 - [`docs/api/TIMEZONE_CONTRACT.md`](./docs/api/TIMEZONE_CONTRACT.md)
 - [`docs/api/RECURRENCE_MODEL.md`](./docs/api/RECURRENCE_MODEL.md)
 - [`docs/api/NOTIFICATION_CONTRACT.md`](./docs/api/NOTIFICATION_CONTRACT.md)
+- [`docs/api/SHARING_CONTRACT.md`](./docs/api/SHARING_CONTRACT.md)
 - [`docs/ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md`](./docs/ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md)
 - [`docs/ops/LOCAL_PRODUCTION_RUNBOOK.md`](./docs/ops/LOCAL_PRODUCTION_RUNBOOK.md)
 - [`docs/project/ROADMAP.md`](./docs/project/ROADMAP.md)
