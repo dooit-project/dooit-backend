@@ -66,11 +66,20 @@ class DocumentationIndexTest {
     }
 
     @Test
-    @DisplayName("로드맵은 앞으로 닫아야 할 production 작업을 관리한다")
+    @DisplayName("로드맵은 앞으로 닫아야 할 제품 기능과 production 작업을 관리한다")
     void roadmapDocumentsNextBacklog() throws Exception {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
-        assertThat(roadmap).contains("## 2. 앞으로 할 일");
+        assertThat(roadmap).contains("## 2. 제품 기능 로드맵");
+        assertThat(roadmap).contains("### P0. 일정 빠른 등록 API");
+        assertThat(roadmap).contains("### P0. 빠른 등록 템플릿");
+        assertThat(roadmap).contains("### P1. 일정 공유 설계");
+        assertThat(roadmap).contains("### P1. 일정 공유 1차 구현");
+        assertThat(roadmap).contains("### P1. 서버 push 실제 발송");
+        assertThat(roadmap).contains("### P2. 장기 게스트 복구");
+        assertThat(roadmap).contains("POST /api/v1/tasks/quick-capture");
+        assertThat(roadmap).contains("SHARED_WORKSPACE");
+        assertThat(roadmap).contains("## 3. 운영 마무리 로드맵");
         assertThat(roadmap).contains("### P0. production 접근 경로 확정");
         assertThat(roadmap).contains("### P0. Android production smoke");
         assertThat(roadmap).contains("### P0. host 상시 가용성 검증");

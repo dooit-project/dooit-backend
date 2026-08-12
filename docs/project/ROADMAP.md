@@ -14,7 +14,105 @@ Last updated: 2026-08-12
 - staging은 현재 운영하지 않는다. 환경은 local 개발 환경과 이 PC의 production 환경으로만 구분한다.
 - 실제 secret, access token, DB dump 내용, private production URL은 문서에 기록하지 않는다.
 
-## 2. 앞으로 할 일
+## 2. 제품 기능 로드맵
+
+운영 접근 경로가 막혀 있더라도 backend 설계와 API 구현을 병행할 수 있는 제품 기능이다. 모바일 UX 영향, 데이터 모델 변경 범위, 공유/권한 모델의 blast radius를 기준으로 순서를 둔다.
+
+### P0. 일정 빠른 등록 API
+
+목표: 모바일과 서버 화면에서 같은 backend API로 빠르게 일정을 입력한다. 첫 버전은 실패해도 안전하게 Inbox Task로 저장되는 보수적 파싱을 기준으로 한다.
+
+- [ ] `POST /api/v1/tasks/quick-capture` 계약을 추가한다.
+- [ ] request는 원문 `text`, 기준 날짜, 사용자 timezone, 선택적 기본 category를 받는다.
+- [ ] “내일 3시 회의”, “금요일 병원”, “매주 월요일 운동” 같은 입력에서 title/date/time/recurrence 후보를 파싱한다.
+- [ ] 파싱 확신도가 낮으면 원문 title의 `IDEA` 또는 Inbox `TODO`로 저장한다.
+- [ ] 생성 결과에 `parsed` 여부와 적용된 date/time/type/recurrence 요약을 반환한다.
+- [ ] 모바일이 확인 화면을 띄울 수 있도록 원문과 서버 해석 결과를 함께 내려준다.
+- [ ] 파싱 실패가 데이터 손실이나 5xx로 이어지지 않도록 회귀 테스트를 추가한다.
+
+선행 조건:
+
+- 사용자 timezone 기준 날짜 경계는 현재 구현된 `User.timeZone`을 사용한다.
+- 자연어 파서는 처음부터 완전한 한국어 NLP로 만들지 않고, 규칙 기반으로 시작한다.
+
+### P0. 빠른 등록 템플릿
+
+목표: 자주 쓰는 일정과 할 일을 한 번의 선택으로 생성할 수 있게 한다. 자연어 파싱보다 예측 가능하고 모바일 반복 사용성에 바로 도움을 준다.
+
+- [ ] `TASK_TEMPLATE` 모델을 추가한다.
+- [ ] `GET /api/v1/task-templates`, `POST /api/v1/task-templates`, `PUT /api/v1/task-templates/{id}`, `DELETE /api/v1/task-templates/{id}`를 추가한다.
+- [ ] template에는 title, type, category, allDay, default time, recurrence preset, dday 연결 없음/선택 정책을 둔다.
+- [ ] `POST /api/v1/task-templates/{id}/tasks`로 template 기반 Task를 생성한다.
+- [ ] owner scope와 guest 승격/병합 대상에 template을 포함할지 결정하고 구현한다.
+
+선행 조건:
+
+- 빠른 등록 API와 request/response 형태를 맞춰 모바일 입력 UI가 둘을 함께 사용할 수 있어야 한다.
+
+### P1. 일정 공유 설계
+
+목표: 개인 owner 모델을 깨지 않고 공유 캘린더/공유 Task를 도입할 수 있는 권한 모델을 먼저 확정한다.
+
+- [ ] 공유 단위 결정: 개별 Task 공유, D-Day 공유, calendar/workspace 공유 중 1차 범위를 정한다.
+- [ ] 권한 모델 결정: owner, editor, viewer, invitee.
+- [ ] 초대 방식 결정: email 초대, invite link, 같은 tailnet 내부 초대 중 1차 범위를 정한다.
+- [ ] 공유된 Task의 반복 series, D-Day 연결, push token, 알림 이력 소유권 정책을 문서화한다.
+- [ ] 기존 owner scope API와 공유 조회 API를 분리할지 결정한다.
+- [ ] migration과 rollback 전략을 먼저 문서화한다.
+
+선행 조건:
+
+- 개인 데이터 격리 invariant를 깨지 않는 repository query 정책을 테스트로 고정한다.
+- 공유 기능은 바로 구현하지 않고 설계 문서와 테스트 전략부터 커밋한다.
+
+### P1. 일정 공유 1차 구현
+
+목표: 가장 작은 공유 단위를 실제 API로 연다. 1차 범위는 “공유 workspace 안의 Task/D-Day를 멤버가 조회”로 제한한다.
+
+- [ ] `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 모델과 migration을 추가한다.
+- [ ] workspace 생성, 멤버 초대, 수락, 제거 API를 추가한다.
+- [ ] shared workspace Task 생성/조회 API를 개인 Task API와 명확히 구분한다.
+- [ ] viewer/editor 권한에 따른 수정/삭제 제한을 적용한다.
+- [ ] 게스트 계정은 공유 workspace 초대 대상에서 제외하거나 제한 정책을 둔다.
+- [ ] 감사 로그 또는 최소한 생성/수정자 필드를 남긴다.
+
+선행 조건:
+
+- P1 일정 공유 설계가 닫혀야 한다.
+
+### P1. 서버 push 실제 발송
+
+목표: 현재 구현된 push token, 알림 후보, 발송 이력 기반 위에 실제 provider 전송을 붙인다.
+
+- [ ] Expo/APNs/FCM 중 production provider와 credential 보관 방식을 확정한다.
+- [ ] 발송 스케줄러 실행 시점과 look-ahead window를 정한다.
+- [ ] idempotency key 기준으로 중복 발송을 막는다.
+- [ ] provider 실패 응답에 따라 token 비활성화 정책을 적용한다.
+- [ ] 모바일 로컬 알림과 중복되지 않도록 `suppressLocalNotification` 정책을 검증한다.
+
+선행 조건:
+
+- production credential 관리 방식이 확정되어야 한다.
+
+### P2. 검색/추천 고도화
+
+목표: 이미 있는 검색과 Today 추천을 실제 사용 패턴에 맞게 개선한다.
+
+- [ ] 최근 완료/이월/미룸 패턴 기반 Today 추천 점수를 추가한다.
+- [ ] category, D-Day, 반복 여부를 반영한 검색 ranking을 개선한다.
+- [ ] 검색 결과 highlight 또는 matched field 정보를 반환할지 결정한다.
+- [ ] 모바일에서 빈 검색 결과일 때 추천 query/category를 줄 수 있는지 검토한다.
+
+### P2. 장기 게스트 복구
+
+목표: 31일 이상 미접속한 게스트의 데이터 복구가 제품 요구로 확정될 때 별도 인증 수단으로 해결한다.
+
+- [ ] refresh token, device-bound proof, recovery code 중 하나를 선택한다.
+- [ ] token 탈취 시 피해 범위와 회수 정책을 정의한다.
+- [ ] 이미 cleanup된 guest의 오류 코드와 UX 문구를 정한다.
+- [ ] 새 guest id 발급을 복구 정책으로 사용하지 않는 원칙을 유지한다.
+
+## 3. 운영 마무리 로드맵
 
 ### P0. production 접근 경로 확정
 
@@ -103,7 +201,7 @@ Last updated: 2026-08-12
 - [ ] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
 - [ ] 서버 push를 실제 발송하려면 Expo/APNs/FCM credential 관리 방식과 발송 시점을 확정한다.
 
-## 3. 현재 완료된 기준
+## 4. 현재 완료된 기준
 
 아래 항목은 현재 코드와 문서 기준으로 닫힌 상태다. 상세 계약은 관련 문서에서 관리한다.
 
@@ -124,7 +222,7 @@ Last updated: 2026-08-12
 - [`../mobile/MOBILE_API_BACKEND_STATUS.md`](../mobile/MOBILE_API_BACKEND_STATUS.md)
 - [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)
 
-## 4. 기본 검증 명령
+## 5. 기본 검증 명령
 
 ```bash
 ./gradlew test
@@ -143,7 +241,7 @@ TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh
 TODOLAB_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
 ```
 
-## 5. 문서 유지 원칙
+## 6. 문서 유지 원칙
 
 - 완료 이력은 로드맵에 길게 누적하지 않고 관련 계약 문서 또는 migration 이력으로 이동한다.
 - 미정인 실제 값은 추측하지 않고 `미정` 또는 `확정 필요`로 둔다.
