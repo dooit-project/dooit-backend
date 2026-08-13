@@ -16,5 +16,6 @@ Last updated: 2026-08-13
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260813_add_shared_workspace.sql` | local production Docker MySQL | 공유 workspace와 membership 테이블 추가 예정. `docs/api/SHARING_CONTRACT.md` 기준 1차 workspace/membership API |
 | 미적용 | `docs/db/migrations/20260813_add_task_template.sql` | local production Docker MySQL | 빠른 등록 템플릿 테이블 추가 예정 |
 | 2026-08-10 20:18 KST | `docs/db/migrations/20260809_add_guest_account_columns.sql` | local production Docker MySQL | 성공. `APP_USER` 게스트 컬럼 추가, email/password/displayName nullable 전환, `IDX_APP_USER_ACCOUNT_TYPE_EXPIRES` 생성 확인 |

@@ -74,11 +74,11 @@ Last updated: 2026-08-13
 
 목표: 가장 작은 공유 단위를 실제 API로 연다. 1차 범위는 “공유 workspace 안의 Task/D-Day를 멤버가 조회”로 제한한다.
 
-- [ ] `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 모델과 migration을 추가한다.
-- [ ] workspace 생성, 멤버 초대, 수락, 제거 API를 추가한다.
+- [x] `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 모델과 migration을 추가한다.
+- [x] workspace 생성, 멤버 초대, 수락, 제거 API를 추가한다.
 - [ ] shared workspace Task 생성/조회 API를 개인 Task API와 명확히 구분한다.
 - [ ] viewer/editor 권한에 따른 수정/삭제 제한을 적용한다.
-- [ ] 게스트 계정은 공유 workspace 초대 대상에서 제외하거나 제한 정책을 둔다.
+- [x] 게스트 계정은 공유 workspace 초대 대상에서 제외하거나 제한 정책을 둔다.
 - [ ] 감사 로그 또는 최소한 생성/수정자 필드를 남긴다.
 
 선행 조건:

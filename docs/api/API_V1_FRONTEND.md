@@ -949,7 +949,143 @@ Response: `TaskResponse`
 
 응답은 기존 Task 생성과 동일한 `TaskResponse`다. 반복 템플릿이면 첫 occurrence에 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`, `recurrence`가 포함된다.
 
-## 6. D-Day API
+## 6. Workspace API
+
+모든 `/api/v1/workspaces/**` 요청은 현재 로그인 사용자의 ACTIVE membership을 기준으로 한다. 게스트 계정은 workspace 생성, 초대, 수락, 조회 대상에서 제외한다.
+
+```ts
+type WorkspaceRole = 'OWNER' | 'EDITOR' | 'VIEWER';
+type WorkspaceMemberStatus = 'PENDING' | 'ACTIVE' | 'REMOVED';
+
+type WorkspaceRequest = {
+  name: string; // 50자 이하
+  description?: string | null; // 300자 이하
+};
+
+type WorkspaceInviteRequest = {
+  email: string;
+  role?: WorkspaceRole | null; // OWNER는 초대 API에서 부여할 수 없음
+};
+
+type WorkspaceMemberUpdateRequest = {
+  role?: WorkspaceRole | null;
+  status?: WorkspaceMemberStatus | null;
+};
+
+type WorkspaceResponse = {
+  id: number;
+  name: string;
+  description: string | null;
+  createdByUserId: number;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+type WorkspaceMemberResponse = {
+  id: number;
+  workspaceId: number;
+  userId: number;
+  email: string;
+  displayName: string;
+  role: WorkspaceRole;
+  status: WorkspaceMemberStatus;
+  createdAt: string;
+  updatedAt: string | null;
+};
+```
+
+### Workspace 생성
+
+```http
+POST /api/v1/workspaces
+```
+
+Request: `WorkspaceRequest`
+
+Response: `WorkspaceResponse`
+
+생성자는 자동으로 `OWNER`/`ACTIVE` 멤버가 된다.
+
+### Workspace 목록
+
+```http
+GET /api/v1/workspaces
+```
+
+Response: `WorkspaceResponse[]`
+
+### Workspace 단건
+
+```http
+GET /api/v1/workspaces/{workspaceId}
+```
+
+Response: `WorkspaceResponse`
+
+### Workspace 수정/삭제
+
+```http
+PUT /api/v1/workspaces/{workspaceId}
+DELETE /api/v1/workspaces/{workspaceId}
+```
+
+수정/삭제는 `OWNER`만 가능하다.
+
+### 멤버 초대
+
+```http
+POST /api/v1/workspaces/{workspaceId}/members
+```
+
+Request: `WorkspaceInviteRequest`
+
+Response: `WorkspaceMemberResponse`
+
+규칙:
+
+- 등록 사용자 email만 초대할 수 있다.
+- `OWNER` role은 초대 API에서 부여할 수 없다.
+- 초대된 멤버는 `PENDING` 상태이며 workspace 데이터 조회 권한이 없다.
+
+### 멤버 목록
+
+```http
+GET /api/v1/workspaces/{workspaceId}/members
+```
+
+Response: `WorkspaceMemberResponse[]`
+
+현재는 ACTIVE 멤버만 반환한다.
+
+### 멤버 수정/초대 수락
+
+```http
+PATCH /api/v1/workspaces/{workspaceId}/members/{memberId}
+```
+
+Request: `WorkspaceMemberUpdateRequest`
+
+Response: `WorkspaceMemberResponse`
+
+초대받은 사용자는 자기 `PENDING` membership에 `{"status":"ACTIVE"}`를 보내 초대를 수락한다. 그 외 role/status 변경은 `OWNER`만 가능하다.
+
+### 멤버 제거
+
+```http
+DELETE /api/v1/workspaces/{workspaceId}/members/{memberId}
+```
+
+Response: `null`
+
+`OWNER`가 멤버를 제거하거나 멤버가 본인 membership에서 나갈 수 있다. workspace에는 최소 1명의 ACTIVE OWNER가 필요하다.
+
+아직 제공하지 않는 workspace 하위 API:
+
+- workspace Task 생성/조회/수정/삭제
+- workspace D-Day 생성/조회/삭제
+- workspace 알림 후보
+
+## 7. D-Day API
 
 모든 `/api/v1/dday-goals/**` 요청은 현재 로그인 사용자의 D-Day 목표만 대상으로 한다.
 
@@ -1041,7 +1177,7 @@ Response: `data: null`
 - v1 리소스 삭제 endpoint인 `DELETE /api/v1/tasks/{id}`, `DELETE /api/v1/dday-goals/{id}`는 성공 시 공통 envelope의 `data`를 `null`로 반환한다.
 - `DELETE /api/v1/tasks/{id}/defer-reason`, `DELETE /api/v1/tasks/{id}/dday-goal`은 Task 리소스 삭제가 아니라 Task 수정이므로 `TaskResponse`를 반환한다.
 
-## 7. Task 통합 검색
+## 8. Task 통합 검색
 
 ```http
 GET /api/v1/tasks/search
@@ -1090,14 +1226,14 @@ Cursor 기준:
 - cursor Task가 더 이상 검색 조건에 포함되지 않으면 HTTP 400이다.
 - 중간에 Task가 생성/수정/삭제되어도 이전 페이지 마지막 항목 이후부터 이어서 조회하므로 offset shift 중복/누락을 피한다.
 
-## 8. 아직 프론트에서 의존하면 안 되는 계약
+## 9. 아직 프론트에서 의존하면 안 되는 계약
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
 - refresh token API
 - 서버 push 알림 발송 API
 
-## 9. 모바일 전환 체크리스트
+## 10. 모바일 전환 체크리스트
 
 - [ ] 로그인 성공 시 `accessToken` 저장
 - [ ] 모든 v1 요청에 `Authorization: Bearer <accessToken>` 추가
@@ -1114,7 +1250,7 @@ Cursor 기준:
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
 - [ ] 서버 push 알림 UI는 push API 구현 전까지 실제 저장 기능처럼 열지 않음
 
-## 10. Legacy API 정책
+## 11. Legacy API 정책
 
 - 모바일 신규 연동 기준은 `/api/v1/**`다.
 - legacy `/api/tasks/**`, `/api/ddays/**`는 웹 화면과 과거 호환 범위로 유지한다.

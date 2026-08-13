@@ -21,6 +21,8 @@ import com.todolab.task.repository.TaskTemplateRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
+import com.todolab.workspace.repository.SharedWorkspaceRepository;
+import com.todolab.workspace.repository.WorkspaceMemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,6 +59,12 @@ class GuestAccountCleanupServiceIntegrationTest {
     TaskTemplateRepository taskTemplateRepository;
 
     @Autowired
+    WorkspaceMemberRepository workspaceMemberRepository;
+
+    @Autowired
+    SharedWorkspaceRepository sharedWorkspaceRepository;
+
+    @Autowired
     PushDeviceTokenRepository pushDeviceTokenRepository;
 
     @Autowired
@@ -69,6 +77,8 @@ class GuestAccountCleanupServiceIntegrationTest {
     void setUp() {
         pushNotificationHistoryRepository.deleteAll();
         pushDeviceTokenRepository.deleteAll();
+        workspaceMemberRepository.deleteAll();
+        sharedWorkspaceRepository.deleteAll();
         taskTemplateRepository.deleteAll();
         taskRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();

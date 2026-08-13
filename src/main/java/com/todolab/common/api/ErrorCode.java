@@ -30,6 +30,10 @@ public enum ErrorCode {
     // User
     USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, 40001, "이미 가입된 이메일입니다."),
 
+    // Workspace
+    WORKSPACE_NOT_FOUND(HttpStatus.NOT_FOUND, 50001, "공유 workspace를 찾을 수 없습니다."),
+    WORKSPACE_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 50002, "공유 workspace 멤버를 찾을 수 없습니다."),
+
     // 서버 내부 오류
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 99999, "서버 오류가 발생했습니다.");
 

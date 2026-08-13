@@ -8,9 +8,13 @@ import com.todolab.task.exception.TaskTemplateNotFoundException;
 import com.todolab.task.exception.TaskValidationException;
 import com.todolab.task.exception.TaskNotFoundException;
 import com.todolab.user.exception.UserEmailAlreadyExistsException;
+import com.todolab.workspace.exception.WorkspaceMemberNotFoundException;
+import com.todolab.workspace.exception.WorkspaceNotFoundException;
+import com.todolab.workspace.exception.WorkspaceValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -149,6 +153,33 @@ public class ApiExceptionHandler {
         log.warn("Guest Creation Rate Limit Exceeded");
         return ResponseEntity.status(ErrorCode.GUEST_CREATION_RATE_LIMIT_EXCEEDED.getStatus())
                 .body(ApiResponse.failure(ErrorCode.GUEST_CREATION_RATE_LIMIT_EXCEEDED));
+    }
+
+    @ExceptionHandler(WorkspaceValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleWorkspaceValidationException(WorkspaceValidationException e) {
+        log.warn("Workspace Validation Failed : {}", e.getDetail());
+        return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
+    }
+
+    @ExceptionHandler(WorkspaceNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleWorkspaceNotFoundException(WorkspaceNotFoundException e) {
+        log.warn("Workspace Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.WORKSPACE_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.WORKSPACE_NOT_FOUND));
+    }
+
+    @ExceptionHandler(WorkspaceMemberNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleWorkspaceMemberNotFoundException(WorkspaceMemberNotFoundException e) {
+        log.warn("Workspace Member Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> handleAccessDeniedException(AccessDeniedException e) {
+        log.warn("Access Denied");
+        return ResponseEntity.status(ErrorCode.FORBIDDEN.getStatus())
+                .body(ApiResponse.failure(ErrorCode.FORBIDDEN));
     }
 
     @ExceptionHandler(Exception.class)
