@@ -58,6 +58,10 @@ public interface DdayGoalRepository extends JpaRepository<DdayGoal, Long> {
 
     Optional<DdayGoal> findByIdAndOwnerIdAndScope(Long id, Long ownerId, ResourceScope scope);
 
+    Optional<DdayGoal> findByIdAndWorkspaceIdAndScope(Long id, Long workspaceId, ResourceScope scope);
+
+    List<DdayGoal> findAllByWorkspaceIdAndScopeOrderByTargetDateAscIdAsc(Long workspaceId, ResourceScope scope);
+
     default boolean existsByIdAndOwnerId(Long id, Long ownerId) {
         return existsByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
     }

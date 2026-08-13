@@ -105,7 +105,8 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tags[0].name").value("v1 Auth"))
                 .andExpect(jsonPath("$.tags[1].name").value("v1 Task"))
-                .andExpect(jsonPath("$.tags[2].name").value("v1 D-Day"))
+                .andExpect(jsonPath("$.tags[2].name").value("v1 Workspace D-Day"))
+                .andExpect(jsonPath("$.tags[3].name").value("v1 D-Day"))
                 .andExpect(jsonPath("$.security[0].bearerAuth").exists());
 
         mockMvc.perform(get("/swagger-ui/index.html"))

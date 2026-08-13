@@ -30,6 +30,7 @@ public class OpenApiConfig {
                 .tags(List.of(
                         new Tag().name("v1 Auth").description("모바일 JWT 인증 API"),
                         new Tag().name("v1 Task").description("모바일 Task API"),
+                        new Tag().name("v1 Workspace D-Day").description("공유 workspace D-Day API"),
                         new Tag().name("v1 D-Day").description("모바일 D-Day 목표 API")
                 ))
                 .components(new Components()

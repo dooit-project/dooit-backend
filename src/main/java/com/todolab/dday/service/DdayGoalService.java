@@ -1,6 +1,7 @@
 package com.todolab.dday.service;
 
 import com.todolab.dday.domain.DdayGoal;
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.dday.dto.DdayGoalRequest;
 import com.todolab.dday.dto.DdayGoalResponse;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
@@ -9,6 +10,7 @@ import com.todolab.task.domain.Task;
 import com.todolab.task.dto.TaskResponse;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,19 @@ public class DdayGoalService {
         return create(request, owner);
     }
 
+    @Transactional
+    public DdayGoalResponse createForWorkspace(DdayGoalRequest request, User actor, SharedWorkspace workspace) {
+        if (actor == null) {
+            throw new IllegalArgumentException("actor는 필수입니다.");
+        }
+        if (workspace == null || workspace.getId() == null) {
+            throw new IllegalArgumentException("workspace는 영속화된 workspace여야 합니다.");
+        }
+        DdayGoal goal = new DdayGoal(request.title(), request.targetDate(), actor);
+        goal.assignWorkspace(workspace);
+        return DdayGoalResponse.from(ddayGoalRepository.save(goal));
+    }
+
     private DdayGoalResponse create(DdayGoalRequest request, User owner) {
         DdayGoal saved = ddayGoalRepository.save(new DdayGoal(request.title(), request.targetDate(), owner));
         return DdayGoalResponse.from(saved);
@@ -60,6 +75,23 @@ public class DdayGoalService {
         DdayGoal goal = ddayGoalRepository.findByIdAndOwnerId(id, ownerId(owner))
                 .orElseThrow(() -> new DdayGoalNotFoundException(id));
         return DdayGoalResponse.from(goal);
+    }
+
+    @Transactional(readOnly = true)
+    public DdayGoalResponse getForWorkspace(Long id, SharedWorkspace workspace) {
+        DdayGoal goal = ddayGoalRepository.findByIdAndWorkspaceIdAndScope(id, workspace.getId(), ResourceScope.WORKSPACE)
+                .orElseThrow(() -> new DdayGoalNotFoundException(id));
+        return DdayGoalResponse.from(goal);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DdayGoalResponse> findAllForWorkspace(SharedWorkspace workspace) {
+        return ddayGoalRepository.findAllByWorkspaceIdAndScopeOrderByTargetDateAscIdAsc(
+                        workspace.getId(),
+                        ResourceScope.WORKSPACE
+                ).stream()
+                .map(DdayGoalResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)

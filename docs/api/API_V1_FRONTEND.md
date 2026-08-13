@@ -1116,11 +1116,44 @@ Response: `TaskResponse`
 
 `ACTIVE` 멤버가 조회할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다.
 
+### Workspace D-Day 생성
+
+```http
+POST /api/v1/workspaces/{workspaceId}/dday-goals
+```
+
+Request: `DdayGoalRequest`
+
+Response: `DdayGoalResponse`
+
+`OWNER`, `EDITOR`만 생성할 수 있다. 생성된 D-Day는 `WORKSPACE` scope로 저장되며 기존 개인 D-Day API에는 반환되지 않는다.
+
+### Workspace D-Day 목록
+
+```http
+GET /api/v1/workspaces/{workspaceId}/dday-goals
+```
+
+Response: `DdayGoalResponse[]`
+
+`ACTIVE` 멤버가 조회할 수 있다.
+
+### Workspace D-Day 단건
+
+```http
+GET /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
+```
+
+Response: `DdayGoalResponse`
+
+`ACTIVE` 멤버가 조회할 수 있다. 다른 workspace의 D-Day ID나 workspace scope 밖 D-Day ID는 `DDAY_GOAL_NOT_FOUND`처럼 처리된다.
+
 아직 제공하지 않는 workspace 하위 API:
 
 - workspace Task 수정/삭제
 - workspace 반복 Task materialize
-- workspace D-Day 생성/조회/삭제
+- workspace D-Day 삭제
+- workspace D-Day와 workspace Task 연결
 - workspace 알림 후보
 
 기존 개인 API인 `/api/v1/tasks/**`, `/api/v1/dday-goals/**`는 `PERSONAL` scope 데이터만 반환한다. workspace scope 데이터는 workspace 하위 API가 열리기 전까지 프론트에서 조회하거나 수정할 수 없다.
