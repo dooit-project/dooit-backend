@@ -1,6 +1,6 @@
 # Data Model Glossary
 
-Last updated: 2026-07-25
+Last updated: 2026-08-13
 
 이 문서는 ToDoLab 백엔드의 주요 도메인 모델과 모바일 API 응답 필드 의미를 정리한다.
 
@@ -95,3 +95,14 @@ D-Day와 연결된 Task는 `ddayGoalId`, `ddayGoalTitle`, `ddayGoalTargetDate`, 
 - v1 모바일 API는 항상 현재 인증 사용자의 User를 owner 기준으로 사용한다.
 - 다른 사용자의 Task/D-Day id는 존재하지 않는 리소스처럼 처리한다.
 - legacy `/api/**`는 웹/과거 호환 범위이며 모바일 신규 계약은 `/api/v1/**`다.
+
+## Resource Scope
+
+공유 workspace 도입을 위해 Task, D-Day, 반복 series는 `scope`를 가진다.
+
+| 값 | 의미 |
+| --- | --- |
+| `PERSONAL` | 기존 개인 데이터. `/api/v1/tasks/**`, `/api/v1/dday-goals/**`에서 조회/수정하는 범위 |
+| `WORKSPACE` | 공유 workspace 데이터. workspace membership 기준으로 접근한다 |
+
+기존 개인 API는 `PERSONAL` scope만 반환한다. `WORKSPACE` scope의 Task/D-Day/반복 series는 workspace 하위 API에서만 다룬다.

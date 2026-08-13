@@ -1,8 +1,10 @@
 package com.todolab.task.domain;
 
 import com.todolab.Constant;
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.dday.domain.DdayGoal;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -100,6 +102,14 @@ public class Task {
     @JoinColumn(name = "`OWNER_USER_ID`")
     private User owner;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`SCOPE`", nullable = false, length = 30)
+    private ResourceScope scope = ResourceScope.PERSONAL;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`WORKSPACE_ID`")
+    private SharedWorkspace workspace;
+
     @Column(name = "`CREATED_AT`")
     private LocalDateTime createdAt;
 
@@ -136,6 +146,7 @@ public class Task {
         this.originalOccurrenceDate = originalOccurrenceDate;
         this.recurrenceException = recurrenceException;
         this.owner = owner;
+        this.scope = ResourceScope.PERSONAL;
     }
 
     public void update(String title, String description, TaskType type, LocalDateTime startAt, LocalDateTime endAt, boolean allDay, String category) {
@@ -250,6 +261,14 @@ public class Task {
             throw new IllegalArgumentException("owner는 필수입니다.");
         }
         this.owner = owner;
+    }
+
+    public void assignWorkspace(SharedWorkspace workspace) {
+        if (workspace == null) {
+            throw new IllegalArgumentException("workspace는 필수입니다.");
+        }
+        this.workspace = workspace;
+        this.scope = ResourceScope.WORKSPACE;
     }
 
     public void setDeferReason(DeferReason deferReason) {

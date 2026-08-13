@@ -1,5 +1,6 @@
 package com.todolab.task.repository;
 
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.task.domain.Task;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +11,12 @@ import java.util.Optional;
 public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositoryCustom {
 
     @EntityGraph(attributePaths = "ddayGoal")
-    List<Task> findByOwnerId(Long ownerId);
+    default List<Task> findByOwnerId(Long ownerId) {
+        return findByOwnerIdAndScope(ownerId, ResourceScope.PERSONAL);
+    }
+
+    @EntityGraph(attributePaths = "ddayGoal")
+    List<Task> findByOwnerIdAndScope(Long ownerId, ResourceScope scope);
 
     List<Task> findByRecurrenceSeriesIdOrderByOccurrenceDateAscIdAsc(Long recurrenceSeriesId);
 
@@ -24,7 +30,15 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
             java.time.LocalDate occurrenceDate
     );
 
-    Optional<Task> findByIdAndOwnerId(Long id, Long ownerId);
+    default Optional<Task> findByIdAndOwnerId(Long id, Long ownerId) {
+        return findByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
+    }
 
-    boolean existsByIdAndOwnerId(Long id, Long ownerId);
+    Optional<Task> findByIdAndOwnerIdAndScope(Long id, Long ownerId, ResourceScope scope);
+
+    default boolean existsByIdAndOwnerId(Long id, Long ownerId) {
+        return existsByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
+    }
+
+    boolean existsByIdAndOwnerIdAndScope(Long id, Long ownerId, ResourceScope scope);
 }

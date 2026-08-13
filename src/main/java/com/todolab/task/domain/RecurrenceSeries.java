@@ -1,7 +1,9 @@
 package com.todolab.task.domain;
 
 import com.todolab.Constant;
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -39,6 +41,14 @@ public class RecurrenceSeries {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`OWNER_USER_ID`")
     private User owner;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`SCOPE`", nullable = false, length = 30)
+    private ResourceScope scope = ResourceScope.PERSONAL;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`WORKSPACE_ID`")
+    private SharedWorkspace workspace;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "`FREQUENCY`", nullable = false, length = 30)
@@ -80,6 +90,7 @@ public class RecurrenceSeries {
     ) {
         update(frequency, interval, recurrenceRule, timeZone, recurrenceStartAt, recurrenceUntil, recurrenceCount);
         this.owner = owner;
+        this.scope = ResourceScope.PERSONAL;
     }
 
     @PrePersist
@@ -97,6 +108,14 @@ public class RecurrenceSeries {
             throw new IllegalArgumentException("owner는 필수입니다.");
         }
         this.owner = owner;
+    }
+
+    public void assignWorkspace(SharedWorkspace workspace) {
+        if (workspace == null) {
+            throw new IllegalArgumentException("workspace는 필수입니다.");
+        }
+        this.workspace = workspace;
+        this.scope = ResourceScope.WORKSPACE;
     }
 
     public void update(

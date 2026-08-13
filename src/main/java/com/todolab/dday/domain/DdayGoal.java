@@ -1,7 +1,9 @@
 package com.todolab.dday.domain;
 
 import com.todolab.Constant;
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -34,6 +36,14 @@ public class DdayGoal {
     @JoinColumn(name = "`OWNER_USER_ID`")
     private User owner;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`SCOPE`", nullable = false, length = 30)
+    private ResourceScope scope = ResourceScope.PERSONAL;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`WORKSPACE_ID`")
+    private SharedWorkspace workspace;
+
     public DdayGoal(String title, LocalDate targetDate) {
         this(title, targetDate, null);
     }
@@ -41,6 +51,7 @@ public class DdayGoal {
     public DdayGoal(String title, LocalDate targetDate, User owner) {
         update(title, targetDate);
         this.owner = owner;
+        this.scope = ResourceScope.PERSONAL;
     }
 
     @PrePersist
@@ -66,6 +77,14 @@ public class DdayGoal {
             throw new IllegalArgumentException("owner는 필수입니다.");
         }
         this.owner = owner;
+    }
+
+    public void assignWorkspace(SharedWorkspace workspace) {
+        if (workspace == null) {
+            throw new IllegalArgumentException("workspace는 필수입니다.");
+        }
+        this.workspace = workspace;
+        this.scope = ResourceScope.WORKSPACE;
     }
 
     private String normalizeTitle(String title) {

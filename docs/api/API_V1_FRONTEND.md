@@ -1085,6 +1085,8 @@ Response: `null`
 - workspace D-Day 생성/조회/삭제
 - workspace 알림 후보
 
+기존 개인 API인 `/api/v1/tasks/**`, `/api/v1/dday-goals/**`는 `PERSONAL` scope 데이터만 반환한다. workspace scope 데이터는 workspace 하위 API가 열리기 전까지 프론트에서 조회하거나 수정할 수 없다.
+
 ## 7. D-Day API
 
 모든 `/api/v1/dday-goals/**` 요청은 현재 로그인 사용자의 D-Day 목표만 대상으로 한다.

@@ -2,7 +2,10 @@ package com.todolab.workspace.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
+import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.mail.MailService;
+import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
 import com.todolab.workspace.domain.WorkspaceMemberStatus;
@@ -58,12 +61,24 @@ class WorkspaceV1IntegrationTest {
     @Autowired
     SharedWorkspaceRepository sharedWorkspaceRepository;
 
+    @Autowired
+    TaskRepository taskRepository;
+
+    @Autowired
+    DdayGoalRepository ddayGoalRepository;
+
+    @Autowired
+    RecurrenceSeriesRepository recurrenceSeriesRepository;
+
     @MockitoBean
     MailService mailService;
 
     @BeforeEach
     void setUp() {
         workspaceMemberRepository.deleteAll();
+        taskRepository.deleteAll();
+        ddayGoalRepository.deleteAll();
+        recurrenceSeriesRepository.deleteAll();
         sharedWorkspaceRepository.deleteAll();
     }
 

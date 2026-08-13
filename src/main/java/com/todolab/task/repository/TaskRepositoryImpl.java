@@ -3,6 +3,7 @@ package com.todolab.task.repository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.task.domain.QTask;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskStatus;
@@ -35,6 +36,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.startAt.isNotNull(),
                         overlapsRange(t, start, end)
                 )
@@ -56,6 +58,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.type.eq(taskType),
                         t.startAt.isNotNull(),
                         overlapsRange(t, start, end)
@@ -77,6 +80,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .selectFrom(t)
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.startAt.isNull(),
                         t.endAt.isNull()
                 )
@@ -97,6 +101,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .selectFrom(t)
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(status)
                 )
                 .orderBy(t.createdAt.asc(), t.id.asc())
@@ -117,6 +122,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(TaskStatus.TODAY),
                         plannedDateFrom(t, fromInclusive),
                         plannedDateBefore(t, toExclusive)
@@ -156,6 +162,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(TaskStatus.TODAY),
                         t.targetDate.eq(targetDate)
                                 .or(t.type.eq(TaskType.SCHEDULE)
@@ -181,6 +188,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(TaskStatus.TODAY),
                         t.startAt.isNotNull(),
                         overlapsRange(t, start, end)
@@ -198,6 +206,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(TaskStatus.TODAY),
                         t.targetDate.eq(targetDate),
                         t.type.ne(TaskType.SCHEDULE)
@@ -224,6 +233,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .from(t)
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(TaskStatus.TODAY),
                         t.targetDate.eq(targetDate)
                 )
@@ -268,6 +278,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(TaskStatus.DONE),
                         t.completedAt.goe(start),
                         t.completedAt.lt(end)
@@ -292,6 +303,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .leftJoin(t.ddayGoal).fetchJoin()
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.status.eq(TaskStatus.DONE),
                         t.completedAt.goe(start),
                         t.completedAt.lt(end)
@@ -313,6 +325,7 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .selectFrom(t)
                 .where(
                         ownerIdEq(t, ownerId),
+                        personalScope(t),
                         t.ddayGoal.id.eq(ddayGoalId)
                 )
                 .orderBy(t.targetDate.asc().nullsLast(), t.createdAt.asc(), t.id.asc())
@@ -321,6 +334,10 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
 
     private BooleanExpression ownerIdEq(QTask task, Long ownerId) {
         return ownerId == null ? null : task.owner.id.eq(ownerId);
+    }
+
+    private BooleanExpression personalScope(QTask task) {
+        return task.scope.eq(ResourceScope.PERSONAL);
     }
 
     private BooleanExpression overlapsRange(QTask t, LocalDateTime start, LocalDateTime end) {

@@ -76,6 +76,7 @@ Last updated: 2026-08-13
 
 - [x] `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 모델과 migration을 추가한다.
 - [x] workspace 생성, 멤버 초대, 수락, 제거 API를 추가한다.
+- [x] Task/D-Day/반복 series에 `PERSONAL`/`WORKSPACE` scope 컬럼을 추가하고 개인 API 격리 테스트를 추가한다.
 - [ ] shared workspace Task 생성/조회 API를 개인 Task API와 명확히 구분한다.
 - [ ] viewer/editor 권한에 따른 수정/삭제 제한을 적용한다.
 - [x] 게스트 계정은 공유 workspace 초대 대상에서 제외하거나 제한 정책을 둔다.

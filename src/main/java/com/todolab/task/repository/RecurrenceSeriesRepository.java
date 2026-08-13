@@ -1,5 +1,6 @@
 package com.todolab.task.repository;
 
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.task.domain.RecurrenceSeries;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -8,7 +9,15 @@ import java.util.Optional;
 
 public interface RecurrenceSeriesRepository extends JpaRepository<RecurrenceSeries, Long> {
 
-    List<RecurrenceSeries> findByOwnerId(Long ownerId);
+    default List<RecurrenceSeries> findByOwnerId(Long ownerId) {
+        return findByOwnerIdAndScope(ownerId, ResourceScope.PERSONAL);
+    }
 
-    Optional<RecurrenceSeries> findByIdAndOwnerId(Long id, Long ownerId);
+    List<RecurrenceSeries> findByOwnerIdAndScope(Long ownerId, ResourceScope scope);
+
+    default Optional<RecurrenceSeries> findByIdAndOwnerId(Long id, Long ownerId) {
+        return findByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
+    }
+
+    Optional<RecurrenceSeries> findByIdAndOwnerIdAndScope(Long id, Long ownerId, ResourceScope scope);
 }

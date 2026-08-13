@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-13
 
-이 문서는 일정 공유 기능을 구현하기 전 고정해야 하는 backend 설계 기준이다. 현재 production API에는 공유 API가 아직 없다.
+이 문서는 일정 공유 기능의 backend 설계 기준이다. 현재 API에는 workspace와 membership 기본 API가 있으며, workspace Task/D-Day API는 아직 없다.
 
 ## 목표
 
@@ -56,7 +56,7 @@ Last updated: 2026-08-13
 
 ## 데이터 모델 방향
 
-예상 migration:
+적용 대상 migration:
 
 - `SHARED_WORKSPACE`
 - `WORKSPACE_MEMBER`
@@ -79,7 +79,7 @@ scope 값:
 - `PERSONAL` row에서는 현재처럼 owner scope 기준이다.
 - `WORKSPACE` row에서는 생성자 또는 최초 작성자 기록으로만 사용하고, 접근 권한은 `WORKSPACE_MEMBER`로 판단한다.
 - workspace Task/D-Day 조회는 `WORKSPACE_ID + ACTIVE membership` 조건을 사용한다.
-- 개인 API repository query는 반드시 `SCOPE=PERSONAL` 조건을 포함한다.
+- 개인 API repository query는 `SCOPE=PERSONAL` 조건을 포함한다.
 
 ## API 방향
 
@@ -134,10 +134,10 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 
 ## 테스트 전략
 
-구현 전 먼저 아래 invariant를 테스트로 고정한다.
+구현 전후 아래 invariant를 테스트로 고정한다.
 
-- 개인 Task API는 workspace Task를 반환하지 않는다.
-- 개인 D-Day API는 workspace D-Day를 반환하지 않는다.
+- 개인 Task API는 workspace Task를 반환하지 않는다. 현재 통합 테스트로 고정되어 있다.
+- 개인 D-Day API는 workspace D-Day를 반환하지 않는다. 현재 통합 테스트로 고정되어 있다.
 - workspace API는 `ACTIVE` member만 접근 가능하다.
 - `VIEWER`는 조회만 가능하고 생성/수정/삭제는 403이다.
 - 다른 workspace의 Task/D-Day ID는 존재하지 않는 리소스처럼 처리한다.
@@ -152,7 +152,7 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 2. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES`에 scope/workspace 컬럼을 nullable/default 안전 방식으로 추가한다.
 3. 기존 row를 `SCOPE=PERSONAL`로 backfill한다.
 4. personal repository query에 `SCOPE=PERSONAL` 조건을 적용한다.
-5. workspace API를 추가한다.
+5. workspace Task/D-Day API를 추가한다.
 
 Rollback:
 
