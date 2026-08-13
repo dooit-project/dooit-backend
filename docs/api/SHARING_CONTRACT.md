@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-13
 
-이 문서는 일정 공유 기능의 backend 설계 기준이다. 현재 API에는 workspace와 membership 기본 API가 있으며, workspace Task/D-Day API는 아직 없다.
+이 문서는 일정 공유 기능의 backend 설계 기준이다. 현재 API에는 workspace와 membership 기본 API, workspace Task 생성/조회 API가 있으며, workspace D-Day API는 아직 없다.
 
 ## 목표
 
@@ -115,6 +115,7 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 
 - workspace 반복 series는 `RECURRENCE_SERIES.SCOPE=WORKSPACE`, `WORKSPACE_ID`를 가진다.
 - workspace occurrence materialize는 workspace membership을 먼저 검증한 뒤 workspace scope에서 실행한다.
+- 현재 workspace Task 생성 API는 반복 Task 생성을 HTTP 400으로 거부한다. workspace 반복 materialize 구현 전까지 반복 workspace Task를 생성하지 않는다.
 - workspace Task는 personal D-Day에 연결할 수 없다.
 - personal Task는 workspace D-Day에 연결할 수 없다.
 - workspace D-Day 삭제 시 같은 workspace의 연결 Task만 연결 해제한다.

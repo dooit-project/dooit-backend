@@ -1079,9 +1079,47 @@ Response: `null`
 
 `OWNER`가 멤버를 제거하거나 멤버가 본인 membership에서 나갈 수 있다. workspace에는 최소 1명의 ACTIVE OWNER가 필요하다.
 
+### Workspace Task 생성
+
+```http
+POST /api/v1/workspaces/{workspaceId}/tasks
+```
+
+Request: `TaskRequest`
+
+Response: `TaskResponse`
+
+규칙:
+
+- `OWNER`, `EDITOR`만 생성할 수 있다.
+- 생성된 Task는 `WORKSPACE` scope로 저장되며 기존 개인 Task API에는 반환되지 않는다.
+- `recurrence`가 있는 workspace Task 생성은 아직 HTTP 400이다.
+- D-Day 연결은 workspace D-Day API가 열리기 전까지 지원하지 않는다.
+
+### Workspace Task 범위 조회
+
+```http
+GET /api/v1/workspaces/{workspaceId}/tasks?type=DAY|WEEK|MONTH&taskType=SCHEDULE&date=YYYY-MM-DD
+```
+
+Response: `TaskResponse[]`
+
+`ACTIVE` 멤버가 조회할 수 있다. query 규칙은 개인 Task 범위 조회와 동일하다.
+
+### Workspace Task 단건 조회
+
+```http
+GET /api/v1/workspaces/{workspaceId}/tasks/{taskId}
+```
+
+Response: `TaskResponse`
+
+`ACTIVE` 멤버가 조회할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다.
+
 아직 제공하지 않는 workspace 하위 API:
 
-- workspace Task 생성/조회/수정/삭제
+- workspace Task 수정/삭제
+- workspace 반복 Task materialize
 - workspace D-Day 생성/조회/삭제
 - workspace 알림 후보
 

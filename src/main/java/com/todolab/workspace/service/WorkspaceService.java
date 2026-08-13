@@ -67,6 +67,21 @@ public class WorkspaceService {
         return WorkspaceResponse.from(findWorkspace(id));
     }
 
+    @Transactional(readOnly = true)
+    public SharedWorkspace requireReadableWorkspace(Long id, User member) {
+        requireActiveMember(id, member);
+        return findWorkspace(id);
+    }
+
+    @Transactional(readOnly = true)
+    public SharedWorkspace requireEditableWorkspace(Long id, User member) {
+        WorkspaceMember workspaceMember = requireActiveMember(id, member);
+        if (workspaceMember.getRole() == WorkspaceRole.VIEWER) {
+            throw new AccessDeniedException("workspace editor 권한이 필요합니다.");
+        }
+        return findWorkspace(id);
+    }
+
     @Transactional
     public WorkspaceResponse updateForOwner(Long id, WorkspaceRequest request, User owner) {
         requireOwner(id, owner);

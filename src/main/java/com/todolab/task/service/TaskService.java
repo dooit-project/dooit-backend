@@ -1,6 +1,7 @@
 package com.todolab.task.service;
 
 import com.todolab.notification.config.PushNotificationProperties;
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.task.domain.DeferReason;
 import com.todolab.task.domain.RecurrenceEditScope;
 import com.todolab.task.domain.RecurrenceSeries;
@@ -30,6 +31,7 @@ import com.todolab.task.exception.TaskValidationException;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +67,21 @@ public class TaskService {
         if (owner == null) {
             throw new IllegalArgumentException("owner는 필수입니다.");
         }
-        return create(req, owner);
+        return create(req, owner, null);
+    }
+
+    @Transactional
+    public TaskResponse createForWorkspace(TaskRequest req, User actor, SharedWorkspace workspace) {
+        if (actor == null) {
+            throw new IllegalArgumentException("actor는 필수입니다.");
+        }
+        if (workspace == null || workspace.getId() == null) {
+            throw new IllegalArgumentException("workspace는 영속화된 workspace여야 합니다.");
+        }
+        if (req.recurrence() != null) {
+            throw new TaskValidationException("workspace 반복 Task는 아직 지원하지 않습니다.");
+        }
+        return create(req, actor, workspace);
     }
 
     @Transactional
@@ -75,7 +91,7 @@ public class TaskService {
         }
 
         TaskQuickCaptureParser.ParsedQuickCapture parsed = taskQuickCaptureParser.parse(request, owner);
-        TaskResponse task = create(parsed.taskRequest(), owner);
+        TaskResponse task = create(parsed.taskRequest(), owner, null);
         return new TaskQuickCaptureResponse(
                 task,
                 parsed.parsed(),
@@ -90,6 +106,10 @@ public class TaskService {
     }
 
     private TaskResponse create(TaskRequest req, User owner) {
+        return create(req, owner, null);
+    }
+
+    private TaskResponse create(TaskRequest req, User owner, SharedWorkspace workspace) {
         req.validate();
         Task task = Task.builder()
                 .title(req.title())
@@ -101,6 +121,9 @@ public class TaskService {
                 .category(req.category())
                 .owner(owner)
                 .build();
+        if (workspace != null) {
+            task.assignWorkspace(workspace);
+        }
 
         if (req.recurrence() != null) {
             RecurrenceSeries series = recurrenceSeriesRepository.save(new RecurrenceSeries(
@@ -113,6 +136,9 @@ public class TaskService {
                     req.recurrence().recurrenceUntil(),
                     req.recurrence().recurrenceCount()
             ));
+            if (workspace != null) {
+                series.assignWorkspace(workspace);
+            }
             task.connectRecurrenceSeries(series, req.startAt().toLocalDate());
         }
 
@@ -136,6 +162,14 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
+    @Transactional(readOnly = true)
+    public TaskResponse getTaskForWorkspace(Long id, SharedWorkspace workspace) {
+        Task task = taskRepository.findByIdAndWorkspaceIdAndScope(id, workspace.getId(), ResourceScope.WORKSPACE)
+                .orElseThrow(() -> new TaskNotFoundException(id));
+
+        return TaskResponse.from(task);
+    }
+
     public List<TaskResponse> getTasks(TaskQueryRequest request) {
         return findTasks(request);
     }
@@ -143,6 +177,22 @@ public class TaskService {
     @Transactional
     public List<TaskResponse> getTasksForOwner(TaskQueryRequest request, User owner) {
         return findTasks(request, ownerId(owner), owner);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getTasksForWorkspace(TaskQueryRequest request, SharedWorkspace workspace) {
+        final TaskQueryType type = request.getType();
+        final String strDate = request.getDate();
+        DateRange range = type.calculate(strDate);
+
+        return taskRepository.findWorkspaceByDateRangeAndType(
+                        workspace.getId(),
+                        range.getStart(),
+                        range.getEnd(),
+                        request.getTaskType()
+                ).stream()
+                .map(TaskResponse::from)
+                .toList();
     }
 
     public List<TaskCategoryGroupResponse> getGroupedTasks(TaskQueryRequest request) {

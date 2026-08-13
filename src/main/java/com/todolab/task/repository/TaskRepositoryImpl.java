@@ -68,6 +68,24 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
     }
 
     @Override
+    public List<Task> findWorkspaceByDateRangeAndType(Long workspaceId, LocalDateTime start, LocalDateTime end, TaskType taskType) {
+        QTask t = QTask.task;
+
+        return queryFactory
+                .selectFrom(t)
+                .leftJoin(t.ddayGoal).fetchJoin()
+                .where(
+                        workspaceIdEq(t, workspaceId),
+                        workspaceScope(t),
+                        t.type.eq(taskType),
+                        t.startAt.isNotNull(),
+                        overlapsRange(t, start, end)
+                )
+                .orderBy(t.startAt.asc(), t.id.asc())
+                .fetch();
+    }
+
+    @Override
     public List<Task> findUnscheduledTask() {
         return findUnscheduledTask(null);
     }
@@ -338,6 +356,14 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
 
     private BooleanExpression personalScope(QTask task) {
         return task.scope.eq(ResourceScope.PERSONAL);
+    }
+
+    private BooleanExpression workspaceScope(QTask task) {
+        return task.scope.eq(ResourceScope.WORKSPACE);
+    }
+
+    private BooleanExpression workspaceIdEq(QTask task, Long workspaceId) {
+        return workspaceId == null ? null : task.workspace.id.eq(workspaceId);
     }
 
     private BooleanExpression overlapsRange(QTask t, LocalDateTime start, LocalDateTime end) {

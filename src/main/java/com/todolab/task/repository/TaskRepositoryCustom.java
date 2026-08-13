@@ -17,6 +17,8 @@ public interface TaskRepositoryCustom {
 
     List<Task> findByDateRangeAndType(Long ownerId, LocalDateTime start, LocalDateTime end, TaskType taskType);
 
+    List<Task> findWorkspaceByDateRangeAndType(Long workspaceId, LocalDateTime start, LocalDateTime end, TaskType taskType);
+
     List<Task> findUnscheduledTask();
 
     List<Task> findUnscheduledTask(Long ownerId);
