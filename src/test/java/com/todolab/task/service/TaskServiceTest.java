@@ -20,6 +20,7 @@ import com.todolab.task.exception.TaskNotFoundException;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -1440,6 +1441,48 @@ class TaskServiceTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().suppressLocalNotification()).isTrue();
+    }
+
+    @Test
+    @DisplayName("서버 push가 활성화되면 workspace 알림 후보도 로컬 알림 억제 플래그를 반환한다")
+    void getNotificationCandidatesForWorkspace_success_suppressLocalNotification() {
+        taskService = new TaskService(
+                taskTxService,
+                taskRepository,
+                recurrenceSeriesRepository,
+                taskCategoryGrouper,
+                recurrenceOccurrenceMaterializer,
+                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null),
+                recurrenceRuleUpdateService,
+                new TaskQuickCaptureParser()
+        );
+        User actor = persistedOwner(1L);
+        SharedWorkspace workspace = new SharedWorkspace("workspace", null, actor);
+        ReflectionTestUtils.setField(workspace, "id", 10L);
+        LocalDate date = LocalDate.of(2026, 7, 13);
+        Task task = Task.builder()
+                .title("workspace-server-push")
+                .status(TaskStatus.TODAY)
+                .startAt(date.atTime(9, 0))
+                .targetDate(date)
+                .owner(actor)
+                .build();
+        task.assignWorkspace(workspace);
+        given(taskRepository.findWorkspaceNotificationCandidateTasks(
+                10L,
+                date.atStartOfDay(),
+                date.plusDays(1).atStartOfDay()
+        )).willReturn(List.of(task));
+
+        var result = taskService.getNotificationCandidatesForWorkspace(date, date, actor, workspace);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().suppressLocalNotification()).isTrue();
+        then(recurrenceOccurrenceMaterializer).should().materializeForWorkspace(
+                10L,
+                date,
+                date.plusDays(1)
+        );
     }
 
     private User persistedOwner(Long id) {
