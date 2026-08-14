@@ -8,6 +8,7 @@ import com.todolab.workspace.domain.WorkspaceMember;
 import com.todolab.workspace.domain.WorkspaceMemberStatus;
 import com.todolab.workspace.domain.WorkspaceRole;
 import com.todolab.workspace.dto.WorkspaceInviteRequest;
+import com.todolab.workspace.dto.WorkspaceInvitationResponse;
 import com.todolab.workspace.dto.WorkspaceMemberResponse;
 import com.todolab.workspace.dto.WorkspaceMemberUpdateRequest;
 import com.todolab.workspace.dto.WorkspaceRequest;
@@ -58,6 +59,15 @@ public class WorkspaceService {
                 .stream()
                 .map(WorkspaceMember::getWorkspace)
                 .map(WorkspaceResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkspaceInvitationResponse> findPendingInvitationsForMember(User member) {
+        assertRegistered(member);
+        return workspaceMemberRepository.findByUserIdAndStatusOrderByIdAsc(member.getId(), WorkspaceMemberStatus.PENDING)
+                .stream()
+                .map(WorkspaceInvitationResponse::from)
                 .toList();
     }
 

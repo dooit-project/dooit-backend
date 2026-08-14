@@ -127,6 +127,15 @@ class WorkspaceV1IntegrationTest {
                 .getContentAsString();
         Number memberId = JsonPath.read(inviteResponse, "$.data.id");
 
+        mockMvc.perform(get("/api/v1/workspace-invitations")
+                        .header("Authorization", "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].workspace.id").value(workspaceId))
+                .andExpect(jsonPath("$.data[0].membership.id").value(memberId.longValue()))
+                .andExpect(jsonPath("$.data[0].membership.status").value("PENDING"))
+                .andExpect(jsonPath("$.data[0].invitedAt").value(notNullValue()));
+
         mockMvc.perform(get("/api/v1/workspaces/{workspaceId}", workspaceId)
                         .header("Authorization", "Bearer " + memberToken))
                 .andExpect(status().isNotFound())
@@ -146,6 +155,29 @@ class WorkspaceV1IntegrationTest {
                         .header("Authorization", "Bearer " + memberToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(workspaceId));
+
+        mockMvc.perform(get("/api/v1/workspace-invitations")
+                        .header("Authorization", "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace 초대 목록은 REMOVED membership을 반환하지 않는다")
+    void findInvitations_excludesRemovedMembership() throws Exception {
+        String ownerToken = accessToken("workspace-owner-removed-invite@example.com");
+        String memberToken = accessToken("workspace-member-removed-invite@example.com");
+        Long workspaceId = createWorkspace(ownerToken, new WorkspaceRequest("초대 제거", null));
+        Long memberId = invite(ownerToken, workspaceId, "workspace-member-removed-invite@example.com", WorkspaceRole.VIEWER);
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/members/{memberId}", workspaceId, memberId)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/workspace-invitations")
+                        .header("Authorization", "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 
     @Test
@@ -179,6 +211,11 @@ class WorkspaceV1IntegrationTest {
                         .header("Authorization", "Bearer " + guestToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new WorkspaceRequest("게스트 공유", null))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+
+        mockMvc.perform(get("/api/v1/workspace-invitations")
+                        .header("Authorization", "Bearer " + guestToken))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value(11003));
     }
