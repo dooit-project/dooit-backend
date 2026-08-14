@@ -25,6 +25,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -100,6 +101,49 @@ class WorkspaceDdayGoalV1IntegrationTest {
                                 "공유 출시",
                                 LocalDate.of(2026, 9, 30)
                         ))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace D-Day는 EDITOR가 삭제한다")
+    void deleteWorkspaceDday_successForEditor() throws Exception {
+        String ownerToken = accessToken("workspace-dday-owner-delete@example.com");
+        String editorToken = accessToken("workspace-dday-editor-delete@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 목표");
+        Long editorMemberId = invite(ownerToken, workspaceId, "workspace-dday-editor-delete@example.com", WorkspaceRole.EDITOR);
+        accept(editorToken, workspaceId, editorMemberId);
+        Long goalId = createWorkspaceDday(ownerToken, workspaceId, new DdayGoalRequest(
+                "공유 출시",
+                LocalDate.of(2026, 9, 30)
+        ));
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/dday-goals/{goalId}", workspaceId, goalId)
+                        .header("Authorization", "Bearer " + editorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/dday-goals/{goalId}", workspaceId, goalId)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(30001));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace D-Day 삭제는 VIEWER에게 403을 반환한다")
+    void deleteWorkspaceDday_forbiddenForViewer() throws Exception {
+        String ownerToken = accessToken("workspace-dday-owner-delete-forbidden@example.com");
+        String viewerToken = accessToken("workspace-dday-viewer-delete-forbidden@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 목표");
+        Long viewerMemberId = invite(ownerToken, workspaceId, "workspace-dday-viewer-delete-forbidden@example.com", WorkspaceRole.VIEWER);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long goalId = createWorkspaceDday(ownerToken, workspaceId, new DdayGoalRequest(
+                "공유 출시",
+                LocalDate.of(2026, 9, 30)
+        ));
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/dday-goals/{goalId}", workspaceId, goalId)
+                        .header("Authorization", "Bearer " + viewerToken))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value(11003));
     }

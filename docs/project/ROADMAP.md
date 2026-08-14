@@ -81,7 +81,7 @@ Last updated: 2026-08-13
 - [x] viewer/editor 권한에 따른 Task 생성/조회 제한을 적용한다.
 - [x] shared workspace D-Day 생성/조회 API를 개인 D-Day API와 명확히 구분한다.
 - [x] shared workspace Task 수정/삭제 API를 추가한다.
-- [ ] shared workspace D-Day 삭제와 Task 연결 API를 추가한다.
+- [x] shared workspace D-Day 삭제와 Task 연결 API를 추가한다.
 - [ ] workspace 반복 Task materialize를 구현한다.
 - [x] 게스트 계정은 공유 workspace 초대 대상에서 제외하거나 제한 정책을 둔다.
 - [ ] 감사 로그 또는 최소한 생성/수정자 필드를 남긴다.

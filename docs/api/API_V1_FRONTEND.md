@@ -1138,6 +1138,26 @@ Response: `null`
 
 `OWNER`, `EDITOR`만 삭제할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다. workspace 반복 Task 삭제는 아직 HTTP 400이다.
 
+### Workspace Task D-Day 연결
+
+```http
+PATCH /api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal?ddayGoalId={goalId}
+```
+
+Response: `TaskResponse`
+
+`OWNER`, `EDITOR`만 연결할 수 있다. Task와 D-Day는 같은 workspace의 `WORKSPACE` scope여야 한다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`, 다른 workspace의 D-Day ID나 workspace scope 밖 D-Day ID는 `DDAY_GOAL_NOT_FOUND`처럼 처리된다.
+
+### Workspace Task D-Day 연결 해제
+
+```http
+DELETE /api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal
+```
+
+Response: `TaskResponse`
+
+`OWNER`, `EDITOR`만 연결 해제할 수 있다.
+
 ### Workspace D-Day 생성
 
 ```http
@@ -1170,11 +1190,29 @@ Response: `DdayGoalResponse`
 
 `ACTIVE` 멤버가 조회할 수 있다. 다른 workspace의 D-Day ID나 workspace scope 밖 D-Day ID는 `DDAY_GOAL_NOT_FOUND`처럼 처리된다.
 
+### Workspace D-Day 연결 Task 목록
+
+```http
+GET /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}/tasks
+```
+
+Response: `TaskResponse[]`
+
+`ACTIVE` 멤버가 조회할 수 있다. 같은 workspace에서 해당 D-Day에 연결된 Task만 반환한다.
+
+### Workspace D-Day 삭제
+
+```http
+DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
+```
+
+Response: `null`
+
+`OWNER`, `EDITOR`만 삭제할 수 있다. 삭제 시 같은 workspace에서 연결된 Task의 D-Day 연결을 해제한다.
+
 아직 제공하지 않는 workspace 하위 API:
 
 - workspace 반복 Task materialize
-- workspace D-Day 삭제
-- workspace D-Day와 workspace Task 연결
 - workspace 알림 후보
 
 기존 개인 API인 `/api/v1/tasks/**`, `/api/v1/dday-goals/**`는 `PERSONAL` scope 데이터만 반환한다. workspace scope 데이터는 workspace 하위 API가 열리기 전까지 프론트에서 조회하거나 수정할 수 없다.

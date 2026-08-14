@@ -521,6 +521,11 @@ public class TaskService {
         return TaskResponse.from(connected);
     }
 
+    public TaskResponse connectDdayGoalForWorkspace(Long id, Long ddayGoalId, SharedWorkspace workspace) {
+        Task connected = taskTxService.connectDdayGoalTxForWorkspace(id, ddayGoalId, workspace);
+        return TaskResponse.from(connected);
+    }
+
     public TaskResponse disconnectDdayGoal(Long id) {
         Task disconnected = taskTxService.disconnectDdayGoalTx(id);
         return TaskResponse.from(disconnected);
@@ -528,6 +533,11 @@ public class TaskService {
 
     public TaskResponse disconnectDdayGoalForOwner(Long id, User owner) {
         Task disconnected = taskTxService.disconnectDdayGoalTxForOwner(id, owner);
+        return TaskResponse.from(disconnected);
+    }
+
+    public TaskResponse disconnectDdayGoalForWorkspace(Long id, SharedWorkspace workspace) {
+        Task disconnected = taskTxService.disconnectDdayGoalTxForWorkspace(id, workspace);
         return TaskResponse.from(disconnected);
     }
 

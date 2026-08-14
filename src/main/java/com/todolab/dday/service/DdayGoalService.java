@@ -131,6 +131,18 @@ public class DdayGoalService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<TaskResponse> findTasksForWorkspace(Long id, SharedWorkspace workspace) {
+        Long workspaceId = workspaceId(workspace);
+        if (ddayGoalRepository.findByIdAndWorkspaceIdAndScope(id, workspaceId, ResourceScope.WORKSPACE).isEmpty()) {
+            throw new DdayGoalNotFoundException(id);
+        }
+
+        return taskRepository.findWorkspaceByDdayGoalId(workspaceId, id).stream()
+                .map(TaskResponse::from)
+                .toList();
+    }
+
     @Transactional
     public void delete(Long id) {
         if (!ddayGoalRepository.existsById(id)) {
@@ -152,10 +164,28 @@ public class DdayGoalService {
         ddayGoalRepository.deleteById(id);
     }
 
+    @Transactional
+    public void deleteForWorkspace(Long id, SharedWorkspace workspace) {
+        Long workspaceId = workspaceId(workspace);
+        if (ddayGoalRepository.findByIdAndWorkspaceIdAndScope(id, workspaceId, ResourceScope.WORKSPACE).isEmpty()) {
+            throw new DdayGoalNotFoundException(id);
+        }
+        taskRepository.findWorkspaceByDdayGoalId(workspaceId, id)
+                .forEach(Task::disconnectDdayGoal);
+        ddayGoalRepository.deleteById(id);
+    }
+
     private Long ownerId(User owner) {
         if (owner == null || owner.getId() == null) {
             throw new IllegalArgumentException("owner는 영속화된 사용자여야 합니다.");
         }
         return owner.getId();
+    }
+
+    private Long workspaceId(SharedWorkspace workspace) {
+        if (workspace == null || workspace.getId() == null) {
+            throw new IllegalArgumentException("workspace는 영속화된 workspace여야 합니다.");
+        }
+        return workspace.getId();
     }
 }

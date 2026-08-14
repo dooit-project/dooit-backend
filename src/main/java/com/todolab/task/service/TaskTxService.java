@@ -272,6 +272,17 @@ public class TaskTxService {
     }
 
     @Transactional
+    public Task connectDdayGoalTxForWorkspace(Long id, Long ddayGoalId, SharedWorkspace workspace) {
+        Long workspaceId = workspaceId(workspace);
+        Task task = findTaskForWorkspace(id, workspace);
+        DdayGoal ddayGoal = ddayGoalRepository.findByIdAndWorkspaceIdAndScope(ddayGoalId, workspaceId, ResourceScope.WORKSPACE)
+                .orElseThrow(() -> new DdayGoalNotFoundException(ddayGoalId));
+
+        task.connectDdayGoal(ddayGoal);
+        return taskRepository.save(task);
+    }
+
+    @Transactional
     public Task disconnectDdayGoalTx(Long id) {
         Task task = findTask(id);
         task.disconnectDdayGoal();
@@ -281,6 +292,13 @@ public class TaskTxService {
     @Transactional
     public Task disconnectDdayGoalTxForOwner(Long id, User owner) {
         Task task = findTaskForOwner(id, owner);
+        task.disconnectDdayGoal();
+        return taskRepository.save(task);
+    }
+
+    @Transactional
+    public Task disconnectDdayGoalTxForWorkspace(Long id, SharedWorkspace workspace) {
+        Task task = findTaskForWorkspace(id, workspace);
         task.disconnectDdayGoal();
         return taskRepository.save(task);
     }

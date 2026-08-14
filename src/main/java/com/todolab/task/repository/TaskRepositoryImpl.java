@@ -350,6 +350,21 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                 .fetch();
     }
 
+    @Override
+    public List<Task> findWorkspaceByDdayGoalId(Long workspaceId, Long ddayGoalId) {
+        QTask t = QTask.task;
+
+        return queryFactory
+                .selectFrom(t)
+                .where(
+                        workspaceIdEq(t, workspaceId),
+                        workspaceScope(t),
+                        t.ddayGoal.id.eq(ddayGoalId)
+                )
+                .orderBy(t.targetDate.asc().nullsLast(), t.createdAt.asc(), t.id.asc())
+                .fetch();
+    }
+
     private BooleanExpression ownerIdEq(QTask task, Long ownerId) {
         return ownerId == null ? null : task.owner.id.eq(ownerId);
     }

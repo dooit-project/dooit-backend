@@ -2,6 +2,7 @@ package com.todolab.workspace.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
+import com.todolab.dday.dto.DdayGoalRequest;
 import com.todolab.mail.MailService;
 import com.todolab.task.domain.RecurrenceFrequency;
 import com.todolab.task.domain.TaskType;
@@ -26,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.notNullValue;
@@ -232,6 +234,107 @@ class WorkspaceTaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Workspace Task는 같은 workspace D-Day에 연결하고 해제한다")
+    void connectAndDisconnectWorkspaceDdayGoal_success() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-dday@example.com");
+        String editorToken = accessToken("workspace-task-editor-dday@example.com");
+        String viewerToken = accessToken("workspace-task-viewer-dday@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long editorMemberId = invite(ownerToken, workspaceId, "workspace-task-editor-dday@example.com", WorkspaceRole.EDITOR);
+        Long viewerMemberId = invite(ownerToken, workspaceId, "workspace-task-viewer-dday@example.com", WorkspaceRole.VIEWER);
+        accept(editorToken, workspaceId, editorMemberId);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 출시 준비",
+                null,
+                TaskType.TODO,
+                null,
+                null,
+                null,
+                false
+        ));
+        Long goalId = createWorkspaceDday(ownerToken, workspaceId, new DdayGoalRequest(
+                "공유 출시",
+                LocalDate.of(2026, 9, 30)
+        ));
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .param("ddayGoalId", goalId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(taskId))
+                .andExpect(jsonPath("$.data.ddayGoalId").value(goalId))
+                .andExpect(jsonPath("$.data.ddayGoalTitle").value("공유 출시"));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/dday-goals/{goalId}/tasks", workspaceId, goalId)
+                        .header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(taskId));
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + editorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.ddayGoalId").isEmpty());
+    }
+
+    @Test
+    @DisplayName("v1 Workspace Task는 다른 workspace D-Day에 연결할 수 없다")
+    void connectWorkspaceDdayGoal_notFoundForOtherWorkspaceGoal() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-other-dday@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long otherWorkspaceId = createWorkspace(ownerToken, "마케팅팀 일정");
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 출시 준비",
+                null,
+                TaskType.TODO,
+                null,
+                null,
+                null,
+                false
+        ));
+        Long otherGoalId = createWorkspaceDday(ownerToken, otherWorkspaceId, new DdayGoalRequest(
+                "다른 팀 출시",
+                LocalDate.of(2026, 10, 31)
+        ));
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .param("ddayGoalId", otherGoalId.toString()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(30001));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace Task D-Day 연결은 VIEWER에게 403을 반환한다")
+    void connectWorkspaceDdayGoal_forbiddenForViewer() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-dday-forbidden@example.com");
+        String viewerToken = accessToken("workspace-task-viewer-dday-forbidden@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long viewerMemberId = invite(ownerToken, workspaceId, "workspace-task-viewer-dday-forbidden@example.com", WorkspaceRole.VIEWER);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 출시 준비",
+                null,
+                TaskType.TODO,
+                null,
+                null,
+                null,
+                false
+        ));
+        Long goalId = createWorkspaceDday(ownerToken, workspaceId, new DdayGoalRequest(
+                "공유 출시",
+                LocalDate.of(2026, 9, 30)
+        ));
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + viewerToken)
+                        .param("ddayGoalId", goalId.toString()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+    }
+
+    @Test
     @DisplayName("v1 Workspace Task 조회는 non-member에게 404를 반환한다")
     void readWorkspaceTask_notFoundForNonMember() throws Exception {
         String ownerToken = accessToken("workspace-task-owner-nonmember@example.com");
@@ -306,6 +409,20 @@ class WorkspaceTaskV1IntegrationTest {
 
     private Long createWorkspaceTask(String accessToken, Long workspaceId, TaskRequest request) throws Exception {
         String response = mockMvc.perform(post("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").value(notNullValue()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private Long createWorkspaceDday(String accessToken, Long workspaceId, DdayGoalRequest request) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/workspaces/{workspaceId}/dday-goals", workspaceId)
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

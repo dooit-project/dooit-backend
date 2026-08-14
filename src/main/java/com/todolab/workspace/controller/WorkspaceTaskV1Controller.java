@@ -22,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -115,5 +116,30 @@ public class WorkspaceTaskV1Controller {
         SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
         taskService.deleteForWorkspace(taskId, workspace);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "Workspace Task D-Day 목표 연결", description = "OWNER 또는 EDITOR가 workspace scope Task를 같은 workspace의 D-Day 목표에 연결합니다.")
+    @PatchMapping("/{taskId}/dday-goal")
+    public ResponseEntity<ApiResponse<TaskResponse>> connectDdayGoal(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId,
+            @PathVariable Long taskId,
+            @RequestParam Long ddayGoalId
+    ) {
+        User actor = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
+        return ResponseEntity.ok(ApiResponse.success(taskService.connectDdayGoalForWorkspace(taskId, ddayGoalId, workspace)));
+    }
+
+    @Operation(summary = "Workspace Task D-Day 목표 연결 해제", description = "OWNER 또는 EDITOR가 workspace scope Task의 D-Day 목표 연결을 해제합니다.")
+    @DeleteMapping("/{taskId}/dday-goal")
+    public ResponseEntity<ApiResponse<TaskResponse>> disconnectDdayGoal(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId,
+            @PathVariable Long taskId
+    ) {
+        User actor = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
+        return ResponseEntity.ok(ApiResponse.success(taskService.disconnectDdayGoalForWorkspace(taskId, workspace)));
     }
 }

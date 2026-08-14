@@ -5,6 +5,7 @@ import com.todolab.common.api.ApiResponse;
 import com.todolab.dday.dto.DdayGoalRequest;
 import com.todolab.dday.dto.DdayGoalResponse;
 import com.todolab.dday.service.DdayGoalService;
+import com.todolab.task.dto.TaskResponse;
 import com.todolab.user.domain.User;
 import com.todolab.workspace.domain.SharedWorkspace;
 import com.todolab.workspace.service.WorkspaceService;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -71,5 +73,30 @@ public class WorkspaceDdayGoalV1Controller {
         User member = currentUserService.requireUser(jwt);
         SharedWorkspace workspace = workspaceService.requireReadableWorkspace(workspaceId, member);
         return ResponseEntity.ok(ApiResponse.success(ddayGoalService.getForWorkspace(goalId, workspace)));
+    }
+
+    @Operation(summary = "Workspace D-Day 연결 Task 조회", description = "ACTIVE 멤버가 workspace scope D-Day 목표에 연결된 Task 목록을 조회합니다.")
+    @GetMapping("/{goalId}/tasks")
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> findTasks(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId,
+            @PathVariable Long goalId
+    ) {
+        User member = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireReadableWorkspace(workspaceId, member);
+        return ResponseEntity.ok(ApiResponse.success(ddayGoalService.findTasksForWorkspace(goalId, workspace)));
+    }
+
+    @Operation(summary = "Workspace D-Day 목표 삭제", description = "OWNER 또는 EDITOR가 workspace scope D-Day 목표를 삭제하고 연결된 workspace Task의 D-Day 연결을 해제합니다.")
+    @DeleteMapping("/{goalId}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId,
+            @PathVariable Long goalId
+    ) {
+        User actor = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
+        ddayGoalService.deleteForWorkspace(goalId, workspace);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

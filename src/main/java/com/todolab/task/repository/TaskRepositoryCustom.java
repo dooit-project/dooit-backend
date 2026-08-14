@@ -56,4 +56,6 @@ public interface TaskRepositoryCustom {
     List<Task> findByDdayGoalId(Long ddayGoalId);
 
     List<Task> findByDdayGoalId(Long ownerId, Long ddayGoalId);
+
+    List<Task> findWorkspaceByDdayGoalId(Long workspaceId, Long ddayGoalId);
 }
