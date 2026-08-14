@@ -169,6 +169,34 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Task 빠른 등록은 단독 요일 표현을 가장 가까운 해당 요일 날짜로 파싱한다")
+    void quickCapture_singleWeekday_success() throws Exception {
+        String accessToken = accessToken("task-quick-capture-weekday@example.com");
+        TaskQuickCaptureRequest request = new TaskQuickCaptureRequest(
+                "금요일 병원",
+                LocalDate.of(2026, 8, 13),
+                "Asia/Seoul",
+                "건강"
+        );
+
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.parsed").value(true))
+                .andExpect(jsonPath("$.data.parsedDate").value("2026-08-14"))
+                .andExpect(jsonPath("$.data.parsedTime").isEmpty())
+                .andExpect(jsonPath("$.data.parsedRecurrenceFrequency").isEmpty())
+                .andExpect(jsonPath("$.data.task.title").value("병원"))
+                .andExpect(jsonPath("$.data.task.type").value("SCHEDULE"))
+                .andExpect(jsonPath("$.data.task.startAt").value("2026-08-14T00:00:00"))
+                .andExpect(jsonPath("$.data.task.endAt").value("2026-08-15T00:00:00"))
+                .andExpect(jsonPath("$.data.task.allDay").value(true))
+                .andExpect(jsonPath("$.data.task.category").value("건강"));
+    }
+
+    @Test
     @DisplayName("v1 Task 빠른 등록은 파싱하지 못한 원문을 Inbox TODO로 저장한다")
     void quickCapture_plainTextFallback_success() throws Exception {
         String accessToken = accessToken("task-quick-capture-fallback@example.com");

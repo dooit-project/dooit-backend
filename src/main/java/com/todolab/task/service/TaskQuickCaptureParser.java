@@ -31,6 +31,7 @@ public class TaskQuickCaptureParser {
     private static final Pattern SLASH_DATE = Pattern.compile("\\b(\\d{1,2})/(\\d{1,2})\\b");
     private static final Pattern TIME = Pattern.compile("(오전|오후)?\\s*(\\d{1,2})시(?:\\s*(\\d{1,2})분)?");
     private static final Pattern WEEKLY = Pattern.compile("매주\\s*(월요일|화요일|수요일|목요일|금요일|토요일|일요일|월|화|수|목|금|토|일)");
+    private static final Pattern SINGLE_WEEKDAY = Pattern.compile("(월요일|화요일|수요일|목요일|금요일|토요일|일요일|(?<![가-힣])(월|화|수|목|금|토|일)(?![가-힣]))");
 
     public ParsedQuickCapture parse(TaskQuickCaptureRequest request, User owner) {
         String originalText = normalizeText(request.text());
@@ -168,6 +169,12 @@ public class TaskQuickCaptureParser {
             }
         }
 
+        Matcher weekday = SINGLE_WEEKDAY.matcher(text);
+        if (weekday.find() && !isWeeklyToken(text, weekday.start())) {
+            consumedTokens.add(weekday.group());
+            return new ParsedDate(referenceDate.with(TemporalAdjusters.nextOrSame(toDayOfWeek(weekday.group()))));
+        }
+
         return new ParsedDate(null);
     }
 
@@ -178,15 +185,37 @@ public class TaskQuickCaptureParser {
         }
 
         consumedTokens.add(matcher.group());
-        return switch (matcher.group(1)) {
-            case "월요일", "월" -> new ParsedWeekly(DayOfWeek.MONDAY, "MO");
-            case "화요일", "화" -> new ParsedWeekly(DayOfWeek.TUESDAY, "TU");
-            case "수요일", "수" -> new ParsedWeekly(DayOfWeek.WEDNESDAY, "WE");
-            case "목요일", "목" -> new ParsedWeekly(DayOfWeek.THURSDAY, "TH");
-            case "금요일", "금" -> new ParsedWeekly(DayOfWeek.FRIDAY, "FR");
-            case "토요일", "토" -> new ParsedWeekly(DayOfWeek.SATURDAY, "SA");
-            case "일요일", "일" -> new ParsedWeekly(DayOfWeek.SUNDAY, "SU");
-            default -> throw new TaskValidationException("올바르지 않은 반복 요일입니다.");
+        DayOfWeek dayOfWeek = toDayOfWeek(matcher.group(1));
+        return new ParsedWeekly(dayOfWeek, toByDay(dayOfWeek));
+    }
+
+    private boolean isWeeklyToken(String text, int tokenStart) {
+        int prefixStart = Math.max(0, tokenStart - 3);
+        return text.substring(prefixStart, tokenStart).contains("매주");
+    }
+
+    private DayOfWeek toDayOfWeek(String value) {
+        return switch (value) {
+            case "월요일", "월" -> DayOfWeek.MONDAY;
+            case "화요일", "화" -> DayOfWeek.TUESDAY;
+            case "수요일", "수" -> DayOfWeek.WEDNESDAY;
+            case "목요일", "목" -> DayOfWeek.THURSDAY;
+            case "금요일", "금" -> DayOfWeek.FRIDAY;
+            case "토요일", "토" -> DayOfWeek.SATURDAY;
+            case "일요일", "일" -> DayOfWeek.SUNDAY;
+            default -> throw new TaskValidationException("올바르지 않은 요일입니다.");
+        };
+    }
+
+    private String toByDay(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY -> "MO";
+            case TUESDAY -> "TU";
+            case WEDNESDAY -> "WE";
+            case THURSDAY -> "TH";
+            case FRIDAY -> "FR";
+            case SATURDAY -> "SA";
+            case SUNDAY -> "SU";
         };
     }
 
