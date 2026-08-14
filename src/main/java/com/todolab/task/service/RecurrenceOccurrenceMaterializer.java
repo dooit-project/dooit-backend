@@ -39,6 +39,15 @@ public class RecurrenceOccurrenceMaterializer {
         recurrenceSeriesRepository.findByOwnerId(ownerId).forEach(series -> materializeSeries(series, fromInclusive, toExclusive));
     }
 
+    @Transactional
+    public void materializeForWorkspace(Long workspaceId, LocalDate fromInclusive, LocalDate toExclusive) {
+        if (workspaceId == null || fromInclusive == null || toExclusive == null || !fromInclusive.isBefore(toExclusive)) {
+            return;
+        }
+
+        recurrenceSeriesRepository.findByWorkspaceId(workspaceId).forEach(series -> materializeSeries(series, fromInclusive, toExclusive));
+    }
+
     private void materializeSeries(RecurrenceSeries series, LocalDate fromInclusive, LocalDate toExclusive) {
         Task template = taskRepository.findByRecurrenceSeriesIdOrderByOccurrenceDateAscIdAsc(series.getId()).stream()
                 .filter(task -> task.getRecurrenceException() == null)
@@ -137,7 +146,7 @@ public class RecurrenceOccurrenceMaterializer {
         LocalDateTime startAt = template.getStartAt() == null ? null : template.getStartAt().plusDays(daysToMove);
         LocalDateTime endAt = template.getEndAt() == null ? null : template.getEndAt().plusDays(daysToMove);
 
-        return Task.builder()
+        Task occurrence = Task.builder()
                 .title(template.getTitle())
                 .description(template.getDescription())
                 .type(template.getType())
@@ -152,6 +161,10 @@ public class RecurrenceOccurrenceMaterializer {
                 .occurrenceDate(occurrenceDate)
                 .originalOccurrenceDate(occurrenceDate)
                 .build();
+        if (series.getWorkspace() != null) {
+            occurrence.assignWorkspace(series.getWorkspace());
+        }
+        return occurrence;
     }
 
     private record RuleParts(Set<DayOfWeek> byDay, List<Integer> byMonthDay) {

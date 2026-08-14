@@ -78,9 +78,6 @@ public class TaskService {
         if (workspace == null || workspace.getId() == null) {
             throw new IllegalArgumentException("workspace는 영속화된 workspace여야 합니다.");
         }
-        if (req.recurrence() != null) {
-            throw new TaskValidationException("workspace 반복 Task는 아직 지원하지 않습니다.");
-        }
         return create(req, actor, workspace);
     }
 
@@ -179,11 +176,16 @@ public class TaskService {
         return findTasks(request, ownerId(owner), owner);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TaskResponse> getTasksForWorkspace(TaskQueryRequest request, SharedWorkspace workspace) {
         final TaskQueryType type = request.getType();
         final String strDate = request.getDate();
         DateRange range = type.calculate(strDate);
+        recurrenceOccurrenceMaterializer.materializeForWorkspace(
+                workspace.getId(),
+                range.materializeFromInclusive(),
+                range.materializeToExclusive()
+        );
 
         return taskRepository.findWorkspaceByDateRangeAndType(
                         workspace.getId(),

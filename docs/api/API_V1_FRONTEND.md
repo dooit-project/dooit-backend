@@ -1093,8 +1093,8 @@ Response: `TaskResponse`
 
 - `OWNER`, `EDITOR`만 생성할 수 있다.
 - 생성된 Task는 `WORKSPACE` scope로 저장되며 기존 개인 Task API에는 반환되지 않는다.
-- `recurrence`가 있는 workspace Task 생성은 아직 HTTP 400이다.
-- D-Day 연결은 workspace D-Day API가 열리기 전까지 지원하지 않는다.
+- `recurrence`가 있는 workspace Task는 workspace scope 반복 series로 저장된다.
+- D-Day 연결은 같은 workspace의 D-Day만 지원한다.
 
 ### Workspace Task 범위 조회
 
@@ -1212,7 +1212,6 @@ Response: `null`
 
 아직 제공하지 않는 workspace 하위 API:
 
-- workspace 반복 Task materialize
 - workspace 알림 후보
 
 기존 개인 API인 `/api/v1/tasks/**`, `/api/v1/dday-goals/**`는 `PERSONAL` scope 데이터만 반환한다. workspace scope 데이터는 workspace 하위 API가 열리기 전까지 프론트에서 조회하거나 수정할 수 없다.

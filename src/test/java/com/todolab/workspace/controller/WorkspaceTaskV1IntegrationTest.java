@@ -357,35 +357,54 @@ class WorkspaceTaskV1IntegrationTest {
     }
 
     @Test
-    @DisplayName("v1 Workspace 반복 Task 생성은 아직 거부한다")
-    void createWorkspaceRecurringTask_rejected() throws Exception {
+    @DisplayName("v1 Workspace 반복 Task는 범위 조회에서 occurrence를 materialize한다")
+    void createWorkspaceRecurringTask_materializedOnRead() throws Exception {
         String ownerToken = accessToken("workspace-task-owner-recurrence@example.com");
+        String viewerToken = accessToken("workspace-task-viewer-recurrence@example.com");
         Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long viewerMemberId = invite(ownerToken, workspaceId, "workspace-task-viewer-recurrence@example.com", WorkspaceRole.VIEWER);
+        accept(viewerToken, workspaceId, viewerMemberId);
 
-        mockMvc.perform(post("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
-                        .header("Authorization", "Bearer " + ownerToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new TaskRequest(
-                                "공유 반복 회의",
-                                null,
-                                TaskType.SCHEDULE,
-                                LocalDateTime.of(2026, 8, 17, 9, 0),
-                                LocalDateTime.of(2026, 8, 17, 10, 0),
-                                null,
-                                false,
-                                new TaskRecurrenceRequest(
-                                        RecurrenceFrequency.WEEKLY,
-                                        1,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        List.of("MO"),
-                                        null
-                                )
-                        ))))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.code").value(10001));
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 반복 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                null,
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of("MO"),
+                        null
+                )
+        ));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + viewerToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08-17"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(taskId))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-17"));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + viewerToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08-24"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].title").value("공유 반복 회의"))
+                .andExpect(jsonPath("$.data[0].startAt").value("2026-08-24T09:00:00"))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-24"));
     }
 
     private String accessToken(String email) {

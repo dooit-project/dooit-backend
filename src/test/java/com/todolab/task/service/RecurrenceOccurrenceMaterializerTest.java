@@ -11,6 +11,8 @@ import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
+import com.todolab.workspace.domain.SharedWorkspace;
+import com.todolab.workspace.repository.SharedWorkspaceRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,9 @@ class RecurrenceOccurrenceMaterializerTest extends RepositoryTestSupport {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    SharedWorkspaceRepository sharedWorkspaceRepository;
 
     @Test
     @DisplayName("반복 series template Task 기준으로 조회 범위의 occurrence Task를 생성한다")
@@ -84,6 +89,48 @@ class RecurrenceOccurrenceMaterializerTest extends RepositoryTestSupport {
         assertThat(tasks.get(1).getEndAt()).isEqualTo(LocalDateTime.of(2026, 7, 13, 10, 0));
         assertThat(tasks.get(1).getStatus()).isEqualTo(TaskStatus.TODAY);
         assertThat(tasks.get(1).getTargetDate()).isEqualTo(LocalDate.of(2026, 7, 13));
+    }
+
+    @Test
+    @DisplayName("workspace 반복 series occurrence는 workspace scope로 생성한다")
+    void materializeForWorkspace_createsWorkspaceOccurrences() {
+        User owner = userRepository.save(new User("materialize-workspace@example.com", "encoded-password", "반복 사용자"));
+        SharedWorkspace workspace = sharedWorkspaceRepository.save(new SharedWorkspace("제품팀", null, owner));
+        RecurrenceSeries series = new RecurrenceSeries(
+                owner,
+                RecurrenceFrequency.WEEKLY,
+                1,
+                "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=2",
+                "Asia/Seoul",
+                LocalDateTime.of(2026, 7, 6, 9, 0),
+                null,
+                2
+        );
+        series.assignWorkspace(workspace);
+        recurrenceSeriesRepository.save(series);
+        Task template = Task.builder()
+                .title("공유 주간 회의")
+                .type(TaskType.SCHEDULE)
+                .startAt(LocalDateTime.of(2026, 7, 6, 9, 0))
+                .endAt(LocalDateTime.of(2026, 7, 6, 10, 0))
+                .owner(owner)
+                .recurrenceSeries(series)
+                .occurrenceDate(LocalDate.of(2026, 7, 6))
+                .originalOccurrenceDate(LocalDate.of(2026, 7, 6))
+                .build();
+        template.assignWorkspace(workspace);
+        taskRepository.save(template);
+        flushAndClear();
+
+        materializer.materializeForWorkspace(workspace.getId(), LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31));
+        flushAndClear();
+
+        List<Task> tasks = taskRepository.findByRecurrenceSeriesIdOrderByOccurrenceDateAscIdAsc(series.getId());
+
+        assertThat(tasks).hasSize(2);
+        assertThat(tasks.get(1).getOccurrenceDate()).isEqualTo(LocalDate.of(2026, 7, 13));
+        assertThat(tasks.get(1).getScope()).isEqualTo(com.todolab.common.domain.ResourceScope.WORKSPACE);
+        assertThat(tasks.get(1).getWorkspace().getId()).isEqualTo(workspace.getId());
     }
 
     @Test

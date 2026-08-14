@@ -15,6 +15,12 @@ public interface RecurrenceSeriesRepository extends JpaRepository<RecurrenceSeri
 
     List<RecurrenceSeries> findByOwnerIdAndScope(Long ownerId, ResourceScope scope);
 
+    default List<RecurrenceSeries> findByWorkspaceId(Long workspaceId) {
+        return findByWorkspaceIdAndScope(workspaceId, ResourceScope.WORKSPACE);
+    }
+
+    List<RecurrenceSeries> findByWorkspaceIdAndScope(Long workspaceId, ResourceScope scope);
+
     default Optional<RecurrenceSeries> findByIdAndOwnerId(Long id, Long ownerId) {
         return findByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
     }

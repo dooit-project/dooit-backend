@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-13
 
-이 문서는 일정 공유 기능의 backend 설계 기준이다. 현재 API에는 workspace와 membership 기본 API, workspace Task 생성/조회/수정/삭제 API, workspace D-Day 생성/조회/삭제 API, workspace Task-D-Day 연결 API가 있다.
+이 문서는 일정 공유 기능의 backend 설계 기준이다. 현재 API에는 workspace와 membership 기본 API, workspace Task 생성/조회/수정/삭제 API, workspace 반복 Task materialize, workspace D-Day 생성/조회/삭제 API, workspace Task-D-Day 연결 API가 있다.
 
 ## 목표
 
