@@ -2,6 +2,8 @@ package com.todolab.task.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
+import com.todolab.dday.domain.DdayGoal;
+import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.mail.MailService;
 import com.todolab.task.domain.RecurrenceFrequency;
 import com.todolab.task.domain.TaskType;
@@ -49,6 +51,9 @@ class TaskTemplateV1IntegrationTest {
 
     @Autowired
     TaskTemplateRepository taskTemplateRepository;
+
+    @Autowired
+    DdayGoalRepository ddayGoalRepository;
 
     @Autowired
     JwtTokenService jwtTokenService;
@@ -147,6 +152,7 @@ class TaskTemplateV1IntegrationTest {
                 LocalDate.of(2026, 8, 17),
                 "월요일 운동",
                 null,
+                null,
                 null
         );
 
@@ -165,6 +171,77 @@ class TaskTemplateV1IntegrationTest {
                 .andExpect(jsonPath("$.data.recurrenceSeriesId").value(notNullValue()))
                 .andExpect(jsonPath("$.data.recurrence.frequency").value("WEEKLY"))
                 .andExpect(jsonPath("$.data.recurrence.recurrenceRule").value("FREQ=WEEKLY;INTERVAL=1;BYDAY=MO"));
+    }
+
+    @Test
+    @DisplayName("v1 Task 템플릿으로 생성한 Task에 개인 D-Day를 연결한다")
+    void createTaskFromTemplate_withDdayGoal_success() throws Exception {
+        String accessToken = accessToken("task-template-create-dday@example.com");
+        User owner = userRepository.findByEmail("task-template-create-dday@example.com").orElseThrow();
+        DdayGoal goal = ddayGoalRepository.save(new DdayGoal("출시", LocalDate.of(2026, 9, 30), owner));
+        Long templateId = createTemplate(accessToken, new TaskTemplateRequest(
+                "출시 준비",
+                null,
+                TaskType.TODO,
+                "업무",
+                false,
+                null,
+                null,
+                null,
+                null,
+                null
+        ));
+        TaskTemplateCreateTaskRequest request = new TaskTemplateCreateTaskRequest(
+                null,
+                null,
+                null,
+                null,
+                goal.getId()
+        );
+
+        mockMvc.perform(post("/api/v1/task-templates/{id}/tasks", templateId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").value(notNullValue()))
+                .andExpect(jsonPath("$.data.title").value("출시 준비"))
+                .andExpect(jsonPath("$.data.ddayGoalId").value(goal.getId()))
+                .andExpect(jsonPath("$.data.ddayGoalTitle").value("출시"));
+    }
+
+    @Test
+    @DisplayName("v1 Task 템플릿 Task 생성은 다른 사용자의 D-Day 연결을 거부한다")
+    void createTaskFromTemplate_withOtherOwnerDdayGoal_notFound() throws Exception {
+        String accessToken = accessToken("task-template-create-other-dday@example.com");
+        User otherOwner = userRepository.save(new User("task-template-other-dday-owner@example.com", "encoded-password", "다른 사용자"));
+        DdayGoal otherGoal = ddayGoalRepository.save(new DdayGoal("다른 목표", LocalDate.of(2026, 9, 30), otherOwner));
+        Long templateId = createTemplate(accessToken, new TaskTemplateRequest(
+                "출시 준비",
+                null,
+                TaskType.TODO,
+                "업무",
+                false,
+                null,
+                null,
+                null,
+                null,
+                null
+        ));
+        TaskTemplateCreateTaskRequest request = new TaskTemplateCreateTaskRequest(
+                null,
+                null,
+                null,
+                null,
+                otherGoal.getId()
+        );
+
+        mockMvc.perform(post("/api/v1/task-templates/{id}/tasks", templateId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(30001));
     }
 
     private String accessToken(String email) {

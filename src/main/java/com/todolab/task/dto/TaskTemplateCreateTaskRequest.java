@@ -20,6 +20,9 @@ public record TaskTemplateCreateTaskRequest(
 
         @Size(max = 30, message = "카테고리 override는 30자 이하여야 합니다")
         @Schema(description = "템플릿 카테고리 대신 사용할 카테고리", example = "건강", maxLength = 30, nullable = true)
-        String category
+        String category,
+
+        @Schema(description = "생성된 Task에 연결할 개인 D-Day 목표 ID. 생략하면 연결하지 않습니다.", example = "1", nullable = true)
+        Long ddayGoalId
 ) {
 }

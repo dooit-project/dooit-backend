@@ -91,7 +91,11 @@ public class TaskTemplateService {
     public TaskResponse createTaskForOwner(Long id, TaskTemplateCreateTaskRequest request, User owner) {
         TaskTemplate template = findForOwner(id, owner);
         TaskRequest taskRequest = toTaskRequest(template, request);
-        return taskService.createForOwner(taskRequest, owner);
+        TaskResponse created = taskService.createForOwner(taskRequest, owner);
+        if (request.ddayGoalId() == null) {
+            return created;
+        }
+        return taskService.connectDdayGoalForOwner(created.id(), request.ddayGoalId(), owner);
     }
 
     private TaskTemplate findForOwner(Long id, User owner) {

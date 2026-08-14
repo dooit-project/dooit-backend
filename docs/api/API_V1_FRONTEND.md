@@ -383,6 +383,7 @@ type TaskTemplateCreateTaskRequest = {
   title?: string | null; // 30자 이하 override
   description?: string | null; // 300자 이하 override
   category?: string | null; // 30자 이하 override
+  ddayGoalId?: number | null; // 생성된 Task에 연결할 개인 D-Day 목표 ID
 };
 
 type TaskTemplateResponse = {
@@ -893,7 +894,8 @@ Response: `TaskTemplateResponse`
 - `defaultDurationMinutes`는 1분 이상 1440분 이하이며, Task 생성 시 생략되어 있으면 60분을 사용한다.
 - `recurrenceByDays`는 `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, `SU`만 허용한다.
 - 템플릿은 guest 승격 시 같은 사용자 ID로 유지되고, 기존 계정 로그인 병합과 만료 guest cleanup 대상에 포함된다.
-- D-Day 연결과 공유 workspace 템플릿 정책은 아직 지원하지 않는다.
+- 템플릿 자체에는 D-Day를 저장하지 않는다. 템플릿 기반 Task 생성 시 `ddayGoalId`를 보내면 생성된 개인 Task에 같은 owner의 개인 D-Day를 연결한다.
+- 공유 workspace 템플릿 정책은 아직 지원하지 않는다.
 
 ### 템플릿 목록
 
@@ -944,11 +946,12 @@ Response: `TaskResponse`
 ```json
 {
   "targetDate": "2026-08-17",
-  "title": "월요일 운동"
+  "title": "월요일 운동",
+  "ddayGoalId": 1
 }
 ```
 
-응답은 기존 Task 생성과 동일한 `TaskResponse`다. 반복 템플릿이면 첫 occurrence에 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`, `recurrence`가 포함된다.
+응답은 기존 Task 생성과 동일한 `TaskResponse`다. 반복 템플릿이면 첫 occurrence에 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`, `recurrence`가 포함된다. `ddayGoalId`는 같은 owner의 개인 D-Day만 허용하며 다른 owner 또는 workspace D-Day는 `DDAY_GOAL_NOT_FOUND`처럼 처리된다.
 
 ## 6. Workspace API
 
