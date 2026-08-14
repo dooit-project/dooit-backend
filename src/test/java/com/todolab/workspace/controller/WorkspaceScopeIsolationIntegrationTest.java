@@ -4,13 +4,20 @@ import com.todolab.auth.service.JwtTokenService;
 import com.todolab.dday.domain.DdayGoal;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.mail.MailService;
+import com.todolab.task.domain.RecurrenceFrequency;
+import com.todolab.task.domain.RecurrenceSeries;
 import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskType;
+import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
 import com.todolab.workspace.domain.SharedWorkspace;
+import com.todolab.workspace.domain.WorkspaceMember;
+import com.todolab.workspace.domain.WorkspaceMemberStatus;
+import com.todolab.workspace.domain.WorkspaceRole;
 import com.todolab.workspace.repository.SharedWorkspaceRepository;
+import com.todolab.workspace.repository.WorkspaceMemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +31,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,10 +53,16 @@ class WorkspaceScopeIsolationIntegrationTest {
     TaskRepository taskRepository;
 
     @Autowired
+    RecurrenceSeriesRepository recurrenceSeriesRepository;
+
+    @Autowired
     DdayGoalRepository ddayGoalRepository;
 
     @Autowired
     SharedWorkspaceRepository sharedWorkspaceRepository;
+
+    @Autowired
+    WorkspaceMemberRepository workspaceMemberRepository;
 
     @MockitoBean
     MailService mailService;
@@ -113,5 +127,89 @@ class WorkspaceScopeIsolationIntegrationTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value(30001));
+    }
+
+    @Test
+    @DisplayName("workspace Task는 personal D-Day에 연결할 수 없다")
+    void workspaceTask_rejectsPersonalDdayConnection() throws Exception {
+        User owner = userRepository.save(new User("workspace-scope-connect@example.com", "encoded-password", "Scope 사용자"));
+        String accessToken = jwtTokenService.createAccessToken(owner).tokenValue();
+        SharedWorkspace workspace = createOwnedWorkspace(owner, "공유 공간");
+        DdayGoal personalGoal = ddayGoalRepository.save(new DdayGoal("개인 목표", LocalDate.of(2026, 9, 30), owner));
+        Task workspaceTask = Task.builder()
+                .title("공유 일정")
+                .type(TaskType.TODO)
+                .owner(owner)
+                .build();
+        workspaceTask.assignWorkspace(workspace);
+        workspaceTask = taskRepository.save(workspaceTask);
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal", workspace.getId(), workspaceTask.getId())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("ddayGoalId", personalGoal.getId().toString()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(30001));
+    }
+
+    @Test
+    @DisplayName("workspace 반복 occurrence materialize는 다른 workspace 조회에 섞이지 않는다")
+    void workspaceOccurrenceMaterialize_staysInsideWorkspace() throws Exception {
+        User owner = userRepository.save(new User("workspace-scope-recurrence@example.com", "encoded-password", "Scope 사용자"));
+        String accessToken = jwtTokenService.createAccessToken(owner).tokenValue();
+        SharedWorkspace workspace = createOwnedWorkspace(owner, "공유 공간");
+        SharedWorkspace otherWorkspace = createOwnedWorkspace(owner, "다른 공유 공간");
+        RecurrenceSeries series = new RecurrenceSeries(
+                owner,
+                RecurrenceFrequency.WEEKLY,
+                1,
+                "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=2",
+                "Asia/Seoul",
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                null,
+                2
+        );
+        series.assignWorkspace(workspace);
+        series = recurrenceSeriesRepository.save(series);
+        Task template = Task.builder()
+                .title("공유 반복 회의")
+                .type(TaskType.SCHEDULE)
+                .startAt(LocalDateTime.of(2026, 8, 17, 9, 0))
+                .endAt(LocalDateTime.of(2026, 8, 17, 10, 0))
+                .owner(owner)
+                .recurrenceSeries(series)
+                .occurrenceDate(LocalDate.of(2026, 8, 17))
+                .originalOccurrenceDate(LocalDate.of(2026, 8, 17))
+                .build();
+        template.assignWorkspace(workspace);
+        taskRepository.save(template);
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspace.getId())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08-24"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-24"));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", otherWorkspace.getId())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08-24"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    private SharedWorkspace createOwnedWorkspace(User owner, String name) {
+        SharedWorkspace workspace = sharedWorkspaceRepository.save(new SharedWorkspace(name, null, owner));
+        workspaceMemberRepository.save(new WorkspaceMember(
+                workspace,
+                owner,
+                WorkspaceRole.OWNER,
+                WorkspaceMemberStatus.ACTIVE,
+                owner
+        ));
+        return workspace;
     }
 }

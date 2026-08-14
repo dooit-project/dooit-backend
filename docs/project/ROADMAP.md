@@ -63,7 +63,7 @@ Last updated: 2026-08-13
 - [x] 공유된 Task의 반복 series, D-Day 연결, push token, 알림 이력 소유권 정책을 문서화한다.
 - [x] 기존 owner scope API와 공유 조회 API를 분리한다.
 - [x] migration과 rollback 전략을 먼저 문서화한다.
-- [ ] `docs/api/SHARING_CONTRACT.md` 기준으로 구현 전 invariant 테스트를 추가한다.
+- [x] `docs/api/SHARING_CONTRACT.md` 기준으로 구현 전후 invariant 테스트를 추가한다.
 
 선행 조건:
 
