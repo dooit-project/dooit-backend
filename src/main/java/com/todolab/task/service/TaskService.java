@@ -413,6 +413,11 @@ public class TaskService {
         return TaskResponse.from(updated);
     }
 
+    public TaskResponse updateForWorkspace(Long id, TaskRequest taskRequest, SharedWorkspace workspace) {
+        Task updated = taskTxService.updateTxForWorkspace(id, taskRequest, workspace);
+        return TaskResponse.from(updated);
+    }
+
     public TaskResponse updateRecurrenceRuleForOwner(Long id, TaskRecurrenceRequest request, User owner) {
         Task updated = recurrenceRuleUpdateService.updateRuleFromOccurrenceForOwner(id, request, owner);
         return TaskResponse.from(updated);
@@ -544,6 +549,10 @@ public class TaskService {
 
     public void deleteForOwner(Long id, User owner, RecurrenceEditScope recurrenceScope) {
         taskTxService.deleteTxForOwner(id, owner, recurrenceScope);
+    }
+
+    public void deleteForWorkspace(Long id, SharedWorkspace workspace) {
+        taskTxService.deleteTxForWorkspace(id, workspace);
     }
 
     private List<TaskResponse> findTasks(TaskQueryRequest request) {

@@ -29,9 +29,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -114,6 +116,119 @@ class WorkspaceTaskV1IntegrationTest {
                         ))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value(11003));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace Task는 EDITOR가 수정하고 VIEWER가 변경 내용을 조회한다")
+    void updateWorkspaceTask_successForEditor() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-update@example.com");
+        String editorToken = accessToken("workspace-task-editor-update@example.com");
+        String viewerToken = accessToken("workspace-task-viewer-update@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long editorMemberId = invite(ownerToken, workspaceId, "workspace-task-editor-update@example.com", WorkspaceRole.EDITOR);
+        Long viewerMemberId = invite(ownerToken, workspaceId, "workspace-task-viewer-update@example.com", WorkspaceRole.VIEWER);
+        accept(editorToken, workspaceId, editorMemberId);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 회의",
+                "킥오프",
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                "업무",
+                false
+        ));
+
+        mockMvc.perform(put("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskRequest(
+                                "공유 회의 변경",
+                                "회의실 확정",
+                                TaskType.SCHEDULE,
+                                LocalDateTime.of(2026, 8, 17, 10, 0),
+                                LocalDateTime.of(2026, 8, 17, 11, 0),
+                                "제품",
+                                false
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(taskId))
+                .andExpect(jsonPath("$.data.title").value("공유 회의 변경"))
+                .andExpect(jsonPath("$.data.category").value("제품"));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("공유 회의 변경"))
+                .andExpect(jsonPath("$.data.description").value("회의실 확정"));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace Task 수정과 삭제는 VIEWER에게 403을 반환한다")
+    void mutateWorkspaceTask_forbiddenForViewer() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-mutate-forbidden@example.com");
+        String viewerToken = accessToken("workspace-task-viewer-mutate-forbidden@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long viewerMemberId = invite(ownerToken, workspaceId, "workspace-task-viewer-mutate-forbidden@example.com", WorkspaceRole.VIEWER);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                null,
+                false
+        ));
+
+        mockMvc.perform(put("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + viewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskRequest(
+                                "공유 회의 변경",
+                                null,
+                                TaskType.SCHEDULE,
+                                LocalDateTime.of(2026, 8, 17, 10, 0),
+                                LocalDateTime.of(2026, 8, 17, 11, 0),
+                                null,
+                                false
+                        ))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace Task는 EDITOR가 삭제한다")
+    void deleteWorkspaceTask_successForEditor() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-delete@example.com");
+        String editorToken = accessToken("workspace-task-editor-delete@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long editorMemberId = invite(ownerToken, workspaceId, "workspace-task-editor-delete@example.com", WorkspaceRole.EDITOR);
+        accept(editorToken, workspaceId, editorMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                null,
+                false
+        ));
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + editorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(20001));
     }
 
     @Test

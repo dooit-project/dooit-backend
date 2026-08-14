@@ -1116,6 +1116,28 @@ Response: `TaskResponse`
 
 `ACTIVE` 멤버가 조회할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다.
 
+### Workspace Task 수정
+
+```http
+PUT /api/v1/workspaces/{workspaceId}/tasks/{taskId}
+```
+
+Request: `TaskRequest`
+
+Response: `TaskResponse`
+
+`OWNER`, `EDITOR`만 수정할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다. `recurrence`가 있는 요청과 workspace 반복 Task 수정은 아직 HTTP 400이다.
+
+### Workspace Task 삭제
+
+```http
+DELETE /api/v1/workspaces/{workspaceId}/tasks/{taskId}
+```
+
+Response: `null`
+
+`OWNER`, `EDITOR`만 삭제할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다. workspace 반복 Task 삭제는 아직 HTTP 400이다.
+
 ### Workspace D-Day 생성
 
 ```http
@@ -1150,7 +1172,6 @@ Response: `DdayGoalResponse`
 
 아직 제공하지 않는 workspace 하위 API:
 
-- workspace Task 수정/삭제
 - workspace 반복 Task materialize
 - workspace D-Day 삭제
 - workspace D-Day와 workspace Task 연결

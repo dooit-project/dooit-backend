@@ -20,9 +20,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -86,5 +88,32 @@ public class WorkspaceTaskV1Controller {
         User member = currentUserService.requireUser(jwt);
         SharedWorkspace workspace = workspaceService.requireReadableWorkspace(workspaceId, member);
         return ResponseEntity.ok(ApiResponse.success(taskService.getTaskForWorkspace(taskId, workspace)));
+    }
+
+    @Operation(summary = "Workspace Task 수정", description = "OWNER 또는 EDITOR가 workspace scope Task를 수정합니다.")
+    @PutMapping("/{taskId}")
+    public ResponseEntity<ApiResponse<TaskResponse>> update(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId,
+            @PathVariable Long taskId,
+            @Valid @RequestBody TaskRequest request
+    ) {
+        request.validate();
+        User actor = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
+        return ResponseEntity.ok(ApiResponse.success(taskService.updateForWorkspace(taskId, request, workspace)));
+    }
+
+    @Operation(summary = "Workspace Task 삭제", description = "OWNER 또는 EDITOR가 workspace scope Task를 삭제합니다.")
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId,
+            @PathVariable Long taskId
+    ) {
+        User actor = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
+        taskService.deleteForWorkspace(taskId, workspace);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

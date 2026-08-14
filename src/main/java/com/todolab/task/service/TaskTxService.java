@@ -1,5 +1,6 @@
 package com.todolab.task.service;
 
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.dday.domain.DdayGoal;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
 import com.todolab.dday.repository.DdayGoalRepository;
@@ -17,6 +18,7 @@ import com.todolab.task.exception.TaskNotFoundException;
 import com.todolab.task.exception.TaskValidationException;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +70,18 @@ public class TaskTxService {
                 .filter(scopedTask -> id.equals(scopedTask.getId()))
                 .findFirst()
                 .orElse(task);
+    }
+
+    @Transactional
+    public Task updateTxForWorkspace(Long id, TaskRequest req, SharedWorkspace workspace) {
+        validateNoRecurrenceRuleUpdate(req);
+        Task task = findTaskForWorkspace(id, workspace);
+        if (isRecurringOccurrence(task)) {
+            throw new TaskValidationException("workspace 반복 Task 수정은 아직 지원하지 않습니다.");
+        }
+
+        applySingleUpdate(task, req);
+        return taskRepository.save(task);
     }
 
     @Transactional
@@ -305,6 +319,16 @@ public class TaskTxService {
         taskRepository.saveAll(scopedTasks);
     }
 
+    @Transactional
+    public void deleteTxForWorkspace(Long id, SharedWorkspace workspace) {
+        Task task = findTaskForWorkspace(id, workspace);
+        if (isRecurringOccurrence(task)) {
+            throw new TaskValidationException("workspace 반복 Task 삭제는 아직 지원하지 않습니다.");
+        }
+
+        taskRepository.deleteById(id);
+    }
+
     private Task findTask(Long id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
@@ -312,6 +336,11 @@ public class TaskTxService {
 
     private Task findTaskForOwner(Long id, User owner) {
         return taskRepository.findByIdAndOwnerId(id, ownerId(owner))
+                .orElseThrow(() -> new TaskNotFoundException(id));
+    }
+
+    private Task findTaskForWorkspace(Long id, SharedWorkspace workspace) {
+        return taskRepository.findByIdAndWorkspaceIdAndScope(id, workspaceId(workspace), ResourceScope.WORKSPACE)
                 .orElseThrow(() -> new TaskNotFoundException(id));
     }
 
@@ -330,6 +359,13 @@ public class TaskTxService {
             throw new IllegalArgumentException("owner는 영속화된 사용자여야 합니다.");
         }
         return owner.getId();
+    }
+
+    private Long workspaceId(SharedWorkspace workspace) {
+        if (workspace == null || workspace.getId() == null) {
+            throw new IllegalArgumentException("workspace는 영속화된 workspace여야 합니다.");
+        }
+        return workspace.getId();
     }
 
     private void validateTodayOrderTarget(Task task, LocalDate targetDate, TodayOrderDirection direction) {
