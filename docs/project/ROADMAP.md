@@ -47,7 +47,7 @@ Last updated: 2026-08-13
 - [x] `POST /api/v1/task-templates/{id}/tasks`로 template 기반 Task를 생성한다.
 - [x] owner scope와 guest 승격/병합/cleanup 대상에 template을 포함한다.
 - [x] D-Day 연결 템플릿 정책을 결정한다.
-- [ ] 공유 workspace 템플릿 정책을 공유 설계 단계에서 결정한다.
+- [x] 공유 workspace 템플릿 정책을 공유 설계 단계에서 결정한다.
 
 선행 조건:
 

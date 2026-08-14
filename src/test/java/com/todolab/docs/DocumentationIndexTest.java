@@ -102,6 +102,8 @@ class DocumentationIndexTest {
         assertThat(sharing).contains("WORKSPACE_MEMBER");
         assertThat(sharing).contains("게스트 계정은 초대 대상과 workspace 생성 대상에서 제외한다.");
         assertThat(sharing).contains("개인 Task API는 workspace Task를 반환하지 않는다.");
+        assertThat(sharing).contains("Task 템플릿은 1차 정책에서 personal-only 리소스로 유지한다.");
+        assertThat(sharing).contains("workspace 템플릿 공유와 개인 템플릿 기반 workspace Task 생성은 제공하지 않는다.");
     }
 
     @Test

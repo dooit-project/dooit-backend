@@ -120,6 +120,7 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 - workspace Task는 personal D-Day에 연결할 수 없다.
 - personal Task는 workspace D-Day에 연결할 수 없다.
 - workspace D-Day 삭제 시 같은 workspace의 연결 Task만 연결 해제한다.
+- Task 템플릿은 1차 정책에서 personal-only 리소스로 유지한다. workspace 템플릿 공유와 개인 템플릿 기반 workspace Task 생성은 제공하지 않는다.
 
 ## 알림 정책
 

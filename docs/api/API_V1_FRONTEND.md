@@ -895,7 +895,7 @@ Response: `TaskTemplateResponse`
 - `recurrenceByDays`는 `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, `SU`만 허용한다.
 - 템플릿은 guest 승격 시 같은 사용자 ID로 유지되고, 기존 계정 로그인 병합과 만료 guest cleanup 대상에 포함된다.
 - 템플릿 자체에는 D-Day를 저장하지 않는다. 템플릿 기반 Task 생성 시 `ddayGoalId`를 보내면 생성된 개인 Task에 같은 owner의 개인 D-Day를 연결한다.
-- 공유 workspace 템플릿 정책은 아직 지원하지 않는다.
+- 1차 정책에서 템플릿은 personal-only 리소스다. 공유 workspace 템플릿과 개인 템플릿 기반 workspace Task 생성은 제공하지 않는다.
 
 ### 템플릿 목록
 
