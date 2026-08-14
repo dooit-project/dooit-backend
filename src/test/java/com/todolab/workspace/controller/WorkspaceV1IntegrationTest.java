@@ -202,6 +202,61 @@ class WorkspaceV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Workspace EDITOR는 workspace 수정과 삭제를 할 수 없다")
+    void mutateWorkspace_forbiddenForEditor() throws Exception {
+        String ownerToken = accessToken("workspace-owner-mutate-forbidden@example.com");
+        String editorToken = accessToken("workspace-editor-mutate-forbidden@example.com");
+        Long workspaceId = createWorkspace(ownerToken, new WorkspaceRequest("팀 일정", null));
+        Long editorMemberId = invite(ownerToken, workspaceId, "workspace-editor-mutate-forbidden@example.com", WorkspaceRole.EDITOR);
+        accept(editorToken, workspaceId, editorMemberId);
+
+        mockMvc.perform(put("/api/v1/workspaces/{workspaceId}", workspaceId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceRequest("변경 시도", null))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}", workspaceId)
+                        .header("Authorization", "Bearer " + editorToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace 마지막 ACTIVE OWNER는 강등, 제거, 탈퇴할 수 없다")
+    void lastActiveOwnerMutation_invalidInput() throws Exception {
+        String ownerToken = accessToken("workspace-owner-last@example.com");
+        Long workspaceId = createWorkspace(ownerToken, new WorkspaceRequest("마지막 owner", null));
+        Long ownerMemberId = firstMemberId(ownerToken, workspaceId);
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/members/{memberId}", workspaceId, ownerMemberId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceMemberUpdateRequest(
+                                WorkspaceRole.VIEWER,
+                                null
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value(10001));
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/members/{memberId}", workspaceId, ownerMemberId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceMemberUpdateRequest(
+                                null,
+                                WorkspaceMemberStatus.REMOVED
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value(10001));
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/members/{memberId}", workspaceId, ownerMemberId)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value(10001));
+    }
+
+    @Test
     @DisplayName("v1 Workspace는 게스트 계정 사용을 거부한다")
     void createWorkspace_forbiddenForGuest() throws Exception {
         User guest = userRepository.save(User.guest(LocalDateTime.of(2026, 9, 13, 0, 0)));
@@ -271,6 +326,18 @@ class WorkspaceV1IntegrationTest {
                 .getResponse()
                 .getContentAsString();
         Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private Long firstMemberId(String accessToken, Long workspaceId) throws Exception {
+        String response = mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/members", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data[0].id");
         return id.longValue();
     }
 

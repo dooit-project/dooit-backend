@@ -57,6 +57,33 @@ Last updated: 2026-08-15
 - 게스트 계정은 초대 대상과 workspace 생성 대상에서 제외한다.
 - 같은 user는 같은 workspace에 활성 멤버십을 하나만 가진다.
 
+Endpoint 권한 행렬:
+
+| Endpoint | OWNER | EDITOR | VIEWER | PENDING/REMOVED/Non-member |
+| --- | --- | --- | --- | --- |
+| `POST /api/v1/workspaces` | 가능 | n/a | n/a | n/a |
+| `GET /api/v1/workspaces` | ACTIVE 목록 포함 | ACTIVE 목록 포함 | ACTIVE 목록 포함 | 제외 |
+| `GET /api/v1/workspace-invitations` | 본인 PENDING 초대 조회 | 본인 PENDING 초대 조회 | 본인 PENDING 초대 조회 | 본인 PENDING만 조회 |
+| `GET /api/v1/workspaces/{workspaceId}` | 가능 | 가능 | 가능 | 404 `WORKSPACE_NOT_FOUND` |
+| `PUT/DELETE /api/v1/workspaces/{workspaceId}` | 가능 | 403 `FORBIDDEN` | 403 `FORBIDDEN` | 404 `WORKSPACE_NOT_FOUND` |
+| `POST /api/v1/workspaces/{workspaceId}/members` | 가능 | 403 `FORBIDDEN` | 403 `FORBIDDEN` | 404 `WORKSPACE_NOT_FOUND` |
+| `GET /api/v1/workspaces/{workspaceId}/members` | ACTIVE 멤버 조회 | ACTIVE 멤버 조회 | ACTIVE 멤버 조회 | 404 `WORKSPACE_NOT_FOUND` |
+| `PATCH /api/v1/workspaces/{workspaceId}/members/{memberId}` | 가능 | 자기 PENDING 수락만 가능 | 자기 PENDING 수락만 가능 | 자기 PENDING 수락만 가능 |
+| `DELETE /api/v1/workspaces/{workspaceId}/members/{memberId}` | 가능 | 본인 탈퇴만 가능 | 본인 탈퇴만 가능 | 404 `WORKSPACE_NOT_FOUND` |
+| `POST/PUT/DELETE /api/v1/workspaces/{workspaceId}/tasks/**` | 가능 | 가능 | 403 `FORBIDDEN` | 404 `WORKSPACE_NOT_FOUND` |
+| `GET /api/v1/workspaces/{workspaceId}/tasks/**` | 가능 | 가능 | 가능 | 404 `WORKSPACE_NOT_FOUND` |
+| `POST/DELETE /api/v1/workspaces/{workspaceId}/dday-goals/**` | 가능 | 가능 | 403 `FORBIDDEN` | 404 `WORKSPACE_NOT_FOUND` |
+| `GET /api/v1/workspaces/{workspaceId}/dday-goals/**` | 가능 | 가능 | 가능 | 404 `WORKSPACE_NOT_FOUND` |
+
+오류 코드 정책:
+
+- 권한 부족은 403 `FORBIDDEN`이다.
+- workspace 자체가 없거나 현재 사용자가 ACTIVE 멤버가 아니면 404 `WORKSPACE_NOT_FOUND`로 숨긴다.
+- 다른 workspace의 Task ID 또는 workspace scope 밖 Task ID는 404 `TASK_NOT_FOUND`로 숨긴다.
+- 다른 workspace의 D-Day ID 또는 workspace scope 밖 D-Day ID는 404 `DDAY_GOAL_NOT_FOUND`로 숨긴다.
+- 잘못된 workspace Task-D-Day scope 연결은 404 계열 리소스 없음으로 처리한다.
+- 마지막 ACTIVE OWNER 강등, 제거, 탈퇴 시도는 400 `INVALID_INPUT`이다.
+
 ## 데이터 모델 방향
 
 적용 대상 migration:
