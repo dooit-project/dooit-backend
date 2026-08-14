@@ -2,6 +2,7 @@ package com.todolab.workspace.controller;
 
 import com.todolab.auth.service.CurrentUserService;
 import com.todolab.common.api.ApiResponse;
+import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.dto.TaskResponse;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -77,6 +79,21 @@ public class WorkspaceTaskV1Controller {
                 .rawDate(date)
                 .build();
         return ResponseEntity.ok(ApiResponse.success(taskService.getTasksForWorkspace(request, workspace)));
+    }
+
+    @Operation(summary = "Workspace 로컬 알림 후보 조회", description = "ACTIVE 멤버가 workspace scope Task/occurrence 중 모바일 로컬 알림 예약 후보를 조회합니다.")
+    @GetMapping("/notification-candidates")
+    public ResponseEntity<ApiResponse<List<TaskNotificationCandidateResponse>>> getNotificationCandidates(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId,
+            @Parameter(description = "알림 후보 조회 시작일", schema = @Schema(type = "string", format = "date", example = "2026-08-17"))
+            @RequestParam LocalDate from,
+            @Parameter(description = "알림 후보 조회 종료일. 시작일 포함 최대 31일까지 조회할 수 있습니다.", schema = @Schema(type = "string", format = "date", example = "2026-08-23"))
+            @RequestParam LocalDate to
+    ) {
+        User member = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireReadableWorkspace(workspaceId, member);
+        return ResponseEntity.ok(ApiResponse.success(taskService.getNotificationCandidatesForWorkspace(from, to, member, workspace)));
     }
 
     @Operation(summary = "Workspace Task 단건 조회", description = "ACTIVE 멤버가 workspace scope Task를 단건 조회합니다.")

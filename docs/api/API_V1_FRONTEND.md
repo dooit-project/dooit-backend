@@ -1116,6 +1116,16 @@ Response: `TaskResponse`
 
 `ACTIVE` 멤버가 조회할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다.
 
+### Workspace 로컬 알림 후보
+
+```http
+GET /api/v1/workspaces/{workspaceId}/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
+```
+
+Response: `TaskNotificationCandidateResponse[]`
+
+`ACTIVE` 멤버가 조회할 수 있다. 조건과 응답 형식은 개인 로컬 알림 후보 API와 동일하지만, 같은 workspace의 `WORKSPACE` scope Task/occurrence만 반환한다. 개인 알림 후보 API에는 workspace Task가 포함되지 않는다.
+
 ### Workspace Task 수정
 
 ```http
@@ -1209,10 +1219,6 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 Response: `null`
 
 `OWNER`, `EDITOR`만 삭제할 수 있다. 삭제 시 같은 workspace에서 연결된 Task의 D-Day 연결을 해제한다.
-
-아직 제공하지 않는 workspace 하위 API:
-
-- workspace 알림 후보
 
 기존 개인 API인 `/api/v1/tasks/**`, `/api/v1/dday-goals/**`는 `PERSONAL` scope 데이터만 반환한다. workspace scope 데이터는 workspace 하위 API가 열리기 전까지 프론트에서 조회하거나 수정할 수 없다.
 

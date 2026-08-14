@@ -216,6 +216,24 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
     }
 
     @Override
+    public List<Task> findWorkspaceNotificationCandidateTasks(Long workspaceId, LocalDateTime start, LocalDateTime end) {
+        QTask t = QTask.task;
+
+        return queryFactory
+                .selectFrom(t)
+                .leftJoin(t.ddayGoal).fetchJoin()
+                .where(
+                        workspaceIdEq(t, workspaceId),
+                        workspaceScope(t),
+                        t.status.eq(TaskStatus.TODAY),
+                        t.startAt.isNotNull(),
+                        overlapsRange(t, start, end)
+                )
+                .orderBy(t.startAt.asc(), t.id.asc())
+                .fetch();
+    }
+
+    @Override
     public List<Task> findReorderableTodayTasks(Long ownerId, LocalDate targetDate) {
         QTask t = QTask.task;
 

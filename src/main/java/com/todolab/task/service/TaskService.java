@@ -329,6 +329,30 @@ public class TaskService {
                 .toList();
     }
 
+    @Transactional
+    public List<TaskNotificationCandidateResponse> getNotificationCandidatesForWorkspace(
+            LocalDate fromInclusive,
+            LocalDate toInclusive,
+            User actor,
+            SharedWorkspace workspace
+    ) {
+        validateNotificationCandidateRange(fromInclusive, toInclusive);
+        DateRange serviceRange = DateRange.of(fromInclusive.atStartOfDay(), toInclusive.plusDays(1).atStartOfDay())
+                .toServiceZone(ZoneId.of(actor.getTimeZone()));
+        recurrenceOccurrenceMaterializer.materializeForWorkspace(
+                workspace.getId(),
+                serviceRange.materializeFromInclusive(),
+                serviceRange.materializeToExclusive()
+        );
+        return taskRepository.findWorkspaceNotificationCandidateTasks(workspace.getId(), serviceRange.getStart(), serviceRange.getEnd()).stream()
+                .filter(task -> task.getStartAt() != null)
+                .filter(task -> task.getCompletedAt() == null)
+                .filter(task -> task.getRecurrenceException() != com.todolab.task.domain.RecurrenceExceptionType.SKIPPED)
+                .sorted(Comparator.comparing(Task::getStartAt).thenComparing(Task::getId))
+                .map(task -> TaskNotificationCandidateResponse.from(task, pushNotificationProperties.enabled()))
+                .toList();
+    }
+
     public List<TaskResponse> getTodayTasks(LocalDate targetDate) {
         return taskRepository.findTodayTasks(targetDate).stream()
                 .map(TaskResponse::from)

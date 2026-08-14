@@ -369,6 +369,70 @@ class WorkspaceTaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Workspace 알림 후보는 ACTIVE 멤버가 조회하고 반복 occurrence를 materialize한다")
+    void getWorkspaceNotificationCandidates_success() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-notification@example.com");
+        String viewerToken = accessToken("workspace-task-viewer-notification@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long viewerMemberId = invite(ownerToken, workspaceId, "workspace-task-viewer-notification@example.com", WorkspaceRole.VIEWER);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 알림 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                null,
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of("MO"),
+                        null
+                )
+        ));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks/notification-candidates", workspaceId)
+                        .header("Authorization", "Bearer " + viewerToken)
+                        .param("from", "2026-08-17")
+                        .param("to", "2026-08-24"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].taskId").value(taskId))
+                .andExpect(jsonPath("$.data[0].scheduledAt").value("2026-08-17T09:00:00"))
+                .andExpect(jsonPath("$.data[1].scheduledAt").value("2026-08-24T09:00:00"))
+                .andExpect(jsonPath("$.data[1].occurrenceDate").value("2026-08-24"));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace 알림 후보는 non-member에게 404를 반환한다")
+    void getWorkspaceNotificationCandidates_notFoundForNonMember() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-notification-nonmember@example.com");
+        String outsiderToken = accessToken("workspace-task-outsider-notification@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 알림 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                null,
+                false
+        ));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks/notification-candidates", workspaceId)
+                        .header("Authorization", "Bearer " + outsiderToken)
+                        .param("from", "2026-08-17")
+                        .param("to", "2026-08-17"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(50001));
+    }
+
+    @Test
     @DisplayName("v1 Workspace 반복 Task는 범위 조회에서 occurrence를 materialize한다")
     void createWorkspaceRecurringTask_materializedOnRead() throws Exception {
         String ownerToken = accessToken("workspace-task-owner-recurrence@example.com");

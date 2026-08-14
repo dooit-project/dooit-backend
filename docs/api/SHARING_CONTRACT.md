@@ -116,7 +116,7 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 
 - workspace 반복 series는 `RECURRENCE_SERIES.SCOPE=WORKSPACE`, `WORKSPACE_ID`를 가진다.
 - workspace occurrence materialize는 workspace membership을 먼저 검증한 뒤 workspace scope에서 실행한다.
-- 현재 workspace Task 생성 API는 반복 Task 생성을 HTTP 400으로 거부한다. workspace 반복 materialize 구현 전까지 반복 workspace Task를 생성하지 않는다.
+- workspace Task 생성 API는 반복 Task를 허용하고 workspace 범위 조회와 알림 후보 조회에서 occurrence를 materialize한다.
 - workspace Task는 personal D-Day에 연결할 수 없다.
 - personal Task는 workspace D-Day에 연결할 수 없다.
 - workspace D-Day 삭제 시 같은 workspace의 연결 Task만 연결 해제한다.
@@ -124,7 +124,7 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 ## 알림 정책
 
 - 1차 구현에서 workspace 알림 후보는 개인 알림 후보 API에 포함하지 않는다.
-- workspace 알림 후보 API를 열 경우 `/api/v1/workspaces/{workspaceId}/tasks/notification-candidates`처럼 별도 path를 사용한다.
+- workspace 알림 후보 API는 `/api/v1/workspaces/{workspaceId}/tasks/notification-candidates` path를 사용한다.
 - 서버 push 실제 발송 전까지 workspace 알림도 모바일 로컬 알림 책임으로 둔다.
 - workspace 알림 이력은 전송자를 기록할 수 있도록 별도 정책 확정 후 구현한다.
 
