@@ -42,6 +42,10 @@ public class RecurrenceSeries {
     @JoinColumn(name = "`OWNER_USER_ID`")
     private User owner;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`CREATED_BY_USER_ID`")
+    private User createdBy;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "`SCOPE`", nullable = false, length = 30)
     private ResourceScope scope = ResourceScope.PERSONAL;
@@ -90,6 +94,7 @@ public class RecurrenceSeries {
     ) {
         update(frequency, interval, recurrenceRule, timeZone, recurrenceStartAt, recurrenceUntil, recurrenceCount);
         this.owner = owner;
+        this.createdBy = owner;
         this.scope = ResourceScope.PERSONAL;
     }
 
@@ -108,6 +113,13 @@ public class RecurrenceSeries {
             throw new IllegalArgumentException("owner는 필수입니다.");
         }
         this.owner = owner;
+    }
+
+    public void markCreatedBy(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("createdBy는 필수입니다.");
+        }
+        this.createdBy = user;
     }
 
     public void assignWorkspace(SharedWorkspace workspace) {

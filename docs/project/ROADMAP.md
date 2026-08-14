@@ -84,7 +84,7 @@ Last updated: 2026-08-13
 - [x] shared workspace D-Day 삭제와 Task 연결 API를 추가한다.
 - [x] workspace 반복 Task materialize를 구현한다.
 - [x] 게스트 계정은 공유 workspace 초대 대상에서 제외하거나 제한 정책을 둔다.
-- [ ] 감사 로그 또는 최소한 생성/수정자 필드를 남긴다.
+- [x] 감사 로그 또는 최소한 생성/수정자 필드를 남긴다.
 
 선행 조건:
 

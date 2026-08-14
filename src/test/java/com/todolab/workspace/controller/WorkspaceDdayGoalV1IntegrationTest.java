@@ -3,6 +3,7 @@ package com.todolab.workspace.controller;
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
 import com.todolab.dday.dto.DdayGoalRequest;
+import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.mail.MailService;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
@@ -24,6 +25,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -48,6 +50,9 @@ class WorkspaceDdayGoalV1IntegrationTest {
 
     @Autowired
     JwtTokenService jwtTokenService;
+
+    @Autowired
+    DdayGoalRepository ddayGoalRepository;
 
     @MockitoBean
     MailService mailService;
@@ -83,6 +88,9 @@ class WorkspaceDdayGoalV1IntegrationTest {
                         .header("Authorization", "Bearer " + ownerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
+
+        User owner = userRepository.findByEmail("workspace-dday-owner@example.com").orElseThrow();
+        assertThat(ddayGoalRepository.findById(goalId).orElseThrow().getCreatedBy().getId()).isEqualTo(owner.getId());
     }
 
     @Test

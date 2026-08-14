@@ -60,11 +60,15 @@ public class TaskTxService {
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
             applySingleUpdate(task, req);
+            task.markUpdatedBy(owner);
             return taskRepository.save(task);
         }
 
         List<Task> scopedTasks = scopedRecurringTasks(task, ownerId(owner), effectiveScope);
-        scopedTasks.forEach(scopedTask -> applyScopedOccurrenceUpdate(scopedTask, req));
+        scopedTasks.forEach(scopedTask -> {
+            applyScopedOccurrenceUpdate(scopedTask, req);
+            scopedTask.markUpdatedBy(owner);
+        });
         taskRepository.saveAll(scopedTasks);
         return scopedTasks.stream()
                 .filter(scopedTask -> id.equals(scopedTask.getId()))
@@ -73,7 +77,7 @@ public class TaskTxService {
     }
 
     @Transactional
-    public Task updateTxForWorkspace(Long id, TaskRequest req, SharedWorkspace workspace) {
+    public Task updateTxForWorkspace(Long id, TaskRequest req, User actor, SharedWorkspace workspace) {
         validateNoRecurrenceRuleUpdate(req);
         Task task = findTaskForWorkspace(id, workspace);
         if (isRecurringOccurrence(task)) {
@@ -81,6 +85,7 @@ public class TaskTxService {
         }
 
         applySingleUpdate(task, req);
+        task.markUpdatedBy(actor);
         return taskRepository.save(task);
     }
 
@@ -272,13 +277,14 @@ public class TaskTxService {
     }
 
     @Transactional
-    public Task connectDdayGoalTxForWorkspace(Long id, Long ddayGoalId, SharedWorkspace workspace) {
+    public Task connectDdayGoalTxForWorkspace(Long id, Long ddayGoalId, User actor, SharedWorkspace workspace) {
         Long workspaceId = workspaceId(workspace);
         Task task = findTaskForWorkspace(id, workspace);
         DdayGoal ddayGoal = ddayGoalRepository.findByIdAndWorkspaceIdAndScope(ddayGoalId, workspaceId, ResourceScope.WORKSPACE)
                 .orElseThrow(() -> new DdayGoalNotFoundException(ddayGoalId));
 
         task.connectDdayGoal(ddayGoal);
+        task.markUpdatedBy(actor);
         return taskRepository.save(task);
     }
 
@@ -297,9 +303,10 @@ public class TaskTxService {
     }
 
     @Transactional
-    public Task disconnectDdayGoalTxForWorkspace(Long id, SharedWorkspace workspace) {
+    public Task disconnectDdayGoalTxForWorkspace(Long id, User actor, SharedWorkspace workspace) {
         Task task = findTaskForWorkspace(id, workspace);
         task.disconnectDdayGoal();
+        task.markUpdatedBy(actor);
         return taskRepository.save(task);
     }
 

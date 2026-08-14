@@ -10,6 +10,7 @@ Last updated: 2026-08-13
 - 1차 공유 범위는 workspace 안의 Task와 D-Day 조회/생성/수정/삭제다.
 - 기존 `/api/v1/tasks/**`, `/api/v1/dday-goals/**` 개인 API에는 공유 데이터가 섞이지 않아야 한다.
 - 반복 series, occurrence, 알림 후보, D-Day 연결은 workspace scope 안에서만 일관되게 동작해야 한다.
+- Task/D-Day/반복 series는 내부 audit 컬럼으로 생성자를 남기고, Task는 마지막 수정자도 남긴다. 현재 v1 응답 DTO에는 audit field를 노출하지 않는다.
 
 ## 1차 범위
 

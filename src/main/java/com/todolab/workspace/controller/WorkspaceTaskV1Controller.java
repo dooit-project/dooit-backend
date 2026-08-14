@@ -102,7 +102,7 @@ public class WorkspaceTaskV1Controller {
         request.validate();
         User actor = currentUserService.requireUser(jwt);
         SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
-        return ResponseEntity.ok(ApiResponse.success(taskService.updateForWorkspace(taskId, request, workspace)));
+        return ResponseEntity.ok(ApiResponse.success(taskService.updateForWorkspace(taskId, request, actor, workspace)));
     }
 
     @Operation(summary = "Workspace Task 삭제", description = "OWNER 또는 EDITOR가 workspace scope Task를 삭제합니다.")
@@ -128,7 +128,7 @@ public class WorkspaceTaskV1Controller {
     ) {
         User actor = currentUserService.requireUser(jwt);
         SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
-        return ResponseEntity.ok(ApiResponse.success(taskService.connectDdayGoalForWorkspace(taskId, ddayGoalId, workspace)));
+        return ResponseEntity.ok(ApiResponse.success(taskService.connectDdayGoalForWorkspace(taskId, ddayGoalId, actor, workspace)));
     }
 
     @Operation(summary = "Workspace Task D-Day 목표 연결 해제", description = "OWNER 또는 EDITOR가 workspace scope Task의 D-Day 목표 연결을 해제합니다.")
@@ -140,6 +140,6 @@ public class WorkspaceTaskV1Controller {
     ) {
         User actor = currentUserService.requireUser(jwt);
         SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
-        return ResponseEntity.ok(ApiResponse.success(taskService.disconnectDdayGoalForWorkspace(taskId, workspace)));
+        return ResponseEntity.ok(ApiResponse.success(taskService.disconnectDdayGoalForWorkspace(taskId, actor, workspace)));
     }
 }

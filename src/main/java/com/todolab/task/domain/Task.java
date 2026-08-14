@@ -102,6 +102,14 @@ public class Task {
     @JoinColumn(name = "`OWNER_USER_ID`")
     private User owner;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`CREATED_BY_USER_ID`")
+    private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`UPDATED_BY_USER_ID`")
+    private User updatedBy;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "`SCOPE`", nullable = false, length = 30)
     private ResourceScope scope = ResourceScope.PERSONAL;
@@ -146,6 +154,7 @@ public class Task {
         this.originalOccurrenceDate = originalOccurrenceDate;
         this.recurrenceException = recurrenceException;
         this.owner = owner;
+        this.createdBy = owner;
         this.scope = ResourceScope.PERSONAL;
     }
 
@@ -261,6 +270,20 @@ public class Task {
             throw new IllegalArgumentException("owner는 필수입니다.");
         }
         this.owner = owner;
+    }
+
+    public void markCreatedBy(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("createdBy는 필수입니다.");
+        }
+        this.createdBy = user;
+    }
+
+    public void markUpdatedBy(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("updatedBy는 필수입니다.");
+        }
+        this.updatedBy = user;
     }
 
     public void assignWorkspace(SharedWorkspace workspace) {

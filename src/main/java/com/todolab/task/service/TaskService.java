@@ -415,8 +415,8 @@ public class TaskService {
         return TaskResponse.from(updated);
     }
 
-    public TaskResponse updateForWorkspace(Long id, TaskRequest taskRequest, SharedWorkspace workspace) {
-        Task updated = taskTxService.updateTxForWorkspace(id, taskRequest, workspace);
+    public TaskResponse updateForWorkspace(Long id, TaskRequest taskRequest, User actor, SharedWorkspace workspace) {
+        Task updated = taskTxService.updateTxForWorkspace(id, taskRequest, actor, workspace);
         return TaskResponse.from(updated);
     }
 
@@ -523,8 +523,8 @@ public class TaskService {
         return TaskResponse.from(connected);
     }
 
-    public TaskResponse connectDdayGoalForWorkspace(Long id, Long ddayGoalId, SharedWorkspace workspace) {
-        Task connected = taskTxService.connectDdayGoalTxForWorkspace(id, ddayGoalId, workspace);
+    public TaskResponse connectDdayGoalForWorkspace(Long id, Long ddayGoalId, User actor, SharedWorkspace workspace) {
+        Task connected = taskTxService.connectDdayGoalTxForWorkspace(id, ddayGoalId, actor, workspace);
         return TaskResponse.from(connected);
     }
 
@@ -538,8 +538,8 @@ public class TaskService {
         return TaskResponse.from(disconnected);
     }
 
-    public TaskResponse disconnectDdayGoalForWorkspace(Long id, SharedWorkspace workspace) {
-        Task disconnected = taskTxService.disconnectDdayGoalTxForWorkspace(id, workspace);
+    public TaskResponse disconnectDdayGoalForWorkspace(Long id, User actor, SharedWorkspace workspace) {
+        Task disconnected = taskTxService.disconnectDdayGoalTxForWorkspace(id, actor, workspace);
         return TaskResponse.from(disconnected);
     }
 

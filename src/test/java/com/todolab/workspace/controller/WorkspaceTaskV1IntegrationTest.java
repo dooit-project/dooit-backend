@@ -5,9 +5,11 @@ import com.todolab.auth.service.JwtTokenService;
 import com.todolab.dday.dto.DdayGoalRequest;
 import com.todolab.mail.MailService;
 import com.todolab.task.domain.RecurrenceFrequency;
+import com.todolab.task.domain.Task;
 import com.todolab.task.domain.TaskType;
 import com.todolab.task.dto.TaskRecurrenceRequest;
 import com.todolab.task.dto.TaskRequest;
+import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
 import com.todolab.workspace.domain.WorkspaceMemberStatus;
@@ -30,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -55,6 +58,9 @@ class WorkspaceTaskV1IntegrationTest {
 
     @Autowired
     JwtTokenService jwtTokenService;
+
+    @Autowired
+    TaskRepository taskRepository;
 
     @MockitoBean
     MailService mailService;
@@ -163,6 +169,12 @@ class WorkspaceTaskV1IntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.title").value("공유 회의 변경"))
                 .andExpect(jsonPath("$.data.description").value("회의실 확정"));
+
+        Task task = taskRepository.findById(taskId).orElseThrow();
+        User owner = userRepository.findByEmail("workspace-task-owner-update@example.com").orElseThrow();
+        User editor = userRepository.findByEmail("workspace-task-editor-update@example.com").orElseThrow();
+        assertThat(task.getCreatedBy().getId()).isEqualTo(owner.getId());
+        assertThat(task.getUpdatedBy().getId()).isEqualTo(editor.getId());
     }
 
     @Test

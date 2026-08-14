@@ -16,6 +16,7 @@ Last updated: 2026-08-13
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260814_add_workspace_audit_columns.sql` | local production Docker MySQL | Task, D-Day, 반복 series의 생성자와 Task 수정자 기록 컬럼 추가 예정 |
 | 미적용 | `docs/db/migrations/20260813_add_workspace_scope_columns.sql` | local production Docker MySQL | Task, D-Day, 반복 series의 `PERSONAL`/`WORKSPACE` scope와 workspace FK 추가 예정 |
 | 미적용 | `docs/db/migrations/20260813_add_shared_workspace.sql` | local production Docker MySQL | 공유 workspace와 membership 테이블 추가 예정. `docs/api/SHARING_CONTRACT.md` 기준 1차 workspace/membership API |
 | 미적용 | `docs/db/migrations/20260813_add_task_template.sql` | local production Docker MySQL | 빠른 등록 템플릿 테이블 추가 예정 |
