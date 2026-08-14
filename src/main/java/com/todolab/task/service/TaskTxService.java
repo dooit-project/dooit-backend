@@ -78,15 +78,36 @@ public class TaskTxService {
 
     @Transactional
     public Task updateTxForWorkspace(Long id, TaskRequest req, User actor, SharedWorkspace workspace) {
+        return updateTxForWorkspace(id, req, actor, workspace, RecurrenceEditScope.THIS);
+    }
+
+    @Transactional
+    public Task updateTxForWorkspace(
+            Long id,
+            TaskRequest req,
+            User actor,
+            SharedWorkspace workspace,
+            RecurrenceEditScope recurrenceScope
+    ) {
         validateNoRecurrenceRuleUpdate(req);
         Task task = findTaskForWorkspace(id, workspace);
-        if (isRecurringOccurrence(task)) {
-            throw new TaskValidationException("workspace 반복 Task 수정은 아직 지원하지 않습니다.");
+        RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
+        if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
+            applySingleUpdate(task, req);
+            task.markUpdatedBy(actor);
+            return taskRepository.save(task);
         }
 
-        applySingleUpdate(task, req);
-        task.markUpdatedBy(actor);
-        return taskRepository.save(task);
+        List<Task> scopedTasks = scopedRecurringTasksForWorkspace(task, workspaceId(workspace), effectiveScope);
+        scopedTasks.forEach(scopedTask -> {
+            applyScopedOccurrenceUpdate(scopedTask, req);
+            scopedTask.markUpdatedBy(actor);
+        });
+        taskRepository.saveAll(scopedTasks);
+        return scopedTasks.stream()
+                .filter(scopedTask -> id.equals(scopedTask.getId()))
+                .findFirst()
+                .orElse(task);
     }
 
     @Transactional
@@ -346,12 +367,24 @@ public class TaskTxService {
 
     @Transactional
     public void deleteTxForWorkspace(Long id, SharedWorkspace workspace) {
+        deleteTxForWorkspace(id, workspace, RecurrenceEditScope.THIS);
+    }
+
+    @Transactional
+    public void deleteTxForWorkspace(Long id, SharedWorkspace workspace, RecurrenceEditScope recurrenceScope) {
         Task task = findTaskForWorkspace(id, workspace);
-        if (isRecurringOccurrence(task)) {
-            throw new TaskValidationException("workspace 반복 Task 삭제는 아직 지원하지 않습니다.");
+        RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
+        if (!isRecurringOccurrence(task)) {
+            taskRepository.deleteById(id);
+            return;
         }
 
-        taskRepository.deleteById(id);
+        List<Task> scopedTasks = effectiveScope == RecurrenceEditScope.THIS
+                ? List.of(task)
+                : scopedRecurringTasksForWorkspace(task, workspaceId(workspace), effectiveScope);
+        scopedTasks.forEach(this::skipRecurringOccurrence);
+        truncateSeriesIfNeeded(task, effectiveScope);
+        taskRepository.saveAll(scopedTasks);
     }
 
     private Task findTask(Long id) {
@@ -471,6 +504,23 @@ public class TaskTxService {
         return taskRepository.findByRecurrenceSeriesIdAndOwnerIdAndOccurrenceDateGreaterThanEqualOrderByOccurrenceDateAscIdAsc(
                 recurrenceSeriesId,
                 ownerId,
+                task.getOccurrenceDate()
+        );
+    }
+
+    private List<Task> scopedRecurringTasksForWorkspace(Task task, Long workspaceId, RecurrenceEditScope recurrenceScope) {
+        Long recurrenceSeriesId = task.getRecurrenceSeries().getId();
+        if (recurrenceScope == RecurrenceEditScope.ALL) {
+            return taskRepository.findByRecurrenceSeriesIdAndWorkspaceIdAndScopeOrderByOccurrenceDateAscIdAsc(
+                    recurrenceSeriesId,
+                    workspaceId,
+                    ResourceScope.WORKSPACE
+            );
+        }
+        return taskRepository.findByRecurrenceSeriesIdAndWorkspaceIdAndScopeAndOccurrenceDateGreaterThanEqualOrderByOccurrenceDateAscIdAsc(
+                recurrenceSeriesId,
+                workspaceId,
+                ResourceScope.WORKSPACE,
                 task.getOccurrenceDate()
         );
     }

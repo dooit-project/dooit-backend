@@ -483,6 +483,115 @@ class WorkspaceTaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-24"));
     }
 
+    @Test
+    @DisplayName("v1 Workspace 반복 Task는 THIS_AND_FUTURE 범위로 수정한다")
+    void updateWorkspaceRecurringTask_thisAndFuture() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-recurrence-update@example.com");
+        String editorToken = accessToken("workspace-task-editor-recurrence-update@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long editorMemberId = invite(ownerToken, workspaceId, "workspace-task-editor-recurrence-update@example.com", WorkspaceRole.EDITOR);
+        accept(editorToken, workspaceId, editorMemberId);
+        createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "공유 반복 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                null,
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of("MO"),
+                        null
+                )
+        ));
+        materializeWorkspaceMonth(editorToken, workspaceId, "2026-08");
+        Long secondOccurrenceId = firstWorkspaceTaskId(editorToken, workspaceId, "2026-08-24");
+
+        mockMvc.perform(put("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, secondOccurrenceId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .param("recurrenceScope", "THIS_AND_FUTURE")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskRequest(
+                                "공유 반복 회의 변경",
+                                "변경된 범위",
+                                TaskType.SCHEDULE,
+                                LocalDateTime.of(2026, 8, 24, 11, 0),
+                                LocalDateTime.of(2026, 8, 24, 12, 0),
+                                "제품",
+                                false
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(secondOccurrenceId))
+                .andExpect(jsonPath("$.data.title").value("공유 반복 회의 변경"))
+                .andExpect(jsonPath("$.data.startAt").value("2026-08-24T11:00:00"));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08-17"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].title").value("공유 반복 회의"))
+                .andExpect(jsonPath("$.data[0].startAt").value("2026-08-17T09:00:00"));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].title").value("공유 반복 회의 변경"))
+                .andExpect(jsonPath("$.data[0].startAt").value("2026-08-31T11:00:00"));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace 반복 Task는 ALL 범위로 삭제한다")
+    void deleteWorkspaceRecurringTask_all() throws Exception {
+        String ownerToken = accessToken("workspace-task-owner-recurrence-delete@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "삭제할 공유 반복 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 17, 9, 0),
+                LocalDateTime.of(2026, 8, 17, 10, 0),
+                null,
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of("MO"),
+                        null
+                )
+        ));
+        materializeWorkspaceMonth(ownerToken, workspaceId, "2026-08");
+        Long secondOccurrenceId = firstWorkspaceTaskId(ownerToken, workspaceId, "2026-08-24");
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}/tasks/{taskId}", workspaceId, secondOccurrenceId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .param("recurrenceScope", "ALL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", "2026-08"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
     private String accessToken(String email) {
         User user = userRepository.save(new User(email, "encoded-password", "Workspace Task 사용자"));
         return jwtTokenService.createAccessToken(user).tokenValue();
@@ -527,6 +636,30 @@ class WorkspaceTaskV1IntegrationTest {
                 .getResponse()
                 .getContentAsString();
         Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private void materializeWorkspaceMonth(String accessToken, Long workspaceId, String month) throws Exception {
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "MONTH")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", month))
+                .andExpect(status().isOk());
+    }
+
+    private Long firstWorkspaceTaskId(String accessToken, Long workspaceId, String date) throws Exception {
+        String response = mockMvc.perform(get("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("type", "DAY")
+                        .param("taskType", "SCHEDULE")
+                        .param("date", date))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data[0].id");
         return id.longValue();
     }
 

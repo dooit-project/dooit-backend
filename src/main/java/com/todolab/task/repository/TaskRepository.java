@@ -30,6 +30,19 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
             java.time.LocalDate occurrenceDate
     );
 
+    List<Task> findByRecurrenceSeriesIdAndWorkspaceIdAndScopeOrderByOccurrenceDateAscIdAsc(
+            Long recurrenceSeriesId,
+            Long workspaceId,
+            ResourceScope scope
+    );
+
+    List<Task> findByRecurrenceSeriesIdAndWorkspaceIdAndScopeAndOccurrenceDateGreaterThanEqualOrderByOccurrenceDateAscIdAsc(
+            Long recurrenceSeriesId,
+            Long workspaceId,
+            ResourceScope scope,
+            java.time.LocalDate occurrenceDate
+    );
+
     default Optional<Task> findByIdAndOwnerId(Long id, Long ownerId) {
         return findByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
     }

@@ -65,6 +65,28 @@ class OpenApiDocumentationIntegrationTest {
     }
 
     @Test
+    @DisplayName("OpenAPI JSON에 v1 Workspace path가 노출된다")
+    void apiDocs_v1WorkspacePaths() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces'].get.tags[0]").value("v1 Workspace"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces'].post.summary").value("Workspace 생성"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspace-invitations'].get.tags[0]").value("v1 Workspace Invitation"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspace-invitations'].get.summary").value("현재 사용자 Workspace 초대 목록"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/members'].post.tags[0]").value("v1 Workspace"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/members/{memberId}'].patch.summary").value("Workspace 멤버 수정"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/tasks'].get.tags[0]").value("v1 Workspace Task"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/tasks/notification-candidates'].get.summary")
+                        .value("Workspace 로컬 알림 후보 조회"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/tasks/{taskId}'].put.parameters[2].name")
+                        .value("recurrenceScope"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/tasks/{taskId}'].delete.parameters[2].schema.enum[0]")
+                        .value("THIS"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/dday-goals'].get.tags[0]")
+                        .value("v1 Workspace D-Day"));
+    }
+
+    @Test
     @DisplayName("OpenAPI JSON에 request schema의 enum, 날짜 형식, validation 제약이 노출된다")
     void apiDocs_requestSchemaConstraints() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
@@ -106,7 +128,10 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.tags[0].name").value("v1 Auth"))
                 .andExpect(jsonPath("$.tags[1].name").value("v1 Task"))
                 .andExpect(jsonPath("$.tags[2].name").value("v1 Workspace D-Day"))
-                .andExpect(jsonPath("$.tags[3].name").value("v1 D-Day"))
+                .andExpect(jsonPath("$.tags[3].name").value("v1 Workspace Invitation"))
+                .andExpect(jsonPath("$.tags[4].name").value("v1 D-Day"))
+                .andExpect(jsonPath("$.tags[5].name").value("v1 Workspace Task"))
+                .andExpect(jsonPath("$.tags[9].name").value("v1 Workspace"))
                 .andExpect(jsonPath("$.security[0].bearerAuth").exists());
 
         mockMvc.perform(get("/swagger-ui/index.html"))

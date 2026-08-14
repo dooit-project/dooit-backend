@@ -1,6 +1,6 @@
 # Sharing Contract
 
-Last updated: 2026-08-13
+Last updated: 2026-08-15
 
 이 문서는 일정 공유 기능의 backend 설계 기준이다. 현재 API에는 workspace와 membership 기본 API, workspace Task 생성/조회/수정/삭제 API, workspace 반복 Task materialize, workspace D-Day 생성/조회/삭제 API, workspace Task-D-Day 연결 API가 있다.
 
@@ -18,10 +18,12 @@ Last updated: 2026-08-13
 
 - workspace 생성
 - workspace 멤버 초대, 수락, 제거
+- 현재 사용자 PENDING 초대 목록 조회
 - workspace Task 생성/조회/수정/삭제
 - workspace D-Day 생성/조회/삭제
 - workspace D-Day와 workspace Task 연결
 - workspace 반복 Task 생성과 occurrence materialize
+- workspace 반복 Task 수정/삭제 범위 처리
 
 ### 제외
 
@@ -97,6 +99,7 @@ POST /api/v1/workspaces/{workspaceId}/members
 GET /api/v1/workspaces/{workspaceId}/members
 PATCH /api/v1/workspaces/{workspaceId}/members/{memberId}
 DELETE /api/v1/workspaces/{workspaceId}/members/{memberId}
+GET /api/v1/workspace-invitations
 
 POST /api/v1/workspaces/{workspaceId}/tasks
 GET /api/v1/workspaces/{workspaceId}/tasks
@@ -112,11 +115,15 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 
 개인 API와 workspace API는 path를 분리한다. 모바일은 개인 화면과 공유 workspace 화면을 명시적으로 구분해야 한다.
 
+`GET /api/v1/workspace-invitations`는 현재 로그인 사용자의 `PENDING` membership만 반환한다. 응답은 `workspace`, `membership`, `invitedAt`로 구성되며 수락 후 목록에서 제거되고 workspace 목록에 나타난다. `REMOVED` membership은 반환하지 않고, 게스트 계정은 HTTP 403 `FORBIDDEN`이다.
+
 ## 반복과 D-Day 정책
 
 - workspace 반복 series는 `RECURRENCE_SERIES.SCOPE=WORKSPACE`, `WORKSPACE_ID`를 가진다.
 - workspace occurrence materialize는 workspace membership을 먼저 검증한 뒤 workspace scope에서 실행한다.
 - workspace Task 생성 API는 반복 Task를 허용하고 workspace 범위 조회와 알림 후보 조회에서 occurrence를 materialize한다.
+- workspace 반복 Task 수정/삭제는 개인 Task API와 동일하게 `recurrenceScope=THIS|THIS_AND_FUTURE|ALL`을 사용한다.
+- workspace 반복 범위 수정/삭제는 같은 workspace의 materialize된 occurrence만 대상으로 한다. `THIS_AND_FUTURE`, `ALL` 삭제는 아직 materialize되지 않은 미래 occurrence가 다시 생성되지 않도록 series 종료일도 함께 줄인다.
 - workspace Task는 personal D-Day에 연결할 수 없다.
 - personal Task는 workspace D-Day에 연결할 수 없다.
 - workspace D-Day 삭제 시 같은 workspace의 연결 Task만 연결 해제한다.

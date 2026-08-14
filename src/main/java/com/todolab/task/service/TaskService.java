@@ -440,7 +440,17 @@ public class TaskService {
     }
 
     public TaskResponse updateForWorkspace(Long id, TaskRequest taskRequest, User actor, SharedWorkspace workspace) {
-        Task updated = taskTxService.updateTxForWorkspace(id, taskRequest, actor, workspace);
+        return updateForWorkspace(id, taskRequest, actor, workspace, RecurrenceEditScope.THIS);
+    }
+
+    public TaskResponse updateForWorkspace(
+            Long id,
+            TaskRequest taskRequest,
+            User actor,
+            SharedWorkspace workspace,
+            RecurrenceEditScope recurrenceScope
+    ) {
+        Task updated = taskTxService.updateTxForWorkspace(id, taskRequest, actor, workspace, recurrenceScope);
         return TaskResponse.from(updated);
     }
 
@@ -588,7 +598,11 @@ public class TaskService {
     }
 
     public void deleteForWorkspace(Long id, SharedWorkspace workspace) {
-        taskTxService.deleteTxForWorkspace(id, workspace);
+        deleteForWorkspace(id, workspace, RecurrenceEditScope.THIS);
+    }
+
+    public void deleteForWorkspace(Long id, SharedWorkspace workspace, RecurrenceEditScope recurrenceScope) {
+        taskTxService.deleteTxForWorkspace(id, workspace, recurrenceScope);
     }
 
     private List<TaskResponse> findTasks(TaskQueryRequest request) {

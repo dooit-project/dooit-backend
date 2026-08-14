@@ -2,6 +2,7 @@ package com.todolab.workspace.controller;
 
 import com.todolab.auth.service.CurrentUserService;
 import com.todolab.common.api.ApiResponse;
+import com.todolab.task.domain.RecurrenceEditScope;
 import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.dto.TaskQueryRequest;
 import com.todolab.task.dto.TaskRequest;
@@ -114,12 +115,20 @@ public class WorkspaceTaskV1Controller {
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long workspaceId,
             @PathVariable Long taskId,
-            @Valid @RequestBody TaskRequest request
+            @Valid @RequestBody TaskRequest request,
+            @Parameter(description = "반복 Task 수정 범위. 반복 Task가 아니면 무시됩니다.", schema = @Schema(allowableValues = {"THIS", "THIS_AND_FUTURE", "ALL"}, example = "THIS"))
+            @RequestParam(required = false) RecurrenceEditScope recurrenceScope
     ) {
         request.validate();
         User actor = currentUserService.requireUser(jwt);
         SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
-        return ResponseEntity.ok(ApiResponse.success(taskService.updateForWorkspace(taskId, request, actor, workspace)));
+        return ResponseEntity.ok(ApiResponse.success(taskService.updateForWorkspace(
+                taskId,
+                request,
+                actor,
+                workspace,
+                recurrenceScope
+        )));
     }
 
     @Operation(summary = "Workspace Task 삭제", description = "OWNER 또는 EDITOR가 workspace scope Task를 삭제합니다.")
@@ -127,11 +136,13 @@ public class WorkspaceTaskV1Controller {
     public ResponseEntity<ApiResponse<Void>> delete(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long workspaceId,
-            @PathVariable Long taskId
+            @PathVariable Long taskId,
+            @Parameter(description = "반복 Task 삭제 범위. 반복 Task가 아니면 무시됩니다.", schema = @Schema(allowableValues = {"THIS", "THIS_AND_FUTURE", "ALL"}, example = "THIS"))
+            @RequestParam(required = false) RecurrenceEditScope recurrenceScope
     ) {
         User actor = currentUserService.requireUser(jwt);
         SharedWorkspace workspace = workspaceService.requireEditableWorkspace(workspaceId, actor);
-        taskService.deleteForWorkspace(taskId, workspace);
+        taskService.deleteForWorkspace(taskId, workspace, recurrenceScope);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

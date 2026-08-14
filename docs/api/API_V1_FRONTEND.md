@@ -996,6 +996,12 @@ type WorkspaceMemberResponse = {
   createdAt: string;
   updatedAt: string | null;
 };
+
+type WorkspaceInvitationResponse = {
+  workspace: WorkspaceResponse;
+  membership: WorkspaceMemberResponse; // status=PENDING
+  invitedAt: string;
+};
 ```
 
 ### Workspace 생성
@@ -1017,6 +1023,18 @@ GET /api/v1/workspaces
 ```
 
 Response: `WorkspaceResponse[]`
+
+ACTIVE membership의 workspace만 반환한다.
+
+### 현재 사용자 초대 목록
+
+```http
+GET /api/v1/workspace-invitations
+```
+
+Response: `WorkspaceInvitationResponse[]`
+
+현재 로그인 사용자의 `PENDING` membership만 반환한다. 수락 후에는 이 목록에서 제거되고 `GET /api/v1/workspaces`에 나타난다. `REMOVED` membership은 반환하지 않는다. 게스트 계정은 HTTP 403 `FORBIDDEN`이다.
 
 ### Workspace 단건
 
@@ -1134,23 +1152,29 @@ Response: `TaskNotificationCandidateResponse[]`
 
 ```http
 PUT /api/v1/workspaces/{workspaceId}/tasks/{taskId}
+PUT /api/v1/workspaces/{workspaceId}/tasks/{taskId}?recurrenceScope=THIS|THIS_AND_FUTURE|ALL
 ```
 
 Request: `TaskRequest`
 
 Response: `TaskResponse`
 
-`OWNER`, `EDITOR`만 수정할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다. `recurrence`가 있는 요청과 workspace 반복 Task 수정은 아직 HTTP 400이다.
+`OWNER`, `EDITOR`만 수정할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다. `recurrence`가 있는 요청은 반복 규칙 수정 요청으로 간주해 HTTP 400 `INVALID_INPUT`이다.
+
+반복 Task 수정 범위는 개인 Task API와 동일하다. `recurrenceScope`를 생략하면 `THIS`이며, 반복 Task가 아니면 무시된다. `THIS_AND_FUTURE`, `ALL`은 같은 workspace의 materialize된 occurrence만 대상으로 하며, occurrence 날짜별로 요청 `startAt`/`endAt`의 시간을 유지해 날짜를 이동하므로 `startAt`이 필요하다.
 
 ### Workspace Task 삭제
 
 ```http
 DELETE /api/v1/workspaces/{workspaceId}/tasks/{taskId}
+DELETE /api/v1/workspaces/{workspaceId}/tasks/{taskId}?recurrenceScope=THIS|THIS_AND_FUTURE|ALL
 ```
 
 Response: `null`
 
-`OWNER`, `EDITOR`만 삭제할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다. workspace 반복 Task 삭제는 아직 HTTP 400이다.
+`OWNER`, `EDITOR`만 삭제할 수 있다. 다른 workspace의 Task ID나 workspace scope 밖 Task ID는 `TASK_NOT_FOUND`처럼 처리된다.
+
+반복 Task 삭제 범위는 개인 Task API와 동일하다. `recurrenceScope`를 생략하면 `THIS`이며, 반복 Task가 아니면 기존처럼 해당 Task를 삭제한다. 반복 occurrence 삭제는 `recurrenceException=SKIPPED` marker로 남기고 조회/알림 후보에서는 제외된다. `THIS_AND_FUTURE`, `ALL`은 아직 materialize되지 않은 미래 occurrence가 다시 생성되지 않도록 series 종료일도 함께 줄인다.
 
 ### Workspace Task D-Day 연결
 
