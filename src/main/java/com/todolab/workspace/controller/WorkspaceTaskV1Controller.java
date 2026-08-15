@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
@@ -49,6 +50,7 @@ public class WorkspaceTaskV1Controller {
 
     @Operation(summary = "Workspace Task 생성", description = "OWNER 또는 EDITOR가 workspace scope Task를 생성합니다.")
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ApiResponse<TaskResponse>> create(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long workspaceId,

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -41,6 +42,7 @@ public class WorkspaceDdayGoalV1Controller {
 
     @Operation(summary = "Workspace D-Day 목표 생성", description = "OWNER 또는 EDITOR가 workspace scope D-Day 목표를 생성합니다.")
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ApiResponse<DdayGoalResponse>> create(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long workspaceId,

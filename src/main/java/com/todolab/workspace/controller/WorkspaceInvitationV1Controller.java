@@ -6,9 +6,6 @@ import com.todolab.user.domain.User;
 import com.todolab.workspace.dto.WorkspaceInvitationResponse;
 import com.todolab.workspace.service.WorkspaceService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,18 +23,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "v1 Workspace Invitation", description = "현재 사용자 workspace 초대 API")
 @SecurityRequirement(name = "bearerAuth")
-@ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증 필요",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "403",
-                description = "게스트 계정은 workspace 초대 조회 대상에서 제외",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
-        )
-})
 public class WorkspaceInvitationV1Controller {
 
     private final WorkspaceService workspaceService;

@@ -10,9 +10,6 @@ import com.todolab.workspace.dto.WorkspaceRequest;
 import com.todolab.workspace.dto.WorkspaceResponse;
 import com.todolab.workspace.service.WorkspaceService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -38,28 +36,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "v1 Workspace", description = "공유 workspace API")
 @SecurityRequirement(name = "bearerAuth")
-@ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "요청값 검증 실패",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증 필요",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "403",
-                description = "권한 부족",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "workspace 또는 member 없음",
-                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
-        )
-})
 public class WorkspaceV1Controller {
 
     private final WorkspaceService workspaceService;
@@ -67,6 +43,7 @@ public class WorkspaceV1Controller {
 
     @Operation(summary = "Workspace 생성", description = "로그인 사용자의 공유 workspace를 생성하고 생성자를 OWNER로 등록합니다.")
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ApiResponse<WorkspaceResponse>> create(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody WorkspaceRequest request
@@ -117,6 +94,7 @@ public class WorkspaceV1Controller {
 
     @Operation(summary = "Workspace 멤버 초대", description = "OWNER가 등록 사용자를 PENDING 멤버로 초대합니다.")
     @PostMapping("/{workspaceId}/members")
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ApiResponse<WorkspaceMemberResponse>> inviteMember(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long workspaceId,
