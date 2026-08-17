@@ -3,7 +3,8 @@ set -euo pipefail
 
 base_url=${TODOLAB_TAILSCALE_API_URL:-${TODOLAB_SMOKE_BASE_URL:-}}
 expo_origin=${TODOLAB_EXPO_WEB_ORIGIN:-}
-tailscale_cli=${TODOLAB_TAILSCALE_CLI:-tailscale}
+tailscale_cli=${TODOLAB_TAILSCALE_CLI:-}
+default_macos_tailscale_cli=/Applications/Tailscale.app/Contents/MacOS/Tailscale
 tmpdir=$(mktemp -d)
 
 cleanup() {
@@ -19,10 +20,26 @@ require_command() {
 }
 
 require_tailscale_cli() {
-  if command -v "$tailscale_cli" >/dev/null 2>&1; then
+  if [ -n "$tailscale_cli" ]; then
+    if command -v "$tailscale_cli" >/dev/null 2>&1; then
+      tailscale_cli=$(command -v "$tailscale_cli")
+      return 0
+    fi
+    if [ -x "$tailscale_cli" ]; then
+      return 0
+    fi
+    echo "Required command not found: $tailscale_cli" >&2
+    exit 2
+  fi
+  if command -v tailscale >/dev/null 2>&1; then
+    tailscale_cli=$(command -v tailscale)
     return 0
   fi
-  if [ -x "$tailscale_cli" ]; then
+  if [ -x "$default_macos_tailscale_cli" ]; then
+    tailscale_cli=$default_macos_tailscale_cli
+    return 0
+  fi
+  if command -v "$tailscale_cli" >/dev/null 2>&1; then
     return 0
   fi
   if [ -d /Applications/Tailscale.app ]; then
@@ -30,7 +47,7 @@ require_tailscale_cli() {
     echo "Install or link the CLI, or set TODOLAB_TAILSCALE_CLI to its executable path." >&2
     exit 2
   fi
-  echo "Required command not found: $tailscale_cli" >&2
+  echo "Required command not found: tailscale" >&2
   exit 2
 }
 
@@ -58,16 +75,6 @@ json_value() {
   jq -r "$expression" "$output_file"
 }
 
-if [ -z "$base_url" ]; then
-  echo "TODOLAB_TAILSCALE_API_URL is required, for example https://<device>.<tailnet>.ts.net" >&2
-  exit 2
-fi
-if [[ "$base_url" != https://* ]]; then
-  echo "TODOLAB_TAILSCALE_API_URL must be an HTTPS URL" >&2
-  exit 2
-fi
-base_url=${base_url%/}
-
 require_command curl
 require_command jq
 require_tailscale_cli
@@ -87,6 +94,18 @@ if ! grep -q '127.0.0.1:8080\|localhost:8080' "$serve_status"; then
   cat "$serve_status" >&2
   exit 1
 fi
+if [ -z "$base_url" ]; then
+  base_url=$(grep -Eo 'https://[^[:space:]]+' "$serve_status" | head -n 1 || true)
+fi
+if [ -z "$base_url" ]; then
+  echo "TODOLAB_TAILSCALE_API_URL is required, or Tailscale Serve must expose an HTTPS URL" >&2
+  exit 2
+fi
+if [[ "$base_url" != https://* ]]; then
+  echo "TODOLAB_TAILSCALE_API_URL must be an HTTPS URL" >&2
+  exit 2
+fi
+base_url=${base_url%/}
 
 readiness_json="$tmpdir/readiness.json"
 guest_json="$tmpdir/guest.json"

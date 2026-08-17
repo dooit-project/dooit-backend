@@ -103,6 +103,8 @@ TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tail
 TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net TODOLAB_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
 ```
 
+`TODOLAB_TAILSCALE_API_URL`을 아직 확정값으로 저장하지 않았더라도 `tailscale serve status`에 HTTPS URL이 있으면 `./scripts/check-tailscale-production.sh`는 해당 URL을 자동 감지해 host smoke를 실행한다. 자동 감지 결과는 점검 출력으로만 사용하고 문서에는 실제 URL을 기록하지 않는다.
+
 ## 5. Production Health Check
 
 운영 readiness endpoint는 `/actuator/health/readiness`다. 이 endpoint는 인증 없이 접근 가능하지만, Actuator 노출 범위는 `health`로만 제한한다.

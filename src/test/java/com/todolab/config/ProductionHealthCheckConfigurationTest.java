@@ -105,6 +105,19 @@ class ProductionHealthCheckConfigurationTest {
     }
 
     @Test
+    @DisplayName("Tailscale production 점검은 macOS Tailscale.app CLI 경로를 fallback으로 사용한다")
+    void tailscaleProductionCheckFallsBackToMacosAppCli() throws Exception {
+        String script = Files.readString(Path.of("scripts/check-tailscale-production.sh"));
+        String runbook = Files.readString(Path.of("docs/ops/LOCAL_PRODUCTION_RUNBOOK.md"));
+
+        assertThat(script).contains("/Applications/Tailscale.app/Contents/MacOS/Tailscale");
+        assertThat(script).contains("command -v tailscale");
+        assertThat(script).contains("tailscale_cli=$default_macos_tailscale_cli");
+        assertThat(script).contains("grep -Eo 'https://[^[:space:]]+' \"$serve_status\"");
+        assertThat(runbook).contains("점검 스크립트는 `/Applications/Tailscale.app/Contents/MacOS/Tailscale`을 자동 사용한다");
+    }
+
+    @Test
     @DisplayName("DB 백업과 복구 스크립트는 압축 검증과 복구 확인 플래그를 둔다")
     void databaseBackupAndRestoreScriptsHaveSafetyChecks() throws Exception {
         String backup = Files.readString(Path.of("scripts/backup-db.sh"));

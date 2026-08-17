@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-13
+Last updated: 2026-08-18
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -129,12 +129,12 @@ Last updated: 2026-08-13
 
 목표: 공용 인터넷 포트포워딩 없이 Android production build가 Tailscale HTTPS로 production API에 접근한다.
 
-- [ ] Mac에서 `tailscale` CLI를 PATH에 설치하거나 `TODOLAB_TAILSCALE_CLI`로 경로를 지정한다.
+- [x] Mac에서 `tailscale` CLI를 PATH에 설치하거나 `Tailscale.app` 실행 파일을 자동 감지한다.
 - [ ] Mac과 Android 기기를 같은 tailnet에 연결한다.
 - [ ] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
-- [ ] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 `http://127.0.0.1:8080`에 연결한다.
+- [x] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 `http://127.0.0.1:8080`에 연결한다.
 - [ ] `.env`에 `TODOLAB_TAILSCALE_API_URL`을 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`를 통과시킨다.
-- [ ] `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-tailscale-production.sh`를 통과시킨다.
+- [x] `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-tailscale-production.sh`를 통과시킨다.
 - [ ] Android 실제 기기에서 `GET /api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
 - [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
 
