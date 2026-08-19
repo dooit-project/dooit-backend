@@ -8,7 +8,7 @@ Last updated: 2026-08-20
 
 ## 현재 운영 입력 상태
 
-2026-08-20 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. 아직 문서에 확정값을 남기지 않는 항목은 Android production Tailscale HTTPS URL, Expo Web production origin, offsite backup 경로다.
+2026-08-20 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, Expo Web production origin, offsite backup 경로다.
 
 남은 값은 `.env`와 운영 환경에만 저장하고, 문서에는 검증 범위와 명령만 기록한다.
 

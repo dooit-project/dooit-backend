@@ -46,6 +46,8 @@ Last audited: 2026-08-20
 - [x] 2026-08-09 게스트 계정 기준: 생성, `/auth/me`, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약 구현
 - [x] 2026-08-11 production guest smoke 기준: `./scripts/smoke-production-api.sh`로 게스트 발급, `/auth/me`, token refresh, 회원가입 승격, 기존 계정 병합, 병합 재시도 멱등성 확인 가능
 - [x] 2026-08-11 production Tailscale smoke 기준: `./scripts/check-tailscale-production.sh`로 HTTPS readiness, guest 발급, `/auth/me`, 선택적 Expo Web CORS preflight 확인 가능
+- [x] 2026-08-20 production Tailscale URL 기준: MagicDNS HTTPS URL을 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh` 통과
+- [x] 2026-08-20 production Tailscale host smoke 기준: HTTPS readiness, guest 발급, guest `/auth/me` 확인. 실제 URL, token, guest id는 기록하지 않음
 
 1. [x] 인증 사용자 소유권
    - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
@@ -239,6 +241,7 @@ Last audited: 2026-08-20
 
 - [x] host 내부 production API smoke: `./scripts/smoke-production-api.sh`
 - [x] Tailscale HTTPS host smoke 스크립트: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh`
+- [x] Tailscale HTTPS URL `.env` 반영: `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`
 - [ ] Android 실제 기기 production smoke: Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
 - [ ] Expo Web production origin: 필요 시 `TODOLAB_ALLOWED_ORIGINS` 반영 후 preflight 확인
 

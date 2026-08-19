@@ -24,7 +24,7 @@ Last updated: 2026-08-20
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
 | 서버 push | token, 후보, 이력, provider 설정 계약 완료 | Expo 발송 client, scheduler, idempotency, invalid token 처리 구현 |
-| production 접근 | host 내부와 Tailscale host smoke 가능 | Android 실제 기기 HTTPS smoke와 `.env` 확정값 반영 |
+| production 접근 | host 내부와 Tailscale host smoke 가능, `.env` Tailscale URL 반영 완료 | Android 실제 기기 HTTPS smoke |
 | 운영 복구성 | 스크립트와 runbook 준비 | 재부팅/로그인/Docker 재시작 후 recovery 증적 확보 |
 | backup | local backup 절차 준비 | offsite backup 위치 결정과 restore 연습 |
 
@@ -157,9 +157,9 @@ Last updated: 2026-08-20
 
 - [x] Mac에서 `tailscale` CLI를 PATH에 설치하거나 `Tailscale.app` 실행 파일을 자동 감지한다.
 - [ ] Mac과 Android 기기를 같은 tailnet에 연결한다.
-- [ ] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
+- [x] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
 - [x] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 `http://127.0.0.1:8080`에 연결한다.
-- [ ] `.env`에 `TODOLAB_TAILSCALE_API_URL`을 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`를 통과시킨다.
+- [x] `.env`에 `TODOLAB_TAILSCALE_API_URL`을 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`를 통과시킨다.
 - [x] `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-tailscale-production.sh`를 통과시킨다.
 - [ ] Android 실제 기기에서 `GET /api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
 - [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
