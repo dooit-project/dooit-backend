@@ -46,6 +46,9 @@ class DocumentationIndexTest {
         String guest = Files.readString(Path.of("docs/api/GUEST_ACCOUNT_HANDOFF.md"));
 
         assertThat(docsIndex).contains("## 유지 원칙");
+        assertThat(docsIndex).contains("## 현재 기준 요약");
+        assertThat(docsIndex).contains("아직 닫히지 않은 제품/운영 작업");
+        assertThat(docsIndex).contains("Android production Tailscale HTTPS 실기기 smoke");
         assertThat(docsIndex).contains("완료 이력만 남은 문서는 별도로 유지하지 않고");
         assertThat(docsIndex).doesNotContain("history/TASK_DATE_MIGRATION.md");
         assertThat(docsIndex).doesNotContain("BACKEND_DOCUMENTATION_PLAN.md");
@@ -72,6 +75,9 @@ class DocumentationIndexTest {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
         assertThat(roadmap).contains("## 2. 제품 기능 로드맵");
+        assertThat(roadmap).contains("### 2026-08-20 정리");
+        assertThat(roadmap).contains("현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증");
+        assertThat(roadmap).contains("서버 push 실제 발송");
         assertThat(roadmap).contains("### P0. 일정 빠른 등록 API");
         assertThat(roadmap).contains("### P0. 빠른 등록 템플릿");
         assertThat(roadmap).contains("### P1. 일정 공유 설계");
@@ -128,6 +134,8 @@ class DocumentationIndexTest {
         String environment = Files.readString(Path.of("docs/ops/ENVIRONMENT_INTEGRATION.md"));
 
         assertThat(notification).contains("1차 provider는 `EXPO`");
+        assertThat(notification).contains("## 현재 구현 상태");
+        assertThat(notification).contains("실제 Expo/APNs/FCM provider 호출");
         assertThat(notification).contains("TODOLAB_PUSH_ENABLED");
         assertThat(notification).contains("서버 Push 발송 스케줄러 설계");
         assertThat(notification).contains("idempotency key는 `SERVER:{task.id}`");
@@ -150,6 +158,8 @@ class DocumentationIndexTest {
         String environment = Files.readString(Path.of("docs/ops/ENVIRONMENT_INTEGRATION.md"));
 
         assertThat(environment).contains("## 4. 운영 환경 확정 입력값");
+        assertThat(environment).contains("## 현재 운영 입력 상태");
+        assertThat(environment).contains("Android production Tailscale HTTPS URL");
         assertThat(environment).contains("API base URL");
         assertThat(environment).contains("Expo Web origin");
         assertThat(environment).contains("Authorization` header 포함 preflight 성공");

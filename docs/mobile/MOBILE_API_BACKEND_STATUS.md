@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-11
+Last audited: 2026-08-20
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -9,6 +9,21 @@ Last audited: 2026-08-11
 - `[x]` 완료 또는 현재 코드로 확인됨
 - `[~]` 부분 구현됨. 계약과 차이가 있어 보완 필요
 - `[ ]` 미구현 또는 아직 확인 불가
+
+## 0. 현재 요약
+
+2026-08-20 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 남은 최우선 확인은 backend 구현 문제가 아니라 production 접근 경로와 실제 기기 검증이다.
+
+| 영역 | 상태 | 현재 기준 |
+| --- | --- | --- |
+| Auth/Guest | [x] | JWT, guest 생성/갱신/승격/병합/cleanup/rate limit 계약 구현 |
+| Task/D-Day | [x] | owner scope, Today/Calendar, 검색, D-Day 연결, 반복 occurrence 구현 |
+| Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 실제 입력 로그 기반 파싱 보강만 남음 |
+| Templates | [x] | `TaskTemplate` CRUD와 template 기반 Task 생성 구현 |
+| Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
+| Notifications | [~] | 로컬 알림 후보, push token, 발송 이력 API 구현. 실제 서버 push 발송은 미구현 |
+| Production Android | [ ] | Tailscale HTTPS URL로 Android 실제 기기 smoke 필요 |
+| Expo Web production | [ ] | 사용 여부와 실제 origin 확정 전 |
 
 ## 1. 실제 사용 전 최우선
 

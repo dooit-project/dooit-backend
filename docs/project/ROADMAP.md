@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-18
+Last updated: 2026-08-20
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -14,6 +14,20 @@ Last updated: 2026-08-18
 - staging은 현재 운영하지 않는다. 환경은 local 개발 환경과 이 PC의 production 환경으로만 구분한다.
 - 실제 secret, access token, DB dump 내용, private production URL은 문서에 기록하지 않는다.
 
+### 2026-08-20 정리
+
+현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증에 몰려 있다.
+
+| 구분 | 현재 상태 | 다음에 닫을 일 |
+| --- | --- | --- |
+| 빠른 등록 | API와 규칙 기반 파싱 구현 완료 | 모바일 실제 입력 로그 기반 날짜/시간 표현 보강 |
+| 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
+| 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
+| 서버 push | token, 후보, 이력, provider 설정 계약 완료 | Expo 발송 client, scheduler, idempotency, invalid token 처리 구현 |
+| production 접근 | host 내부와 Tailscale host smoke 가능 | Android 실제 기기 HTTPS smoke와 `.env` 확정값 반영 |
+| 운영 복구성 | 스크립트와 runbook 준비 | 재부팅/로그인/Docker 재시작 후 recovery 증적 확보 |
+| backup | local backup 절차 준비 | offsite backup 위치 결정과 restore 연습 |
+
 ## 2. 제품 기능 로드맵
 
 운영 접근 경로가 막혀 있더라도 backend 설계와 API 구현을 병행할 수 있는 제품 기능이다. 모바일 UX 영향, 데이터 모델 변경 범위, 공유/권한 모델의 blast radius를 기준으로 순서를 둔다.
@@ -21,6 +35,8 @@ Last updated: 2026-08-18
 ### P0. 일정 빠른 등록 API
 
 목표: 모바일과 서버 화면에서 같은 backend API로 빠르게 일정을 입력한다. 첫 버전은 실패해도 안전하게 Inbox Task로 저장되는 보수적 파싱을 기준으로 한다.
+
+상태: API와 회귀 테스트는 닫혔다. 남은 작업은 실제 모바일 입력 로그를 반영한 파싱 coverage 확장이다.
 
 - [x] `POST /api/v1/tasks/quick-capture` 계약을 추가한다.
 - [x] request는 원문 `text`, 기준 날짜, 사용자 timezone, 선택적 기본 category를 받는다.
@@ -41,6 +57,8 @@ Last updated: 2026-08-18
 
 목표: 자주 쓰는 일정과 할 일을 한 번의 선택으로 생성할 수 있게 한다. 자연어 파싱보다 예측 가능하고 모바일 반복 사용성에 바로 도움을 준다.
 
+상태: backend 1차 구현은 닫혔다. 모바일 화면 연동 중 추가 필드가 필요해질 때 계약을 보강한다.
+
 - [x] `TASK_TEMPLATE` 모델을 추가한다.
 - [x] `GET /api/v1/task-templates`, `POST /api/v1/task-templates`, `PUT /api/v1/task-templates/{id}`, `DELETE /api/v1/task-templates/{id}`를 추가한다.
 - [x] template에는 title, type, category, allDay, default time, recurrence preset을 둔다.
@@ -56,6 +74,8 @@ Last updated: 2026-08-18
 ### P1. 일정 공유 설계
 
 목표: 개인 owner 모델을 깨지 않고 공유 캘린더/공유 Task를 도입할 수 있는 권한 모델을 먼저 확정한다.
+
+상태: 설계와 invariant 테스트 기준은 닫혔다. 구현 세부 계약은 `docs/api/SHARING_CONTRACT.md`를 원본으로 본다.
 
 - [x] 공유 단위 결정: 1차 범위는 workspace 안의 Task/D-Day로 제한한다.
 - [x] 권한 모델 결정: OWNER, EDITOR, VIEWER와 PENDING/ACTIVE/REMOVED membership을 사용한다.
@@ -73,6 +93,8 @@ Last updated: 2026-08-18
 ### P1. 일정 공유 1차 구현
 
 목표: 가장 작은 공유 단위를 실제 API로 연다. 1차 범위는 “공유 workspace 안의 Task/D-Day를 멤버가 조회”로 제한한다.
+
+상태: backend 1차 구현은 닫혔다. 모바일 연동 단계에서는 개인 API와 workspace API가 섞이지 않는지, VIEWER/EDITOR 권한 UX가 맞는지 검증한다.
 
 - [x] `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 모델과 migration을 추가한다.
 - [x] workspace 생성, 멤버 초대, 수락, 제거 API를 추가한다.
@@ -94,6 +116,8 @@ Last updated: 2026-08-18
 ### P1. 서버 push 실제 발송
 
 목표: 현재 구현된 push token, 알림 후보, 발송 이력 기반 위에 실제 provider 전송을 붙인다.
+
+상태: provider 설정과 이력 저장 계약은 준비되어 있지만, 실제 Expo/APNs/FCM 호출 scheduler는 아직 구현하지 않는다.
 
 - [ ] Expo/APNs/FCM 중 production provider와 credential 보관 방식을 확정한다.
 - [ ] 발송 스케줄러 실행 시점과 look-ahead window를 정한다.
@@ -124,6 +148,8 @@ Last updated: 2026-08-18
 - [ ] 새 guest id 발급을 복구 정책으로 사용하지 않는 원칙을 유지한다.
 
 ## 3. 운영 마무리 로드맵
+
+운영 로드맵은 실제 secret, private URL, DB dump 내용을 남기지 않고 통과한 명령과 검증 범위만 기록한다.
 
 ### P0. production 접근 경로 확정
 

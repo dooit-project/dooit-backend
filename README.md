@@ -72,6 +72,8 @@ src/main/java/com/todolab/
 
 문서 전체 목록과 전달 우선순위는 [`docs/README.md`](./docs/README.md)를 기준으로 확인합니다.
 
+현재 기준 요약과 아직 닫히지 않은 작업은 [`docs/README.md`](./docs/README.md)의 “현재 기준 요약”과 [`docs/project/ROADMAP.md`](./docs/project/ROADMAP.md)를 함께 봅니다.
+
 프론트엔드/모바일 전달용 핵심 문서:
 
 - [`docs/api/API_V1_FRONTEND.md`](./docs/api/API_V1_FRONTEND.md)

@@ -1,8 +1,24 @@
 # Notification Contract
 
-Last updated: 2026-07-25
+Last updated: 2026-08-20
 
 이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API와 서버 push token 등록 API를 제공하며, 서버 push 발송 API는 제공하지 않는다.
+
+## 현재 구현 상태
+
+2026-08-20 기준 backend는 아래 범위까지 제공한다.
+
+- 로컬 알림 후보 조회: `GET /api/v1/tasks/notification-candidates`
+- push token 등록/조회/비활성화: `POST /api/v1/push-tokens`, `GET /api/v1/push-tokens`, `DELETE /api/v1/push-tokens/{id}`
+- 서버 push 전송 이력 조회: `GET /api/v1/push-notification-histories`
+- push provider 설정값: `enabled=false`, `provider=EXPO`, Expo endpoint 기본값
+
+아직 제공하지 않는 범위:
+
+- 실제 Expo/APNs/FCM provider 호출
+- 발송 scheduler
+- provider 실패 응답 기반 token 자동 비활성화
+- 성공 이력 기반 서버 발송 idempotency 적용
 
 ## 책임 분리
 

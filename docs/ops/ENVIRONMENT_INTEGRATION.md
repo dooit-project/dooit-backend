@@ -1,10 +1,16 @@
 # ToDoLab Environment Integration
 
-Last updated: 2026-08-11
+Last updated: 2026-08-20
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
 이 PC를 단일 production으로 운영하는 실제 명령과 백업·복구 절차는 [`LOCAL_PRODUCTION_RUNBOOK.md`](./LOCAL_PRODUCTION_RUNBOOK.md)를 따른다.
+
+## 현재 운영 입력 상태
+
+2026-08-20 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. 아직 문서에 확정값을 남기지 않는 항목은 Android production Tailscale HTTPS URL, Expo Web production origin, offsite backup 경로다.
+
+남은 값은 `.env`와 운영 환경에만 저장하고, 문서에는 검증 범위와 명령만 기록한다.
 
 ## 1. 환경별 API URL
 

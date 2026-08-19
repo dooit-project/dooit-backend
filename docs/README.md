@@ -1,8 +1,22 @@
 # ToDoLab Backend Docs
 
-Last updated: 2026-08-13
+Last updated: 2026-08-20
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
+
+## 현재 기준 요약
+
+2026-08-20 현재 문서 원본은 아래 순서로 판단한다.
+
+| 우선순위 | 문서/원본 | 기준 |
+| --- | --- | --- |
+| 1 | 실행 중인 백엔드 `/v3/api-docs` | endpoint, request/response schema, validation, security 원본 계약 |
+| 2 | `docs/api/**` | 사람이 읽는 API 계약, 권한/오류/시간대/반복/알림/공유 정책 |
+| 3 | `docs/mobile/**` | 모바일 real-mode 검증 상태와 장애 대응 절차 |
+| 4 | `docs/ops/**` | local production 운영, 환경변수, 배포·백업·복구 절차 |
+| 5 | `docs/project/ROADMAP.md` | 아직 닫히지 않은 제품/운영 작업 |
+
+현재 로드맵에서 닫아야 할 최우선 작업은 Android production Tailscale HTTPS 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현이 닫혔고, 서버 push 실제 발송과 검색·추천 고도화가 다음 후보로 남아 있다.
 
 ## 프론트/모바일 전달 문서
 
