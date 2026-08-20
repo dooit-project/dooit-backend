@@ -1,6 +1,6 @@
 # ToDoLab Backend
 
-ToDoLab의 일정·할 일 도메인, 서버 렌더링 화면, 배치 작업을 담당하는 백엔드 애플리케이션입니다.
+ToDoLab의 일정·할 일 도메인, 모바일/웹 클라이언트 API, 배치 작업을 담당하는 백엔드 애플리케이션입니다.
 
 명확한 도메인 모델과 검증 가능한 구조를 우선하며, Spring MVC와 Virtual Threads를 기반으로 읽기 쉬운 명령형 코드와 동시 처리 성능을 함께 확보하는 것을 목표로 합니다.
 
@@ -10,7 +10,6 @@ ToDoLab의 일정·할 일 도메인, 서버 렌더링 화면, 배치 작업을 
 - 오늘·주간·월간 일정 조회와 정렬
 - D-Day 목표 관리
 - 일일 일정 메일 발송 배치
-- Thymeleaf 기반 서버 렌더링 화면
 - 일관된 API 응답과 예외 처리
 
 ## 기술 스택
@@ -21,7 +20,6 @@ ToDoLab의 일정·할 일 도메인, 서버 렌더링 화면, 배치 작업을 
 | Framework | Spring Boot 4.0.6, Spring MVC, Virtual Threads |
 | Data | Spring Data JPA, QueryDSL, MySQL 8 |
 | Batch & Mail | Spring Batch, Spring Mail |
-| View | Thymeleaf |
 | API Docs | OpenAPI, Swagger UI, Scalar |
 | Build & Test | Gradle Wrapper, JUnit, JaCoCo |
 | Runtime | Docker, Docker Compose |
@@ -35,8 +33,7 @@ src/main/java/com/todolab/
 ├── task/     # 일정·할 일 도메인
 ├── dday/     # D-Day 도메인
 ├── batch/    # 일일 일정 배치
-├── mail/     # 메일 발송
-└── view/     # 서버 렌더링 화면
+└── mail/     # 메일 발송
 ```
 
 ## 로컬 개발

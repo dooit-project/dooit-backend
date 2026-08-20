@@ -7,7 +7,7 @@ Last updated: 2026-08-20
 ## 1. 현재 기준
 
 - 모바일 API 기준 경로는 `/api/v1/**`다.
-- 인증은 모바일 API는 Bearer JWT, 서버 렌더링 화면은 session login을 사용한다.
+- 인증은 `/api/v1/**` 모바일/웹 클라이언트 API에서 Bearer JWT를 사용한다.
 - API 원본 계약은 실행 중인 백엔드의 `/v3/api-docs` OpenAPI JSON이다.
 - local production은 이 Mac의 Docker Compose와 external MySQL volume을 사용한다.
 - production app port는 `127.0.0.1:8080`에만 bind하고, Android 접근은 Tailscale HTTPS 경로로만 연다.

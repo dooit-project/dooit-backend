@@ -1,6 +1,6 @@
 # ToDoLab API Compatibility Policy
 
-Last updated: 2026-07-22
+Last updated: 2026-08-21
 
 이 문서는 `/api/v1/**` 모바일 API를 변경할 때 지켜야 할 호환성 기준과 OpenAPI 변경 검토 방식을 정리한다.
 
@@ -9,9 +9,9 @@ Last updated: 2026-07-22
 - 모바일이 사용하는 안정 API는 `/api/v1/**`이다.
 - 기존 v1 endpoint의 path, method, request field, response field, error envelope는 호환성을 유지한다.
 - 새 기능은 가능한 한 기존 v1 계약을 깨지 않고 field 또는 endpoint를 추가하는 방식으로 확장한다.
-- 기존 `/api/**` legacy endpoint는 웹 화면과 과거 연동 호환을 위해 유지하되, 모바일 신규 기능에는 사용하지 않는다.
+- 기존 `/api/**` legacy endpoint는 과거 연동 호환을 위해 유지하되, 모바일/웹 클라이언트 신규 기능에는 사용하지 않는다.
 - 모바일 호환을 위해 legacy `/api/ddays/**` alias를 새로 추가하지 않는다. 모바일은 D-Day API를 `/api/v1/dday-goals/**`로 전환한다.
-- legacy endpoint 제거는 웹 화면 의존성과 과거 클라이언트 사용 여부를 확인한 뒤 별도 deprecation 절차로 진행한다.
+- legacy endpoint 제거는 과거 클라이언트 사용 여부와 운영 로그를 확인한 뒤 별도 deprecation 절차로 진행한다.
 
 ## 2. Breaking Change 기준
 
@@ -81,14 +81,13 @@ API 계약 변경 PR에는 아래를 함께 반영한다.
 
 - `/api/v1/**`는 모바일/외부 클라이언트용 안정 계약이다.
 - `/api/tasks/**`, `/api/ddays/**`는 legacy 계약이다.
-- legacy `/api/tasks/**`는 현재 웹 화면과 기존 백엔드 UI 흐름을 위해 유지한다.
+- legacy `/api/tasks/**`는 과거 호환 범위로만 유지한다.
 - legacy `/api/ddays/**`는 현재 제공 중인 범위만 유지한다. 없는 endpoint를 모바일 호환용 alias로 새로 추가하지 않는다.
 - legacy API에는 v1 owner scope, JWT 인증, OpenAPI 품질 보강을 새 기능 수준으로 확대하지 않는다.
 - 새 모바일 API는 반드시 `/api/v1/**`에 추가한다.
 
 제거 검토 조건:
 
-- 웹 화면이 v1 또는 내부 서비스 호출로 완전히 전환됨
 - 모바일과 외부 클라이언트가 legacy path를 호출하지 않음
 - 운영 로그에서 legacy path 사용이 충분한 기간 동안 관측되지 않음
 - 대체 v1 endpoint와 마이그레이션 문서가 준비됨

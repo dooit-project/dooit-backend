@@ -1418,6 +1418,6 @@ Cursor 기준:
 ## 11. Legacy API 정책
 
 - 모바일 신규 연동 기준은 `/api/v1/**`다.
-- legacy `/api/tasks/**`, `/api/ddays/**`는 웹 화면과 과거 호환 범위로 유지한다.
+- legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다.
 - 모바일 호환을 위해 legacy `/api/ddays/{id}`, `/api/ddays/{id}/tasks` alias를 새로 추가하지 않는다.
 - D-Day 단건 조회는 `GET /api/v1/dday-goals/{id}`, D-Day 기반 Today Task 생성은 `POST /api/v1/dday-goals/{id}/tasks`를 사용한다.

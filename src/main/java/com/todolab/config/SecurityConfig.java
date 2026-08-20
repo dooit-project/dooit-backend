@@ -45,18 +45,7 @@ public class SecurityConfig {
             "/actuator/health/**"
     };
 
-    private static final String[] WEB_STATIC_PUBLIC_MATCHERS = {
-            "/login",
-            "/favicon.ico",
-            "/css/**",
-            "/js/**",
-            "/images/**"
-    };
-
-    static final String[] WEB_PUBLIC_MATCHERS = combine(
-            WEB_STATIC_PUBLIC_MATCHERS,
-            ACTUATOR_HEALTH_MATCHERS
-    );
+    static final String[] NON_API_PUBLIC_MATCHERS = ACTUATOR_HEALTH_MATCHERS;
 
     private final ApiAuthenticationEntryPoint apiAuthenticationEntryPoint;
     private final ApiAccessDeniedHandler apiAccessDeniedHandler;
@@ -90,46 +79,32 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain nonApiSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(publicWebMatchers()).permitAll()
-                        .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/tasks/today", true)
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+                        .requestMatchers(publicNonApiMatchers()).permitAll()
+                        .anyRequest().denyAll()
                 )
                 .build();
     }
 
-    private String[] publicWebMatchers() {
+    private String[] publicNonApiMatchers() {
         if (!documentationProperties.publicEnabled()) {
-            return WEB_PUBLIC_MATCHERS;
+            return NON_API_PUBLIC_MATCHERS;
         }
 
-        String[] matchers = new String[WEB_PUBLIC_MATCHERS.length + DOCUMENTATION_MATCHERS.length];
-        System.arraycopy(WEB_PUBLIC_MATCHERS, 0, matchers, 0, WEB_PUBLIC_MATCHERS.length);
+        String[] matchers = new String[NON_API_PUBLIC_MATCHERS.length + DOCUMENTATION_MATCHERS.length];
+        System.arraycopy(NON_API_PUBLIC_MATCHERS, 0, matchers, 0, NON_API_PUBLIC_MATCHERS.length);
         System.arraycopy(
                 DOCUMENTATION_MATCHERS,
                 0,
                 matchers,
-                WEB_PUBLIC_MATCHERS.length,
+                NON_API_PUBLIC_MATCHERS.length,
                 DOCUMENTATION_MATCHERS.length
         );
         return matchers;
-    }
-
-    private static String[] combine(String[] first, String[] second) {
-        String[] combined = new String[first.length + second.length];
-        System.arraycopy(first, 0, combined, 0, first.length);
-        System.arraycopy(second, 0, combined, first.length, second.length);
-        return combined;
     }
 
     @Bean

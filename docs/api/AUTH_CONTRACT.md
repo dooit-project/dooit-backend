@@ -1,16 +1,16 @@
 # Auth Contract
 
-Last updated: 2026-08-12
+Last updated: 2026-08-21
 
-이 문서는 ToDoLab 백엔드의 모바일 JWT 인증과 웹 세션 인증 책임을 정리한다.
+이 문서는 ToDoLab 백엔드의 모바일/웹 클라이언트 JWT 인증 책임을 정리한다.
 
 ## 인증 방식
 
-- 모바일 API는 `/api/v1/**` 경로에서 `Authorization: Bearer <accessToken>` JWT를 사용한다.
-- 웹 화면은 세션 기반 form login을 사용한다.
+- 클라이언트 API는 `/api/v1/**` 경로에서 `Authorization: Bearer <accessToken>` JWT를 사용한다.
+- 백엔드는 Thymeleaf 서버 렌더링 화면과 세션 기반 form login을 제공하지 않는다.
 - 회원가입과 로그인은 인증 없이 호출할 수 있다.
 - 게스트 시작은 `POST /api/v1/auth/guest`로 인증 없이 호출할 수 있다.
-- 사용자 데이터 소유권 격리는 모바일 JWT와 웹 세션 모두 동일하게 적용한다.
+- 사용자 데이터 소유권 격리는 JWT 인증 사용자 기준으로 적용한다.
 
 ## 계정 유형
 

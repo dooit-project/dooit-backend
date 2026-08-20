@@ -42,7 +42,7 @@ Last audited: 2026-08-21
 - [x] 2026-07-22 v1 Task 생성 응답 기준: nullable/default/date 규칙을 OpenAPI와 `API_V1_FRONTEND.md`에 반영
 - [x] 2026-07-22 v1 MONTH Task 조회 기준: `date=YYYY-MM` 바인딩, `YYYY-MM-DD` 거부, owner scope 검증
 - [x] 2026-07-22 v1 리소스 삭제 응답 기준: Task/D-Day 삭제 성공 envelope의 `data`는 `null`
-- [x] 2026-07-22 legacy 정책 기준: `/api/tasks/**`, `/api/ddays/**`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않음
+- [x] 2026-07-22 legacy 정책 기준: `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로 유지하고 모바일 alias는 추가하지 않음
 - [x] 2026-08-09 게스트 계정 기준: 생성, `/auth/me`, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약 구현
 - [x] 2026-08-11 production guest smoke 기준: `./scripts/smoke-production-api.sh`로 게스트 발급, `/auth/me`, token refresh, 회원가입 승격, 기존 계정 병합, 병합 재시도 멱등성 확인 가능
 - [x] 2026-08-11 production Tailscale smoke 기준: `./scripts/check-tailscale-production.sh`로 HTTPS readiness, guest 발급, `/auth/me`, 선택적 Expo Web CORS preflight 확인 가능

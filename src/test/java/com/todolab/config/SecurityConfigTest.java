@@ -26,7 +26,7 @@ class SecurityConfigTest {
     void documentationMatchersArePublic() {
         assertThat(SecurityConfig.DOCUMENTATION_MATCHERS)
                 .contains("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/scalar.html");
-        assertThat(SecurityConfig.WEB_PUBLIC_MATCHERS)
+        assertThat(SecurityConfig.NON_API_PUBLIC_MATCHERS)
                 .doesNotContain(SecurityConfig.DOCUMENTATION_MATCHERS);
     }
 
@@ -35,7 +35,7 @@ class SecurityConfigTest {
     void actuatorHealthMatchersArePublic() {
         assertThat(SecurityConfig.ACTUATOR_HEALTH_MATCHERS)
                 .contains("/actuator/health", "/actuator/health/**");
-        assertThat(SecurityConfig.WEB_PUBLIC_MATCHERS)
+        assertThat(SecurityConfig.NON_API_PUBLIC_MATCHERS)
                 .contains(SecurityConfig.ACTUATOR_HEALTH_MATCHERS);
     }
 }

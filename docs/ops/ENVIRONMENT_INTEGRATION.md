@@ -146,7 +146,7 @@ Redis health indicator는 기본 비활성이다. 게스트 생성 rate limit �
 
 ## 7. API 로그 운영 기준
 
-백엔드는 `/api/**` 요청에 공통 API 로그 필터를 적용한다. 서버 렌더링 화면과 정적 리소스는 이 필터 대상이 아니다.
+백엔드는 `/api/**` 요청에 공통 API 로그 필터를 적용한다. Actuator health와 OpenAPI/Swagger/Scalar 문서 endpoint는 이 필터 대상이 아니다.
 
 기본 기록 항목:
 

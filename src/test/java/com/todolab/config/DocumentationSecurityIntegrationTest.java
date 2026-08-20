@@ -31,13 +31,13 @@ class DocumentationSecurityIntegrationTest {
     @DisplayName("문서 공개 설정을 끄면 OpenAPI 문서 endpoint가 공개되지 않는다")
     void documentationEndpointsAreNotPublicWhenDisabled() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/swagger-ui/index.html"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/scalar.html"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -48,5 +48,18 @@ class DocumentationSecurityIntegrationTest {
 
         mockMvc.perform(get("/actuator/health/readiness"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("서버 렌더링 화면 경로는 더 이상 제공하지 않는다")
+    void serverRenderedPagesAreNotServed() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/login"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/tasks/today"))
+                .andExpect(status().isForbidden());
     }
 }
