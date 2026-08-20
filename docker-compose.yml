@@ -9,6 +9,8 @@ services:
       MYSQL_USER: ${TODOLAB_DB_USERNAME:?TODOLAB_DB_USERNAME is required}
       MYSQL_PASSWORD: ${TODOLAB_DB_PASSWORD:?TODOLAB_DB_PASSWORD is required}
       TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - todolab-mysql-data:/var/lib/mysql
       - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
