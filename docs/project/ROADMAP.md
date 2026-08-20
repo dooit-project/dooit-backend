@@ -25,7 +25,7 @@ Last updated: 2026-08-20
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
 | 서버 push | token, 후보, 이력, provider 설정 계약 완료 | Expo 발송 client, scheduler, idempotency, invalid token 처리 구현 |
 | production 접근 | host 내부와 Tailscale host smoke 가능, `.env` Tailscale URL 반영 완료 | Android 실제 기기 HTTPS smoke |
-| 운영 복구성 | 스크립트와 runbook 준비 | 재부팅/로그인/Docker 재시작 후 recovery 증적 확보 |
+| 운영 복구성 | launchd, Docker health, readiness, Tailscale recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local backup 절차 준비 | offsite backup 위치 결정과 restore 연습 |
 
 ## 2. 제품 기능 로드맵
@@ -191,8 +191,9 @@ Last updated: 2026-08-20
 
 - [ ] `TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`를 관리자 권한으로 실행한다.
 - [ ] `TODOLAB_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
+- [x] 현재 부팅 상태에서 `./scripts/check-production-recovery.sh`를 통과시킨다.
+- [x] Tailscale URL 확정 후 `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-production-recovery.sh`를 통과시킨다.
 - [ ] 실제 재부팅 또는 로그아웃/로그인 후 `./scripts/check-production-recovery.sh`를 통과시킨다.
-- [ ] Tailscale URL 확정 후 `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-production-recovery.sh`를 통과시킨다.
 - [ ] Docker Desktop 재시작, 네트워크 변경, 절전 복귀 뒤 readiness와 Android 접근을 확인한다.
 
 증적:

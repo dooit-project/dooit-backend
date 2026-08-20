@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-20
+Last audited: 2026-08-21
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -48,6 +48,7 @@ Last audited: 2026-08-20
 - [x] 2026-08-11 production Tailscale smoke 기준: `./scripts/check-tailscale-production.sh`로 HTTPS readiness, guest 발급, `/auth/me`, 선택적 Expo Web CORS preflight 확인 가능
 - [x] 2026-08-20 production Tailscale URL 기준: MagicDNS HTTPS URL을 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh` 통과
 - [x] 2026-08-20 production Tailscale host smoke 기준: HTTPS readiness, guest 발급, guest `/auth/me` 확인. 실제 URL, token, guest id는 기록하지 않음
+- [x] 2026-08-21 production recovery 기준: launchd, Docker Desktop, app/mysql health, readiness, Tailscale HTTPS recovery check 통과. 실제 URL은 기록하지 않음
 
 1. [x] 인증 사용자 소유권
    - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
@@ -242,6 +243,7 @@ Last audited: 2026-08-20
 - [x] host 내부 production API smoke: `./scripts/smoke-production-api.sh`
 - [x] Tailscale HTTPS host smoke 스크립트: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh`
 - [x] Tailscale HTTPS URL `.env` 반영: `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`
+- [x] Tailscale HTTPS recovery check: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`
 - [ ] Android 실제 기기 production smoke: Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
 - [ ] Expo Web production origin: 필요 시 `TODOLAB_ALLOWED_ORIGINS` 반영 후 preflight 확인
 
