@@ -1352,7 +1352,7 @@ Query parameters:
 
 | 이름 | 값 |
 | --- | --- |
-| `q` | 제목/설명 부분 검색어. 한글 검색과 영문 대소문자 무시 검색을 지원한다. |
+| `q` | 제목/설명/category/D-Day 제목 부분 검색어. 한글 검색과 영문 대소문자 무시 검색을 지원한다. |
 | `statuses` | `INBOX`, `TODAY`, `DONE`. 반복 파라미터 또는 콤마 구분을 지원한다. |
 | `taskTypes` | `TODO`, `SCHEDULE`, `IDEA`. 반복 파라미터 또는 콤마 구분을 지원한다. |
 | `category` | 카테고리명 exact match. |
@@ -1373,7 +1373,9 @@ Response: `TaskSearchResponse`
     {
       "task": { "id": 1, "title": "출시 회의" },
       "relevantDate": "2026-07-22",
-      "dateSource": "TARGET_DATE"
+      "dateSource": "TARGET_DATE",
+      "matchedFields": ["TITLE"],
+      "highlight": "출시 회의"
     }
   ],
   "nextCursor": "50",
@@ -1381,7 +1383,12 @@ Response: `TaskSearchResponse`
 }
 ```
 
-`dateSource` 값은 `TARGET_DATE`, `START_AT`, `COMPLETED_AT`, `CREATED_AT`, `UPDATED_AT`, `NONE` 중 하나다. 잘못된 enum, `dateFrom > dateTo`, 잘못된 cursor, 범위를 벗어난 `limit`은 HTTP 400으로 응답한다.
+`dateSource` 값은 `TARGET_DATE`, `START_AT`, `COMPLETED_AT`, `CREATED_AT`, `UPDATED_AT`, `NONE` 중 하나다. `matchedFields` 값은 `TITLE`, `DESCRIPTION`, `CATEGORY`, `DDAY_GOAL_TITLE` 중 하나이며, `q`가 없으면 빈 배열이다. `highlight`는 검색 결과 표시용 짧은 매칭 원문이며 `q`가 없으면 `null`이다. 잘못된 enum, `dateFrom > dateTo`, 잘못된 cursor, 범위를 벗어난 `limit`은 HTTP 400으로 응답한다.
+
+정렬 주의:
+
+- `q`가 있으면 같은 sort 안에서 제목, category, D-Day 제목, 설명 매칭 순서로 먼저 정렬한다.
+- 그 다음 `sort` 값의 날짜/생성/수정 시각 기준과 `task.id` tie-breaker를 적용한다.
 
 Cursor 기준:
 

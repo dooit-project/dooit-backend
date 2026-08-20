@@ -129,13 +129,15 @@ Last updated: 2026-08-20
 
 - production credential 관리 방식이 확정되어야 한다.
 
-### P2. 검색/추천 고도화
+### P1. 검색/추천 고도화
 
 목표: 이미 있는 검색과 Today 추천을 실제 사용 패턴에 맞게 개선한다.
 
 - [ ] 최근 완료/이월/미룸 패턴 기반 Today 추천 점수를 추가한다.
-- [ ] category, D-Day, 반복 여부를 반영한 검색 ranking을 개선한다.
-- [ ] 검색 결과 highlight 또는 matched field 정보를 반환할지 결정한다.
+- [x] category와 D-Day 제목을 `q` 검색 매칭 범위에 포함한다.
+- [x] title, category, D-Day 제목, description 순서로 검색 매칭 ranking을 적용한다.
+- [x] 검색 결과에 `matchedFields`와 `highlight`를 반환한다.
+- [ ] 반복 여부를 반영한 검색 ranking을 개선한다.
 - [ ] 모바일에서 빈 검색 결과일 때 추천 query/category를 줄 수 있는지 검토한다.
 
 ### P2. 장기 게스트 복구

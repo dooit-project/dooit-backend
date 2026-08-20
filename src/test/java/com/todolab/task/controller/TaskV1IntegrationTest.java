@@ -2,6 +2,7 @@ package com.todolab.task.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
+import com.todolab.dday.dto.DdayGoalRequest;
 import com.todolab.mail.MailService;
 import com.todolab.task.domain.RecurrenceExceptionType;
 import com.todolab.task.domain.RecurrenceFrequency;
@@ -554,6 +555,8 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.items[0].task.type").value("SCHEDULE"))
                 .andExpect(jsonPath("$.data.items[0].relevantDate").value("2026-07-22"))
                 .andExpect(jsonPath("$.data.items[0].dateSource").value("TARGET_DATE"))
+                .andExpect(jsonPath("$.data.items[0].matchedFields[0]").value("TITLE"))
+                .andExpect(jsonPath("$.data.items[0].highlight").value("출시 회의"))
                 .andExpect(jsonPath("$.data.nextCursor").value(String.valueOf(firstTaskId)))
                 .andExpect(jsonPath("$.data.limit").value(1))
                 .andReturn()
@@ -576,7 +579,51 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.items[0].task.id").value(secondTaskId))
                 .andExpect(jsonPath("$.data.items[0].task.title").value("출시 리허설"))
                 .andExpect(jsonPath("$.data.items[0].relevantDate").value("2026-07-23"))
+                .andExpect(jsonPath("$.data.items[0].matchedFields[0]").value("DESCRIPTION"))
+                .andExpect(jsonPath("$.data.items[0].highlight").value("영문 release 점검"))
                 .andExpect(jsonPath("$.data.nextCursor").isEmpty());
+    }
+
+    @Test
+    @DisplayName("v1 Task 통합 검색은 category와 D-Day 제목 매칭 정보를 반환한다")
+    void searchTasks_success_categoryAndDdayMatches() throws Exception {
+        String accessToken = accessToken("task-search-rich-match@example.com");
+        Long categoryTaskId = createTask(accessToken, new TaskRequest(
+                "자료 정리",
+                null,
+                LocalDateTime.of(2026, 7, 24, 9, 0),
+                LocalDateTime.of(2026, 7, 24, 10, 0),
+                "출시",
+                false
+        ));
+        Long ddayTaskId = createTask(accessToken, new TaskRequest(
+                "체크리스트",
+                null,
+                LocalDateTime.of(2026, 7, 25, 9, 0),
+                LocalDateTime.of(2026, 7, 25, 10, 0),
+                "업무",
+                false
+        ));
+        Long ddayGoalId = createDdayGoal(accessToken, "출시 목표", "2026-08-01");
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/dday-goal", ddayTaskId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("ddayGoalId", String.valueOf(ddayGoalId)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/tasks/search")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "출시")
+                        .param("sort", "RELEVANT_DATE_ASC")
+                        .param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(2))
+                .andExpect(jsonPath("$.data.items[0].task.id").value(categoryTaskId))
+                .andExpect(jsonPath("$.data.items[0].matchedFields[0]").value("CATEGORY"))
+                .andExpect(jsonPath("$.data.items[0].highlight").value("출시"))
+                .andExpect(jsonPath("$.data.items[1].task.id").value(ddayTaskId))
+                .andExpect(jsonPath("$.data.items[1].matchedFields[0]").value("DDAY_GOAL_TITLE"))
+                .andExpect(jsonPath("$.data.items[1].highlight").value("출시 목표"));
     }
 
     @Test
@@ -1340,6 +1387,21 @@ class TaskV1IntegrationTest {
 
     private Long createTask(String accessToken, TaskRequest request) throws Exception {
         String response = mockMvc.perform(post("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private Long createDdayGoal(String accessToken, String title, String targetDate) throws Exception {
+        DdayGoalRequest request = new DdayGoalRequest(title, LocalDate.parse(targetDate));
+        String response = mockMvc.perform(post("/api/v1/dday-goals")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

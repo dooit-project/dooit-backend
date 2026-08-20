@@ -83,6 +83,8 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("### P1. 일정 공유 설계");
         assertThat(roadmap).contains("### P1. 일정 공유 1차 구현");
         assertThat(roadmap).contains("### P1. 서버 push 실제 발송");
+        assertThat(roadmap).contains("### P1. 검색/추천 고도화");
+        assertThat(roadmap).contains("검색 결과에 `matchedFields`와 `highlight`를 반환한다");
         assertThat(roadmap).contains("### P2. 장기 게스트 복구");
         assertThat(roadmap).contains("POST /api/v1/tasks/quick-capture");
         assertThat(roadmap).contains("SHARED_WORKSPACE");

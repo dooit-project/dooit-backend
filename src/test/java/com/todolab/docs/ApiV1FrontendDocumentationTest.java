@@ -44,6 +44,10 @@ class ApiV1FrontendDocumentationTest {
         String content = Files.readString(API_DOC);
 
         assertThat(content).contains("GET /api/v1/tasks/search");
+        assertThat(content).contains("제목/설명/category/D-Day 제목 부분 검색어");
+        assertThat(content).contains("matchedFields");
+        assertThat(content).contains("DDAY_GOAL_TITLE");
+        assertThat(content).contains("같은 sort 안에서 제목, category, D-Day 제목, 설명 매칭 순서");
         assertThat(content).contains("PUT /api/v1/tasks/today-order");
         assertThat(content).contains("GET /api/v1/tasks/notification-candidates");
         assertThat(content).contains("suppressLocalNotification");
