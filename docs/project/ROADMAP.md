@@ -26,7 +26,7 @@ Last updated: 2026-08-20
 | 서버 push | token, 후보, 이력, provider 설정 계약 완료 | Expo 발송 client, scheduler, idempotency, invalid token 처리 구현 |
 | production 접근 | host 내부와 Tailscale host smoke 가능, `.env` Tailscale URL 반영 완료 | Android 실제 기기 HTTPS smoke |
 | 운영 복구성 | launchd, Docker health, readiness, Tailscale recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
-| backup | local backup 절차 준비 | offsite backup 위치 결정과 restore 연습 |
+| backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 
 ## 2. 제품 기능 로드맵
 
@@ -206,6 +206,7 @@ Last updated: 2026-08-20
 
 목표: PC 디스크 장애에도 복구 가능한 외부 매체 또는 신뢰할 수 있는 동기화 위치를 운영 절차에 포함한다.
 
+- [x] local backup gzip, backup age, disk 여유 공간, readiness를 `./scripts/check-production-routine.sh`로 확인한다.
 - [ ] 외부 디스크, NAS, cloud sync 중 하나를 `TODOLAB_OFFSITE_BACKUP_DIR`로 결정한다.
 - [ ] `TODOLAB_OFFSITE_BACKUP_DIR=... ./scripts/sync-production-backup.sh`를 통과시킨다.
 - [ ] `TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh`를 통과시킨다.
