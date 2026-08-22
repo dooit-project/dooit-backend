@@ -1358,6 +1358,7 @@ Query parameters:
 | `category` | 카테고리명 exact match. |
 | `ddayGoalId` | 연결된 D-Day 목표 ID. |
 | `hasDday` | D-Day 목표 연결 여부. |
+| `hasRecurrence` | 반복 series 연결 여부. |
 | `allDay` | 종일 일정 여부. |
 | `dateField` | `PLANNED`, `START`, `TARGET`, `COMPLETED`, `CREATED`, `UPDATED`. 기본값은 `PLANNED`. |
 | `dateFrom`, `dateTo` | `dateField` 기준 날짜 범위. `YYYY-MM-DD`, 양 끝 포함. |
@@ -1383,11 +1384,11 @@ Response: `TaskSearchResponse`
 }
 ```
 
-`dateSource` 값은 `TARGET_DATE`, `START_AT`, `COMPLETED_AT`, `CREATED_AT`, `UPDATED_AT`, `NONE` 중 하나다. `matchedFields` 값은 `TITLE`, `DESCRIPTION`, `CATEGORY`, `DDAY_GOAL_TITLE` 중 하나이며, `q`가 없으면 빈 배열이다. `highlight`는 검색 결과 표시용 짧은 매칭 원문이며 `q`가 없으면 `null`이다. 잘못된 enum, `dateFrom > dateTo`, 잘못된 cursor, 범위를 벗어난 `limit`은 HTTP 400으로 응답한다.
+`dateSource` 값은 `TARGET_DATE`, `START_AT`, `COMPLETED_AT`, `CREATED_AT`, `UPDATED_AT`, `NONE` 중 하나다. `matchedFields` 값은 `TITLE`, `DESCRIPTION`, `CATEGORY`, `DDAY_GOAL_TITLE`, `RECURRENCE` 중 하나이며, `q`가 없으면 빈 배열이다. `highlight`는 검색 결과 표시용 짧은 매칭 원문이며 `q`가 없으면 `null`이다. 잘못된 enum, `dateFrom > dateTo`, 잘못된 cursor, 범위를 벗어난 `limit`은 HTTP 400으로 응답한다.
 
 정렬 주의:
 
-- `q`가 있으면 같은 sort 안에서 제목, category, D-Day 제목, 설명 매칭 순서로 먼저 정렬한다.
+- `q`가 있으면 같은 sort 안에서 제목, category, D-Day 제목, 반복, 설명 매칭 순서로 먼저 정렬한다.
 - 그 다음 `sort` 값의 날짜/생성/수정 시각 기준과 `task.id` tie-breaker를 적용한다.
 
 Cursor 기준:

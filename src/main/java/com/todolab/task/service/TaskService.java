@@ -222,6 +222,8 @@ public class TaskService {
                 .filter(task -> request.getDdayGoalId() == null
                         || (task.getDdayGoal() != null && request.getDdayGoalId().equals(task.getDdayGoal().getId())))
                 .filter(task -> request.getHasDday() == null || request.getHasDday().equals(task.getDdayGoal() != null))
+                .filter(task -> request.getHasRecurrence() == null
+                        || request.getHasRecurrence().equals(task.getRecurrenceSeries() != null))
                 .filter(task -> request.getAllDay() == null || request.getAllDay().equals(task.isAllDay()))
                 .map(task -> SearchCandidate.from(task, request.getDateField(), request.getQ()))
                 .filter(candidate -> candidate.matchesText(request.getQ()))
@@ -823,7 +825,8 @@ public class TaskService {
                 case TITLE -> 0;
                 case CATEGORY -> 1;
                 case DDAY_GOAL_TITLE -> 2;
-                case DESCRIPTION -> 3;
+                case RECURRENCE -> 3;
+                case DESCRIPTION -> 4;
             };
         }
 
@@ -849,6 +852,9 @@ public class TaskService {
             if (task.getDdayGoal() != null && containsIgnoreCase(task.getDdayGoal().getTitle(), lowerNeedle)) {
                 return new SearchMatch(List.of(TaskSearchMatchedField.DDAY_GOAL_TITLE), task.getDdayGoal().getTitle());
             }
+            if (task.getRecurrenceSeries() != null && recurrenceMatches(task, lowerNeedle)) {
+                return new SearchMatch(List.of(TaskSearchMatchedField.RECURRENCE), recurrenceHighlight(task));
+            }
             if (containsIgnoreCase(task.getDescription(), lowerNeedle)) {
                 return new SearchMatch(List.of(TaskSearchMatchedField.DESCRIPTION), task.getDescription());
             }
@@ -858,6 +864,28 @@ public class TaskService {
 
         private static boolean containsIgnoreCase(String value, String lowerNeedle) {
             return value != null && value.toLowerCase(Locale.ROOT).contains(lowerNeedle);
+        }
+
+        private static boolean recurrenceMatches(Task task, String lowerNeedle) {
+            String frequency = task.getRecurrenceSeries().getFrequency().name().toLowerCase(Locale.ROOT);
+            return "반복".contains(lowerNeedle)
+                    || "recurrence".contains(lowerNeedle)
+                    || "repeat".contains(lowerNeedle)
+                    || frequency.contains(lowerNeedle)
+                    || recurrenceKoreanLabel(task).contains(lowerNeedle);
+        }
+
+        private static String recurrenceHighlight(Task task) {
+            return "반복 " + recurrenceKoreanLabel(task);
+        }
+
+        private static String recurrenceKoreanLabel(Task task) {
+            return switch (task.getRecurrenceSeries().getFrequency()) {
+                case DAILY -> "매일";
+                case WEEKLY -> "매주";
+                case MONTHLY -> "매월";
+                case YEARLY -> "매년";
+            };
         }
     }
 

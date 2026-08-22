@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasItem;
 
 @SpringBootTest(properties = "spring.batch.job.enabled=false")
 @AutoConfigureMockMvc
@@ -118,7 +119,8 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.paths['/api/v1/tasks'].get.parameters[0].schema.enum[0]").value("DAY"))
                 .andExpect(jsonPath("$.paths['/api/v1/tasks'].get.parameters[1].schema.enum[1]").value("SCHEDULE"))
                 .andExpect(jsonPath("$.paths['/api/v1/tasks/search'].get.parameters[1].schema.enum[0]").value("INBOX"))
-                .andExpect(jsonPath("$.paths['/api/v1/tasks/search'].get.parameters[7].schema.enum[0]").value("PLANNED"))
+                .andExpect(jsonPath("$.paths['/api/v1/tasks/search'].get.parameters[*].name").value(hasItem("hasRecurrence")))
+                .andExpect(jsonPath("$.paths['/api/v1/tasks/search'].get.parameters[*].name").value(hasItem("dateField")))
                 .andExpect(jsonPath("$.components.schemas.TodayOrderRequest.description").value("Today Task 일괄 재정렬 요청"))
                 .andExpect(jsonPath("$.components.schemas.TodayOrderRequest.required[0]").value("date"))
                 .andExpect(jsonPath("$.paths['/api/v1/tasks/{id}/today-order'].patch.parameters[2].schema.enum[0]").value("UP"))

@@ -164,12 +164,12 @@ public class TaskV1Controller {
 
     @Operation(
             summary = "Task 통합 검색",
-            description = "로그인 사용자의 Task를 텍스트, 상태, 종류, 카테고리, D-Day 연결 여부, 날짜 기준으로 검색합니다."
+            description = "로그인 사용자의 Task를 텍스트, 상태, 종류, 카테고리, D-Day/반복 연결 여부, 날짜 기준으로 검색합니다."
     )
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<TaskSearchResponse>> searchTasks(
             @AuthenticationPrincipal Jwt jwt,
-            @Parameter(description = "제목 또는 설명 부분 검색어", schema = @Schema(example = "출시"))
+            @Parameter(description = "제목, 설명, category, D-Day 제목, 반복 정보 부분 검색어", schema = @Schema(example = "출시"))
             @RequestParam(required = false) String q,
             @Parameter(description = "상태 필터. 반복 또는 콤마 구분을 지원합니다.", schema = @Schema(allowableValues = {"INBOX", "TODAY", "DONE"}))
             @RequestParam(required = false) List<String> statuses,
@@ -181,6 +181,8 @@ public class TaskV1Controller {
             @RequestParam(required = false) Long ddayGoalId,
             @Parameter(description = "D-Day 목표 연결 여부", schema = @Schema(example = "true"))
             @RequestParam(required = false) Boolean hasDday,
+            @Parameter(description = "반복 series 연결 여부", schema = @Schema(example = "true"))
+            @RequestParam(required = false) Boolean hasRecurrence,
             @Parameter(description = "종일 일정 여부", schema = @Schema(example = "false"))
             @RequestParam(required = false) Boolean allDay,
             @Parameter(
@@ -214,6 +216,7 @@ public class TaskV1Controller {
                 category,
                 ddayGoalId,
                 hasDday,
+                hasRecurrence,
                 allDay,
                 dateField,
                 dateFrom,

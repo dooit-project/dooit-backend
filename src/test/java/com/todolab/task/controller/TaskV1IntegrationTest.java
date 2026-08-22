@@ -627,6 +627,58 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Task 통합 검색은 반복 여부 필터와 반복 매칭 정보를 반환한다")
+    void searchTasks_success_recurrenceFilterAndMatch() throws Exception {
+        String accessToken = accessToken("task-search-recurrence@example.com");
+        Long recurringTaskId = createTask(accessToken, new TaskRequest(
+                "운동",
+                "아침 루틴",
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 7, 7, 0),
+                LocalDateTime.of(2026, 7, 7, 8, 0),
+                "건강",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("TU"),
+                        null
+                )
+        ));
+        createTask(accessToken, new TaskRequest(
+                "단건 운동",
+                null,
+                LocalDateTime.of(2026, 7, 8, 7, 0),
+                LocalDateTime.of(2026, 7, 8, 8, 0),
+                "건강",
+                false
+        ));
+
+        mockMvc.perform(get("/api/v1/tasks/search")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("hasRecurrence", "true")
+                        .param("sort", "RELEVANT_DATE_ASC"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].task.id").value(recurringTaskId))
+                .andExpect(jsonPath("$.data.items[0].task.recurrenceSeriesId").value(notNullValue()));
+
+        mockMvc.perform(get("/api/v1/tasks/search")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "반복")
+                        .param("sort", "RELEVANT_DATE_ASC"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].task.id").value(recurringTaskId))
+                .andExpect(jsonPath("$.data.items[0].matchedFields[0]").value("RECURRENCE"))
+                .andExpect(jsonPath("$.data.items[0].highlight").value("반복 매주"));
+    }
+
+    @Test
     @DisplayName("v1 Task 통합 검색 cursor는 offset 대신 마지막 Task id 기준으로 다음 페이지를 이어간다")
     void searchTasks_cursorUsesLastTaskIdAnchor() throws Exception {
         String accessToken = accessToken("task-search-cursor-anchor@example.com");

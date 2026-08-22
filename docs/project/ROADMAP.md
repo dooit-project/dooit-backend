@@ -137,7 +137,7 @@ Last updated: 2026-08-20
 - [x] category와 D-Day 제목을 `q` 검색 매칭 범위에 포함한다.
 - [x] title, category, D-Day 제목, description 순서로 검색 매칭 ranking을 적용한다.
 - [x] 검색 결과에 `matchedFields`와 `highlight`를 반환한다.
-- [ ] 반복 여부를 반영한 검색 ranking을 개선한다.
+- [x] 반복 여부 필터와 반복 매칭 ranking을 추가한다.
 - [ ] 모바일에서 빈 검색 결과일 때 추천 query/category를 줄 수 있는지 검토한다.
 
 ### P2. 장기 게스트 복구

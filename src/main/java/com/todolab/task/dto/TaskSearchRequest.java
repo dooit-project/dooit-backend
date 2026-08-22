@@ -27,6 +27,7 @@ public class TaskSearchRequest {
     private final String category;
     private final Long ddayGoalId;
     private final Boolean hasDday;
+    private final Boolean hasRecurrence;
     private final Boolean allDay;
     private final TaskSearchDateField dateField;
     private final LocalDate dateFrom;
@@ -42,6 +43,7 @@ public class TaskSearchRequest {
             String category,
             Long ddayGoalId,
             Boolean hasDday,
+            Boolean hasRecurrence,
             Boolean allDay,
             String rawDateField,
             LocalDate dateFrom,
@@ -56,6 +58,7 @@ public class TaskSearchRequest {
         this.category = normalizeBlank(category);
         this.ddayGoalId = ddayGoalId;
         this.hasDday = hasDday;
+        this.hasRecurrence = hasRecurrence;
         this.allDay = allDay;
         this.dateField = parseEnum(rawDateField, TaskSearchDateField.class, TaskSearchDateField.PLANNED, "dateField");
         this.dateFrom = dateFrom;
