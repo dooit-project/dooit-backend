@@ -12,6 +12,9 @@ import java.util.Arrays;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
+    public static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
+    public static final String IDEMPOTENCY_REPLAYED_HEADER = "Idempotency-Replayed";
+
     private final String[] allowedOrigins;
 
     public CorsConfig(@Value("${app.cors.allowed-origins:}") String allowedOrigins) {
@@ -40,8 +43,10 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedHeaders(
                         HttpHeaders.CONTENT_TYPE,
                         HttpHeaders.ACCEPT,
-                        HttpHeaders.AUTHORIZATION
+                        HttpHeaders.AUTHORIZATION,
+                        IDEMPOTENCY_KEY_HEADER
                 )
+                .exposedHeaders(IDEMPOTENCY_REPLAYED_HEADER)
                 .maxAge(3600);
     }
 }

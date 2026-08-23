@@ -186,8 +186,9 @@ class DocumentationIndexTest {
         assertThat(environment).contains("Android production Tailscale HTTPS URL");
         assertThat(environment).contains("API base URL");
         assertThat(environment).contains("Expo Web origin");
-        assertThat(environment).contains("Authorization` header 포함 preflight 성공");
+        assertThat(environment).contains("Authorization`, `Content-Type`, `Idempotency-Key` header 포함 preflight 성공");
         assertThat(environment).contains("Native 앱은 CORS 대상이 아니므로 API URL 접근성과 인증 흐름만 확인한다.");
+        assertThat(environment).contains("Cache-Control: no-store");
         assertThat(environment).contains("확정된 Tailscale HTTPS URL만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.");
     }
 

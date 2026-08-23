@@ -27,6 +27,22 @@ Content-Type: application/json
 Accept: application/json
 ```
 
+생성 API 멱등성 계약이 적용된 endpoint는 아래 header를 추가로 사용할 수 있다. 현재 CORS preflight는 이 header를 허용한다.
+
+```http
+Idempotency-Key: <client-generated-key>
+```
+
+공통 response/cache header:
+
+```http
+Cache-Control: no-store, no-cache, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+```
+
+멱등성 replay 응답을 도입할 때 사용할 `Idempotency-Replayed` response header는 CORS expose header에 포함되어 있다.
+
 공통 성공 응답:
 
 ```ts

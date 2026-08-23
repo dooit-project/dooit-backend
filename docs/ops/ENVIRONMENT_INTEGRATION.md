@@ -47,6 +47,11 @@ Last updated: 2026-08-23
 - `Content-Type`
 - `Accept`
 - `Authorization`
+- `Idempotency-Key`
+
+노출 response header:
+
+- `Idempotency-Replayed`
 
 허용 method:
 
@@ -71,7 +76,7 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 - staging은 현재 운영하지 않는다. production origin은 코드에 하드코딩하지 않는다.
 - 여러 origin은 쉼표로 구분한다.
 - secret 값은 문서에 기록하지 않는다.
-- origin을 추가한 뒤 `Authorization` header가 포함된 preflight를 확인한다.
+- origin을 추가한 뒤 `Authorization`, `Content-Type`, `Idempotency-Key` header가 포함된 preflight를 확인한다.
 - iOS Simulator, Android Emulator, 실제 기기 native 앱 요청은 CORS 대상이 아니므로 API URL 접근성만 확인한다.
 - Expo Web은 브라우저 CORS 대상이므로 실제 접속 origin을 `TODOLAB_ALLOWED_ORIGINS`에 추가한다.
 - production에서는 `TODOLAB_DOCS_PUBLIC_ENABLED=false`를 기본값으로 유지한다.
@@ -83,7 +88,7 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 | 항목 | staging | production | 검증 기준 |
 | --- | --- | --- | --- |
 | API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, Android용 Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
-| Expo Web origin | 사용하지 않음 | 미정 | `Authorization` header 포함 preflight 성공 |
+| Expo Web origin | 사용하지 않음 | 미정 | `Authorization`, `Content-Type`, `Idempotency-Key` header 포함 preflight 성공 |
 | Native 앱 API 접근 | 사용하지 않음 | Tailscale HTTPS URL 확정 필요 | Android 실제 기기에서 HTTPS API 접근 가능 |
 | 문서 UI 공개 여부 | 사용하지 않음 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 비공개 정책 확인 |
 | CORS 환경변수 | 사용하지 않음 | `TODOLAB_ALLOWED_ORIGINS` | Expo Web 사용 시 쉼표 구분 origin 목록 적용 |
@@ -167,7 +172,19 @@ curl --fail http://127.0.0.1:8080/api/v1/system/metadata
 
 현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다. prod 설정의 `TODOLAB_DOCS_PUBLIC_ENABLED`, `TODOLAB_SPRINGDOC_API_DOCS_ENABLED`, `TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED` 기본값은 테스트로 검증한다.
 
-## 8. API 로그 운영 기준
+## 8. API Cache 정책
+
+`/api/**` 응답은 성공, validation 오류, 인증 실패, 권한 오류 모두 아래 cache header를 반환한다.
+
+```http
+Cache-Control: no-store, no-cache, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+```
+
+API 오류와 인증 실패는 HTML redirect 없이 JSON `ApiResponse` envelope와 HTTP status/error code를 그대로 반환한다.
+
+## 9. API 로그 운영 기준
 
 백엔드는 `/api/**` 요청에 공통 API 로그 필터를 적용한다. Actuator health와 OpenAPI/Swagger/Scalar 문서 endpoint는 이 필터 대상이 아니다.
 

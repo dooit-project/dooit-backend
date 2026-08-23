@@ -42,7 +42,7 @@ Last updated: 2026-08-23
 - [ ] Android 실제 기기에서 production Tailscale HTTPS URL을 smoke한다.
 - [ ] production Web origin 사용 여부와 실제 origin을 확정한다.
 - [x] 비밀번호 재설정 request/verify/confirm API, reset link 형식, TTL, rate limit, error code, session 처리 정책을 구현한다.
-- [ ] 운영 Web CORS allow origin/header와 인증/API 응답 `Cache-Control: no-store` 정책을 확정한다.
+- [x] 운영 Web CORS allow header와 인증/API 응답 `Cache-Control: no-store` 정책을 확정한다.
 
 ### P1. 프론트 계약 후속 요청
 
