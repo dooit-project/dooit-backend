@@ -2,22 +2,23 @@
 
 Last updated: 2026-08-23
 
-이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API와 서버 push token 등록 API를 제공하며, 서버 push 발송 API는 제공하지 않는다.
+이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API, 서버 push token 등록 API, 개인 owner Task 서버 push 자동 발송을 제공하며, 별도 서버 push 수동 발송 API는 제공하지 않는다.
 
 ## 현재 구현 상태
 
-2026-08-20 기준 backend는 아래 범위까지 제공한다.
+2026-08-24 기준 backend는 아래 범위까지 제공한다.
 
 - 로컬 알림 후보 조회: `GET /api/v1/tasks/notification-candidates`
 - push token 등록/조회/비활성화: `POST /api/v1/push-tokens`, `GET /api/v1/push-tokens`, `DELETE /api/v1/push-tokens/{id}`
 - 서버 push 전송 이력 조회: `GET /api/v1/push-notification-histories`
 - push provider 설정값: `enabled=false`, `provider=EXPO`, Expo endpoint 기본값
 - Expo Push Service 단건 발송 client와 push ticket 성공/오류 해석
+- `app.notification.push.enabled=true`일 때 개인 owner Task 알림 후보를 scheduler 기반 자동 발송
 
 아직 제공하지 않는 범위:
 
-- 발송 scheduler
-- scheduler 기반 자동 발송
+- shared workspace 알림 후보의 서버 push 자동 발송
+- 서버 push 수동 발송 API
 
 ## 책임 분리
 
@@ -145,6 +146,7 @@ GET /api/v1/push-notification-histories?limit=50
 - 발송 후보 window는 `TODOLAB_PUSH_LOOK_AHEAD_WINDOW=PT10M` 기본값에 따라 현재 시각부터 10분 뒤까지다.
 - 후보 산출은 `GET /api/v1/tasks/notification-candidates`와 같은 기준을 사용한다.
 - 서버 push는 활성 push token이 있는 사용자만 대상으로 한다.
+- 1차 자동 발송 범위는 개인 owner Task 알림 후보로 제한한다. shared workspace 후보는 수신자/멤버별 중복 정책을 별도로 확정한 뒤 추가한다.
 - idempotency key는 `SERVER:{task.id}` 또는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
 - 같은 owner와 idempotency key의 `SUCCESS` 이력이 있으면 다시 발송하지 않는다.
 - 이력 기록 command가 idempotency key를 비워 보내면 백엔드가 Task/occurrence 필드로 같은 key를 생성한다.
