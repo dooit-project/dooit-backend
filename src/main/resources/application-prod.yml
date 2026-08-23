@@ -51,6 +51,11 @@ app:
         max-requests: ${TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS:30}
         window: ${TODOLAB_GUEST_RATE_LIMIT_WINDOW:PT1H}
         max-tracked-keys: ${TODOLAB_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS:10000}
+    password-reset:
+      token-ttl: ${TODOLAB_PASSWORD_RESET_TOKEN_TTL:PT30M}
+      rate-limit-window: ${TODOLAB_PASSWORD_RESET_RATE_LIMIT_WINDOW:PT1H}
+      max-requests-per-window: ${TODOLAB_PASSWORD_RESET_MAX_REQUESTS_PER_WINDOW:5}
+      link-template: "${TODOLAB_PASSWORD_RESET_LINK_TEMPLATE:todolab://password-reset?token={token}}"
 
   cors:
     allowed-origins: ${TODOLAB_ALLOWED_ORIGINS:}

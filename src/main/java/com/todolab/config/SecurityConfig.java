@@ -2,6 +2,7 @@ package com.todolab.config;
 
 import com.todolab.auth.config.AuthJwtProperties;
 import com.todolab.auth.config.GuestAccountRateLimitProperties;
+import com.todolab.auth.config.PasswordResetProperties;
 import com.todolab.auth.security.ApiAccessDeniedHandler;
 import com.todolab.auth.security.ApiAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,8 @@ import java.nio.charset.StandardCharsets;
 @EnableConfigurationProperties({
         AuthJwtProperties.class,
         DocumentationProperties.class,
-        GuestAccountRateLimitProperties.class
+        GuestAccountRateLimitProperties.class,
+        PasswordResetProperties.class
 })
 public class SecurityConfig {
 
@@ -69,7 +71,8 @@ public class SecurityConfig {
                                 "/api/v1/system/metadata",
                                 "/api/v1/auth/guest",
                                 "/api/v1/auth/register",
-                                "/api/v1/auth/login"
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/password-reset/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll()

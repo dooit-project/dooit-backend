@@ -31,6 +31,8 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(compose).contains("\"127.0.0.1:8080:8080\"");
         assertThat(compose).contains("TODOLAB_JWT_SECRET");
         assertThat(compose).contains("TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL: ${TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL:-P31D}");
+        assertThat(compose).contains("TODOLAB_PASSWORD_RESET_TOKEN_TTL: ${TODOLAB_PASSWORD_RESET_TOKEN_TTL:-PT30M}");
+        assertThat(compose).contains("TODOLAB_PASSWORD_RESET_LINK_TEMPLATE:");
         assertThat(compose).contains("APP_BATCH_SCHEDULER_ENABLED: ${APP_BATCH_SCHEDULER_ENABLED:-false}");
         assertThat(Files.readString(Path.of(".env.example"))).contains("TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL=P31D");
     }
@@ -62,6 +64,8 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(application).contains("validate-group-membership: false");
         assertThat(application).contains("readiness:");
         assertThat(application).contains("include: readinessState,db,schema");
+        assertThat(Files.readString(Path.of("src/main/java/com/todolab/config/SchemaHealthIndicator.java")))
+                .contains("PASSWORD_RESET_TOKEN");
     }
 
     @Test

@@ -1,6 +1,6 @@
 # ToDoLab v1 Frontend API
 
-Last updated: 2026-08-10
+Last updated: 2026-08-23
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -237,6 +237,58 @@ type GuestPromotionRegisterResponse = TokenResponse & {
 ```
 
 검증 실패 또는 이메일 중복이면 게스트 상태와 데이터는 유지된다. 승격 성공 후 기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 owner API와 `/auth/me`에서 401 처리된다.
+
+### 비밀번호 재설정
+
+```http
+POST /api/v1/auth/password-reset/request
+POST /api/v1/auth/password-reset/verify
+POST /api/v1/auth/password-reset/confirm
+```
+
+모두 인증 없이 호출할 수 있다.
+
+Request:
+
+```ts
+type PasswordResetRequest = {
+  email: string;
+};
+
+type PasswordResetVerifyRequest = {
+  token: string;
+};
+
+type PasswordResetConfirmRequest = {
+  token: string;
+  newPassword: string; // 8-72자
+};
+```
+
+Response:
+
+```ts
+type PasswordResetRequestResponse = {
+  requested: true;
+  ttlSeconds: number; // 기본 1800
+};
+
+type PasswordResetVerifyResponse = {
+  valid: true;
+  maskedEmail: string;
+};
+```
+
+정책:
+
+- request는 가입 여부와 무관하게 HTTP 200과 `requested=true`를 반환한다.
+- 등록 계정이면 backend가 reset link를 email로 발송한다.
+- reset link 기본 형식은 `todolab://password-reset?token={token}`이다.
+- token TTL은 기본 30분이다.
+- request rate limit은 normalized email 기준 기본 5건/1시간이며 초과 시 429/`11006`이다.
+- token이 없거나 만료되었거나 이미 사용되었으면 verify/confirm은 400/`11005`를 반환한다.
+- confirm 성공 응답은 `data=null`이다.
+- confirm 성공 후 기존 access token은 즉시 폐기하지 않고 기존 JWT `exp`까지 유효할 수 있다.
 
 ### 내 정보
 

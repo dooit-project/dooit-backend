@@ -33,6 +33,10 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("Authorization: Bearer <guest-access-token>");
         assertThat(content).contains("기존 게스트 user id를 유지한 채 `REGISTERED`로 승격한다.");
         assertThat(content).contains("기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 owner API와 `/auth/me`에서 401 처리된다.");
+        assertThat(content).contains("POST /api/v1/auth/password-reset/request");
+        assertThat(content).contains("POST /api/v1/auth/password-reset/verify");
+        assertThat(content).contains("POST /api/v1/auth/password-reset/confirm");
+        assertThat(content).contains("confirm 성공 후 기존 access token은 즉시 폐기하지 않고");
         assertThat(content).contains("게스트 데이터 병합 로그인");
         assertThat(content).contains("Task와 일정, Today 순서, 완료 상태, 미룸 사유");
         assertThat(content).contains("같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 다시 반환한다.");

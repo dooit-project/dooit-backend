@@ -1,6 +1,6 @@
 # Auth Contract
 
-Last updated: 2026-08-21
+Last updated: 2026-08-23
 
 이 문서는 ToDoLab 백엔드의 모바일/웹 클라이언트 JWT 인증 책임을 정리한다.
 
@@ -10,6 +10,7 @@ Last updated: 2026-08-21
 - 백엔드는 Thymeleaf 서버 렌더링 화면과 세션 기반 form login을 제공하지 않는다.
 - 회원가입과 로그인은 인증 없이 호출할 수 있다.
 - 게스트 시작은 `POST /api/v1/auth/guest`로 인증 없이 호출할 수 있다.
+- 비밀번호 재설정 request/verify/confirm은 인증 없이 호출할 수 있다.
 - 사용자 데이터 소유권 격리는 JWT 인증 사용자 기준으로 적용한다.
 
 ## 계정 유형
@@ -166,6 +167,31 @@ JWT claim:
 
 refresh token을 도입할 때는 별도 endpoint, 저장소, 폐기 정책, 모바일 secure storage 정책을 먼저 확정한다.
 
+## 비밀번호 재설정
+
+현재 제공:
+
+- `POST /api/v1/auth/password-reset/request`: 가입 여부 노출 없이 요청을 접수한다.
+- `POST /api/v1/auth/password-reset/verify`: 재설정 token이 사용 가능한지 확인한다.
+- `POST /api/v1/auth/password-reset/confirm`: 유효한 token으로 새 비밀번호를 저장한다.
+
+저장 모델:
+
+- `PASSWORD_RESET_TOKEN`에 `USER_ID`, normalized `EMAIL`, `TOKEN_HASH`, `EXPIRES_AT`, `USED_AT`, `CREATED_AT`을 저장한다.
+- 원본 token은 저장하지 않고 SHA-256 hash만 저장한다.
+- token은 URL-safe opaque string이다.
+- reset link 기본 형식은 `todolab://password-reset?token={token}`이며, production에서는 `TODOLAB_PASSWORD_RESET_LINK_TEMPLATE`로 변경할 수 있다.
+
+정책:
+
+- request는 등록 계정이 없어도 HTTP 200과 `requested=true`를 반환해 계정 존재 여부를 노출하지 않는다.
+- 등록 계정이 있으면 TTL 30분 token을 생성하고 reset link를 email로 발송한다.
+- 게스트 계정은 email/password가 없으므로 재설정 대상이 아니다.
+- request rate limit은 normalized email 기준 기본 5건/1시간이며 초과 시 429/`11006`이다.
+- verify/confirm에서 token이 없거나 만료되었거나 이미 사용되었으면 400/`11005`다.
+- confirm 성공 시 token은 `USED_AT`을 기록해 재사용할 수 없다.
+- confirm은 기존 access token blocklist를 만들지 않는다. 이미 발급된 access token은 기존 Auth 정책처럼 `exp`까지 유효할 수 있다.
+
 ## 로그아웃과 토큰 폐기
 
 현재 모바일 로그아웃은 클라이언트 책임이다.
@@ -183,5 +209,7 @@ refresh token을 도입할 때는 별도 endpoint, 저장소, 폐기 정책, 모
 | 이메일/비밀번호 불일치 | 401 | `11001` | `이메일 또는 비밀번호가 올바르지 않습니다.` | 로그인 화면에 안전한 실패 문구 노출 |
 | 토큰 없음, 만료, 위변조 | 401 | `11002` | `인증이 필요합니다.` | 저장 토큰 삭제 후 로그인 유도 |
 | 인증은 됐지만 권한 부족 | 403 | `11003` | `접근 권한이 없습니다.` | 재시도하지 않고 권한 오류 표시 |
+| 비밀번호 재설정 token 없음, 만료, 사용됨 | 400 | `11005` | `비밀번호 재설정 링크가 만료되었거나 올바르지 않습니다.` | 재설정 링크 재요청 안내 |
+| 비밀번호 재설정 rate limit 초과 | 429 | `11006` | `비밀번호 재설정 요청이 너무 많습니다.` | 대기 후 재시도 안내 |
 
 401과 403 응답은 공통 `ApiResponse` envelope를 사용한다.

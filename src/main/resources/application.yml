@@ -23,6 +23,11 @@ app:
         max-requests: 30
         window: PT1H
         max-tracked-keys: 10000
+    password-reset:
+      token-ttl: PT30M
+      rate-limit-window: PT1H
+      max-requests-per-window: 5
+      link-template: "${TODOLAB_PASSWORD_RESET_LINK_TEMPLATE:todolab://password-reset?token={token}}"
 
   cors:
     allowed-origins: http://localhost:8081,http://localhost:8090

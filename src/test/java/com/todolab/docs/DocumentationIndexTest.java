@@ -65,6 +65,9 @@ class DocumentationIndexTest {
         assertThat(auth).contains("게스트 생성 Rate Limit");
         assertThat(auth).contains("GUEST_CREATION_RATE_LIMIT_EXCEEDED(11004)");
         assertThat(auth).contains("다중 서버에서 공유 window");
+        assertThat(auth).contains("비밀번호 재설정");
+        assertThat(auth).contains("PASSWORD_RESET_TOKEN");
+        assertThat(auth).contains("TODOLAB_PASSWORD_RESET_LINK_TEMPLATE");
         assertThat(guest).contains("기존 계정 로그인 및 게스트 병합");
         assertThat(guest).contains("backend commit은 이 문서가 포함된 최신 `main` 커밋을 사용한다.");
     }

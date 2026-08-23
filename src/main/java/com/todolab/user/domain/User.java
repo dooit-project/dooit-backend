@@ -157,6 +157,14 @@ public class User {
         this.timeZone = normalizedTimeZone;
     }
 
+    public void updatePasswordHash(String passwordHash) {
+        String normalizedPasswordHash = normalizeRequired(passwordHash);
+        if (normalizedPasswordHash == null) {
+            throw new IllegalArgumentException("passwordHash는 필수입니다.");
+        }
+        this.passwordHash = normalizedPasswordHash;
+    }
+
     private String normalizeEmail(String email) {
         String normalized = normalizeRequired(email);
         if (normalized == null) {

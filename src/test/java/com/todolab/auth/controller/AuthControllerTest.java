@@ -8,6 +8,7 @@ import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.service.AuthService;
 import com.todolab.auth.service.CurrentUserService;
 import com.todolab.auth.service.GuestAccountRateLimiter;
+import com.todolab.auth.service.PasswordResetService;
 import com.todolab.common.api.ApiExceptionHandler;
 import com.todolab.common.api.ErrorCode;
 import com.todolab.user.domain.AccountType;
@@ -62,6 +63,9 @@ class AuthControllerTest {
 
     @MockitoBean
     GuestAccountRateLimiter guestAccountRateLimiter;
+
+    @MockitoBean
+    PasswordResetService passwordResetService;
 
     @Test
     @DisplayName("회원가입 성공")

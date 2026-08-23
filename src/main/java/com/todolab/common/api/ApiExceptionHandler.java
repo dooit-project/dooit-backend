@@ -2,6 +2,8 @@ package com.todolab.common.api;
 
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
+import com.todolab.auth.exception.PasswordResetRateLimitExceededException;
+import com.todolab.auth.exception.PasswordResetTokenInvalidException;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
 import com.todolab.task.exception.TaskOrderConflictException;
 import com.todolab.task.exception.TaskTemplateNotFoundException;
@@ -153,6 +155,24 @@ public class ApiExceptionHandler {
         log.warn("Guest Creation Rate Limit Exceeded");
         return ResponseEntity.status(ErrorCode.GUEST_CREATION_RATE_LIMIT_EXCEEDED.getStatus())
                 .body(ApiResponse.failure(ErrorCode.GUEST_CREATION_RATE_LIMIT_EXCEEDED));
+    }
+
+    @ExceptionHandler(PasswordResetTokenInvalidException.class)
+    public ResponseEntity<ApiResponse<?>> handlePasswordResetTokenInvalidException(
+            PasswordResetTokenInvalidException e
+    ) {
+        log.warn("Password Reset Token Invalid");
+        return ResponseEntity.status(ErrorCode.PASSWORD_RESET_TOKEN_INVALID.getStatus())
+                .body(ApiResponse.failure(ErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+    }
+
+    @ExceptionHandler(PasswordResetRateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<?>> handlePasswordResetRateLimitExceededException(
+            PasswordResetRateLimitExceededException e
+    ) {
+        log.warn("Password Reset Rate Limit Exceeded");
+        return ResponseEntity.status(ErrorCode.PASSWORD_RESET_RATE_LIMIT_EXCEEDED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.PASSWORD_RESET_RATE_LIMIT_EXCEEDED));
     }
 
     @ExceptionHandler(WorkspaceValidationException.class)

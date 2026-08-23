@@ -1,6 +1,11 @@
 package com.todolab.auth.controller;
 
 import com.todolab.auth.dto.AuthenticatedUserResponse;
+import com.todolab.auth.dto.PasswordResetConfirmRequest;
+import com.todolab.auth.dto.PasswordResetRequest;
+import com.todolab.auth.dto.PasswordResetRequestResponse;
+import com.todolab.auth.dto.PasswordResetVerifyRequest;
+import com.todolab.auth.dto.PasswordResetVerifyResponse;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.TokenResponse;
@@ -8,6 +13,7 @@ import com.todolab.common.api.ApiResponse;
 import com.todolab.auth.service.AuthService;
 import com.todolab.auth.service.CurrentUserService;
 import com.todolab.auth.service.GuestAccountRateLimiter;
+import com.todolab.auth.service.PasswordResetService;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.dto.UserResponse;
@@ -67,6 +73,7 @@ public class AuthController {
     private final CurrentUserService currentUserService;
     private final JwtDecoder jwtDecoder;
     private final GuestAccountRateLimiter guestAccountRateLimiter;
+    private final PasswordResetService passwordResetService;
 
     @Operation(summary = "회원가입", description = "이메일, 비밀번호, 표시 이름으로 모바일 API 사용자를 생성합니다.")
     @PostMapping("/register")
@@ -110,6 +117,31 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.success(authService.login(guestPrincipal(authorization), request)));
+    }
+
+    @Operation(summary = "비밀번호 재설정 요청", description = "가입 여부 노출 없이 비밀번호 재설정 요청을 접수하고 등록 계정에만 재설정 메일을 발송합니다.")
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<ApiResponse<PasswordResetRequestResponse>> requestPasswordReset(
+            @Valid @RequestBody PasswordResetRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(passwordResetService.requestReset(request)));
+    }
+
+    @Operation(summary = "비밀번호 재설정 token 검증", description = "비밀번호 재설정 token이 만료 또는 사용 전인지 확인합니다.")
+    @PostMapping("/password-reset/verify")
+    public ResponseEntity<ApiResponse<PasswordResetVerifyResponse>> verifyPasswordReset(
+            @Valid @RequestBody PasswordResetVerifyRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(passwordResetService.verify(request)));
+    }
+
+    @Operation(summary = "비밀번호 재설정 확정", description = "유효한 재설정 token으로 새 비밀번호를 저장하고 token을 사용 처리합니다.")
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirmPasswordReset(
+            @Valid @RequestBody PasswordResetConfirmRequest request
+    ) {
+        passwordResetService.confirm(request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(

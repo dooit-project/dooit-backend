@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-08-17
+Last updated: 2026-08-23
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -16,6 +16,7 @@ Last updated: 2026-08-17
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260823_add_password_reset_token.sql` | local production Docker MySQL | 비밀번호 재설정 release 전 적용 필요 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260814_add_workspace_audit_columns.sql` | local production Docker MySQL | 성공. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES` audit 컬럼 생성 확인 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260813_add_workspace_scope_columns.sql` | local production Docker MySQL | 성공. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES` scope/workspace 컬럼 생성 확인 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260813_add_shared_workspace.sql` | local production Docker MySQL | 성공. `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 테이블 생성 확인 |
