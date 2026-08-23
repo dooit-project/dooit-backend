@@ -1,6 +1,6 @@
 # ToDoLab Environment Integration
 
-Last updated: 2026-08-21
+Last updated: 2026-08-23
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
@@ -8,7 +8,7 @@ Last updated: 2026-08-21
 
 ## 현재 운영 입력 상태
 
-2026-08-21 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, Expo Web production origin, offsite backup 경로다.
+2026-08-23 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. backend metadata는 `GET /api/v1/system/metadata`로 공개 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, Expo Web production origin, offsite backup 경로다.
 
 전원 정책은 아직 strict production 기준이 아니다. `TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`는 macOS 관리자 비밀번호 입력이 필요하므로 운영자 터미널에서 실행한다.
 
@@ -23,7 +23,7 @@ Last updated: 2026-08-21
 | local, 실제 기기 | `http://<dev-machine-lan-ip>:8080` | 확인 필요 | 같은 네트워크에서 개발 머신 IP로 접근 |
 | staging | 사용하지 않음 | 해당 없음 | 이 PC 단일 production 운영에서는 별도 staging을 두지 않는다. |
 | production, host 내부 | `http://127.0.0.1:8080` | 확정 | Docker Compose app port는 loopback에만 공개한다. |
-| production, Android | Tailscale HTTPS URL 미정 | 확인 필요 | `https://<device>.<tailnet>.ts.net` 확정 후 모바일 API URL로 사용한다. |
+| production, Android | `.env`의 `TODOLAB_TAILSCALE_API_URL` | host smoke 확인됨, 실제 기기 확인 필요 | 실제 URL은 문서에 기록하지 않는다. |
 
 모바일 기본 base path는 모든 환경에서 `/api/v1`이다.
 
@@ -82,11 +82,12 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 
 | 항목 | staging | production | 검증 기준 |
 | --- | --- | --- | --- |
-| API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, Android용 Tailscale HTTPS URL 미정 | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
+| API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, Android용 Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
 | Expo Web origin | 사용하지 않음 | 미정 | `Authorization` header 포함 preflight 성공 |
 | Native 앱 API 접근 | 사용하지 않음 | Tailscale HTTPS URL 확정 필요 | Android 실제 기기에서 HTTPS API 접근 가능 |
 | 문서 UI 공개 여부 | 사용하지 않음 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 비공개 정책 확인 |
 | CORS 환경변수 | 사용하지 않음 | `TODOLAB_ALLOWED_ORIGINS` | Expo Web 사용 시 쉼표 구분 origin 목록 적용 |
+| backend metadata | 사용하지 않음 | `GET /api/v1/system/metadata` | `commitSha`, `imageTag`, `version` 확인 |
 
 확정 후 반영 순서:
 
@@ -134,7 +135,29 @@ Redis health indicator는 기본 비활성이다. 게스트 생성 rate limit �
 - `/actuator/health/db`: datasource 연결 상태
 - `/actuator/health/schema`: 핵심 table 존재 여부
 
-## 6. 문서 UI 공개 기준
+## 6. Production Metadata
+
+운영 backend 식별 endpoint는 `GET /api/v1/system/metadata`다. 이 endpoint는 인증 없이 접근 가능하다.
+
+응답 필드:
+
+- `version`: 애플리케이션 버전. 기본값은 `1.0-SNAPSHOT`이다.
+- `commitSha`: 배포된 backend commit SHA. release script는 현재 `git rev-parse HEAD` 값을 `TODOLAB_APP_COMMIT_SHA`로 주입한다.
+- `imageTag`: 배포된 Docker image tag. 기본 release는 현재 short SHA를 사용한다.
+
+반환하지 않는 값:
+
+- secret, access token, DB URL/password
+- private Tailscale URL
+- CORS origin 원문
+
+운영 확인 예:
+
+```bash
+curl --fail http://127.0.0.1:8080/api/v1/system/metadata
+```
+
+## 7. 문서 UI 공개 기준
 
 | 환경 | Swagger UI `/swagger-ui` | Scalar `/scalar.html` | 비고 |
 | --- | --- | --- | --- |
@@ -144,7 +167,7 @@ Redis health indicator는 기본 비활성이다. 게스트 생성 rate limit �
 
 현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다. prod 설정의 `TODOLAB_DOCS_PUBLIC_ENABLED`, `TODOLAB_SPRINGDOC_API_DOCS_ENABLED`, `TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED` 기본값은 테스트로 검증한다.
 
-## 7. API 로그 운영 기준
+## 8. API 로그 운영 기준
 
 백엔드는 `/api/**` 요청에 공통 API 로그 필터를 적용한다. Actuator health와 OpenAPI/Swagger/Scalar 문서 endpoint는 이 필터 대상이 아니다.
 

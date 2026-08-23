@@ -58,6 +58,11 @@ app:
   docs:
     public-enabled: ${TODOLAB_DOCS_PUBLIC_ENABLED:false}
 
+  metadata:
+    version: ${TODOLAB_APP_VERSION:1.0-SNAPSHOT}
+    commit-sha: ${TODOLAB_APP_COMMIT_SHA:${TODOLAB_APP_IMAGE_TAG:local}}
+    image-tag: ${TODOLAB_APP_IMAGE_TAG:local}
+
   api-logging:
     enabled: ${TODOLAB_API_LOGGING_ENABLED:true}
     payload-enabled: ${TODOLAB_API_LOGGING_PAYLOAD_ENABLED:false}

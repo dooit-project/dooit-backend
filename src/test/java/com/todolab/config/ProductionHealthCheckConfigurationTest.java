@@ -45,6 +45,8 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(dockerfile).contains("org.opencontainers.image.revision");
         assertThat(compose).contains("image: todolab-backend:${TODOLAB_APP_IMAGE_TAG:-local}");
         assertThat(compose).contains("APP_VERSION: ${TODOLAB_APP_IMAGE_TAG:-local}");
+        assertThat(compose).contains("TODOLAB_APP_COMMIT_SHA: ${TODOLAB_APP_COMMIT_SHA:-local}");
+        assertThat(compose).contains("TODOLAB_APP_IMAGE_TAG: ${TODOLAB_APP_IMAGE_TAG:-local}");
         assertThat(compose).contains("driver: json-file");
         assertThat(compose).contains("max-size: \"10m\"");
         assertThat(compose).contains("max-file: \"5\"");
@@ -169,10 +171,13 @@ class ProductionHealthCheckConfigurationTest {
         String rollback = Files.readString(Path.of("scripts/rollback-production.sh"));
 
         assertThat(release).contains("git rev-parse --short HEAD");
+        assertThat(release).contains("git rev-parse HEAD");
+        assertThat(release).contains("TODOLAB_APP_COMMIT_SHA=\"$commit_sha\"");
         assertThat(release).contains("TODOLAB_APP_IMAGE_TAG=\"$image_tag\" docker compose build app");
         assertThat(release).contains("./gradlew clean test bootJar");
         assertThat(release).contains("Rollback command: ./scripts/rollback-production.sh <previous-image-tag>");
         assertThat(rollback).contains("docker image inspect \"$image_name\"");
+        assertThat(rollback).contains("TODOLAB_APP_COMMIT_SHA=\"$image_tag\"");
         assertThat(rollback).contains("TODOLAB_APP_IMAGE_TAG=\"$image_tag\" docker compose up -d --no-build app");
         assertThat(rollback).contains("/actuator/health/readiness");
     }

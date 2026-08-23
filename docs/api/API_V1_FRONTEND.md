@@ -1415,14 +1415,36 @@ Cursor 기준:
 - cursor Task가 더 이상 검색 조건에 포함되지 않으면 HTTP 400이다.
 - 중간에 Task가 생성/수정/삭제되어도 이전 페이지 마지막 항목 이후부터 이어서 조회하므로 offset shift 중복/누락을 피한다.
 
-## 9. 아직 프론트에서 의존하면 안 되는 계약
+## 9. System API
+
+### 백엔드 metadata 조회
+
+```http
+GET /api/v1/system/metadata
+```
+
+인증 없이 호출할 수 있다.
+
+Response:
+
+```ts
+type AppMetadataResponse = {
+  version: string;
+  commitSha: string;
+  imageTag: string;
+};
+```
+
+이 endpoint는 production build가 실제 연결한 backend commit/image를 확인하기 위한 읽기 전용 공개 API다. secret, private URL, 환경변수 원문은 반환하지 않는다.
+
+## 10. 아직 프론트에서 의존하면 안 되는 계약
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
 - refresh token API
 - 서버 push 알림 발송 API
 
-## 10. 모바일 전환 체크리스트
+## 11. 모바일 전환 체크리스트
 
 - [ ] 로그인 성공 시 `accessToken` 저장
 - [ ] 모든 v1 요청에 `Authorization: Bearer <accessToken>` 추가
@@ -1439,7 +1461,7 @@ Cursor 기준:
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
 - [ ] 서버 push 알림 UI는 push API 구현 전까지 실제 저장 기능처럼 열지 않음
 
-## 11. Legacy API 정책
+## 12. Legacy API 정책
 
 - 모바일 신규 연동 기준은 `/api/v1/**`다.
 - legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다.

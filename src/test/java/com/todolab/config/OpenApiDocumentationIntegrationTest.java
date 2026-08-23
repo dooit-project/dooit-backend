@@ -66,6 +66,17 @@ class OpenApiDocumentationIntegrationTest {
     }
 
     @Test
+    @DisplayName("OpenAPI JSON에 v1 System metadata 문서가 노출된다")
+    void apiDocs_v1SystemMetadataDocumentation() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/system/metadata'].get.tags[0]").value("v1 System"))
+                .andExpect(jsonPath("$.paths['/api/v1/system/metadata'].get.summary").value("백엔드 metadata 조회"))
+                .andExpect(jsonPath("$.components.schemas.AppMetadataResponse.description").value("백엔드 배포 metadata"))
+                .andExpect(jsonPath("$.tags[*].name").value(hasItem("v1 System")));
+    }
+
+    @Test
     @DisplayName("OpenAPI JSON에 v1 Workspace path가 노출된다")
     void apiDocs_v1WorkspacePaths() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
@@ -139,7 +150,8 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.tags[3].name").value("v1 Workspace Invitation"))
                 .andExpect(jsonPath("$.tags[4].name").value("v1 D-Day"))
                 .andExpect(jsonPath("$.tags[5].name").value("v1 Workspace Task"))
-                .andExpect(jsonPath("$.tags[9].name").value("v1 Workspace"))
+                .andExpect(jsonPath("$.tags[*].name").value(hasItem("v1 Workspace")))
+                .andExpect(jsonPath("$.tags[*].name").value(hasItem("v1 System")))
                 .andExpect(jsonPath("$.security[0].bearerAuth").exists());
 
         mockMvc.perform(get("/swagger-ui/index.html"))

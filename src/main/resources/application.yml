@@ -30,6 +30,11 @@ app:
   docs:
     public-enabled: true
 
+  metadata:
+    version: ${TODOLAB_APP_VERSION:1.0-SNAPSHOT}
+    commit-sha: ${TODOLAB_APP_COMMIT_SHA:local}
+    image-tag: ${TODOLAB_APP_IMAGE_TAG:local}
+
   api-logging:
     enabled: true
     payload-enabled: true
