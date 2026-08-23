@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,11 @@ public class PushNotificationHistoryService {
 
     private static final int DEFAULT_LIMIT = 50;
     private static final int MAX_LIMIT = 100;
+    private static final Set<String> PERMANENT_TOKEN_ERROR_CODES = Set.of(
+            "DEVICENOTREGISTERED",
+            "INVALIDPUSHTOKEN",
+            "INVALIDDEVICETOKEN"
+    );
 
     private final PushNotificationHistoryRepository pushNotificationHistoryRepository;
     private final PushDeviceTokenRepository pushDeviceTokenRepository;
@@ -31,6 +38,9 @@ public class PushNotificationHistoryService {
         PushDeviceToken pushDeviceToken = command.pushDeviceTokenId() == null
                 ? null
                 : pushDeviceTokenRepository.findByIdAndOwnerId(command.pushDeviceTokenId(), ownerId).orElse(null);
+        if (shouldDeactivateToken(command) && pushDeviceToken != null) {
+            pushDeviceToken.deactivate();
+        }
         PushNotificationHistory history = new PushNotificationHistory(
                 owner,
                 pushDeviceToken,
@@ -93,6 +103,17 @@ public class PushNotificationHistoryService {
             return command.idempotencyKey();
         }
         return serverIdempotencyKey(command.taskId(), command.recurrenceSeriesId(), command.occurrenceDate());
+    }
+
+    private boolean shouldDeactivateToken(PushNotificationHistoryRecordCommand command) {
+        return command.status() == PushNotificationStatus.FAILED && isPermanentTokenError(command.errorCode());
+    }
+
+    private boolean isPermanentTokenError(String errorCode) {
+        if (errorCode == null || errorCode.isBlank()) {
+            return false;
+        }
+        return PERMANENT_TOKEN_ERROR_CODES.contains(errorCode.trim().toUpperCase(Locale.ROOT));
     }
 
     private int normalizeLimit(Integer limit) {

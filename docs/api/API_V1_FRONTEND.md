@@ -679,6 +679,7 @@ Response:
 - 응답은 실제 `deviceToken` 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
 - `DELETE`는 물리 삭제가 아니라 비활성화다.
 - 이 API는 서버 push 발송을 수행하지 않는다. 발송과 실패 토큰 정리는 별도 계약이다.
+- 서버 push 전송 이력 기록 중 `DeviceNotRegistered`, `InvalidPushToken`, `InvalidDeviceToken` 같은 영구 token 실패가 확인되면 해당 token은 비활성화되고 활성 목록에서 제외된다.
 
 ### Push 알림 전송 이력 조회
 

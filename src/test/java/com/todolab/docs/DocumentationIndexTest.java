@@ -151,6 +151,7 @@ class DocumentationIndexTest {
         assertThat(notification).contains("`FAILED` 이력만 있는 key는 다음 scheduler cycle의 재시도 대상");
         assertThat(notification).contains("전송 실패 Token 비활성화 정책");
         assertThat(notification).contains("DeviceNotRegistered");
+        assertThat(notification).contains("credential 오류와 payload 오류는 token 자체 문제로 보지 않고 token을 유지한다");
         assertThat(notification).contains("suppressLocalNotification=true");
         assertThat(notification).contains("GET /api/v1/push-notification-histories");
         assertThat(notification).contains("PUSH_NOTIFICATION_HISTORY");

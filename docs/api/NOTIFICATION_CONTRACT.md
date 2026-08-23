@@ -156,8 +156,9 @@ GET /api/v1/push-notification-histories?limit=50
 Expo provider 기준 실패 처리는 아래처럼 구분한다.
 
 - `DeviceNotRegistered`는 영구 실패로 보고 해당 `PUSH_DEVICE_TOKEN.active=false`로 비활성화한다.
-- token 형식 오류, provider가 명시한 invalid token 오류는 영구 실패로 보고 비활성화한다.
+- `InvalidPushToken`, `InvalidDeviceToken`처럼 provider가 명시한 invalid token 오류는 영구 실패로 보고 비활성화한다.
 - rate limit, timeout, 5xx, 네트워크 오류는 일시 실패로 보고 token을 유지한다.
+- credential 오류와 payload 오류는 token 자체 문제로 보지 않고 token을 유지한다.
 - 일시 실패는 전송 이력에 `FAILED`로 저장하되 같은 scheduler cycle에서 즉시 무한 재시도하지 않는다.
 - 영구 실패로 비활성화된 token은 `GET /api/v1/push-tokens` 활성 목록에서 제외된다.
 - 사용자가 같은 device token을 다시 등록하면 기존 row를 갱신하고 `active=true`로 되살린다.
