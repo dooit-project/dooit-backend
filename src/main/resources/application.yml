@@ -45,6 +45,8 @@ app:
       provider: EXPO
       endpoint: https://exp.host/--/api/v2/push/send
       access-token:
+      scheduler-fixed-delay: PT1M
+      look-ahead-window: PT10M
 
   batch:
     scheduler:

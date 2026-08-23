@@ -130,7 +130,7 @@ GET /api/v1/push-notification-histories?limit=50
 - `TODOLAB_PUSH_ACCESS_TOKEN` 값은 문서, git, 로그, 전송 이력에 남기지 않는다.
 - access token이 비어 있으면 백엔드는 Authorization header 없이 Expo Push API를 호출하는 설정으로 간주한다.
 - 운영 설정 prefix는 `app.notification.push`다.
-- production 환경변수는 `TODOLAB_PUSH_ENABLED`, `TODOLAB_PUSH_PROVIDER`, `TODOLAB_PUSH_ENDPOINT`, `TODOLAB_PUSH_ACCESS_TOKEN`을 사용한다.
+- production 환경변수는 `TODOLAB_PUSH_ENABLED`, `TODOLAB_PUSH_PROVIDER`, `TODOLAB_PUSH_ENDPOINT`, `TODOLAB_PUSH_ACCESS_TOKEN`, `TODOLAB_PUSH_SCHEDULER_FIXED_DELAY`, `TODOLAB_PUSH_LOOK_AHEAD_WINDOW`를 사용한다.
 - 기본값은 `enabled=false`, `provider=EXPO`, `endpoint=https://exp.host/--/api/v2/push/send`다.
 - provider 설정은 발송 준비 계약이며, `enabled=true`만으로 발송 스케줄러가 동작하지는 않는다.
 
@@ -139,8 +139,8 @@ GET /api/v1/push-notification-histories?limit=50
 서버 push 발송은 아래 단계로 구현한다.
 
 - scheduler는 `app.notification.push.enabled=true`일 때만 동작한다.
-- scheduler는 1분 주기로 실행한다.
-- 발송 후보 window는 현재 시각부터 10분 뒤까지다.
+- scheduler는 `TODOLAB_PUSH_SCHEDULER_FIXED_DELAY=PT1M` 기본값에 따라 1분 주기로 실행한다.
+- 발송 후보 window는 `TODOLAB_PUSH_LOOK_AHEAD_WINDOW=PT10M` 기본값에 따라 현재 시각부터 10분 뒤까지다.
 - 후보 산출은 `GET /api/v1/tasks/notification-candidates`와 같은 기준을 사용한다.
 - 서버 push는 활성 push token이 있는 사용자만 대상으로 한다.
 - idempotency key는 `SERVER:{task.id}` 또는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
