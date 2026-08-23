@@ -3,7 +3,12 @@ package com.todolab.workspace.controller;
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
 import com.todolab.dday.repository.DdayGoalRepository;
+import com.todolab.dday.dto.DdayGoalRequest;
 import com.todolab.mail.MailService;
+import com.todolab.task.domain.RecurrenceFrequency;
+import com.todolab.task.domain.TaskType;
+import com.todolab.task.dto.TaskRecurrenceRequest;
+import com.todolab.task.dto.TaskRequest;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.User;
@@ -28,6 +33,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.List;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -297,6 +304,61 @@ class WorkspaceV1IntegrationTest {
         org.assertj.core.api.Assertions.assertThat(sharedWorkspaceRepository.findById(workspaceId)).isEmpty();
     }
 
+    @Test
+    @DisplayName("v1 Workspace OWNER는 Task, D-Day, 반복 series가 있는 workspace를 삭제한다")
+    void deleteWorkspace_success_withChildren() throws Exception {
+        String ownerToken = accessToken("workspace-owner-delete-children@example.com");
+        Long workspaceId = createWorkspace(ownerToken, new WorkspaceRequest("삭제 대상", null));
+        Long goalId = createWorkspaceDday(ownerToken, workspaceId, new DdayGoalRequest(
+                "출시 목표",
+                LocalDate.of(2026, 8, 30)
+        ));
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "출시 회의",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 23, 9, 0),
+                LocalDateTime.of(2026, 8, 23, 10, 0),
+                "업무",
+                false
+        ));
+        createWorkspaceTask(ownerToken, workspaceId, new TaskRequest(
+                "매주 점검",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 8, 24, 9, 0),
+                LocalDateTime.of(2026, 8, 24, 10, 0),
+                "업무",
+                false,
+                new TaskRecurrenceRequest(
+                        RecurrenceFrequency.WEEKLY,
+                        1,
+                        null,
+                        null,
+                        null,
+                        3,
+                        List.of("MO"),
+                        null
+                )
+        ));
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/tasks/{taskId}/dday-goal", workspaceId, taskId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .param("ddayGoalId", String.valueOf(goalId)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/v1/workspaces/{workspaceId}", workspaceId)
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        org.assertj.core.api.Assertions.assertThat(sharedWorkspaceRepository.findById(workspaceId)).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(workspaceMemberRepository.findByWorkspaceIdOrderByIdAsc(workspaceId)).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(taskRepository.findAll()).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(ddayGoalRepository.findAll()).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(recurrenceSeriesRepository.findAll()).isEmpty();
+    }
+
     private String accessToken(String email) {
         User owner = userRepository.save(new User(email, "encoded-password", "Workspace 사용자"));
         return jwtTokenService.createAccessToken(owner).tokenValue();
@@ -350,5 +412,31 @@ class WorkspaceV1IntegrationTest {
                                 WorkspaceMemberStatus.ACTIVE
                         ))))
                 .andExpect(status().isOk());
+    }
+
+    private Long createWorkspaceTask(String accessToken, Long workspaceId, TaskRequest request) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private Long createWorkspaceDday(String accessToken, Long workspaceId, DdayGoalRequest request) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/workspaces/{workspaceId}/dday-goals", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
     }
 }

@@ -1,5 +1,9 @@
 package com.todolab.workspace.service;
 
+import com.todolab.common.domain.ResourceScope;
+import com.todolab.dday.repository.DdayGoalRepository;
+import com.todolab.task.repository.RecurrenceSeriesRepository;
+import com.todolab.task.repository.TaskRepository;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
@@ -33,6 +37,9 @@ public class WorkspaceService {
     private final SharedWorkspaceRepository sharedWorkspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final UserRepository userRepository;
+    private final TaskRepository taskRepository;
+    private final DdayGoalRepository ddayGoalRepository;
+    private final RecurrenceSeriesRepository recurrenceSeriesRepository;
 
     @Transactional
     public WorkspaceResponse createForOwner(WorkspaceRequest request, User owner) {
@@ -104,6 +111,12 @@ public class WorkspaceService {
     public void deleteForOwner(Long id, User owner) {
         requireOwner(id, owner);
         SharedWorkspace workspace = findWorkspace(id);
+        taskRepository.deleteAll(taskRepository.findByWorkspaceIdAndScope(id, ResourceScope.WORKSPACE));
+        ddayGoalRepository.deleteAll(ddayGoalRepository.findAllByWorkspaceIdAndScopeOrderByTargetDateAscIdAsc(
+                id,
+                ResourceScope.WORKSPACE
+        ));
+        recurrenceSeriesRepository.deleteAll(recurrenceSeriesRepository.findByWorkspaceId(id));
         workspaceMemberRepository.deleteAll(workspaceMemberRepository.findByWorkspaceIdOrderByIdAsc(id));
         sharedWorkspaceRepository.delete(workspace);
     }

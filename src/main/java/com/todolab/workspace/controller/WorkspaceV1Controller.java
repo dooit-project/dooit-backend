@@ -81,7 +81,7 @@ public class WorkspaceV1Controller {
         return ResponseEntity.ok(ApiResponse.success(workspaceService.updateForOwner(workspaceId, request, owner)));
     }
 
-    @Operation(summary = "Workspace 삭제", description = "OWNER가 workspace를 삭제합니다. Task 공유 도입 전 기본 workspace만 대상으로 합니다.")
+    @Operation(summary = "Workspace 삭제", description = "OWNER가 workspace와 하위 Task, D-Day, 반복 series, membership을 함께 삭제합니다.")
     @DeleteMapping("/{workspaceId}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @AuthenticationPrincipal Jwt jwt,

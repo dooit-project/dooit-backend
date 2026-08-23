@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-20
+Last updated: 2026-08-23
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -31,6 +31,27 @@ Last updated: 2026-08-20
 ## 2. 제품 기능 로드맵
 
 운영 접근 경로가 막혀 있더라도 backend 설계와 API 구현을 병행할 수 있는 제품 기능이다. 모바일 UX 영향, 데이터 모델 변경 범위, 공유/권한 모델의 blast radius를 기준으로 순서를 둔다.
+
+### P0. 프론트 출시 연동 요청
+
+목표: 프론트 real API 연결과 출시 검증을 막는 backend 계약/배포 gap을 우선 닫는다. 완료 보고에는 backend commit SHA 또는 image tag, 배포 환경/API URL, 적용 migration, 변경 OpenAPI endpoint/schema/error code, 호환성, 실행 테스트, 프론트 확인 사항을 함께 남긴다.
+
+- [ ] 내용이 있는 Workspace 삭제가 500을 반환하지 않도록 삭제 정책을 구현하고 `SHARING_CONTRACT.md`와 OpenAPI에 반영한다.
+- [ ] staging/production HTTPS API URL, production Web origin, backend commit/image metadata endpoint, readiness 공개 접근을 확정한다.
+- [ ] 비밀번호 재설정 request/verify/confirm API, reset link 형식, TTL, rate limit, error code, session 처리 정책을 구현한다.
+- [ ] 운영 Web CORS allow origin/header와 인증/API 응답 `Cache-Control: no-store` 정책을 확정한다.
+
+### P1. 프론트 계약 후속 요청
+
+- [ ] 주요 생성 API에 `Idempotency-Key` 처리와 24시간 replay 저장 정책을 추가한다.
+- [ ] 등록 계정 refresh, guest refresh, logout, refresh token rotation/reuse detection, guest 90일 보존 정책을 설계/구현한다.
+- [ ] Task별 알림 preference와 notification candidate `notifyAt`을 추가한다.
+- [ ] Workspace PENDING 초대 거절 계약과 권한 테스트를 추가한다.
+
+### P2. 조건부 프론트 요청
+
+- [ ] 서버 push 기기 등록과 발송 멱등성은 로컬 예약 알림 한계가 실제로 확인된 뒤 도입한다.
+- [ ] Workspace 템플릿은 제품 필요성이 확정된 뒤 별도 scope/권한/반복/D-Day 정책을 먼저 계약한다.
 
 ### P0. 일정 빠른 등록 API
 

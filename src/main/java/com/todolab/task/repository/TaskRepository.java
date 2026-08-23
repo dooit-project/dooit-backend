@@ -51,6 +51,8 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
 
     Optional<Task> findByIdAndWorkspaceIdAndScope(Long id, Long workspaceId, ResourceScope scope);
 
+    List<Task> findByWorkspaceIdAndScope(Long workspaceId, ResourceScope scope);
+
     default boolean existsByIdAndOwnerId(Long id, Long ownerId) {
         return existsByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
     }

@@ -1,6 +1,6 @@
 # Sharing Contract
 
-Last updated: 2026-08-15
+Last updated: 2026-08-23
 
 이 문서는 일정 공유 기능의 backend 설계 기준이다. 현재 API에는 workspace와 membership 기본 API, workspace Task 생성/조회/수정/삭제 API, workspace 반복 Task materialize, workspace D-Day 생성/조회/삭제 API, workspace Task-D-Day 연결 API가 있다.
 
@@ -180,6 +180,18 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 - 다른 workspace의 Task/D-Day ID는 존재하지 않는 리소스처럼 처리한다.
 - workspace Task와 personal D-Day 연결은 400 또는 404로 거부한다.
 - workspace 반복 occurrence materialize는 같은 workspace 안에서만 생성된다.
+- Task, D-Day, 반복 series, membership이 있는 workspace 삭제는 500을 반환하지 않고 하위 workspace 리소스를 함께 삭제한다.
+
+## Workspace 삭제 정책
+
+`DELETE /api/v1/workspaces/{workspaceId}`는 `OWNER`만 호출할 수 있다.
+
+- 삭제 성공 응답은 공통 envelope의 `data=null`이다.
+- workspace 하위 `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES`, `WORKSPACE_MEMBER`는 같은 트랜잭션에서 함께 삭제한다.
+- 삭제 순서는 Task, D-Day, recurrence series, membership, workspace 순서다.
+- 개인 scope Task/D-Day/recurrence series는 삭제 대상이 아니다.
+- `EDITOR`, `VIEWER`는 403 `FORBIDDEN`, non-member와 PENDING/REMOVED 멤버는 404 `WORKSPACE_NOT_FOUND`다.
+- 삭제 불가 정책 대신 cascade 삭제 정책을 사용하므로 내용이 있는 workspace 삭제에서 HTTP 409를 반환하지 않는다.
 
 ## Migration과 Rollback
 

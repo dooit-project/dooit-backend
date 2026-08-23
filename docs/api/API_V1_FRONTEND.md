@@ -1059,7 +1059,7 @@ PUT /api/v1/workspaces/{workspaceId}
 DELETE /api/v1/workspaces/{workspaceId}
 ```
 
-수정/삭제는 `OWNER`만 가능하다.
+수정/삭제는 `OWNER`만 가능하다. `DELETE /api/v1/workspaces/{workspaceId}`는 workspace 하위 `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES`, `WORKSPACE_MEMBER`를 같은 트랜잭션에서 함께 삭제하고 성공 시 `data=null`을 반환한다. 내용이 있는 workspace 삭제도 HTTP 500을 반환하지 않는다.
 
 ### 멤버 초대
 

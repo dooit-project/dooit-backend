@@ -78,6 +78,10 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("### 2026-08-20 정리");
         assertThat(roadmap).contains("현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증");
         assertThat(roadmap).contains("서버 push 실제 발송");
+        assertThat(roadmap).contains("### P0. 프론트 출시 연동 요청");
+        assertThat(roadmap).contains("비밀번호 재설정 request/verify/confirm API");
+        assertThat(roadmap).contains("### P1. 프론트 계약 후속 요청");
+        assertThat(roadmap).contains("Task별 알림 preference");
         assertThat(roadmap).contains("### P0. 일정 빠른 등록 API");
         assertThat(roadmap).contains("### P0. 빠른 등록 템플릿");
         assertThat(roadmap).contains("### P1. 일정 공유 설계");
@@ -114,6 +118,8 @@ class DocumentationIndexTest {
         assertThat(sharing).contains("개인 Task API는 workspace Task를 반환하지 않는다.");
         assertThat(sharing).contains("Task 템플릿은 1차 정책에서 personal-only 리소스로 유지한다.");
         assertThat(sharing).contains("workspace 템플릿 공유와 개인 템플릿 기반 workspace Task 생성은 제공하지 않는다.");
+        assertThat(sharing).contains("## Workspace 삭제 정책");
+        assertThat(sharing).contains("하위 `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES`, `WORKSPACE_MEMBER`");
     }
 
     @Test
