@@ -36,7 +36,7 @@ Last updated: 2026-08-23
 
 목표: 프론트 real API 연결과 출시 검증을 막는 backend 계약/배포 gap을 우선 닫는다. 완료 보고에는 backend commit SHA 또는 image tag, 배포 환경/API URL, 적용 migration, 변경 OpenAPI endpoint/schema/error code, 호환성, 실행 테스트, 프론트 확인 사항을 함께 남긴다.
 
-- [ ] 내용이 있는 Workspace 삭제가 500을 반환하지 않도록 삭제 정책을 구현하고 `SHARING_CONTRACT.md`와 OpenAPI에 반영한다.
+- [x] 내용이 있는 Workspace 삭제가 500을 반환하지 않도록 삭제 정책을 구현하고 `SHARING_CONTRACT.md`와 OpenAPI에 반영한다.
 - [ ] staging/production HTTPS API URL, production Web origin, backend commit/image metadata endpoint, readiness 공개 접근을 확정한다.
 - [ ] 비밀번호 재설정 request/verify/confirm API, reset link 형식, TTL, rate limit, error code, session 처리 정책을 구현한다.
 - [ ] 운영 Web CORS allow origin/header와 인증/API 응답 `Cache-Control: no-store` 정책을 확정한다.
