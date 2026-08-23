@@ -44,6 +44,7 @@ app:
       enabled: false
       provider: EXPO
       endpoint: https://exp.host/--/api/v2/push/send
+      access-token:
 
   batch:
     scheduler:

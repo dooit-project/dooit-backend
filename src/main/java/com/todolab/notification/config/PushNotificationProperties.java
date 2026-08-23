@@ -6,7 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record PushNotificationProperties(
         boolean enabled,
         PushNotificationProvider provider,
-        String endpoint
+        String endpoint,
+        String accessToken
 ) {
 
     public PushNotificationProperties {

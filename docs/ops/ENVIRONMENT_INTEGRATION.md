@@ -171,6 +171,7 @@ TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED=false
 TODOLAB_PUSH_ENABLED=false
 TODOLAB_PUSH_PROVIDER=EXPO
 TODOLAB_PUSH_ENDPOINT=https://exp.host/--/api/v2/push/send
+TODOLAB_PUSH_ACCESS_TOKEN=
 TODOLAB_REDIS_HEALTH_ENABLED=false
 ```
 
@@ -188,3 +189,4 @@ TODOLAB_REDIS_HEALTH_ENABLED=false
 - archive 파일은 일 단위와 크기 단위로 끊고 `${TODOLAB_LOG_PATH}/archive/*.log.gz`로 압축한다.
 - Logback 기본 기능은 압축 시점을 롤오버 시점으로 처리한다. 정확히 3일 지난 파일만 지연 압축해야 하면 운영 환경의 `logrotate` 또는 cron 정책을 추가한다.
 - 서버 push 1차 provider는 `EXPO`이며, `TODOLAB_PUSH_ENABLED=false`가 기본값이다. 발송 스케줄러가 구현되기 전에는 enabled 값을 켜도 실제 발송하지 않는다.
+- Android/iOS push credentials는 EAS/Expo project에 보관하고, 백엔드는 Expo enhanced push security를 켠 경우에만 `TODOLAB_PUSH_ACCESS_TOKEN`을 환경변수로 받는다.

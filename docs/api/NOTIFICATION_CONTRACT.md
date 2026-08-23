@@ -1,6 +1,6 @@
 # Notification Contract
 
-Last updated: 2026-08-20
+Last updated: 2026-08-23
 
 이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API와 서버 push token 등록 API를 제공하며, 서버 push 발송 API는 제공하지 않는다.
 
@@ -121,11 +121,16 @@ GET /api/v1/push-notification-histories?limit=50
 - 모바일은 `suppressLocalNotification=true`인 후보를 로컬 알림으로 예약하지 않는다.
 - 서버 push 전환은 앱 버전별로 점진 적용한다.
 
-## 서버 Push Provider 설정
+## 서버 Push Provider와 Credential 정책
 
 - 1차 provider는 `EXPO`로 확정한다.
+- 모바일은 Expo Push Service용 `ExpoPushToken`을 등록한다. FCM/APNs native token은 1차 범위에서 사용하지 않는다.
+- Android/iOS push credentials는 EAS/Expo project에 보관하고 백엔드 저장소나 DB에 저장하지 않는다.
+- Expo enhanced push security를 켜면 백엔드는 Expo access token을 `TODOLAB_PUSH_ACCESS_TOKEN` 환경변수로만 주입받는다.
+- `TODOLAB_PUSH_ACCESS_TOKEN` 값은 문서, git, 로그, 전송 이력에 남기지 않는다.
+- access token이 비어 있으면 백엔드는 Authorization header 없이 Expo Push API를 호출하는 설정으로 간주한다.
 - 운영 설정 prefix는 `app.notification.push`다.
-- production 환경변수는 `TODOLAB_PUSH_ENABLED`, `TODOLAB_PUSH_PROVIDER`, `TODOLAB_PUSH_ENDPOINT`를 사용한다.
+- production 환경변수는 `TODOLAB_PUSH_ENABLED`, `TODOLAB_PUSH_PROVIDER`, `TODOLAB_PUSH_ENDPOINT`, `TODOLAB_PUSH_ACCESS_TOKEN`을 사용한다.
 - 기본값은 `enabled=false`, `provider=EXPO`, `endpoint=https://exp.host/--/api/v2/push/send`다.
 - provider 설정은 발송 준비 계약이며, `enabled=true`만으로 발송 스케줄러가 동작하지는 않는다.
 

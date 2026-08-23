@@ -76,7 +76,7 @@ class TaskServiceTest {
                 recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
-                new PushNotificationProperties(false, PushNotificationProvider.EXPO, null),
+                new PushNotificationProperties(false, PushNotificationProvider.EXPO, null, null),
                 recurrenceRuleUpdateService,
                 new TaskQuickCaptureParser()
         );
@@ -1481,7 +1481,7 @@ class TaskServiceTest {
                 recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
-                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null),
+                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null, null),
                 recurrenceRuleUpdateService,
                 new TaskQuickCaptureParser()
         );
@@ -1515,7 +1515,7 @@ class TaskServiceTest {
                 recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
-                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null),
+                new PushNotificationProperties(true, PushNotificationProvider.EXPO, null, null),
                 recurrenceRuleUpdateService,
                 new TaskQuickCaptureParser()
         );

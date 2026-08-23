@@ -119,7 +119,7 @@ Last updated: 2026-08-20
 
 상태: provider 설정과 이력 저장 계약은 준비되어 있지만, 실제 Expo/APNs/FCM 호출 scheduler는 아직 구현하지 않는다.
 
-- [ ] Expo/APNs/FCM 중 production provider와 credential 보관 방식을 확정한다.
+- [x] Expo/APNs/FCM 중 production provider와 credential 보관 방식을 확정한다.
 - [ ] 발송 스케줄러 실행 시점과 look-ahead window를 정한다.
 - [ ] idempotency key 기준으로 중복 발송을 막는다.
 - [ ] provider 실패 응답에 따라 token 비활성화 정책을 적용한다.

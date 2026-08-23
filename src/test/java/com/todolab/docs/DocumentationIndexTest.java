@@ -141,6 +141,8 @@ class DocumentationIndexTest {
         assertThat(notification).contains("## 현재 구현 상태");
         assertThat(notification).contains("실제 Expo/APNs/FCM provider 호출");
         assertThat(notification).contains("TODOLAB_PUSH_ENABLED");
+        assertThat(notification).contains("TODOLAB_PUSH_ACCESS_TOKEN");
+        assertThat(notification).contains("EAS/Expo project에 보관");
         assertThat(notification).contains("서버 Push 발송 스케줄러 설계");
         assertThat(notification).contains("idempotency key는 `SERVER:{task.id}`");
         assertThat(notification).contains("전송 실패 Token 비활성화 정책");
@@ -149,6 +151,7 @@ class DocumentationIndexTest {
         assertThat(notification).contains("GET /api/v1/push-notification-histories");
         assertThat(notification).contains("PUSH_NOTIFICATION_HISTORY");
         assertThat(environment).contains("TODOLAB_PUSH_PROVIDER=EXPO");
+        assertThat(environment).contains("TODOLAB_PUSH_ACCESS_TOKEN=");
         assertThat(environment).contains("TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED");
         assertThat(environment).contains("local 프로필은 프론트 연동 디버깅을 위해 `payload-enabled=true`");
         assertThat(environment).contains("## 5. Production Health Check");
