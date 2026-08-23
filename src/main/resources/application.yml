@@ -11,7 +11,7 @@ app:
     jwt:
       issuer: https://todolab.local
       secret: ${TODOLAB_JWT_SECRET:dev-only-not-for-production-jwt-secret}
-      access-token-ttl: PT1H
+      access-token-ttl: PT15M
       guest-access-token-ttl: P31D
     guest:
       cleanup:
@@ -28,6 +28,9 @@ app:
       rate-limit-window: PT1H
       max-requests-per-window: 5
       link-template: "${TODOLAB_PASSWORD_RESET_LINK_TEMPLATE:todolab://password-reset?token={token}}"
+    refresh-token:
+      idle-ttl: P30D
+      absolute-ttl: P90D
 
   cors:
     allowed-origins: http://localhost:8081,http://localhost:8090

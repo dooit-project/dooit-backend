@@ -12,4 +12,4 @@ app:
     jwt:
       issuer: https://todolab.test
       secret: test-only-jwt-secret-at-least-32-bytes
-      access-token-ttl: PT1H
+      access-token-ttl: PT15M

@@ -4,6 +4,9 @@ import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
 import com.todolab.auth.exception.PasswordResetRateLimitExceededException;
 import com.todolab.auth.exception.PasswordResetTokenInvalidException;
+import com.todolab.auth.exception.RefreshTokenExpiredException;
+import com.todolab.auth.exception.RefreshTokenInvalidException;
+import com.todolab.auth.exception.RefreshTokenReusedException;
 import com.todolab.common.idempotency.IdempotencyKeyReusedException;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
 import com.todolab.task.exception.TaskOrderConflictException;
@@ -181,6 +184,27 @@ public class ApiExceptionHandler {
         log.warn("Password Reset Rate Limit Exceeded");
         return ResponseEntity.status(ErrorCode.PASSWORD_RESET_RATE_LIMIT_EXCEEDED.getStatus())
                 .body(ApiResponse.failure(ErrorCode.PASSWORD_RESET_RATE_LIMIT_EXCEEDED));
+    }
+
+    @ExceptionHandler(RefreshTokenInvalidException.class)
+    public ResponseEntity<ApiResponse<?>> handleRefreshTokenInvalidException(RefreshTokenInvalidException e) {
+        log.warn("Refresh Token Invalid");
+        return ResponseEntity.status(ErrorCode.REFRESH_TOKEN_INVALID.getStatus())
+                .body(ApiResponse.failure(ErrorCode.REFRESH_TOKEN_INVALID));
+    }
+
+    @ExceptionHandler(RefreshTokenExpiredException.class)
+    public ResponseEntity<ApiResponse<?>> handleRefreshTokenExpiredException(RefreshTokenExpiredException e) {
+        log.warn("Refresh Token Expired");
+        return ResponseEntity.status(ErrorCode.REFRESH_TOKEN_EXPIRED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.REFRESH_TOKEN_EXPIRED));
+    }
+
+    @ExceptionHandler(RefreshTokenReusedException.class)
+    public ResponseEntity<ApiResponse<?>> handleRefreshTokenReusedException(RefreshTokenReusedException e) {
+        log.warn("Refresh Token Reused");
+        return ResponseEntity.status(ErrorCode.REFRESH_TOKEN_REUSED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.REFRESH_TOKEN_REUSED));
     }
 
     @ExceptionHandler(WorkspaceValidationException.class)

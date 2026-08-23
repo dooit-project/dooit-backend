@@ -2,6 +2,7 @@ package com.todolab.auth.controller;
 
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.repository.PasswordResetTokenRepository;
+import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.mail.MailService;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
@@ -55,6 +56,9 @@ class PasswordResetIntegrationTest {
     PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Autowired
+    RefreshTokenSessionRepository refreshTokenSessionRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     @MockitoBean
@@ -63,6 +67,7 @@ class PasswordResetIntegrationTest {
     @BeforeEach
     void setUp() {
         passwordResetTokenRepository.deleteAll();
+        refreshTokenSessionRepository.deleteAll();
         userRepository.deleteAll();
         reset(mailService);
     }

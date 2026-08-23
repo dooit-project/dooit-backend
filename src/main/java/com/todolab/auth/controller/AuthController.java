@@ -1,11 +1,13 @@
 package com.todolab.auth.controller;
 
 import com.todolab.auth.dto.AuthenticatedUserResponse;
+import com.todolab.auth.dto.LogoutRequest;
 import com.todolab.auth.dto.PasswordResetConfirmRequest;
 import com.todolab.auth.dto.PasswordResetRequest;
 import com.todolab.auth.dto.PasswordResetRequestResponse;
 import com.todolab.auth.dto.PasswordResetVerifyRequest;
 import com.todolab.auth.dto.PasswordResetVerifyResponse;
+import com.todolab.auth.dto.RefreshRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.TokenResponse;
@@ -117,6 +119,27 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.success(authService.login(guestPrincipal(authorization), request)));
+    }
+
+    @Operation(summary = "등록 계정 token 갱신", description = "refresh token을 회전하고 새 access token과 refresh token을 반환합니다.")
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<TokenResponse>> refresh(@Valid @RequestBody RefreshRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.refresh(request)));
+    }
+
+    @Operation(
+            summary = "로그아웃",
+            description = "현재 사용자 refresh session을 폐기합니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody(required = false) LogoutRequest request
+    ) {
+        User user = currentUserService.requireUser(jwt);
+        authService.logout(request, user);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "비밀번호 재설정 요청", description = "가입 여부 노출 없이 비밀번호 재설정 요청을 접수하고 등록 계정에만 재설정 메일을 발송합니다.")

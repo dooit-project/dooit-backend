@@ -27,7 +27,7 @@ Last updated: 2026-08-20
 | [`api/API_V1_FRONTEND.md`](./api/API_V1_FRONTEND.md) | v1 API endpoint, request/response, 검색, Today 재정렬, D-Day 계약 |
 | [`api/GUEST_ACCOUNT_HANDOFF.md`](./api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 계정 생성, 승격, 병합, 만료, rate limit 모바일 전달 계약 |
 | [`ops/ENVIRONMENT_INTEGRATION.md`](./ops/ENVIRONMENT_INTEGRATION.md) | 환경별 URL, CORS origin, Expo/iOS/Android/실기기 차이 |
-| [`api/AUTH_CONTRACT.md`](./api/AUTH_CONTRACT.md) | JWT claim, access token TTL, refresh token 미도입, 로그아웃, 401/403 |
+| [`api/AUTH_CONTRACT.md`](./api/AUTH_CONTRACT.md) | JWT claim, access token TTL, refresh token rotation, 로그아웃, 401/403 |
 | [`api/API_ERROR_CODES.md`](./api/API_ERROR_CODES.md) | 오류 코드, 사용자 노출 message, 모바일 처리, retry 기준 |
 | [`api/DATA_MODEL_GLOSSARY.md`](./api/DATA_MODEL_GLOSSARY.md) | Task, D-Day, User 주요 필드와 상태 전이 |
 | [`api/TIMEZONE_CONTRACT.md`](./api/TIMEZONE_CONTRACT.md) | 현재 `Asia/Seoul` 기준과 사용자 timezone 도입 원칙 |

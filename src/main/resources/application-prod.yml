@@ -39,7 +39,7 @@ app:
     jwt:
       issuer: ${TODOLAB_JWT_ISSUER}
       secret: ${TODOLAB_JWT_SECRET}
-      access-token-ttl: ${TODOLAB_JWT_ACCESS_TOKEN_TTL:PT1H}
+      access-token-ttl: ${TODOLAB_JWT_ACCESS_TOKEN_TTL:PT15M}
       guest-access-token-ttl: ${TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL:P31D}
     guest:
       cleanup:
@@ -56,6 +56,9 @@ app:
       rate-limit-window: ${TODOLAB_PASSWORD_RESET_RATE_LIMIT_WINDOW:PT1H}
       max-requests-per-window: ${TODOLAB_PASSWORD_RESET_MAX_REQUESTS_PER_WINDOW:5}
       link-template: "${TODOLAB_PASSWORD_RESET_LINK_TEMPLATE:todolab://password-reset?token={token}}"
+    refresh-token:
+      idle-ttl: ${TODOLAB_REFRESH_TOKEN_IDLE_TTL:P30D}
+      absolute-ttl: ${TODOLAB_REFRESH_TOKEN_ABSOLUTE_TTL:P90D}
 
   cors:
     allowed-origins: ${TODOLAB_ALLOWED_ORIGINS:}

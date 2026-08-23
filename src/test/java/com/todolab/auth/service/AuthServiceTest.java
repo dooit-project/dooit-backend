@@ -1,9 +1,11 @@
 package com.todolab.auth.service;
 
+import com.todolab.auth.config.RefreshTokenProperties;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
+import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.notification.repository.PushDeviceTokenRepository;
 import com.todolab.notification.repository.PushNotificationHistoryRepository;
@@ -60,6 +62,14 @@ class AuthServiceTest {
     @Mock
     PushNotificationHistoryRepository pushNotificationHistoryRepository;
 
+    @Mock
+    RefreshTokenSessionRepository refreshTokenSessionRepository;
+
+    RefreshTokenProperties refreshTokenProperties = new RefreshTokenProperties(
+            java.time.Duration.ofDays(30),
+            java.time.Duration.ofDays(90)
+    );
+
     AuthService authService;
 
     @BeforeEach
@@ -73,7 +83,9 @@ class AuthServiceTest {
                 recurrenceSeriesRepository,
                 taskTemplateRepository,
                 pushDeviceTokenRepository,
-                pushNotificationHistoryRepository
+                pushNotificationHistoryRepository,
+                refreshTokenSessionRepository,
+                refreshTokenProperties
         );
     }
 
@@ -81,6 +93,7 @@ class AuthServiceTest {
     @DisplayName("로그인 성공 시 이메일을 정규화하고 access token을 반환한다")
     void login_success() {
         User user = new User("test@example.com", "encoded-password", "테스터");
+        org.springframework.test.util.ReflectionTestUtils.setField(user, "id", 1L);
         LoginRequest request = new LoginRequest(" TEST@Example.COM ", "password123");
         JwtTokenService.AccessToken accessToken = new JwtTokenService.AccessToken(
                 "access-token",
@@ -96,6 +109,8 @@ class AuthServiceTest {
         assertThat(response.tokenType()).isEqualTo("Bearer");
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.expiresAt()).isEqualTo(accessToken.expiresAt());
+        assertThat(response.refreshToken()).isNotBlank();
+        assertThat(response.refreshExpiresAt()).isNotNull();
         assertThat(response.user().email()).isEqualTo("test@example.com");
         assertThat(response.user().accountType()).isEqualTo(AccountType.REGISTERED);
 
@@ -187,6 +202,8 @@ class AuthServiceTest {
         );
 
         assertThat(response.accessToken()).isEqualTo("registered-token");
+        assertThat(response.refreshToken()).isNotBlank();
+        assertThat(response.refreshExpiresAt()).isNotNull();
         assertThat(response.user().id()).isEqualTo(10L);
         assertThat(response.user().accountType()).isEqualTo(AccountType.REGISTERED);
         assertThat(response.user().email()).isEqualTo("test@example.com");

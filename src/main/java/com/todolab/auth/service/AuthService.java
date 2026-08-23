@@ -1,11 +1,19 @@
 package com.todolab.auth.service;
 
+import com.todolab.auth.config.RefreshTokenProperties;
+import com.todolab.auth.domain.RefreshTokenSession;
 import com.todolab.auth.dto.GuestMergeResultResponse;
 import com.todolab.auth.dto.LoginRequest;
+import com.todolab.auth.dto.LogoutRequest;
+import com.todolab.auth.dto.RefreshRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.InvalidCredentialsException;
+import com.todolab.auth.exception.RefreshTokenExpiredException;
+import com.todolab.auth.exception.RefreshTokenInvalidException;
+import com.todolab.auth.exception.RefreshTokenReusedException;
 import com.todolab.Constant;
+import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.notification.domain.PushDeviceToken;
 import com.todolab.notification.repository.PushDeviceTokenRepository;
@@ -26,8 +34,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +57,10 @@ public class AuthService {
     private final TaskTemplateRepository taskTemplateRepository;
     private final PushDeviceTokenRepository pushDeviceTokenRepository;
     private final PushNotificationHistoryRepository pushNotificationHistoryRepository;
+    private final RefreshTokenSessionRepository refreshTokenSessionRepository;
+    private final RefreshTokenProperties refreshTokenProperties;
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest request) {
@@ -67,13 +85,8 @@ public class AuthService {
         }
 
         JwtTokenService.AccessToken accessToken = jwtTokenService.createAccessToken(target);
-        return new TokenResponse(
-                "Bearer",
-                accessToken.tokenValue(),
-                accessToken.expiresAt(),
-                UserResponse.from(target),
-                mergeResult
-        );
+        RefreshTokenIssue refreshToken = issueRefreshToken(target, null);
+        return tokenResponse(target, accessToken, refreshToken, mergeResult);
     }
 
     @Transactional
@@ -138,12 +151,48 @@ public class AuthService {
         );
 
         JwtTokenService.AccessToken accessToken = jwtTokenService.createAccessToken(guest);
-        return new TokenResponse(
-                "Bearer",
-                accessToken.tokenValue(),
-                accessToken.expiresAt(),
-                UserResponse.from(guest)
-        );
+        RefreshTokenIssue refreshToken = issueRefreshToken(guest, null);
+        return tokenResponse(guest, accessToken, refreshToken, null);
+    }
+
+    @Transactional
+    public TokenResponse refresh(RefreshRequest request) {
+        LocalDateTime now = LocalDateTime.now(Constant.ZONE);
+        RefreshTokenSession current = refreshTokenSessionRepository.findByTokenHash(hash(request.refreshToken()))
+                .orElseThrow(RefreshTokenInvalidException::new);
+
+        if (current.getRevokedAt() != null || current.getReplacedAt() != null) {
+            revokeFamily(current.getFamilyId(), now);
+            throw new RefreshTokenReusedException();
+        }
+        if (current.isExpired(now)) {
+            current.revoke(now);
+            throw new RefreshTokenExpiredException();
+        }
+        if (current.getUser().getMergedIntoUserId() != null) {
+            current.revoke(now);
+            throw new RefreshTokenInvalidException();
+        }
+
+        current.markReplaced(now);
+        RefreshTokenIssue refreshToken = issueRefreshToken(current.getUser(), current.getFamilyId());
+        JwtTokenService.AccessToken accessToken = current.getUser().getAccountType() == AccountType.GUEST
+                ? jwtTokenService.createGuestAccessToken(current.getUser())
+                : jwtTokenService.createAccessToken(current.getUser());
+        return tokenResponse(current.getUser(), accessToken, refreshToken, null);
+    }
+
+    @Transactional
+    public void logout(LogoutRequest request, User user) {
+        LocalDateTime now = LocalDateTime.now(Constant.ZONE);
+        if (request != null && request.refreshToken() != null && !request.refreshToken().isBlank()) {
+            refreshTokenSessionRepository.findByTokenHash(hash(request.refreshToken()))
+                    .filter(session -> session.getUser().getId().equals(user.getId()))
+                    .ifPresent(session -> session.revoke(now));
+            return;
+        }
+        refreshTokenSessionRepository.findByUserIdAndRevokedAtIsNull(user.getId())
+                .forEach(session -> session.revoke(now));
     }
 
     private String normalizeEmail(String email) {
@@ -187,6 +236,8 @@ public class AuthService {
         MergePushTokenResult pushTokenResult = reassignPushDeviceTokens(guest, target);
         int pushHistoryCount = reassignPushNotificationHistories(guest, target);
         guest.markMergedInto(target);
+        refreshTokenSessionRepository.findByUserIdAndRevokedAtIsNull(guest.getId())
+                .forEach(session -> session.revoke(LocalDateTime.now(Constant.ZONE)));
 
         log.info(
                 "Guest account merged: guestUserId={}, targetUserId={}, tasks={}, ddayGoals={}, recurrenceSeries={}, pushTokens={}, skippedPushTokens={}, pushHistories={}",
@@ -263,6 +314,65 @@ public class AuthService {
     }
 
     private record MergePushTokenResult(int reassignedCount, int skippedDuplicateCount) {
+    }
+
+    private TokenResponse tokenResponse(
+            User user,
+            JwtTokenService.AccessToken accessToken,
+            RefreshTokenIssue refreshToken,
+            GuestMergeResultResponse mergeResult
+    ) {
+        return new TokenResponse(
+                "Bearer",
+                accessToken.tokenValue(),
+                accessToken.expiresAt(),
+                refreshToken.tokenValue(),
+                refreshToken.refreshExpiresAt(),
+                UserResponse.from(user),
+                mergeResult
+        );
+    }
+
+    private RefreshTokenIssue issueRefreshToken(User user, String familyId) {
+        LocalDateTime now = LocalDateTime.now(Constant.ZONE);
+        String tokenValue = generateRefreshToken();
+        LocalDateTime absoluteExpiresAt = now.plus(refreshTokenProperties.absoluteTtl());
+        LocalDateTime idleExpiresAt = now.plus(refreshTokenProperties.idleTtl());
+        LocalDateTime refreshExpiresAt = idleExpiresAt.isBefore(absoluteExpiresAt) ? idleExpiresAt : absoluteExpiresAt;
+        refreshTokenSessionRepository.save(new RefreshTokenSession(
+                user,
+                familyId == null ? UUID.randomUUID().toString() : familyId,
+                hash(tokenValue),
+                refreshExpiresAt,
+                absoluteExpiresAt
+        ));
+        return new RefreshTokenIssue(tokenValue, refreshExpiresAt);
+    }
+
+    private void revokeFamily(String familyId, LocalDateTime now) {
+        refreshTokenSessionRepository.findByFamilyId(familyId)
+                .forEach(session -> session.revoke(now));
+    }
+
+    private String generateRefreshToken() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String hash(String token) {
+        if (token == null || token.isBlank()) {
+            throw new RefreshTokenInvalidException();
+        }
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                    .digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm is unavailable", e);
+        }
+    }
+
+    private record RefreshTokenIssue(String tokenValue, LocalDateTime refreshExpiresAt) {
     }
 
     private record GuestMergeResult(User target, GuestMergeResultResponse mergeResult) {

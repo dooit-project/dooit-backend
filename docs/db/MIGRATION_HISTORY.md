@@ -16,6 +16,7 @@ Last updated: 2026-08-23
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 등록 계정 refresh/logout release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | Idempotency-Key release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_password_reset_token.sql` | local production Docker MySQL | 비밀번호 재설정 release 전 적용 필요 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260814_add_workspace_audit_columns.sql` | local production Docker MySQL | 성공. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES` audit 컬럼 생성 확인 |

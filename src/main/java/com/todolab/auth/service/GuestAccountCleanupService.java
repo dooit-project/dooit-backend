@@ -1,6 +1,7 @@
 package com.todolab.auth.service;
 
 import com.todolab.dday.domain.DdayGoal;
+import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.notification.domain.PushDeviceToken;
 import com.todolab.notification.domain.PushNotificationHistory;
@@ -35,6 +36,7 @@ public class GuestAccountCleanupService {
     private final TaskTemplateRepository taskTemplateRepository;
     private final PushDeviceTokenRepository pushDeviceTokenRepository;
     private final PushNotificationHistoryRepository pushNotificationHistoryRepository;
+    private final RefreshTokenSessionRepository refreshTokenSessionRepository;
 
     @Transactional
     public CleanupResult deleteExpiredGuests(LocalDateTime now) {
@@ -71,6 +73,9 @@ public class GuestAccountCleanupService {
             List<DdayGoal> ddayGoals = ddayGoalRepository.findAllByOwnerIdOrderByTargetDateAscIdAsc(guest.getId());
             ddayGoalRepository.deleteAll(ddayGoals);
             deletedDdayGoals += ddayGoals.size();
+
+            refreshTokenSessionRepository.findByUserId(guest.getId())
+                    .forEach(refreshTokenSessionRepository::delete);
         }
 
         userRepository.deleteAll(expiredGuests);

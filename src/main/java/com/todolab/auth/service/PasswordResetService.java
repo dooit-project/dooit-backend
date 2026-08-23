@@ -11,6 +11,7 @@ import com.todolab.auth.dto.PasswordResetVerifyResponse;
 import com.todolab.auth.exception.PasswordResetRateLimitExceededException;
 import com.todolab.auth.exception.PasswordResetTokenInvalidException;
 import com.todolab.auth.repository.PasswordResetTokenRepository;
+import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.mail.MailService;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
@@ -39,6 +40,7 @@ public class PasswordResetService {
     private final PasswordResetProperties passwordResetProperties;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final RefreshTokenSessionRepository refreshTokenSessionRepository;
 
     @Transactional
     public PasswordResetRequestResponse requestReset(PasswordResetRequest request) {
@@ -63,6 +65,8 @@ public class PasswordResetService {
     public void confirm(PasswordResetConfirmRequest request) {
         PasswordResetToken token = requireUsableToken(request.token());
         token.getUser().updatePasswordHash(passwordEncoder.encode(request.newPassword()));
+        refreshTokenSessionRepository.findByUserIdAndRevokedAtIsNull(token.getUser().getId())
+                .forEach(session -> session.revoke(LocalDateTime.now(Constant.ZONE)));
         token.markUsed(LocalDateTime.now(Constant.ZONE));
     }
 

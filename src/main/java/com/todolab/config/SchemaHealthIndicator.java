@@ -22,6 +22,7 @@ public class SchemaHealthIndicator implements HealthIndicator {
             "PASSWORD_RESET_TOKEN",
             "PUSH_DEVICE_TOKEN",
             "PUSH_NOTIFICATION_HISTORY",
+            "REFRESH_TOKEN_SESSION",
             "RECURRENCE_SERIES",
             "TASK"
     );

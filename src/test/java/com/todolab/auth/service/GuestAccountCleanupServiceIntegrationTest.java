@@ -2,6 +2,7 @@ package com.todolab.auth.service;
 
 import com.todolab.dday.domain.DdayGoal;
 import com.todolab.dday.repository.DdayGoalRepository;
+import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.mail.MailService;
 import com.todolab.notification.config.PushNotificationProvider;
 import com.todolab.notification.domain.PushDeviceToken;
@@ -70,6 +71,9 @@ class GuestAccountCleanupServiceIntegrationTest {
     @Autowired
     PushNotificationHistoryRepository pushNotificationHistoryRepository;
 
+    @Autowired
+    RefreshTokenSessionRepository refreshTokenSessionRepository;
+
     @MockitoBean
     MailService mailService;
 
@@ -83,6 +87,7 @@ class GuestAccountCleanupServiceIntegrationTest {
         taskRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();
         ddayGoalRepository.deleteAll();
+        refreshTokenSessionRepository.deleteAll();
         userRepository.deleteAll();
     }
 

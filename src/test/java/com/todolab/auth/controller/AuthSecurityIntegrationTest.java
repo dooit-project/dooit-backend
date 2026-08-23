@@ -3,6 +3,9 @@ package com.todolab.auth.controller;
 import com.todolab.auth.security.ApiAccessDeniedHandler;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.RegisterRequest;
+import com.todolab.auth.dto.RefreshRequest;
+import com.todolab.auth.dto.LogoutRequest;
+import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.auth.service.JwtTokenService;
 import com.todolab.common.api.ErrorCode;
 import com.todolab.dday.domain.DdayGoal;
@@ -82,6 +85,9 @@ class AuthSecurityIntegrationTest {
     @Autowired
     SharedWorkspaceRepository sharedWorkspaceRepository;
 
+    @Autowired
+    RefreshTokenSessionRepository refreshTokenSessionRepository;
+
     @MockitoBean
     MailService mailService;
 
@@ -93,6 +99,7 @@ class AuthSecurityIntegrationTest {
         taskRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();
         ddayGoalRepository.deleteAll();
+        refreshTokenSessionRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -128,6 +135,80 @@ class AuthSecurityIntegrationTest {
                 .andExpect(jsonPath("$.data.email").doesNotExist())
                 .andExpect(jsonPath("$.data.displayName").doesNotExist())
                 .andExpect(jsonPath("$.data.role").value("USER"));
+    }
+
+    @Test
+    @DisplayName("로그인은 refresh token을 반환하고 refresh는 token을 회전한다")
+    void loginAndRefresh_rotatesRefreshToken() throws Exception {
+        userRepository.save(new User(
+                "refresh@example.com",
+                passwordEncoder.encode("password123"),
+                "리프레시 사용자"
+        ));
+
+        String loginBody = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("refresh@example.com", "password123"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken").isString())
+                .andExpect(jsonPath("$.data.refreshToken").isString())
+                .andExpect(jsonPath("$.data.refreshExpiresAt").isString())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String refreshToken = objectMapper.readTree(loginBody).get("data").get("refreshToken").asText();
+
+        String refreshBody = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshRequest(refreshToken))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken").isString())
+                .andExpect(jsonPath("$.data.refreshToken").isString())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String rotatedToken = objectMapper.readTree(refreshBody).get("data").get("refreshToken").asText();
+        assertThat(rotatedToken).isNotEqualTo(refreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshRequest(refreshToken))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value(11009));
+    }
+
+    @Test
+    @DisplayName("로그아웃은 refresh token을 폐기한다")
+    void logout_revokesRefreshToken() throws Exception {
+        User user = userRepository.save(new User(
+                "logout@example.com",
+                passwordEncoder.encode("password123"),
+                "로그아웃 사용자"
+        ));
+
+        String loginBody = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("logout@example.com", "password123"))))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String accessToken = objectMapper.readTree(loginBody).get("data").get("accessToken").asText();
+        String refreshToken = objectMapper.readTree(loginBody).get("data").get("refreshToken").asText();
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LogoutRequest(refreshToken))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshRequest(refreshToken))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value(11009));
+
+        assertThat(refreshTokenSessionRepository.findByUserIdAndRevokedAtIsNull(user.getId())).isEmpty();
     }
 
     @Test
