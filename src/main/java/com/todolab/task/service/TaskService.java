@@ -44,6 +44,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -215,7 +217,7 @@ public class TaskService {
     }
 
     public TaskSearchResponse searchTasksForOwner(TaskSearchRequest request, User owner) {
-        List<SearchCandidate> candidates = taskRepository.findByOwnerId(ownerId(owner)).stream()
+        List<SearchCandidate> baseCandidates = taskRepository.findByOwnerId(ownerId(owner)).stream()
                 .filter(task -> request.getStatuses().isEmpty() || request.getStatuses().contains(task.getStatus()))
                 .filter(task -> request.getTaskTypes().isEmpty() || request.getTaskTypes().contains(task.getType()))
                 .filter(task -> request.getCategory() == null || request.getCategory().equals(task.getCategory()))
@@ -226,8 +228,11 @@ public class TaskService {
                         || request.getHasRecurrence().equals(task.getRecurrenceSeries() != null))
                 .filter(task -> request.getAllDay() == null || request.getAllDay().equals(task.isAllDay()))
                 .map(task -> SearchCandidate.from(task, request.getDateField(), request.getQ()))
-                .filter(candidate -> candidate.matchesText(request.getQ()))
                 .filter(candidate -> matchesDateRange(candidate.relevantDate(), request))
+                .toList();
+
+        List<SearchCandidate> candidates = baseCandidates.stream()
+                .filter(candidate -> candidate.matchesText(request.getQ()))
                 .sorted(searchComparator(request.getSort()))
                 .toList();
 
@@ -239,8 +244,31 @@ public class TaskService {
         List<TaskSearchItemResponse> items = candidates.subList(fromIndex, toIndex).stream()
                 .map(SearchCandidate::toResponse)
                 .toList();
+        List<String> suggestedCategories = suggestedCategories(baseCandidates, candidates, request);
 
-        return new TaskSearchResponse(items, nextCursor, request.getLimit());
+        return new TaskSearchResponse(items, nextCursor, request.getLimit(), suggestedCategories, suggestedCategories);
+    }
+
+    private List<String> suggestedCategories(
+            List<SearchCandidate> baseCandidates,
+            List<SearchCandidate> matchedCandidates,
+            TaskSearchRequest request
+    ) {
+        if (request.getQ() == null || request.getCursorTaskId() != null || !matchedCandidates.isEmpty()) {
+            return List.of();
+        }
+
+        return baseCandidates.stream()
+                .map(candidate -> candidate.task().getCategory())
+                .filter(category -> category != null && !category.isBlank())
+                .collect(Collectors.groupingBy(category -> category, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder())
+                        .thenComparing(Map.Entry.comparingByKey()))
+                .limit(5)
+                .map(Map.Entry::getKey)
+                .toList();
     }
 
     private int cursorFromIndex(List<SearchCandidate> candidates, Long cursorTaskId) {

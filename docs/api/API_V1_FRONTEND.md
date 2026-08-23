@@ -1380,11 +1380,19 @@ Response: `TaskSearchResponse`
     }
   ],
   "nextCursor": "50",
-  "limit": 50
+  "limit": 50,
+  "suggestedQueries": [],
+  "suggestedCategories": []
 }
 ```
 
 `dateSource` 값은 `TARGET_DATE`, `START_AT`, `COMPLETED_AT`, `CREATED_AT`, `UPDATED_AT`, `NONE` 중 하나다. `matchedFields` 값은 `TITLE`, `DESCRIPTION`, `CATEGORY`, `DDAY_GOAL_TITLE`, `RECURRENCE` 중 하나이며, `q`가 없으면 빈 배열이다. `highlight`는 검색 결과 표시용 짧은 매칭 원문이며 `q`가 없으면 `null`이다. 잘못된 enum, `dateFrom > dateTo`, 잘못된 cursor, 범위를 벗어난 `limit`은 HTTP 400으로 응답한다.
+
+빈 검색 결과 추천:
+
+- `q`가 있고 첫 페이지 결과가 0건이면 `suggestedQueries`와 `suggestedCategories`에 현재 필터와 날짜 조건 안의 기존 category를 빈도순으로 최대 5개 반환한다.
+- `suggestedQueries`는 모바일이 같은 검색창에 다시 넣을 수 있는 category 기반 query이고, `suggestedCategories`는 category 필터 chip으로 제안할 수 있는 값이다.
+- 결과가 있거나 cursor로 다음 페이지를 조회하는 요청이면 두 배열은 빈 배열이다.
 
 정렬 주의:
 

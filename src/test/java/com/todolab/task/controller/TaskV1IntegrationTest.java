@@ -627,6 +627,26 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Task 통합 검색은 빈 결과에서 category 기반 추천 query를 반환한다")
+    void searchTasks_success_emptyResultSuggestions() throws Exception {
+        String accessToken = accessToken("task-search-empty-suggestions@example.com");
+        createTask(accessToken, new TaskRequest("회의 준비", null, null, null, "업무", false));
+        createTask(accessToken, new TaskRequest("보고서 정리", null, null, null, "업무", false));
+        createTask(accessToken, new TaskRequest("장보기", null, null, null, "개인", false));
+
+        mockMvc.perform(get("/api/v1/tasks/search")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("q", "없는검색어")
+                        .param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(0))
+                .andExpect(jsonPath("$.data.suggestedQueries[0]").value("업무"))
+                .andExpect(jsonPath("$.data.suggestedQueries[1]").value("개인"))
+                .andExpect(jsonPath("$.data.suggestedCategories[0]").value("업무"))
+                .andExpect(jsonPath("$.data.suggestedCategories[1]").value("개인"));
+    }
+
+    @Test
     @DisplayName("v1 Task 통합 검색은 반복 여부 필터와 반복 매칭 정보를 반환한다")
     void searchTasks_success_recurrenceFilterAndMatch() throws Exception {
         String accessToken = accessToken("task-search-recurrence@example.com");
