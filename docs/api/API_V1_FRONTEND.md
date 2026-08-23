@@ -155,6 +155,8 @@ type TokenResponse = {
   tokenType: 'Bearer';
   accessToken: string;
   expiresAt: string; // 기본 31일 뒤
+  refreshToken: string;
+  refreshExpiresAt: string;
   user: {
     id: number;
     accountType: 'GUEST';
@@ -219,6 +221,8 @@ type TokenResponse = {
   tokenType: 'Bearer';
   accessToken: string;
   expiresAt: string;
+  refreshToken: string | null;
+  refreshExpiresAt: string | null;
   user: UserResponse;
   mergeResult: GuestMergeResultResponse | null;
 };
@@ -258,6 +262,47 @@ Content-Type: application/json
 - 병합 완료 후 기존 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 owner API와 `/auth/me`에서 401 처리된다.
 - 병합 성공 응답은 `mergeResult.tasks`, `mergeResult.schedules`, `mergeResult.ddayGoals`, `mergeResult.recurrenceSeries`를 포함한다.
 - 일반 로그인처럼 병합이 없으면 `mergeResult`는 `null`이다.
+
+### 등록 계정 token 갱신
+
+```http
+POST /api/v1/auth/refresh
+Content-Type: application/json
+```
+
+Request:
+
+```ts
+type RefreshRequest = {
+  refreshToken: string;
+};
+```
+
+Response는 새 `accessToken`, 새 `refreshToken`, `refreshExpiresAt`을 포함하는 `TokenResponse`다.
+
+주의:
+
+- refresh 성공 시 기존 refresh token은 회전되어 다시 사용할 수 없다.
+- 이미 회전되었거나 폐기된 refresh token을 다시 보내면 같은 family의 session이 폐기되고 401/`11009`를 반환한다.
+- 만료된 refresh token은 401/`11008`, 존재하지 않거나 올바르지 않은 refresh token은 401/`11007`이다.
+
+### 로그아웃
+
+```http
+POST /api/v1/auth/logout
+Authorization: Bearer <access-token>
+Content-Type: application/json
+```
+
+Request:
+
+```ts
+type LogoutRequest = {
+  refreshToken?: string | null;
+};
+```
+
+응답은 `data=null`이다. `refreshToken`을 보내면 해당 session만 폐기하고, 생략하면 현재 access token 사용자 기준 활성 refresh session을 모두 폐기한다.
 
 게스트 상태 회원가입:
 
@@ -1534,7 +1579,6 @@ type AppMetadataResponse = {
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
-- refresh token API
 - 서버 push 알림 발송 API
 
 ## 11. 모바일 전환 체크리스트

@@ -1,6 +1,6 @@
 # API Error Codes
 
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 이 문서는 모바일과 운영자가 함께 보는 ToDoLab v1 API 오류 코드 카탈로그다. 모든 API 오류 응답은 공통 envelope를 사용한다.
 
@@ -30,6 +30,9 @@ Last updated: 2026-08-23
 | `11004` | 429 | `게스트 계정 생성 요청이 너무 많습니다.` | 게스트 계정 생성 rate limit 초과 | 대기 후 재시도 안내 | 예 |
 | `11005` | 400 | `비밀번호 재설정 링크가 만료되었거나 올바르지 않습니다.` | password reset token 없음, 만료, 이미 사용됨 | 재설정 링크 재요청 안내 | 아니오 |
 | `11006` | 429 | `비밀번호 재설정 요청이 너무 많습니다.` | password reset email 기준 rate limit 초과 | 대기 후 재시도 안내 | 예 |
+| `11007` | 401 | `refresh token이 올바르지 않습니다.` | refresh token 없음, 위변조, 폐기됨, 사용자 상태 불일치 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
+| `11008` | 401 | `refresh token이 만료되었습니다.` | refresh token idle TTL 또는 absolute TTL 만료 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
+| `11009` | 401 | `refresh token 재사용이 감지되었습니다.` | 이미 회전되었거나 폐기된 refresh token 재사용 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
 | `20001` | 404 | `일정을 찾을 수 없습니다.` | Task 없음 또는 owner scope 밖 | 목록 재조회 | 아니오 |
 | `20002` | 409 | `Today 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요.` | Today 일괄 재정렬 stale 목록 | Today 재조회 후 재시도 | 조건부 |
 | `30001` | 404 | `D-Day 목표를 찾을 수 없습니다.` | D-Day 목표 없음 또는 owner scope 밖 | 목록 재조회 | 아니오 |
@@ -40,11 +43,17 @@ Last updated: 2026-08-23
 
 ## 로깅 기준
 
+## Refresh Token 오류 정책
+
+- 등록 계정과 게스트는 발급된 refresh token으로 `POST /api/v1/auth/refresh`를 호출할 수 있다.
+- refresh 성공 시 기존 token은 회전되며, 같은 token을 다시 보내면 401/`11009`다.
+- reuse detection이 발생하면 같은 token family의 refresh session을 모두 폐기한다.
+- refresh token 오류는 access token 인증 실패 `11002`와 구분해 `11007`, `11008`, `11009`를 사용한다.
+
 ## 게스트 token 갱신 오류 정책
 
 - 만료 전 유효한 guest token은 `POST /api/v1/auth/guest/refresh`로 같은 guest user id의 token을 재발급한다.
 - 만료된 guest token, 병합 완료 guest token, 이미 정리되어 user row가 없는 guest token은 401/`11002`로 처리한다.
-- refresh token, device-bound proof, recovery code가 없으므로 만료 후 재발급은 지원하지 않는다.
 - 새로운 guest id 발급은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
 - 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
 

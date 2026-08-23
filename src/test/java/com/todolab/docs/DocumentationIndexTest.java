@@ -68,6 +68,10 @@ class DocumentationIndexTest {
         assertThat(auth).contains("비밀번호 재설정");
         assertThat(auth).contains("PASSWORD_RESET_TOKEN");
         assertThat(auth).contains("TODOLAB_PASSWORD_RESET_LINK_TEMPLATE");
+        assertThat(auth).contains("POST /api/v1/auth/refresh");
+        assertThat(auth).contains("REFRESH_TOKEN_SESSION");
+        assertThat(auth).contains("refresh token 재사용 감지");
+        assertThat(auth).contains("POST /api/v1/auth/logout");
         assertThat(guest).contains("기존 계정 로그인 및 게스트 병합");
         assertThat(guest).contains("backend commit은 이 문서가 포함된 최신 `main` 커밋을 사용한다.");
     }
