@@ -147,6 +147,8 @@ class DocumentationIndexTest {
         assertThat(notification).contains("EAS/Expo project에 보관");
         assertThat(notification).contains("서버 Push 발송 스케줄러 설계");
         assertThat(notification).contains("idempotency key는 `SERVER:{task.id}`");
+        assertThat(notification).contains("`SUCCESS` 이력이 있으면 다시 발송하지 않는다");
+        assertThat(notification).contains("`FAILED` 이력만 있는 key는 다음 scheduler cycle의 재시도 대상");
         assertThat(notification).contains("전송 실패 Token 비활성화 정책");
         assertThat(notification).contains("DeviceNotRegistered");
         assertThat(notification).contains("suppressLocalNotification=true");

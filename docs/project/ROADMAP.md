@@ -121,7 +121,7 @@ Last updated: 2026-08-20
 
 - [x] Expo/APNs/FCM 중 production provider와 credential 보관 방식을 확정한다.
 - [x] 발송 스케줄러 실행 시점과 look-ahead window를 정한다.
-- [ ] idempotency key 기준으로 중복 발송을 막는다.
+- [x] idempotency key 기준으로 중복 발송을 막는다.
 - [ ] provider 실패 응답에 따라 token 비활성화 정책을 적용한다.
 - [x] 모바일 로컬 알림과 중복되지 않도록 `suppressLocalNotification` 정책을 검증한다.
 

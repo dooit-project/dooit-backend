@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -40,7 +41,7 @@ public class PushNotificationHistoryService {
                 command.recurrenceSeriesId(),
                 command.occurrenceDate(),
                 command.notificationKey(),
-                command.idempotencyKey(),
+                idempotencyKey(command),
                 command.providerMessageId(),
                 command.errorCode(),
                 command.errorMessage(),
@@ -59,12 +60,39 @@ public class PushNotificationHistoryService {
     }
 
     @Transactional(readOnly = true)
+    public boolean shouldSkipServerPush(
+            User owner,
+            Long taskId,
+            Long recurrenceSeriesId,
+            LocalDate occurrenceDate
+    ) {
+        return hasSuccessfulHistory(ownerId(owner), serverIdempotencyKey(taskId, recurrenceSeriesId, occurrenceDate));
+    }
+
+    public String serverIdempotencyKey(Long taskId, Long recurrenceSeriesId, LocalDate occurrenceDate) {
+        if (recurrenceSeriesId != null && occurrenceDate != null) {
+            return "SERVER:%d:%s".formatted(recurrenceSeriesId, occurrenceDate);
+        }
+        if (taskId != null) {
+            return "SERVER:%d".formatted(taskId);
+        }
+        throw new IllegalArgumentException("taskId 또는 recurrenceSeriesId와 occurrenceDate가 필요합니다.");
+    }
+
+    @Transactional(readOnly = true)
     public List<PushNotificationHistoryResponse> getRecentHistoriesForOwner(User owner, Integer limit) {
         return pushNotificationHistoryRepository
                 .findByOwnerIdOrderByAttemptedAtDescIdDesc(ownerId(owner), PageRequest.of(0, normalizeLimit(limit)))
                 .stream()
                 .map(PushNotificationHistoryResponse::from)
                 .toList();
+    }
+
+    private String idempotencyKey(PushNotificationHistoryRecordCommand command) {
+        if (command.idempotencyKey() != null && !command.idempotencyKey().isBlank()) {
+            return command.idempotencyKey();
+        }
+        return serverIdempotencyKey(command.taskId(), command.recurrenceSeriesId(), command.occurrenceDate());
     }
 
     private int normalizeLimit(Integer limit) {

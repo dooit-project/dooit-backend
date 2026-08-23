@@ -144,7 +144,9 @@ GET /api/v1/push-notification-histories?limit=50
 - 후보 산출은 `GET /api/v1/tasks/notification-candidates`와 같은 기준을 사용한다.
 - 서버 push는 활성 push token이 있는 사용자만 대상으로 한다.
 - idempotency key는 `SERVER:{task.id}` 또는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
-- 같은 idempotency key의 성공 이력이 있으면 다시 발송하지 않는다.
+- 같은 owner와 idempotency key의 `SUCCESS` 이력이 있으면 다시 발송하지 않는다.
+- 이력 기록 command가 idempotency key를 비워 보내면 백엔드가 Task/occurrence 필드로 같은 key를 생성한다.
+- `FAILED` 이력만 있는 key는 다음 scheduler cycle의 재시도 대상이 될 수 있다.
 - 발송 결과는 성공/실패 모두 `PUSH_NOTIFICATION_HISTORY` 전송 이력으로 저장한다.
 - 실패한 token이 provider에서 영구 invalid로 판정되면 해당 push token을 비활성화한다.
 - 외부 provider 호출은 짧은 timeout과 제한된 retry만 허용한다.
