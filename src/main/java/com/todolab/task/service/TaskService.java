@@ -304,16 +304,11 @@ public class TaskService {
         List<TaskResponse> inboxTasks = taskRepository.findByStatus(TaskStatus.INBOX).stream()
                 .map(TaskResponse::from)
                 .toList();
+        Map<String, Long> recentCompletedCategoryCounts = recentCompletedCategoryCounts(
+                taskRepository.findDoneTasksBetween(referenceDate.minusDays(14), referenceDate.minusDays(1))
+        );
 
-        return java.util.stream.Stream.concat(overdueTasks.stream(), inboxTasks.stream())
-                .map(task -> RecommendationCandidate.from(task, referenceDate))
-                .sorted(Comparator
-                        .comparingInt(RecommendationCandidate::priority)
-                        .thenComparingLong(RecommendationCandidate::sortKey)
-                        .thenComparing(candidate -> candidate.task().id(), Comparator.nullsLast(Comparator.naturalOrder())))
-                .limit(5)
-                .map(candidate -> new TaskRecommendationResponse(candidate.task(), candidate.reason()))
-                .toList();
+        return todayRecommendations(overdueTasks, inboxTasks, recentCompletedCategoryCounts, referenceDate);
     }
 
     public List<TaskRecommendationResponse> getTodayRecommendationsForOwner(LocalDate referenceDate, User owner) {
@@ -324,16 +319,36 @@ public class TaskService {
         List<TaskResponse> inboxTasks = taskRepository.findByStatus(ownerId, TaskStatus.INBOX).stream()
                 .map(TaskResponse::from)
                 .toList();
+        Map<String, Long> recentCompletedCategoryCounts = recentCompletedCategoryCounts(
+                taskRepository.findDoneTasksBetween(ownerId, referenceDate.minusDays(14), referenceDate.minusDays(1))
+        );
 
+        return todayRecommendations(overdueTasks, inboxTasks, recentCompletedCategoryCounts, referenceDate);
+    }
+
+    private List<TaskRecommendationResponse> todayRecommendations(
+            List<TaskResponse> overdueTasks,
+            List<TaskResponse> inboxTasks,
+            Map<String, Long> recentCompletedCategoryCounts,
+            LocalDate referenceDate
+    ) {
         return java.util.stream.Stream.concat(overdueTasks.stream(), inboxTasks.stream())
-                .map(task -> RecommendationCandidate.from(task, referenceDate))
+                .map(task -> RecommendationCandidate.from(task, referenceDate, recentCompletedCategoryCounts))
                 .sorted(Comparator
                         .comparingInt(RecommendationCandidate::priority)
+                        .thenComparing(RecommendationCandidate::patternScore, Comparator.reverseOrder())
                         .thenComparingLong(RecommendationCandidate::sortKey)
                         .thenComparing(candidate -> candidate.task().id(), Comparator.nullsLast(Comparator.naturalOrder())))
                 .limit(5)
                 .map(candidate -> new TaskRecommendationResponse(candidate.task(), candidate.reason()))
                 .toList();
+    }
+
+    private Map<String, Long> recentCompletedCategoryCounts(List<Task> doneTasks) {
+        return doneTasks.stream()
+                .map(Task::getCategory)
+                .filter(category -> category != null && !category.isBlank())
+                .collect(Collectors.groupingBy(category -> category, Collectors.counting()));
     }
 
     @Transactional
@@ -750,40 +765,56 @@ public class TaskService {
         }
     }
 
-    private record RecommendationCandidate(TaskResponse task, String reason, int priority, long sortKey) {
-        static RecommendationCandidate from(TaskResponse task, LocalDate referenceDate) {
+    private record RecommendationCandidate(TaskResponse task, String reason, int priority, int patternScore, long sortKey) {
+        static RecommendationCandidate from(
+                TaskResponse task,
+                LocalDate referenceDate,
+                Map<String, Long> recentCompletedCategoryCounts
+        ) {
+            int patternScore = patternScore(task, recentCompletedCategoryCounts);
+
             if (task.carryOverCount() >= 3) {
-                return new RecommendationCandidate(task, "다시 정리 필요", 0, -task.carryOverCount());
+                return new RecommendationCandidate(task, "다시 정리 필요", 0, patternScore, -task.carryOverCount());
             }
 
             LocalDate plannedDate = task.plannedDate();
             if (task.status() == TaskStatus.TODAY && plannedDate != null && plannedDate.isBefore(referenceDate)) {
                 long overdueDays = ChronoUnit.DAYS.between(plannedDate, referenceDate);
-                return new RecommendationCandidate(task, "지난 미완료", 1, -overdueDays);
+                return new RecommendationCandidate(task, "지난 미완료", 1, patternScore, -overdueDays);
             }
 
             LocalDate ddayDate = task.ddayGoalTargetDate();
             if (ddayDate != null && !ddayDate.isBefore(referenceDate)) {
                 long daysLeft = ChronoUnit.DAYS.between(referenceDate, ddayDate);
                 if (!ddayDate.isAfter(referenceDate.plusDays(3))) {
-                    return new RecommendationCandidate(task, "D-Day 3일 이내", 2, daysLeft);
+                    return new RecommendationCandidate(task, "D-Day 3일 이내", 2, patternScore, daysLeft);
                 }
                 if (!ddayDate.isAfter(referenceDate.plusDays(14))) {
-                    return new RecommendationCandidate(task, "D-Day 임박", 3, daysLeft);
+                    return new RecommendationCandidate(task, "D-Day 임박", 3, patternScore, daysLeft);
                 }
             }
 
             LocalDateTime createdAt = task.createdAt();
             if (createdAt != null && !createdAt.toLocalDate().isAfter(referenceDate.minusDays(7))) {
-                return new RecommendationCandidate(task, "오래 기록", 4, createdAtSortKey(createdAt));
+                return new RecommendationCandidate(task, "오래 기록", 4, patternScore, createdAtSortKey(createdAt));
             }
 
             return new RecommendationCandidate(
                     task,
                     "최근 기록",
                     5,
+                    patternScore,
                     createdAt == null ? Long.MAX_VALUE : -createdAtSortKey(createdAt)
             );
+        }
+
+        private static int patternScore(TaskResponse task, Map<String, Long> recentCompletedCategoryCounts) {
+            int carryOverScore = Math.min(task.carryOverCount(), 5) * 10;
+            int deferScore = task.deferReason() == null ? 0 : 8;
+            int completedCategoryScore = task.category() == null
+                    ? 0
+                    : Math.toIntExact(Math.min(recentCompletedCategoryCounts.getOrDefault(task.category(), 0L), 5L)) * 4;
+            return carryOverScore + deferScore + completedCategoryScore;
         }
 
         private static long createdAtSortKey(LocalDateTime createdAt) {

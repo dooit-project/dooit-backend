@@ -840,6 +840,8 @@ class TaskServiceTest {
                 .willReturn(List.of(overdue, stale));
         given(taskRepository.findByStatus(TaskStatus.INBOX))
                 .willReturn(List.of(recent, old, extra1, closeDday, urgentDday, extra2, extra3));
+        given(taskRepository.findDoneTasksBetween(referenceDate.minusDays(14), referenceDate.minusDays(1)))
+                .willReturn(List.of());
 
         // when
         List<TaskRecommendationResponse> result = taskService.getTodayRecommendations(referenceDate);
@@ -853,6 +855,67 @@ class TaskServiceTest {
 
         then(taskRepository).should(times(1)).findPlannedTasks(null, referenceDate);
         then(taskRepository).should(times(1)).findByStatus(TaskStatus.INBOX);
+        then(taskRepository).should(times(1)).findDoneTasksBetween(referenceDate.minusDays(14), referenceDate.minusDays(1));
+        then(taskRepository).shouldHaveNoMoreInteractions();
+        then(taskTxService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("Today 추천은 최근 완료 category와 이월/미룸 패턴 점수를 같은 우선순위 안에서 반영한다")
+    void getTodayRecommendations_success_patternScore() {
+        // given
+        LocalDate referenceDate = LocalDate.of(2026, 6, 16);
+        Task recentDoneWork = Task.builder()
+                .title("완료한 업무")
+                .status(TaskStatus.DONE)
+                .category("업무")
+                .completedAt(referenceDate.minusDays(1).atTime(18, 0))
+                .build();
+        Task recentDonePersonal = Task.builder()
+                .title("완료한 개인")
+                .status(TaskStatus.DONE)
+                .category("개인")
+                .completedAt(referenceDate.minusDays(2).atTime(18, 0))
+                .build();
+        Task deferred = Task.builder()
+                .title("미룬 업무")
+                .status(TaskStatus.INBOX)
+                .category("업무")
+                .deferReason(DeferReason.TOO_BIG)
+                .build();
+        Task carried = Task.builder()
+                .title("한 번 이월")
+                .status(TaskStatus.INBOX)
+                .category("기타")
+                .carryOverCount(1)
+                .build();
+        Task plain = Task.builder()
+                .title("패턴 없음")
+                .status(TaskStatus.INBOX)
+                .category("취미")
+                .build();
+
+        ReflectionTestUtils.setField(deferred, "createdAt", referenceDate.minusDays(1).atTime(9, 0));
+        ReflectionTestUtils.setField(carried, "createdAt", referenceDate.minusDays(1).atTime(10, 0));
+        ReflectionTestUtils.setField(plain, "createdAt", referenceDate.minusDays(1).atTime(11, 0));
+
+        given(taskRepository.findPlannedTasks(null, referenceDate))
+                .willReturn(List.of());
+        given(taskRepository.findByStatus(TaskStatus.INBOX))
+                .willReturn(List.of(plain, deferred, carried));
+        given(taskRepository.findDoneTasksBetween(referenceDate.minusDays(14), referenceDate.minusDays(1)))
+                .willReturn(List.of(recentDoneWork, recentDonePersonal));
+
+        // when
+        List<TaskRecommendationResponse> result = taskService.getTodayRecommendations(referenceDate);
+
+        // then
+        assertThat(result).extracting(r -> r.task().title())
+                .containsExactly("미룬 업무", "한 번 이월", "패턴 없음");
+
+        then(taskRepository).should(times(1)).findPlannedTasks(null, referenceDate);
+        then(taskRepository).should(times(1)).findByStatus(TaskStatus.INBOX);
+        then(taskRepository).should(times(1)).findDoneTasksBetween(referenceDate.minusDays(14), referenceDate.minusDays(1));
         then(taskRepository).shouldHaveNoMoreInteractions();
         then(taskTxService).shouldHaveNoInteractions();
     }

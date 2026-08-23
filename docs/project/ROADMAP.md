@@ -133,7 +133,7 @@ Last updated: 2026-08-20
 
 목표: 이미 있는 검색과 Today 추천을 실제 사용 패턴에 맞게 개선한다.
 
-- [ ] 최근 완료/이월/미룸 패턴 기반 Today 추천 점수를 추가한다.
+- [x] 최근 완료/이월/미룸 패턴 기반 Today 추천 점수를 추가한다.
 - [x] category와 D-Day 제목을 `q` 검색 매칭 범위에 포함한다.
 - [x] title, category, D-Day 제목, description 순서로 검색 매칭 ranking을 적용한다.
 - [x] 검색 결과에 `matchedFields`와 `highlight`를 반환한다.
