@@ -139,7 +139,8 @@ class DocumentationIndexTest {
 
         assertThat(notification).contains("1차 provider는 `EXPO`");
         assertThat(notification).contains("## 현재 구현 상태");
-        assertThat(notification).contains("실제 Expo/APNs/FCM provider 호출");
+        assertThat(notification).contains("Expo Push Service 단건 발송 client");
+        assertThat(notification).contains("scheduler 기반 자동 발송");
         assertThat(notification).contains("TODOLAB_PUSH_ENABLED");
         assertThat(notification).contains("TODOLAB_PUSH_ACCESS_TOKEN");
         assertThat(notification).contains("TODOLAB_PUSH_SCHEDULER_FIXED_DELAY");

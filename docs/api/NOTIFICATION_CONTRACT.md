@@ -12,13 +12,12 @@ Last updated: 2026-08-23
 - push token 등록/조회/비활성화: `POST /api/v1/push-tokens`, `GET /api/v1/push-tokens`, `DELETE /api/v1/push-tokens/{id}`
 - 서버 push 전송 이력 조회: `GET /api/v1/push-notification-histories`
 - push provider 설정값: `enabled=false`, `provider=EXPO`, Expo endpoint 기본값
+- Expo Push Service 단건 발송 client와 push ticket 성공/오류 해석
 
 아직 제공하지 않는 범위:
 
-- 실제 Expo/APNs/FCM provider 호출
 - 발송 scheduler
-- provider 실패 응답 기반 token 자동 비활성화
-- 성공 이력 기반 서버 발송 idempotency 적용
+- scheduler 기반 자동 발송
 
 ## 책임 분리
 
@@ -138,6 +137,9 @@ GET /api/v1/push-notification-histories?limit=50
 
 서버 push 발송은 아래 단계로 구현한다.
 
+- Expo provider 호출은 `https://exp.host/--/api/v2/push/send` 단건 메시지 전송 client를 사용한다.
+- Expo ticket의 `status=ok`와 `id`는 성공 이력의 `providerMessageId`로 저장할 값이다.
+- Expo ticket의 `details.error`는 실패 이력의 `errorCode`와 token 비활성화 판단에 사용한다.
 - scheduler는 `app.notification.push.enabled=true`일 때만 동작한다.
 - scheduler는 `TODOLAB_PUSH_SCHEDULER_FIXED_DELAY=PT1M` 기본값에 따라 1분 주기로 실행한다.
 - 발송 후보 window는 `TODOLAB_PUSH_LOOK_AHEAD_WINDOW=PT10M` 기본값에 따라 현재 시각부터 10분 뒤까지다.

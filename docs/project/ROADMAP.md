@@ -23,7 +23,7 @@ Last updated: 2026-08-20
 | 빠른 등록 | API와 규칙 기반 파싱 구현 완료 | 모바일 실제 입력 로그 기반 날짜/시간 표현 보강 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
-| 서버 push | token, 후보, 이력, provider 설정 계약 완료 | Expo 발송 client, scheduler, idempotency, invalid token 처리 구현 |
+| 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리 완료 | scheduler 기반 자동 발송 구현 |
 | production 접근 | host 내부와 Tailscale host smoke 가능, `.env` Tailscale URL 반영 완료 | Android 실제 기기 HTTPS smoke |
 | 운영 복구성 | launchd, Docker health, readiness, Tailscale recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
@@ -117,12 +117,14 @@ Last updated: 2026-08-20
 
 목표: 현재 구현된 push token, 알림 후보, 발송 이력 기반 위에 실제 provider 전송을 붙인다.
 
-상태: provider 설정과 이력 저장 계약은 준비되어 있지만, 실제 Expo/APNs/FCM 호출 scheduler는 아직 구현하지 않는다.
+상태: provider 설정, 이력 저장 계약, Expo 단건 발송 client는 준비되어 있지만 scheduler 기반 자동 발송은 아직 구현하지 않는다.
 
 - [x] Expo/APNs/FCM 중 production provider와 credential 보관 방식을 확정한다.
 - [x] 발송 스케줄러 실행 시점과 look-ahead window를 정한다.
 - [x] idempotency key 기준으로 중복 발송을 막는다.
 - [x] provider 실패 응답에 따라 token 비활성화 정책을 적용한다.
+- [x] Expo Push Service 단건 발송 client와 ticket 해석을 추가한다.
+- [ ] scheduler 기반 자동 발송을 구현한다.
 - [x] 모바일 로컬 알림과 중복되지 않도록 `suppressLocalNotification` 정책을 검증한다.
 
 선행 조건:
