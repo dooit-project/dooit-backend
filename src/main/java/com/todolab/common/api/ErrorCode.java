@@ -12,6 +12,7 @@ public enum ErrorCode {
     INVALID_INPUT(HttpStatus.BAD_REQUEST, 10001, "값이 올바르지 않습니다."),
     REQUIRED_VALUE_MISSING(HttpStatus.BAD_REQUEST, 10002, "필수값이 없습니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, 10003, "요청한 리소스를 찾을 수 없습니다."),
+    IDEMPOTENCY_KEY_REUSED(HttpStatus.CONFLICT, 10004, "Idempotency-Key가 다른 요청 본문으로 재사용되었습니다."),
 
     // Auth
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, 11001, "이메일 또는 비밀번호가 올바르지 않습니다."),

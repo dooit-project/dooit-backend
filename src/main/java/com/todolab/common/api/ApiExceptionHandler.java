@@ -4,6 +4,7 @@ import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
 import com.todolab.auth.exception.PasswordResetRateLimitExceededException;
 import com.todolab.auth.exception.PasswordResetTokenInvalidException;
+import com.todolab.common.idempotency.IdempotencyKeyReusedException;
 import com.todolab.dday.exception.DdayGoalNotFoundException;
 import com.todolab.task.exception.TaskOrderConflictException;
 import com.todolab.task.exception.TaskTemplateNotFoundException;
@@ -125,6 +126,13 @@ public class ApiExceptionHandler {
         log.warn("Resource Not Found : {}", e.getResourcePath());
         return ResponseEntity.status(ErrorCode.RESOURCE_NOT_FOUND.getStatus())
                 .body(ApiResponse.failure(ErrorCode.RESOURCE_NOT_FOUND));
+    }
+
+    @ExceptionHandler(IdempotencyKeyReusedException.class)
+    public ResponseEntity<ApiResponse<?>> handleIdempotencyKeyReusedException(IdempotencyKeyReusedException e) {
+        log.warn("Idempotency Key Reused With Different Payload");
+        return ResponseEntity.status(ErrorCode.IDEMPOTENCY_KEY_REUSED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.IDEMPOTENCY_KEY_REUSED));
     }
 
     @ExceptionHandler(UserEmailAlreadyExistsException.class)

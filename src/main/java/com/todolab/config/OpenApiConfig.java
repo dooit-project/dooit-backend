@@ -2,20 +2,39 @@ package com.todolab.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Set;
 import java.util.List;
 
 @Configuration
 public class OpenApiConfig {
 
     private static final String BEARER_AUTH = "bearerAuth";
+    private static final Set<String> IDEMPOTENT_POST_PATHS = Set.of(
+            "/api/v1/auth/guest",
+            "/api/v1/tasks",
+            "/api/v1/tasks/quick-capture",
+            "/api/v1/task-templates",
+            "/api/v1/task-templates/{id}/tasks",
+            "/api/v1/dday-goals",
+            "/api/v1/dday-goals/{id}/tasks",
+            "/api/v1/workspaces",
+            "/api/v1/workspaces/{workspaceId}/members",
+            "/api/v1/workspaces/{workspaceId}/tasks",
+            "/api/v1/workspaces/{workspaceId}/dday-goals"
+    );
 
     @Bean
     public OpenAPI toDoLabOpenApi() {
@@ -43,5 +62,28 @@ public class OpenApiConfig {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH));
+    }
+
+    @Bean
+    public OpenApiCustomizer idempotencyOpenApiCustomizer() {
+        return openApi -> IDEMPOTENT_POST_PATHS.forEach(path -> {
+            if (openApi.getPaths() == null || !openApi.getPaths().containsKey(path)) {
+                return;
+            }
+            Operation post = openApi.getPaths().get(path).getPost();
+            if (post == null) {
+                return;
+            }
+            post.addParametersItem(new Parameter()
+                    .in("header")
+                    .name(CorsConfig.IDEMPOTENCY_KEY_HEADER)
+                    .required(false)
+                    .description("생성 요청 멱등성 key. 같은 key와 같은 payload는 최초 응답을 replay합니다.")
+                    .schema(new StringSchema().maxLength(160)));
+            post.getResponses().addApiResponse(
+                    "409",
+                    new ApiResponse().description("Idempotency-Key가 다른 요청 본문으로 재사용됨")
+            );
+        });
     }
 }

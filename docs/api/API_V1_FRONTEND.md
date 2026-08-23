@@ -43,6 +43,31 @@ Expires: 0
 
 멱등성 replay 응답을 도입할 때 사용할 `Idempotency-Replayed` response header는 CORS expose header에 포함되어 있다.
 
+생성 요청 멱등성:
+
+- 아래 생성 API는 선택적 `Idempotency-Key` header를 지원한다.
+- 기준은 인증 사용자 또는 게스트 생성 client signal, HTTP method, request path, `Idempotency-Key`다.
+- 같은 key와 같은 payload는 resource를 다시 만들지 않고 최초 status/body를 반환한다.
+- replay 응답은 `Idempotency-Replayed: true` header를 포함한다.
+- 같은 key와 다른 payload는 HTTP 409와 `10004`를 반환한다.
+- replay 저장 기간은 최소 24시간이다.
+
+대상 endpoint:
+
+```text
+POST /api/v1/auth/guest
+POST /api/v1/tasks
+POST /api/v1/tasks/quick-capture
+POST /api/v1/task-templates
+POST /api/v1/task-templates/{id}/tasks
+POST /api/v1/dday-goals
+POST /api/v1/dday-goals/{id}/tasks
+POST /api/v1/workspaces
+POST /api/v1/workspaces/{workspaceId}/members
+POST /api/v1/workspaces/{workspaceId}/tasks
+POST /api/v1/workspaces/{workspaceId}/dday-goals
+```
+
 공통 성공 응답:
 
 ```ts

@@ -23,6 +23,7 @@ class ApiV1FrontendDocumentationTest {
         assertThat(content).contains("Cache-Control: no-store");
         assertThat(content).contains("Idempotency-Key: <client-generated-key>");
         assertThat(content).contains("Idempotency-Replayed");
+        assertThat(content).contains("replay 저장 기간은 최소 24시간");
         assertThat(content).contains("401은 토큰 없음/만료/위변조");
         assertThat(content).contains("403은 인증 후 권한 부족");
         assertThat(content).contains("PATCH /api/v1/users/me/time-zone");

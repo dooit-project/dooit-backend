@@ -44,6 +44,10 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath(
                         "$.paths['/api/v1/tasks'].get.responses['401'].content['application/json'].schema.$ref"
                 ).exists())
+                .andExpect(jsonPath("$.paths['/api/v1/tasks'].post.parameters[*].name")
+                        .value(hasItem(CorsConfig.IDEMPOTENCY_KEY_HEADER)))
+                .andExpect(jsonPath("$.paths['/api/v1/tasks'].post.responses['409'].description")
+                        .value("Idempotency-Key가 다른 요청 본문으로 재사용됨"))
                 .andExpect(jsonPath("$.paths['/api/v1/tasks/search'].get.tags[0]").value("v1 Task"))
                 .andExpect(jsonPath("$.paths['/api/v1/tasks/search'].get.summary").value("Task 통합 검색"))
                 .andExpect(jsonPath("$.paths['/api/v1/tasks/search'].get.security[0].bearerAuth").exists())
@@ -89,6 +93,8 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/v1/workspaces'].get.tags[0]").value("v1 Workspace"))
                 .andExpect(jsonPath("$.paths['/api/v1/workspaces'].post.summary").value("Workspace 생성"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces'].post.parameters[*].name")
+                        .value(hasItem(CorsConfig.IDEMPOTENCY_KEY_HEADER)))
                 .andExpect(jsonPath("$.paths['/api/v1/workspaces'].get.responses['200'].content['*/*'].schema.$ref")
                         .exists())
                 .andExpect(jsonPath("$.paths['/api/v1/workspace-invitations'].get.tags[0]").value("v1 Workspace Invitation"))
@@ -96,6 +102,8 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.paths['/api/v1/workspace-invitations'].get.responses['200'].content['*/*'].schema.$ref")
                         .exists())
                 .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/members'].post.tags[0]").value("v1 Workspace"))
+                .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/members'].post.parameters[*].name")
+                        .value(hasItem(CorsConfig.IDEMPOTENCY_KEY_HEADER)))
                 .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/members'].post.responses['201'].content")
                         .exists())
                 .andExpect(jsonPath("$.paths['/api/v1/workspaces/{workspaceId}/members/{memberId}'].patch.summary").value("Workspace 멤버 수정"))
