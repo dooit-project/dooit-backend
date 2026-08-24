@@ -1,5 +1,6 @@
 package com.todolab.notification.service;
 
+import com.todolab.Constant;
 import com.todolab.notification.config.PushNotificationProvider;
 import com.todolab.notification.config.PushNotificationProperties;
 import com.todolab.notification.domain.PushDeviceToken;
@@ -63,7 +64,7 @@ class PushNotificationDispatchServiceTest {
         PushNotificationDispatchService service = service(true, Duration.ofMinutes(10));
         User owner = owner();
         PushDeviceToken token = token(owner);
-        TaskNotificationCandidateResponse candidate = candidate(LocalDateTime.now().plusMinutes(5));
+        TaskNotificationCandidateResponse candidate = candidate(LocalDateTime.now(Constant.ZONE).plusMinutes(5));
         given(pushDeviceTokenRepository.findDistinctActiveOwners()).willReturn(List.of(owner));
         given(pushDeviceTokenRepository.findByOwnerIdAndActiveTrueOrderByLastRegisteredAtDescIdDesc(1L))
                 .willReturn(List.of(token));
@@ -95,7 +96,7 @@ class PushNotificationDispatchServiceTest {
         given(pushDeviceTokenRepository.findByOwnerIdAndActiveTrueOrderByLastRegisteredAtDescIdDesc(1L))
                 .willReturn(List.of(token(owner)));
         given(taskService.getNotificationCandidatesForOwner(any(), any(), any()))
-                .willReturn(List.of(candidate(LocalDateTime.now().plusMinutes(5))));
+                .willReturn(List.of(candidate(LocalDateTime.now(Constant.ZONE).plusMinutes(5))));
         given(pushNotificationHistoryService.shouldSkipServerPush(owner, 42L, null, null)).willReturn(true);
 
         int sentCount = service.dispatchDueNotifications();
