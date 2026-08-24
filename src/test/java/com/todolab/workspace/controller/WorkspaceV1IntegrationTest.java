@@ -170,6 +170,55 @@ class WorkspaceV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Workspace 초대받은 사용자는 자기 PENDING 초대를 거절한다")
+    void declinePendingInvitation_success() throws Exception {
+        String ownerToken = accessToken("workspace-owner-decline@example.com");
+        String memberToken = accessToken("workspace-member-decline@example.com");
+        Long workspaceId = createWorkspace(ownerToken, new WorkspaceRequest("초대 거절", null));
+        Long memberId = invite(ownerToken, workspaceId, "workspace-member-decline@example.com", WorkspaceRole.VIEWER);
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/members/{memberId}", workspaceId, memberId)
+                        .header("Authorization", "Bearer " + memberToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceMemberUpdateRequest(
+                                null,
+                                WorkspaceMemberStatus.REMOVED
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("REMOVED"));
+
+        mockMvc.perform(get("/api/v1/workspace-invitations")
+                        .header("Authorization", "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+
+        mockMvc.perform(get("/api/v1/workspaces/{workspaceId}", workspaceId)
+                        .header("Authorization", "Bearer " + memberToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(50001));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace PENDING 멤버는 다른 멤버 수정을 404로 숨긴다")
+    void updateMember_pendingActor_hidden() throws Exception {
+        String ownerToken = accessToken("workspace-owner-pending-hidden@example.com");
+        String memberToken = accessToken("workspace-member-pending-hidden@example.com");
+        Long workspaceId = createWorkspace(ownerToken, new WorkspaceRequest("초대 권한", null));
+        invite(ownerToken, workspaceId, "workspace-member-pending-hidden@example.com", WorkspaceRole.VIEWER);
+        Long ownerMemberId = firstMemberId(ownerToken, workspaceId);
+
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/members/{memberId}", workspaceId, ownerMemberId)
+                        .header("Authorization", "Bearer " + memberToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceMemberUpdateRequest(
+                                WorkspaceRole.VIEWER,
+                                null
+                        ))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(50001));
+    }
+
+    @Test
     @DisplayName("v1 Workspace 초대 목록은 REMOVED membership을 반환하지 않는다")
     void findInvitations_excludesRemovedMembership() throws Exception {
         String ownerToken = accessToken("workspace-owner-removed-invite@example.com");

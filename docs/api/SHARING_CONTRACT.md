@@ -68,7 +68,7 @@ Endpoint 권한 행렬:
 | `PUT/DELETE /api/v1/workspaces/{workspaceId}` | 가능 | 403 `FORBIDDEN` | 403 `FORBIDDEN` | 404 `WORKSPACE_NOT_FOUND` |
 | `POST /api/v1/workspaces/{workspaceId}/members` | 가능 | 403 `FORBIDDEN` | 403 `FORBIDDEN` | 404 `WORKSPACE_NOT_FOUND` |
 | `GET /api/v1/workspaces/{workspaceId}/members` | ACTIVE 멤버 조회 | ACTIVE 멤버 조회 | ACTIVE 멤버 조회 | 404 `WORKSPACE_NOT_FOUND` |
-| `PATCH /api/v1/workspaces/{workspaceId}/members/{memberId}` | 가능 | 자기 PENDING 수락만 가능 | 자기 PENDING 수락만 가능 | 자기 PENDING 수락만 가능 |
+| `PATCH /api/v1/workspaces/{workspaceId}/members/{memberId}` | 가능 | 자기 PENDING 수락/거절만 가능 | 자기 PENDING 수락/거절만 가능 | 자기 PENDING 수락/거절만 가능 |
 | `DELETE /api/v1/workspaces/{workspaceId}/members/{memberId}` | 가능 | 본인 탈퇴만 가능 | 본인 탈퇴만 가능 | 404 `WORKSPACE_NOT_FOUND` |
 | `POST/PUT/DELETE /api/v1/workspaces/{workspaceId}/tasks/**` | 가능 | 가능 | 403 `FORBIDDEN` | 404 `WORKSPACE_NOT_FOUND` |
 | `GET /api/v1/workspaces/{workspaceId}/tasks/**` | 가능 | 가능 | 가능 | 404 `WORKSPACE_NOT_FOUND` |
@@ -142,7 +142,7 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 
 개인 API와 workspace API는 path를 분리한다. 모바일은 개인 화면과 공유 workspace 화면을 명시적으로 구분해야 한다.
 
-`GET /api/v1/workspace-invitations`는 현재 로그인 사용자의 `PENDING` membership만 반환한다. 응답은 `workspace`, `membership`, `invitedAt`로 구성되며 수락 후 목록에서 제거되고 workspace 목록에 나타난다. `REMOVED` membership은 반환하지 않고, 게스트 계정은 HTTP 403 `FORBIDDEN`이다.
+`GET /api/v1/workspace-invitations`는 현재 로그인 사용자의 `PENDING` membership만 반환한다. 응답은 `workspace`, `membership`, `invitedAt`로 구성되며 수락 또는 거절 후 목록에서 제거된다. 수락은 `PATCH /api/v1/workspaces/{workspaceId}/members/{memberId}`에 `status=ACTIVE`, 거절은 `status=REMOVED`를 보낸다. 거절한 membership은 workspace 목록과 초대 목록에 나타나지 않는다. `REMOVED` membership은 반환하지 않고, 게스트 계정은 HTTP 403 `FORBIDDEN`이다.
 
 ## 반복과 D-Day 정책
 

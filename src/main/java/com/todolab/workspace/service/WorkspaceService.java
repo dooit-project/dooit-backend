@@ -177,14 +177,22 @@ public class WorkspaceService {
                 .orElseThrow(() -> new WorkspaceNotFoundException(workspaceId));
 
         if (target.getUser().getId().equals(actor.getId()) && target.getStatus() == WorkspaceMemberStatus.PENDING) {
-            if (request.status() != WorkspaceMemberStatus.ACTIVE) {
-                throw new WorkspaceValidationException("초대 수락은 ACTIVE 상태만 사용할 수 있습니다.");
+            if (request.status() == WorkspaceMemberStatus.ACTIVE) {
+                target.activate();
+                return WorkspaceMemberResponse.from(target);
             }
-            target.activate();
-            return WorkspaceMemberResponse.from(target);
+            if (request.status() == WorkspaceMemberStatus.REMOVED) {
+                target.remove();
+                return WorkspaceMemberResponse.from(target);
+            }
+            throw new WorkspaceValidationException("초대 응답은 ACTIVE 또는 REMOVED 상태만 사용할 수 있습니다.");
         }
 
-        if (actorMember.getStatus() != WorkspaceMemberStatus.ACTIVE || actorMember.getRole() != WorkspaceRole.OWNER) {
+        if (actorMember.getStatus() != WorkspaceMemberStatus.ACTIVE) {
+            throw new WorkspaceNotFoundException(workspaceId);
+        }
+
+        if (actorMember.getRole() != WorkspaceRole.OWNER) {
             throw new AccessDeniedException("workspace owner 권한이 필요합니다.");
         }
         if (target.getRole() == WorkspaceRole.OWNER && request.role() != null && request.role() != WorkspaceRole.OWNER) {
