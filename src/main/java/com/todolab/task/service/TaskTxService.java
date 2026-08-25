@@ -44,7 +44,17 @@ public class TaskTxService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
-        task.update(req.title(), req.description(), req.normalizedType(), req.startAt(), req.endAt(), req.allDay(), req.category());
+        task.update(
+                req.title(),
+                req.description(),
+                req.normalizedType(),
+                req.startAt(),
+                req.endAt(),
+                req.allDay(),
+                req.category(),
+                req.notificationEnabled(),
+                req.notifyAt()
+        );
         return taskRepository.save(task);
     }
 
@@ -462,7 +472,17 @@ public class TaskTxService {
     }
 
     private void applySingleUpdate(Task task, TaskRequest req) {
-        task.update(req.title(), req.description(), req.normalizedType(), req.startAt(), req.endAt(), req.allDay(), req.category());
+        task.update(
+                req.title(),
+                req.description(),
+                req.normalizedType(),
+                req.startAt(),
+                req.endAt(),
+                req.allDay(),
+                req.category(),
+                req.notificationEnabled(),
+                req.notifyAt()
+        );
         if (isRecurringOccurrence(task)) {
             task.markRecurrenceException(RecurrenceExceptionType.MODIFIED, originalOccurrenceDate(task));
         }
@@ -477,7 +497,9 @@ public class TaskTxService {
                 occurrenceRequest.startAt(),
                 occurrenceRequest.endAt(),
                 occurrenceRequest.allDay(),
-                occurrenceRequest.category()
+                occurrenceRequest.category(),
+                occurrenceRequest.notificationEnabled(),
+                occurrenceRequest.notifyAt()
         );
     }
 
@@ -489,7 +511,8 @@ public class TaskTxService {
         long daysToMove = java.time.temporal.ChronoUnit.DAYS.between(requestDate, occurrenceDate);
         LocalDateTime startAt = req.startAt().plusDays(daysToMove);
         LocalDateTime endAt = req.endAt() == null ? null : req.endAt().plusDays(daysToMove);
-        return new TaskRequest(req.title(), req.description(), req.type(), startAt, endAt, req.category(), req.allDay());
+        LocalDateTime notifyAt = req.notifyAt() == null ? null : req.notifyAt().plusDays(daysToMove);
+        return new TaskRequest(req.title(), req.description(), req.type(), startAt, endAt, req.category(), req.allDay(), req.notificationEnabled(), notifyAt, null);
     }
 
     private LocalDate originalOccurrenceDate(Task task) {

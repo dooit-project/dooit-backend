@@ -440,6 +440,8 @@ type TaskResponse = {
   allDay: boolean;
   unscheduled: boolean;
   category: string | null;
+  notificationEnabled: boolean;
+  notifyAt: string | null;
   status: TaskStatus;
   plannedDate: string | null;
   targetDate: string | null;
@@ -481,6 +483,8 @@ type TaskRequest = {
   endAt?: string | null;
   category?: string | null; // 30자 이하
   allDay: boolean;
+  notificationEnabled?: boolean | null; // 생략하면 true
+  notifyAt?: string | null; // null이면 startAt 기준 알림
   recurrence?: TaskRecurrenceRequest | null;
 };
 
@@ -554,7 +558,8 @@ type TaskRecurrenceRequest = {
 type TaskNotificationCandidateResponse = {
   notificationKey: string;
   taskId: number;
-  scheduledAt: string;
+  scheduledAt: string; // notifyAt이 있으면 notifyAt, 없으면 startAt
+  notifyAt: string | null;
   recurrenceSeriesId: number | null;
   occurrenceDate: string | null;
   suppressLocalNotification: boolean;
@@ -791,6 +796,8 @@ Response: `TaskNotificationCandidateResponse[]`
 - 조회 범위는 최대 31일이다.
 - 사용자 timezone 기준 범위 안의 반복 occurrence는 백엔드가 materialize한 뒤 반환한다.
 - `status=TODAY`, `startAt != null`, `completedAt == null`, `recurrenceException != SKIPPED`인 Task만 반환한다.
+- `notificationEnabled=false`인 Task는 반환하지 않는다.
+- `notifyAt`이 있으면 `scheduledAt=notifyAt`이며, 없으면 `scheduledAt=startAt`이다.
 - `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
 - `suppressLocalNotification=true`면 서버 push가 활성화된 상태이므로 모바일은 해당 후보의 로컬 알림 예약을 건너뛴다.
 - 실제 알림 예약/취소는 모바일 로컬 알림 책임이다.

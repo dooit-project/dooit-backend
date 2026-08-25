@@ -34,6 +34,10 @@ public record TaskResponse(
         boolean unscheduled,
         @Schema(description = "카테고리명", example = "업무", nullable = true)
         String category,
+        @Schema(description = "Task 알림 사용 여부", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean notificationEnabled,
+        @Schema(description = "알림 예약 시각. null이면 startAt을 사용합니다.", example = "2026-07-22T08:50:00", nullable = true)
+        LocalDateTime notifyAt,
         @Schema(description = "Task 상태", example = "INBOX", requiredMode = Schema.RequiredMode.REQUIRED)
         TaskStatus status,
         @Schema(description = "표시 기준 날짜. targetDate가 있으면 targetDate, 없으면 startAt 날짜입니다.", example = "2026-07-22", nullable = true)
@@ -86,7 +90,7 @@ public record TaskResponse(
             String category,
             LocalDateTime createdAt
     ) {
-        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, null, createdAt, null);
+        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, true, null, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, null, createdAt, null);
     }
 
     public static TaskResponse from(Task t) {
@@ -102,6 +106,8 @@ public record TaskResponse(
                 .allDay(t.isAllDay())
                 .unscheduled(t.isUnscheduled())
                 .category(t.getCategory())
+                .notificationEnabled(t.isNotificationEnabled())
+                .notifyAt(t.getNotifyAt())
                 .status(t.getStatus())
                 .plannedDate(t.getPlannedDate())
                 .targetDate(t.getTargetDate())

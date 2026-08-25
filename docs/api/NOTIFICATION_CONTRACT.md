@@ -63,6 +63,8 @@ GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
 - 조회 범위는 최대 31일이다.
 - 백엔드는 조회 범위의 반복 occurrence를 materialize한 뒤 후보를 산출한다.
 - 응답의 `notificationKey`는 단건 Task면 `task:{taskId}`, 반복 occurrence면 `recurrence:{recurrenceSeriesId}:{occurrenceDate}` 형식이다.
+- Task별 `notificationEnabled=false`이면 후보에서 제외한다.
+- Task별 `notifyAt`이 있으면 `scheduledAt`은 `notifyAt`이며, 없으면 기존처럼 `startAt`이다.
 - 응답의 `suppressLocalNotification`은 서버 push 활성화 여부에 따라 내려준다.
 - 응답에는 후보 판단 원본인 `task: TaskResponse`를 포함한다.
 

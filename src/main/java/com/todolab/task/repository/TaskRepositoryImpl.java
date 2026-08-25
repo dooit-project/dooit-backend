@@ -209,7 +209,8 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                         personalScope(t),
                         t.status.eq(TaskStatus.TODAY),
                         t.startAt.isNotNull(),
-                        overlapsRange(t, start, end)
+                        t.notificationEnabled.isTrue(),
+                        notificationTimeOverlapsRange(t, start, end)
                 )
                 .orderBy(t.startAt.asc(), t.id.asc())
                 .fetch();
@@ -227,7 +228,8 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
                         workspaceScope(t),
                         t.status.eq(TaskStatus.TODAY),
                         t.startAt.isNotNull(),
-                        overlapsRange(t, start, end)
+                        t.notificationEnabled.isTrue(),
+                        notificationTimeOverlapsRange(t, start, end)
                 )
                 .orderBy(t.startAt.asc(), t.id.asc())
                 .fetch();
@@ -402,6 +404,13 @@ public class TaskRepositoryImpl implements TaskRepositoryCustom {
     private BooleanExpression overlapsRange(QTask t, LocalDateTime start, LocalDateTime end) {
         return singleScheduleInRange(t, start, end)
                 .or(periodScheduleOverlapsRange(t, start, end));
+    }
+
+    private BooleanExpression notificationTimeOverlapsRange(QTask t, LocalDateTime start, LocalDateTime end) {
+        return t.notifyAt.isNotNull()
+                .and(t.notifyAt.goe(start))
+                .and(t.notifyAt.lt(end))
+                .or(t.notifyAt.isNull().and(overlapsRange(t, start, end)));
     }
 
     // 단일 일정은 시작 시각이 조회 범위 [start, end)에 포함되면 조회한다.

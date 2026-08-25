@@ -16,6 +16,7 @@ Last updated: 2026-08-23
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | Task 알림 preference release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 등록 계정 refresh/logout release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | Idempotency-Key release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_password_reset_token.sql` | local production Docker MySQL | 비밀번호 재설정 release 전 적용 필요 |

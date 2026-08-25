@@ -40,6 +40,12 @@ public record TaskRequest(
         @Schema(description = "종일 일정 여부. true이면 startAt/endAt은 모두 00:00이어야 합니다.", example = "false")
         boolean allDay,
 
+        @Schema(description = "Task 알림 사용 여부. 생략하면 true입니다.", example = "true", nullable = true)
+        Boolean notificationEnabled,
+
+        @Schema(description = "알림 예약 시각. null이면 startAt을 사용합니다.", example = "2026-07-15T08:50:00", nullable = true)
+        LocalDateTime notifyAt,
+
         @Schema(description = "반복 생성 옵션. 없으면 단일 Task로 생성합니다.", nullable = true)
         TaskRecurrenceRequest recurrence
 ) {
@@ -53,7 +59,7 @@ public record TaskRequest(
             String category,
             boolean allDay
     ) {
-        this(title, description, type, startAt, endAt, category, allDay, null);
+        this(title, description, type, startAt, endAt, category, allDay, null, null, null);
     }
 
     public TaskRequest(
@@ -64,7 +70,20 @@ public record TaskRequest(
             String category,
             boolean allDay
     ) {
-        this(title, description, null, startAt, endAt, category, allDay, null);
+        this(title, description, null, startAt, endAt, category, allDay, null, null, null);
+    }
+
+    public TaskRequest(
+            String title,
+            String description,
+            TaskType type,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            String category,
+            boolean allDay,
+            TaskRecurrenceRequest recurrence
+    ) {
+        this(title, description, type, startAt, endAt, category, allDay, null, null, recurrence);
     }
 
     public TaskType normalizedType() {
@@ -85,6 +104,7 @@ public record TaskRequest(
         validateDateTimeOrder();
         validateUnscheduledAllDay();
         validateCategory();
+        validateNotification();
         validateRecurrence();
     }
 
@@ -144,6 +164,19 @@ public record TaskRequest(
             return;
         }
         recurrence.validate(startAt);
+    }
+
+    private void validateNotification() {
+        boolean enabled = notificationEnabled == null || notificationEnabled;
+        if (notifyAt == null) {
+            return;
+        }
+        if (!enabled) {
+            throw new TaskValidationException("알림이 비활성화된 Task에는 notifyAt을 설정할 수 없습니다.");
+        }
+        if (startAt == null) {
+            throw new TaskValidationException("notifyAt은 시작 일시가 있는 Task에만 설정할 수 있습니다.");
+        }
     }
 
     private boolean isMidnight(LocalDateTime dt) {

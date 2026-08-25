@@ -148,6 +148,7 @@ class PushNotificationDispatchServiceTest {
                 scheduledAt,
                 null,
                 null,
+                null,
                 true,
                 TaskResponse.builder()
                         .id(42L)

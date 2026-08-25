@@ -119,6 +119,8 @@ public class TaskService {
                 .endAt(req.endAt())
                 .allDay(req.allDay())
                 .category(req.category())
+                .notificationEnabled(req.notificationEnabled())
+                .notifyAt(req.notifyAt())
                 .owner(owner)
                 .build();
         if (workspace != null) {
@@ -368,9 +370,11 @@ public class TaskService {
         );
         return taskRepository.findNotificationCandidateTasks(ownerId, serviceRange.getStart(), serviceRange.getEnd()).stream()
                 .filter(task -> task.getStartAt() != null)
+                .filter(Task::isNotificationEnabled)
+                .filter(task -> task.getNotificationTime() != null)
                 .filter(task -> task.getCompletedAt() == null)
                 .filter(task -> task.getRecurrenceException() != com.todolab.task.domain.RecurrenceExceptionType.SKIPPED)
-                .sorted(Comparator.comparing(Task::getStartAt).thenComparing(Task::getId))
+                .sorted(Comparator.comparing(Task::getNotificationTime).thenComparing(Task::getId))
                 .map(task -> TaskNotificationCandidateResponse.from(task, pushNotificationProperties.enabled()))
                 .toList();
     }
@@ -392,9 +396,11 @@ public class TaskService {
         );
         return taskRepository.findWorkspaceNotificationCandidateTasks(workspace.getId(), serviceRange.getStart(), serviceRange.getEnd()).stream()
                 .filter(task -> task.getStartAt() != null)
+                .filter(Task::isNotificationEnabled)
+                .filter(task -> task.getNotificationTime() != null)
                 .filter(task -> task.getCompletedAt() == null)
                 .filter(task -> task.getRecurrenceException() != com.todolab.task.domain.RecurrenceExceptionType.SKIPPED)
-                .sorted(Comparator.comparing(Task::getStartAt).thenComparing(Task::getId))
+                .sorted(Comparator.comparing(Task::getNotificationTime).thenComparing(Task::getId))
                 .map(task -> TaskNotificationCandidateResponse.from(task, pushNotificationProperties.enabled()))
                 .toList();
     }

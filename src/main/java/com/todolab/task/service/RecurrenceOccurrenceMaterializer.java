@@ -145,6 +145,7 @@ public class RecurrenceOccurrenceMaterializer {
         long daysToMove = ChronoUnit.DAYS.between(templateDate, occurrenceDate);
         LocalDateTime startAt = template.getStartAt() == null ? null : template.getStartAt().plusDays(daysToMove);
         LocalDateTime endAt = template.getEndAt() == null ? null : template.getEndAt().plusDays(daysToMove);
+        LocalDateTime notifyAt = template.getNotifyAt() == null ? null : template.getNotifyAt().plusDays(daysToMove);
 
         Task occurrence = Task.builder()
                 .title(template.getTitle())
@@ -154,6 +155,8 @@ public class RecurrenceOccurrenceMaterializer {
                 .endAt(endAt)
                 .allDay(template.isAllDay())
                 .category(template.getCategory())
+                .notificationEnabled(template.isNotificationEnabled())
+                .notifyAt(notifyAt)
                 .status(TaskStatus.TODAY)
                 .targetDate(occurrenceDate)
                 .owner(template.getOwner())

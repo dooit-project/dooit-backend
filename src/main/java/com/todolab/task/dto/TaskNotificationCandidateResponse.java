@@ -14,6 +14,8 @@ public record TaskNotificationCandidateResponse(
         Long taskId,
         @Schema(description = "알림 예약 시각", example = "2026-07-28T09:00:00")
         LocalDateTime scheduledAt,
+        @Schema(description = "Task별 알림 설정 시각. null이면 startAt 기준 알림입니다.", example = "2026-07-28T08:50:00", nullable = true)
+        LocalDateTime notifyAt,
         @Schema(description = "반복 series ID. 반복 Task가 아니면 null입니다.", example = "10", nullable = true)
         Long recurrenceSeriesId,
         @Schema(description = "반복 occurrence 날짜. 반복 Task가 아니면 null입니다.", example = "2026-07-28", nullable = true)
@@ -34,7 +36,8 @@ public record TaskNotificationCandidateResponse(
         return new TaskNotificationCandidateResponse(
                 notificationKey(task, recurrenceSeriesId, occurrenceDate),
                 task.getId(),
-                task.getStartAt(),
+                task.getNotificationTime(),
+                task.getNotifyAt(),
                 recurrenceSeriesId,
                 occurrenceDate,
                 suppressLocalNotification,

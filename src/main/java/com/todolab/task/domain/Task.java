@@ -60,6 +60,12 @@ public class Task {
     @Column(name = "`CATEGORY`")
     private String category;
 
+    @Column(name = "`NOTIFICATION_ENABLED`", nullable = false)
+    private boolean notificationEnabled = true;
+
+    @Column(name = "`NOTIFY_AT`")
+    private LocalDateTime notifyAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "`STATUS`", nullable = false)
     private TaskStatus status;
@@ -140,10 +146,11 @@ public class Task {
 
     @Builder
     public Task(String title, String description, TaskType type, LocalDateTime startAt, LocalDateTime endAt, boolean allDay, String category,
+                Boolean notificationEnabled, LocalDateTime notifyAt,
                 TaskStatus status, LocalDate targetDate, Integer todayOrder, LocalDateTime completedAt, Integer carryOverCount,
                 DeferReason deferReason, DdayGoal ddayGoal, RecurrenceSeries recurrenceSeries, LocalDate occurrenceDate,
                 LocalDate originalOccurrenceDate, RecurrenceExceptionType recurrenceException, User owner) {
-        apply(title, description, type, startAt, endAt, allDay, category);
+        apply(title, description, type, startAt, endAt, allDay, category, notificationEnabled, notifyAt);
         applyStatus(status, targetDate, completedAt);
         this.todayOrder = todayOrder;
         this.carryOverCount = carryOverCount == null ? 0 : Math.max(0, carryOverCount);
@@ -159,7 +166,21 @@ public class Task {
     }
 
     public void update(String title, String description, TaskType type, LocalDateTime startAt, LocalDateTime endAt, boolean allDay, String category) {
-        apply(title, description, type, startAt, endAt, allDay, category);
+        update(title, description, type, startAt, endAt, allDay, category, null, null);
+    }
+
+    public void update(
+            String title,
+            String description,
+            TaskType type,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            boolean allDay,
+            String category,
+            Boolean notificationEnabled,
+            LocalDateTime notifyAt
+    ) {
+        apply(title, description, type, startAt, endAt, allDay, category, notificationEnabled, notifyAt);
         if (this.status != TaskStatus.DONE && !isUnscheduled()) {
             applyInitialStatus();
         }
@@ -182,6 +203,10 @@ public class Task {
             return targetDate;
         }
         return startAt == null ? null : startAt.toLocalDate();
+    }
+
+    public LocalDateTime getNotificationTime() {
+        return notifyAt == null ? startAt : notifyAt;
     }
 
     public void moveToInbox() {
@@ -312,9 +337,12 @@ public class Task {
             LocalDateTime startAt,
             LocalDateTime endAt,
             boolean allDay,
-            String category
+            String category,
+            Boolean notificationEnabled,
+            LocalDateTime notifyAt
     ) {
         validateSchedule(startAt, endAt, allDay);
+        validateNotification(startAt, notificationEnabled, notifyAt);
 
         String normalizedCategory = normalizeCategory(category);
         validateCategory(normalizedCategory);
@@ -326,6 +354,8 @@ public class Task {
         this.endAt = endAt;
         this.allDay = allDay;
         this.category = normalizedCategory;
+        this.notificationEnabled = notificationEnabled == null || notificationEnabled;
+        this.notifyAt = notifyAt;
 
         if (this.status == null) {
             applyInitialStatus();
@@ -340,6 +370,7 @@ public class Task {
         this.startAt = null;
         this.endAt = null;
         this.allDay = false;
+        this.notifyAt = null;
         if (this.type == TaskType.SCHEDULE) {
             this.type = TaskType.TODO;
         }
@@ -361,6 +392,9 @@ public class Task {
         this.startAt = this.startAt.plusDays(daysToMove);
         if (this.endAt != null) {
             this.endAt = this.endAt.plusDays(daysToMove);
+        }
+        if (this.notifyAt != null) {
+            this.notifyAt = this.notifyAt.plusDays(daysToMove);
         }
     }
 
@@ -407,6 +441,19 @@ public class Task {
         validateUnscheduledAllDay(startAt, endAt, allDay);
         validateSingleSchedule(startAt, endAt, allDay);
         validatePeriodSchedule(startAt, endAt, allDay);
+    }
+
+    private void validateNotification(LocalDateTime startAt, Boolean notificationEnabled, LocalDateTime notifyAt) {
+        boolean enabled = notificationEnabled == null || notificationEnabled;
+        if (notifyAt == null) {
+            return;
+        }
+        if (!enabled) {
+            throw new IllegalArgumentException("알림이 비활성화된 Task에는 notifyAt을 설정할 수 없습니다.");
+        }
+        if (startAt == null) {
+            throw new IllegalArgumentException("notifyAt은 시작 일시가 있는 Task에만 설정할 수 있습니다.");
+        }
     }
 
     private void validateEndAtWithoutStartAt(LocalDateTime startAt, LocalDateTime endAt) {

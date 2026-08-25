@@ -435,6 +435,60 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 알림 후보 조회는 Task별 notifyAt을 예약 시각으로 사용하고 비활성 알림을 제외한다")
+    void getNotificationCandidates_success_notifyAtAndDisabledPreference() throws Exception {
+        String accessToken = accessToken("task-notification-preference@example.com");
+        Long customNotifyTaskId = createTask(accessToken, new TaskRequest(
+                "10분 전 알림",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 28, 9, 0),
+                LocalDateTime.of(2026, 7, 28, 10, 0),
+                "업무",
+                false,
+                true,
+                LocalDateTime.of(2026, 7, 28, 8, 50),
+                null
+        ));
+        Long defaultNotifyTaskId = createTask(accessToken, new TaskRequest(
+                "기본 알림",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 28, 9, 30),
+                LocalDateTime.of(2026, 7, 28, 10, 30),
+                "업무",
+                false
+        ));
+        createTask(accessToken, new TaskRequest(
+                "알림 끔",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 7, 28, 8, 0),
+                LocalDateTime.of(2026, 7, 28, 9, 0),
+                "업무",
+                false,
+                false,
+                null,
+                null
+        ));
+
+        mockMvc.perform(get("/api/v1/tasks/notification-candidates")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("from", "2026-07-28")
+                        .param("to", "2026-07-28"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].notificationKey").value("task:%d".formatted(customNotifyTaskId)))
+                .andExpect(jsonPath("$.data[0].scheduledAt").value("2026-07-28T08:50:00"))
+                .andExpect(jsonPath("$.data[0].notifyAt").value("2026-07-28T08:50:00"))
+                .andExpect(jsonPath("$.data[0].task.notificationEnabled").value(true))
+                .andExpect(jsonPath("$.data[0].task.notifyAt").value("2026-07-28T08:50:00"))
+                .andExpect(jsonPath("$.data[1].notificationKey").value("task:%d".formatted(defaultNotifyTaskId)))
+                .andExpect(jsonPath("$.data[1].scheduledAt").value("2026-07-28T09:30:00"))
+                .andExpect(jsonPath("$.data[1].notifyAt").isEmpty());
+    }
+
+    @Test
     @DisplayName("v1 MONTH Task 조회는 YYYY-MM을 바인딩하고 owner 범위 월간 일정을 반환한다")
     void getTasks_month_success_yearMonthBindingAndOwnerScope() throws Exception {
         String ownerToken = accessToken("task-month-owner@example.com");
