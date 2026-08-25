@@ -49,7 +49,7 @@ Last updated: 2026-08-23
 - [x] 주요 생성 API에 `Idempotency-Key` 처리와 24시간 replay 저장 정책을 추가한다.
 - [x] 등록 계정 refresh, guest refresh, logout, refresh token rotation/reuse detection, guest 90일 보존 정책을 설계/구현한다.
 - [x] Task별 알림 preference와 notification candidate `notifyAt`을 추가한다.
-- [ ] Workspace PENDING 초대 거절 계약과 권한 테스트를 추가한다.
+- [x] Workspace PENDING 초대 거절 계약과 권한 테스트를 추가한다.
 
 ### P2. 조건부 프론트 요청
 
