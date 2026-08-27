@@ -191,7 +191,8 @@ class DocumentationIndexTest {
         assertThat(environment).contains("실제 도메인을 구매해 연결하면");
         assertThat(environment).contains("API base URL");
         assertThat(environment).contains("Web origin");
-        assertThat(environment).contains("Authorization`, `Content-Type`, `Idempotency-Key` header 포함 preflight 성공");
+        assertThat(environment).contains("production Web을 배포하기 전까지 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다");
+        assertThat(environment).contains("Expo Web을 나중에 production에 붙이면");
         assertThat(environment).contains("Native 앱은 CORS 대상이 아니므로 API URL 접근성과 인증 흐름만 확인한다.");
         assertThat(environment).contains("Cache-Control: no-store");
         assertThat(environment).contains("./scripts/check-public-production.sh");
