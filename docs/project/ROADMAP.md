@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-23
+Last updated: 2026-08-27
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -10,11 +10,11 @@ Last updated: 2026-08-23
 - 인증은 `/api/v1/**` 모바일/웹 클라이언트 API에서 Bearer JWT를 사용한다.
 - API 원본 계약은 실행 중인 백엔드의 `/v3/api-docs` OpenAPI JSON이다.
 - local production은 이 Mac의 Docker Compose와 external MySQL volume을 사용한다.
-- production app port는 `127.0.0.1:8080`에만 bind하고, Android 접근은 Tailscale HTTPS 경로로만 연다.
+- production app port는 `127.0.0.1:8080`에만 bind하고, 외부 접근은 Tailscale HTTPS 또는 실제 도메인의 reverse proxy HTTPS 경로로만 연다.
 - staging은 현재 운영하지 않는다. 환경은 local 개발 환경과 이 PC의 production 환경으로만 구분한다.
 - 실제 secret, access token, DB dump 내용, private production URL은 문서에 기록하지 않는다.
 
-### 2026-08-20 정리
+### 2026-08-27 정리
 
 현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증에 몰려 있다.
 
@@ -37,9 +37,9 @@ Last updated: 2026-08-23
 목표: 프론트 real API 연결과 출시 검증을 막는 backend 계약/배포 gap을 우선 닫는다. 완료 보고에는 backend commit SHA 또는 image tag, 배포 환경/API URL, 적용 migration, 변경 OpenAPI endpoint/schema/error code, 호환성, 실행 테스트, 프론트 확인 사항을 함께 남긴다.
 
 - [x] 내용이 있는 Workspace 삭제가 500을 반환하지 않도록 삭제 정책을 구현하고 `SHARING_CONTRACT.md`와 OpenAPI에 반영한다.
-- [x] staging 미운영, production host 내부 URL, production Tailscale HTTPS URL 환경변수 기준, readiness 공개 접근을 문서화한다.
+- [x] staging 미운영, production host 내부 URL, Tailscale/public HTTPS URL 환경변수 기준, readiness 공개 접근을 문서화한다.
 - [x] backend commit/image metadata endpoint를 구현한다.
-- [ ] Android 실제 기기에서 production Tailscale HTTPS URL을 smoke한다.
+- [ ] Android 실제 기기에서 production HTTPS URL을 smoke한다.
 - [ ] production Web origin 사용 여부와 실제 origin을 확정한다.
 - [x] 비밀번호 재설정 request/verify/confirm API, reset link 형식, TTL, rate limit, error code, session 처리 정책을 구현한다.
 - [x] 운영 Web CORS allow header와 인증/API 응답 `Cache-Control: no-store` 정책을 확정한다.
@@ -141,7 +141,7 @@ Last updated: 2026-08-23
 
 목표: 현재 구현된 push token, 알림 후보, 발송 이력 기반 위에 실제 provider 전송을 붙인다.
 
-상태: provider 설정, 이력 저장 계약, Expo 단건 발송 client는 준비되어 있지만 scheduler 기반 자동 발송은 아직 구현하지 않는다.
+상태: provider 설정, 이력 저장 계약, Expo 단건 발송 client, 개인 owner와 shared workspace scheduler 기반 자동 발송까지 닫혔다. 남은 작업은 운영 credential 적용 뒤 실수신 smoke다.
 
 - [x] Expo/APNs/FCM 중 production provider와 credential 보관 방식을 확정한다.
 - [x] 발송 스케줄러 실행 시점과 look-ahead window를 정한다.
@@ -267,7 +267,7 @@ Last updated: 2026-08-23
 - [ ] 모바일 연결 완료 화면에서 병합 결과 count를 구체적으로 노출할지 결정한다.
 - [ ] 게스트가 31일 이상 미접속한 뒤 기존 데이터를 복구해야 하는지 결정한다.
 - [ ] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
-- [ ] 서버 push를 실제 발송하려면 Expo/APNs/FCM credential 관리 방식과 발송 시점을 확정한다.
+- [ ] 서버 push 운영 credential을 실제 production에 적용할지 결정한다.
 
 ## 4. 현재 완료된 기준
 

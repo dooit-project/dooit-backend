@@ -1,6 +1,6 @@
 # Notification Contract
 
-Last updated: 2026-08-23
+Last updated: 2026-08-27
 
 이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API, 서버 push token 등록 API, 개인 owner Task와 shared workspace Task 서버 push 자동 발송을 제공하며, 별도 서버 push 수동 발송 API는 제공하지 않는다.
 
@@ -114,7 +114,7 @@ GET /api/v1/push-notification-histories?limit=50
 
 ## 서버 Push 도입 후 중복 방지
 
-향후 서버 push를 도입할 때는 아래 정책을 먼저 구현한다.
+서버 push 중복 방지는 아래 정책을 따른다.
 
 - 알림 source를 `LOCAL` 또는 `SERVER`로 구분한다.
 - 동일 `task.id` 또는 `recurrenceSeriesId + occurrenceDate`에 대해 source별 중복 발송을 막는다.

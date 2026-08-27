@@ -242,10 +242,10 @@ TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tail
 production 결과는 실제 secret, access token, 비밀번호를 기록하지 않고 아래 형식으로 남긴다.
 
 ```text
-- [x] 2026-08-11 production Tailscale real device: login/me, Today 조회·생성·완료 확인
-  - API URL: https://<device>.<tailnet>.ts.net/api/v1
-  - Host smoke: check-tailscale-production 통과
-  - Android: Tailscale 연결 상태에서 auth/me 200 확인
+- [x] YYYY-MM-DD production real device: login/me, Today 조회·생성·완료 확인
+  - API URL: https://<api-origin>/api/v1
+  - Host smoke: check-tailscale-production 또는 check-public-production 통과
+  - Android: auth/me 200 확인
   - CORS: Expo Web 사용 시 preflight 성공, native-only면 해당 없음
   - 비고: <특이사항>
 ```

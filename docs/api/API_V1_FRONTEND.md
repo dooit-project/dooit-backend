@@ -1,6 +1,6 @@
 # ToDoLab v1 Frontend API
 
-Last updated: 2026-08-23
+Last updated: 2026-08-27
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -823,7 +823,7 @@ Response:
 - 같은 사용자와 `deviceToken` 조합을 다시 등록하면 기존 row를 갱신하고 활성화한다.
 - 응답은 실제 `deviceToken` 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
 - `DELETE`는 물리 삭제가 아니라 비활성화다.
-- 이 API는 서버 push 발송을 수행하지 않는다. 발송과 실패 토큰 정리는 별도 계약이다.
+- 이 API 자체는 서버 push 발송을 수행하지 않는다. 실제 발송은 scheduler가 담당한다.
 - 서버 push 전송 이력 기록 중 `DeviceNotRegistered`, `InvalidPushToken`, `InvalidDeviceToken` 같은 영구 token 실패가 확인되면 해당 token은 비활성화되고 활성 목록에서 제외된다.
 
 ### Push 알림 전송 이력 조회
@@ -1587,7 +1587,7 @@ type AppMetadataResponse = {
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
-- 서버 push 알림 발송 API
+- 서버 push 수동 발송 API
 
 ## 11. 모바일 전환 체크리스트
 
@@ -1604,7 +1604,7 @@ type AppMetadataResponse = {
 - [ ] 로컬 알림 예약은 `GET /api/v1/tasks/notification-candidates` 응답만 기준으로 구성
 - [ ] 401 응답 시 로그인 화면으로 이동하거나 세션 만료 안내
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
-- [ ] 서버 push 알림 UI는 push API 구현 전까지 실제 저장 기능처럼 열지 않음
+- [ ] 서버 push 수동 발송 UI는 별도 API가 생기기 전까지 실제 저장 기능처럼 열지 않음
 
 ## 12. Legacy API 정책
 

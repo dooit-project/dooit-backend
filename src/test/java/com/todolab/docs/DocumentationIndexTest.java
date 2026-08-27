@@ -48,7 +48,7 @@ class DocumentationIndexTest {
         assertThat(docsIndex).contains("## 유지 원칙");
         assertThat(docsIndex).contains("## 현재 기준 요약");
         assertThat(docsIndex).contains("아직 닫히지 않은 제품/운영 작업");
-        assertThat(docsIndex).contains("Android production Tailscale HTTPS 실기기 smoke");
+        assertThat(docsIndex).contains("실제 도메인 DNS/TLS 연결 후 public production smoke");
         assertThat(docsIndex).contains("완료 이력만 남은 문서는 별도로 유지하지 않고");
         assertThat(docsIndex).doesNotContain("history/TASK_DATE_MIGRATION.md");
         assertThat(docsIndex).doesNotContain("BACKEND_DOCUMENTATION_PLAN.md");
@@ -82,7 +82,7 @@ class DocumentationIndexTest {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
         assertThat(roadmap).contains("## 2. 제품 기능 로드맵");
-        assertThat(roadmap).contains("### 2026-08-20 정리");
+        assertThat(roadmap).contains("### 2026-08-27 정리");
         assertThat(roadmap).contains("현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증");
         assertThat(roadmap).contains("서버 push 실제 발송");
         assertThat(roadmap).contains("### P0. 프론트 출시 연동 요청");
@@ -187,13 +187,13 @@ class DocumentationIndexTest {
 
         assertThat(environment).contains("## 4. 운영 환경 확정 입력값");
         assertThat(environment).contains("## 현재 운영 입력 상태");
-        assertThat(environment).contains("Android production Tailscale HTTPS URL");
+        assertThat(environment).contains("실제 도메인을 구매해 연결하면");
         assertThat(environment).contains("API base URL");
-        assertThat(environment).contains("Expo Web origin");
+        assertThat(environment).contains("Web origin");
         assertThat(environment).contains("Authorization`, `Content-Type`, `Idempotency-Key` header 포함 preflight 성공");
         assertThat(environment).contains("Native 앱은 CORS 대상이 아니므로 API URL 접근성과 인증 흐름만 확인한다.");
         assertThat(environment).contains("Cache-Control: no-store");
-        assertThat(environment).contains("확정된 Tailscale HTTPS URL만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.");
+        assertThat(environment).contains("./scripts/check-public-production.sh");
     }
 
     private record DocumentLink(String rootPath, String docsPath) {

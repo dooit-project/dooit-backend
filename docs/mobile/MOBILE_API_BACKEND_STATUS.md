@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-21
+Last audited: 2026-08-27
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -12,7 +12,7 @@ Last audited: 2026-08-21
 
 ## 0. 현재 요약
 
-2026-08-20 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 남은 최우선 확인은 backend 구현 문제가 아니라 production 접근 경로와 실제 기기 검증이다.
+2026-08-27 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 남은 최우선 확인은 backend 구현 문제가 아니라 실제 도메인 연결, production 접근 경로, 실제 기기 검증이다.
 
 | 영역 | 상태 | 현재 기준 |
 | --- | --- | --- |
@@ -21,9 +21,9 @@ Last audited: 2026-08-21
 | Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 실제 입력 로그 기반 파싱 보강만 남음 |
 | Templates | [x] | `TaskTemplate` CRUD와 template 기반 Task 생성 구현 |
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
-| Notifications | [~] | 로컬 알림 후보, push token, 발송 이력 API 구현. 실제 서버 push 발송은 미구현 |
-| Production Android | [ ] | Tailscale HTTPS URL로 Android 실제 기기 smoke 필요 |
-| Expo Web production | [ ] | 사용 여부와 실제 origin 확정 전 |
+| Notifications | [x] | 로컬 알림 후보, push token, 발송 이력, Expo client, 개인/workspace scheduler 자동 발송 구현. 운영 credential 적용 후 실수신 smoke 필요 |
+| Production Android | [ ] | public HTTPS 또는 Tailscale HTTPS URL로 Android 실제 기기 smoke 필요 |
+| Production Web | [ ] | 사용 여부와 실제 origin 확정 전 |
 
 ## 1. 실제 사용 전 최우선
 
@@ -49,12 +49,13 @@ Last audited: 2026-08-21
 - [x] 2026-08-20 production Tailscale URL 기준: MagicDNS HTTPS URL을 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh` 통과
 - [x] 2026-08-20 production Tailscale host smoke 기준: HTTPS readiness, guest 발급, guest `/auth/me` 확인. 실제 URL, token, guest id는 기록하지 않음
 - [x] 2026-08-21 production recovery 기준: launchd, Docker Desktop, app/mysql health, readiness, Tailscale HTTPS recovery check 통과. 실제 URL은 기록하지 않음
+- [x] 2026-08-27 public production 준비 기준: `TODOLAB_PUBLIC_API_URL`과 `./scripts/check-public-production.sh`로 실제 도메인 HTTPS readiness, metadata, guest 발급, `/auth/me`, 선택적 Web CORS preflight를 확인할 수 있음
 
 1. [x] 인증 사용자 소유권
    - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
    - 완료: `/api/v1/tasks`, `/api/v1/dday-goals`의 주요 조회/수정/삭제 endpoint를 owner-aware service path로 확장
    - 완료: 기존 `/api/tasks`, `/api/ddays`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않는 정책 확정
-   - 완료: access token TTL 1시간, refresh token 미도입, 모바일 로그아웃 클라이언트 책임, 401/403 오류 계약 확정
+   - 완료: access token TTL, refresh token 회전, logout, 401/403 오류 계약 확정
    - 문서: `docs/api/AUTH_CONTRACT.md`
 
 2. [x] Today / Calendar 여러 날 일정 범위 조회
@@ -227,8 +228,8 @@ Last audited: 2026-08-21
 
 | 항목 | 상태 | 메모 |
 | --- | --- | --- |
-| 개발 / 스테이징 / 운영 API URL | [~] | local과 host 내부 production은 확정. Android production Tailscale HTTPS URL과 Expo Web production origin은 실제 기기/배포 origin 확정 필요 |
-| 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me` 있음. access token TTL, refresh token 미도입, 로그아웃 책임, 401/403 계약은 `docs/api/AUTH_CONTRACT.md` 기준 |
+| 개발 / 스테이징 / 운영 API URL | [~] | local과 host 내부 production은 확정. public HTTPS 도메인, Android 실제 기기, Web production origin은 외부 연결 후 확인 필요 |
+| 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me`, refresh, logout 있음. TTL, rotation/reuse detection, 401/403 계약은 `docs/api/AUTH_CONTRACT.md` 기준 |
 | 게스트 계정 bootstrap과 정식 계정 연동 | [x] | `POST /api/v1/auth/guest`, 게스트 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약은 `docs/api/GUEST_ACCOUNT_HANDOFF.md` 기준 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
 | 오류 코드와 장애 대응 | [x] | `docs/api/API_ERROR_CODES.md`와 `docs/mobile/MOBILE_INCIDENT_RUNBOOK.md`에 오류 코드, retry, logging/masking, 장애 확인 순서 정리 |
@@ -244,8 +245,9 @@ Last audited: 2026-08-21
 - [x] Tailscale HTTPS host smoke 스크립트: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh`
 - [x] Tailscale HTTPS URL `.env` 반영: `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`
 - [x] Tailscale HTTPS recovery check: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`
-- [ ] Android 실제 기기 production smoke: Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
-- [ ] Expo Web production origin: 필요 시 `TODOLAB_ALLOWED_ORIGINS` 반영 후 preflight 확인
+- [x] public HTTPS smoke 스크립트: `TODOLAB_PUBLIC_API_URL=https://api.example.com ./scripts/check-public-production.sh`
+- [ ] Android 실제 기기 production smoke: public HTTPS 또는 Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
+- [ ] Web production origin: 필요 시 `TODOLAB_ALLOWED_ORIGINS` 반영 후 preflight 확인
 
 ## 9. 추천 구현 순서
 

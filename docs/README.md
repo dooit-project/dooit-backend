@@ -1,12 +1,12 @@
 # ToDoLab Backend Docs
 
-Last updated: 2026-08-20
+Last updated: 2026-08-27
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
 
 ## 현재 기준 요약
 
-2026-08-20 현재 문서 원본은 아래 순서로 판단한다.
+2026-08-27 현재 문서 원본은 아래 순서로 판단한다.
 
 | 우선순위 | 문서/원본 | 기준 |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ Last updated: 2026-08-20
 | 4 | `docs/ops/**` | local production 운영, 환경변수, 배포·백업·복구 절차 |
 | 5 | `docs/project/ROADMAP.md` | 아직 닫히지 않은 제품/운영 작업 |
 
-현재 로드맵에서 닫아야 할 최우선 작업은 Android production Tailscale HTTPS 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현이 닫혔고, 서버 push 실제 발송과 검색·추천 고도화가 다음 후보로 남아 있다.
+현재 로드맵에서 닫아야 할 최우선 작업은 실제 도메인 DNS/TLS 연결 후 public production smoke, Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
 
 ## 프론트/모바일 전달 문서
 
@@ -32,7 +32,7 @@ Last updated: 2026-08-20
 | [`api/DATA_MODEL_GLOSSARY.md`](./api/DATA_MODEL_GLOSSARY.md) | Task, D-Day, User 주요 필드와 상태 전이 |
 | [`api/TIMEZONE_CONTRACT.md`](./api/TIMEZONE_CONTRACT.md) | 현재 `Asia/Seoul` 기준과 사용자 timezone 도입 원칙 |
 | [`api/RECURRENCE_MODEL.md`](./api/RECURRENCE_MODEL.md) | 반복 series와 occurrence 모델 |
-| [`api/NOTIFICATION_CONTRACT.md`](./api/NOTIFICATION_CONTRACT.md) | 모바일 로컬 알림과 향후 서버 push 책임 경계 |
+| [`api/NOTIFICATION_CONTRACT.md`](./api/NOTIFICATION_CONTRACT.md) | 모바일 로컬 알림과 서버 push 책임 경계 |
 | [`api/SHARING_CONTRACT.md`](./api/SHARING_CONTRACT.md) | 일정 공유 workspace 권한, scope, migration 설계 |
 
 실제 API 원본 계약은 실행 중인 백엔드의 `/v3/api-docs` OpenAPI JSON이다.

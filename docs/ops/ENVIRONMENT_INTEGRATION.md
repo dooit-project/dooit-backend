@@ -1,6 +1,6 @@
 # ToDoLab Environment Integration
 
-Last updated: 2026-08-23
+Last updated: 2026-08-27
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
@@ -8,7 +8,7 @@ Last updated: 2026-08-23
 
 ## 현재 운영 입력 상태
 
-2026-08-23 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. 실제 도메인을 구매해 연결하면 `.env`의 `TODOLAB_PUBLIC_API_URL`과 `TODOLAB_JWT_ISSUER`를 같은 HTTPS origin으로 맞춘 뒤 public smoke를 실행한다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. backend metadata는 `GET /api/v1/system/metadata`로 공개 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, production Web origin, offsite backup 경로다.
+2026-08-27 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke, 실제 도메인 public smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. 실제 도메인을 구매해 연결하면 `.env`의 `TODOLAB_PUBLIC_API_URL`과 `TODOLAB_JWT_ISSUER`를 같은 HTTPS origin으로 맞춘 뒤 public smoke를 실행한다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. backend metadata는 `GET /api/v1/system/metadata`로 공개 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, production Web origin, offsite backup 경로다.
 
 전원 정책은 아직 strict production 기준이 아니다. `TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`는 macOS 관리자 비밀번호 입력이 필요하므로 운영자 터미널에서 실행한다.
 
@@ -103,7 +103,7 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 2. Native 앱은 CORS 대상이 아니므로 API URL 접근성과 인증 흐름만 확인한다.
 3. Expo Web을 production에 붙이면 `OPTIONS /api/v1/auth/me` preflight와 `GET /api/v1/auth/me` 401/200 흐름을 확인한다.
 4. production은 문서 UI 비공개 상태를 먼저 확인한 뒤 모바일 smoke test를 진행한다.
-5. 확정된 Tailscale HTTPS URL만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.
+5. 확정된 production HTTPS URL 자체는 문서에 남기지 않고, 통과한 점검 범위만 `docs/project/ROADMAP.md`와 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 반영한다.
 
 반영 전후에는 실제 값을 출력하지 않는 설정 점검을 실행한다.
 
@@ -241,5 +241,5 @@ TODOLAB_REDIS_HEALTH_ENABLED=false
 - production에서는 `${TODOLAB_LOG_PATH}/todolab-backend.log`와 `${TODOLAB_LOG_PATH}/todolab-backend-error.log`를 파일로 남긴다.
 - archive 파일은 일 단위와 크기 단위로 끊고 `${TODOLAB_LOG_PATH}/archive/*.log.gz`로 압축한다.
 - Logback 기본 기능은 압축 시점을 롤오버 시점으로 처리한다. 정확히 3일 지난 파일만 지연 압축해야 하면 운영 환경의 `logrotate` 또는 cron 정책을 추가한다.
-- 서버 push 1차 provider는 `EXPO`이며, `TODOLAB_PUSH_ENABLED=false`가 기본값이다. 발송 스케줄러가 구현되기 전에는 enabled 값을 켜도 실제 발송하지 않는다.
+- 서버 push 1차 provider는 `EXPO`이며, `TODOLAB_PUSH_ENABLED=false`가 기본값이다. enabled 값을 켜면 개인 owner와 ACTIVE workspace 멤버의 알림 후보를 scheduler가 자동 발송한다.
 - Android/iOS push credentials는 EAS/Expo project에 보관하고, 백엔드는 Expo enhanced push security를 켠 경우에만 `TODOLAB_PUSH_ACCESS_TOKEN`을 환경변수로 받는다.
