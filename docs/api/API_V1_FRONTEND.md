@@ -1561,7 +1561,39 @@ Cursor 기준:
 - cursor Task가 더 이상 검색 조건에 포함되지 않으면 HTTP 400이다.
 - 중간에 Task가 생성/수정/삭제되어도 이전 페이지 마지막 항목 이후부터 이어서 조회하므로 offset shift 중복/누락을 피한다.
 
-## 9. System API
+## 9. Calendar Feed API
+
+외부 캘린더 앱에서 개인 일정을 읽기 전용으로 구독하기 위한 iCalendar feed다. feed URL은 bearer token 없이 접근 가능하므로 원본 token을 비밀번호처럼 취급한다.
+
+```http
+POST /api/v1/calendar-feed/token
+DELETE /api/v1/calendar-feed/token
+GET /api/v1/calendar-feeds/{token}.ics
+```
+
+규칙:
+
+- `POST /api/v1/calendar-feed/token`은 인증 필요. 기존 활성 feed token을 폐기하고 새 token을 발급한다.
+- `DELETE /api/v1/calendar-feed/token`은 인증 필요. 로그인 사용자의 활성 feed token을 모두 폐기한다.
+- `GET /api/v1/calendar-feeds/{token}.ics`는 인증 없이 `text/calendar`를 반환한다.
+- token 원본은 저장하지 않고 SHA-256 hash만 DB에 저장한다.
+- feed는 개인 scope의 날짜 있는 미완료 Task만 포함한다. workspace Task는 1차 범위에서 제외한다.
+- Task 설명, category, D-Day 제목, 멤버 이름, access token은 feed에 넣지 않는다.
+- 반복 Task는 feed 조회 범위의 occurrence를 materialize한 뒤 각 occurrence를 `VEVENT`로 반환한다.
+- token이 없거나 폐기됐으면 HTTP 404다.
+
+Response:
+
+```ts
+type CalendarFeedTokenResponse = {
+  token: string;
+  feedPath: string; // /api/v1/calendar-feeds/{token}.ics
+  createdAt: string;
+  active: boolean;
+};
+```
+
+## 10. System API
 
 ### 백엔드 metadata 조회
 
@@ -1583,13 +1615,13 @@ type AppMetadataResponse = {
 
 이 endpoint는 production build가 실제 연결한 backend commit/image를 확인하기 위한 읽기 전용 공개 API다. secret, private URL, 환경변수 원문은 반환하지 않는다.
 
-## 10. 아직 프론트에서 의존하면 안 되는 계약
+## 11. 아직 프론트에서 의존하면 안 되는 계약
 
 아래는 모바일 문서에 요구사항이 있으나 현재 백엔드 v1에는 없다.
 
 - 서버 push 수동 발송 API
 
-## 11. 모바일 전환 체크리스트
+## 12. 모바일 전환 체크리스트
 
 - [ ] 로그인 성공 시 `accessToken` 저장
 - [ ] 모든 v1 요청에 `Authorization: Bearer <accessToken>` 추가
@@ -1606,7 +1638,7 @@ type AppMetadataResponse = {
 - [ ] 403 응답 시 재로그인 반복 대신 권한 오류 표시
 - [ ] 서버 push 수동 발송 UI는 별도 API가 생기기 전까지 실제 저장 기능처럼 열지 않음
 
-## 12. Legacy API 정책
+## 13. Legacy API 정책
 
 - 모바일 신규 연동 기준은 `/api/v1/**`다.
 - legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다.

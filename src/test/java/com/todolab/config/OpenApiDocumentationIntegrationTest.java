@@ -162,13 +162,14 @@ class OpenApiDocumentationIntegrationTest {
     void documentationUi_v1ApiDocsAndTagOrder() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tags[0].name").value("v1 Auth"))
-                .andExpect(jsonPath("$.tags[1].name").value("v1 Task"))
-                .andExpect(jsonPath("$.tags[2].name").value("v1 Workspace D-Day"))
-                .andExpect(jsonPath("$.tags[3].name").value("v1 Workspace Invitation"))
-                .andExpect(jsonPath("$.tags[4].name").value("v1 D-Day"))
-                .andExpect(jsonPath("$.tags[5].name").value("v1 Workspace Task"))
+                .andExpect(jsonPath("$.tags[0].name").value("v1 Workspace Invitation"))
+                .andExpect(jsonPath("$.tags[1].name").value("v1 Workspace Task"))
+                .andExpect(jsonPath("$.tags[2].name").value("v1 Task Template"))
+                .andExpect(jsonPath("$.tags[3].name").value("v1 System"))
+                .andExpect(jsonPath("$.tags[4].name").value("v1 Workspace"))
+                .andExpect(jsonPath("$.tags[5].name").value("v1 Auth"))
                 .andExpect(jsonPath("$.tags[*].name").value(hasItem("v1 Workspace")))
+                .andExpect(jsonPath("$.tags[*].name").value(hasItem("v1 Calendar Feed")))
                 .andExpect(jsonPath("$.tags[*].name").value(hasItem("v1 System")))
                 .andExpect(jsonPath("$.security[0].bearerAuth").exists());
 

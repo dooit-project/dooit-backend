@@ -54,6 +54,7 @@ public class OpenApiConfig {
                         new Tag().name("v1 Workspace Task").description("공유 workspace Task API"),
                         new Tag().name("v1 Workspace D-Day").description("공유 workspace D-Day API"),
                         new Tag().name("v1 D-Day").description("모바일 D-Day 목표 API"),
+                        new Tag().name("v1 Calendar Feed").description("개인 iCalendar 읽기 전용 feed API"),
                         new Tag().name("v1 System").description("운영 확인용 공개 metadata API")
                 ))
                 .components(new Components()

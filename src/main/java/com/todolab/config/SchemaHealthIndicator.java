@@ -17,6 +17,7 @@ public class SchemaHealthIndicator implements HealthIndicator {
 
     private static final List<String> REQUIRED_TABLES = List.of(
             "APP_USER",
+            "CALENDAR_FEED_TOKEN",
             "DDAY_GOAL",
             "IDEMPOTENCY_RECORD",
             "PASSWORD_RESET_TOKEN",

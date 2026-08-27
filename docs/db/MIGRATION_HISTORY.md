@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-08-23
+Last updated: 2026-08-27
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -16,6 +16,7 @@ Last updated: 2026-08-23
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | iCalendar feed token release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | Task 알림 preference release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 등록 계정 refresh/logout release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | Idempotency-Key release 전 적용 필요 |

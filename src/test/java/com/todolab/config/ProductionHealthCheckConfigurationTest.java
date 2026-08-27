@@ -65,6 +65,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(application).contains("readiness:");
         assertThat(application).contains("include: readinessState,db,schema");
         assertThat(Files.readString(Path.of("src/main/java/com/todolab/config/SchemaHealthIndicator.java")))
+                .contains("CALENDAR_FEED_TOKEN")
                 .contains("PASSWORD_RESET_TOKEN")
                 .contains("IDEMPOTENCY_RECORD");
     }

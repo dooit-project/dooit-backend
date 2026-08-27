@@ -167,6 +167,17 @@ Last updated: 2026-08-27
 - [x] 반복 여부 필터와 반복 매칭 ranking을 추가한다.
 - [x] 모바일에서 빈 검색 결과일 때 추천 query/category를 반환한다.
 
+### P1. 외부 캘린더 읽기 전용 feed
+
+목표: Google Calendar, Apple Calendar 같은 외부 캘린더 앱에서 개인 ToDoLab 일정을 읽기 전용으로 구독할 수 있게 한다.
+
+- [x] 개인 iCalendar feed token 발급/폐기 API를 추가한다.
+- [x] token 원본은 저장하지 않고 hash만 저장한다.
+- [x] 인증 없는 `GET /api/v1/calendar-feeds/{token}.ics` feed endpoint를 추가한다.
+- [x] 개인 scope의 날짜 있는 미완료 Task만 feed에 포함한다.
+- [x] Task 설명, category, D-Day 제목, 멤버 이름, access token은 feed에 넣지 않는다.
+- [ ] workspace calendar feed는 멤버별 공개 범위 정책이 확정된 뒤 별도 구현한다.
+
 ### P2. 장기 게스트 복구
 
 목표: 31일 이상 미접속한 게스트의 데이터 복구가 제품 요구로 확정될 때 별도 인증 수단으로 해결한다.

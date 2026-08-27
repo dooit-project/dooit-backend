@@ -98,6 +98,7 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("검색 결과에 `matchedFields`와 `highlight`를 반환한다");
         assertThat(roadmap).contains("반복 여부 필터와 반복 매칭 ranking을 추가한다");
         assertThat(roadmap).contains("모바일에서 빈 검색 결과일 때 추천 query/category를 반환한다");
+        assertThat(roadmap).contains("### P1. 외부 캘린더 읽기 전용 feed");
         assertThat(roadmap).contains("### P2. 장기 게스트 복구");
         assertThat(roadmap).contains("POST /api/v1/tasks/quick-capture");
         assertThat(roadmap).contains("SHARED_WORKSPACE");
