@@ -16,7 +16,7 @@ Last updated: 2026-08-27
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
-| 미적용 | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | iCalendar feed token release 전 적용 필요 |
+| 미적용 | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | 개인/workspace iCalendar feed token release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | Task 알림 preference release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 등록 계정 refresh/logout release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | Idempotency-Key release 전 적용 필요 |

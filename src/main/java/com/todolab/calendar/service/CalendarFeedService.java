@@ -9,6 +9,7 @@ import com.todolab.task.domain.Task;
 import com.todolab.task.repository.TaskRepository;
 import com.todolab.task.service.RecurrenceOccurrenceMaterializer;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,7 @@ public class CalendarFeedService {
     public CalendarFeedTokenResponse issueToken(User owner) {
         Long ownerId = ownerId(owner);
         LocalDateTime now = LocalDateTime.now(Constant.ZONE);
-        calendarFeedTokenRepository.findByOwnerIdAndActiveTrue(ownerId)
+        calendarFeedTokenRepository.findByOwnerIdAndScopeAndActiveTrue(ownerId, ResourceScope.PERSONAL)
                 .forEach(token -> token.revoke(now));
 
         String rawToken = generateToken();
@@ -54,9 +55,37 @@ public class CalendarFeedService {
     }
 
     @Transactional
+    public CalendarFeedTokenResponse issueWorkspaceToken(User member, SharedWorkspace workspace) {
+        Long memberId = ownerId(member);
+        Long workspaceId = workspaceId(workspace);
+        LocalDateTime now = LocalDateTime.now(Constant.ZONE);
+        calendarFeedTokenRepository.findByOwnerIdAndWorkspaceIdAndScopeAndActiveTrue(
+                        memberId,
+                        workspaceId,
+                        ResourceScope.WORKSPACE
+                )
+                .forEach(token -> token.revoke(now));
+
+        String rawToken = generateToken();
+        CalendarFeedToken token = calendarFeedTokenRepository.save(new CalendarFeedToken(member, workspace, hash(rawToken)));
+        return CalendarFeedTokenResponse.issued(token, rawToken);
+    }
+
+    @Transactional
     public void revokeTokens(User owner) {
         LocalDateTime now = LocalDateTime.now(Constant.ZONE);
-        calendarFeedTokenRepository.findByOwnerIdAndActiveTrue(ownerId(owner))
+        calendarFeedTokenRepository.findByOwnerIdAndScopeAndActiveTrue(ownerId(owner), ResourceScope.PERSONAL)
+                .forEach(token -> token.revoke(now));
+    }
+
+    @Transactional
+    public void revokeWorkspaceTokens(User member, SharedWorkspace workspace) {
+        LocalDateTime now = LocalDateTime.now(Constant.ZONE);
+        calendarFeedTokenRepository.findByOwnerIdAndWorkspaceIdAndScopeAndActiveTrue(
+                        ownerId(member),
+                        workspaceId(workspace),
+                        ResourceScope.WORKSPACE
+                )
                 .forEach(token -> token.revoke(now));
     }
 
@@ -70,7 +99,11 @@ public class CalendarFeedService {
             return Optional.empty();
         }
 
-        User owner = feedToken.get().getOwner();
+        CalendarFeedToken token = feedToken.get();
+        if (token.getScope() == ResourceScope.WORKSPACE) {
+            return Optional.of(renderWorkspaceFeed(token));
+        }
+        User owner = token.getOwner();
         LocalDate today = LocalDate.now(ZoneId.of(owner.getTimeZone()));
         LocalDate from = today.minusMonths(FEED_MONTHS_BEFORE).withDayOfMonth(1);
         LocalDate toExclusive = today.plusMonths(FEED_MONTHS_AFTER).plusDays(1);
@@ -90,18 +123,43 @@ public class CalendarFeedService {
                 fromService,
                 toService
         );
-        return Optional.of(render(owner, tasks));
+        return Optional.of(render(owner.getTimeZone(), "ToDoLab", tasks));
     }
 
-    private String render(User owner, List<Task> tasks) {
+    private String renderWorkspaceFeed(CalendarFeedToken token) {
+        User owner = token.getOwner();
+        SharedWorkspace workspace = token.getWorkspace();
+        LocalDate today = LocalDate.now(ZoneId.of(owner.getTimeZone()));
+        LocalDate from = today.minusMonths(FEED_MONTHS_BEFORE).withDayOfMonth(1);
+        LocalDate toExclusive = today.plusMonths(FEED_MONTHS_AFTER).plusDays(1);
+        LocalDateTime fromService = from.atStartOfDay()
+                .atZone(ZoneId.of(owner.getTimeZone()))
+                .withZoneSameInstant(Constant.ZONE)
+                .toLocalDateTime();
+        LocalDateTime toService = toExclusive.atStartOfDay()
+                .atZone(ZoneId.of(owner.getTimeZone()))
+                .withZoneSameInstant(Constant.ZONE)
+                .toLocalDateTime();
+
+        recurrenceOccurrenceMaterializer.materializeForWorkspace(workspace.getId(), fromService.toLocalDate(), toService.toLocalDate());
+        List<Task> tasks = taskRepository.findWorkspaceCalendarFeedTasks(
+                workspace.getId(),
+                ResourceScope.WORKSPACE,
+                fromService,
+                toService
+        );
+        return render(owner.getTimeZone(), "ToDoLab - " + workspace.getName(), tasks);
+    }
+
+    private String render(String timeZone, String calendarName, List<Task> tasks) {
         StringBuilder builder = new StringBuilder();
         builder.append("BEGIN:VCALENDAR\r\n");
         builder.append("VERSION:2.0\r\n");
         builder.append("PRODID:-//ToDoLab//Calendar Feed//KO\r\n");
         builder.append("CALSCALE:GREGORIAN\r\n");
         builder.append("METHOD:PUBLISH\r\n");
-        builder.append("X-WR-CALNAME:").append(escape("ToDoLab")).append("\r\n");
-        builder.append("X-WR-TIMEZONE:").append(escape(owner.getTimeZone())).append("\r\n");
+        builder.append("X-WR-CALNAME:").append(escape(calendarName)).append("\r\n");
+        builder.append("X-WR-TIMEZONE:").append(escape(timeZone)).append("\r\n");
         for (Task task : tasks) {
             appendEvent(builder, task);
         }
@@ -180,5 +238,12 @@ public class CalendarFeedService {
             throw new IllegalArgumentException("owner는 영속화된 사용자여야 합니다.");
         }
         return owner.getId();
+    }
+
+    private Long workspaceId(SharedWorkspace workspace) {
+        if (workspace == null || workspace.getId() == null) {
+            throw new IllegalArgumentException("workspace는 영속화된 workspace여야 합니다.");
+        }
+        return workspace.getId();
     }
 }

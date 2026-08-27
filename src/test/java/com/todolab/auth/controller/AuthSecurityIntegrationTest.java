@@ -7,6 +7,7 @@ import com.todolab.auth.dto.RefreshRequest;
 import com.todolab.auth.dto.LogoutRequest;
 import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.auth.service.JwtTokenService;
+import com.todolab.calendar.repository.CalendarFeedTokenRepository;
 import com.todolab.common.api.ErrorCode;
 import com.todolab.dday.domain.DdayGoal;
 import com.todolab.dday.repository.DdayGoalRepository;
@@ -88,17 +89,21 @@ class AuthSecurityIntegrationTest {
     @Autowired
     RefreshTokenSessionRepository refreshTokenSessionRepository;
 
+    @Autowired
+    CalendarFeedTokenRepository calendarFeedTokenRepository;
+
     @MockitoBean
     MailService mailService;
 
     @BeforeEach
     void setUp() {
+        calendarFeedTokenRepository.deleteAll();
         workspaceMemberRepository.deleteAll();
-        sharedWorkspaceRepository.deleteAll();
         taskTemplateRepository.deleteAll();
         taskRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();
         ddayGoalRepository.deleteAll();
+        sharedWorkspaceRepository.deleteAll();
         refreshTokenSessionRepository.deleteAll();
         userRepository.deleteAll();
     }

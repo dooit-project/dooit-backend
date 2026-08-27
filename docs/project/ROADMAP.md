@@ -176,7 +176,7 @@ Last updated: 2026-08-27
 - [x] 인증 없는 `GET /api/v1/calendar-feeds/{token}.ics` feed endpoint를 추가한다.
 - [x] 개인 scope의 날짜 있는 미완료 Task만 feed에 포함한다.
 - [x] Task 설명, category, D-Day 제목, 멤버 이름, access token은 feed에 넣지 않는다.
-- [ ] workspace calendar feed는 멤버별 공개 범위 정책이 확정된 뒤 별도 구현한다.
+- [x] workspace calendar feed는 멤버별 공개 범위 정책이 확정된 뒤 별도 구현한다.
 
 ### P2. 장기 게스트 복구
 

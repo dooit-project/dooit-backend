@@ -76,6 +76,26 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
             @Param("toExclusive") LocalDateTime toExclusive
     );
 
+    @EntityGraph(attributePaths = {"ddayGoal", "recurrenceSeries"})
+    @Query("""
+            select task
+            from Task task
+            where task.workspace.id = :workspaceId
+              and task.scope = :scope
+              and task.startAt is not null
+              and task.completedAt is null
+              and (task.recurrenceException is null or task.recurrenceException <> com.todolab.task.domain.RecurrenceExceptionType.SKIPPED)
+              and task.startAt < :toExclusive
+              and (task.endAt is null or task.endAt > :fromInclusive)
+            order by task.startAt asc, task.id asc
+            """)
+    List<Task> findWorkspaceCalendarFeedTasks(
+            @Param("workspaceId") Long workspaceId,
+            @Param("scope") ResourceScope scope,
+            @Param("fromInclusive") LocalDateTime fromInclusive,
+            @Param("toExclusive") LocalDateTime toExclusive
+    );
+
     default boolean existsByIdAndOwnerId(Long id, Long ownerId) {
         return existsByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
     }

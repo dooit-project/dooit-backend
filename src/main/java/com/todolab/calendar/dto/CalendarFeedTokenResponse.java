@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-@Schema(description = "개인 iCalendar feed token 응답")
+@Schema(description = "iCalendar feed token 응답")
 public record CalendarFeedTokenResponse(
         @Schema(description = "이번 응답에서만 확인 가능한 원본 feed token", example = "url-safe-token")
         String token,

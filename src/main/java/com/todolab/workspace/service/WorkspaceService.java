@@ -1,5 +1,6 @@
 package com.todolab.workspace.service;
 
+import com.todolab.calendar.repository.CalendarFeedTokenRepository;
 import com.todolab.common.domain.ResourceScope;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.task.repository.RecurrenceSeriesRepository;
@@ -40,6 +41,7 @@ public class WorkspaceService {
     private final TaskRepository taskRepository;
     private final DdayGoalRepository ddayGoalRepository;
     private final RecurrenceSeriesRepository recurrenceSeriesRepository;
+    private final CalendarFeedTokenRepository calendarFeedTokenRepository;
 
     @Transactional
     public WorkspaceResponse createForOwner(WorkspaceRequest request, User owner) {
@@ -117,6 +119,7 @@ public class WorkspaceService {
                 ResourceScope.WORKSPACE
         ));
         recurrenceSeriesRepository.deleteAll(recurrenceSeriesRepository.findByWorkspaceId(id));
+        calendarFeedTokenRepository.deleteAll(calendarFeedTokenRepository.findByWorkspaceIdAndScope(id, ResourceScope.WORKSPACE));
         workspaceMemberRepository.deleteAll(workspaceMemberRepository.findByWorkspaceIdOrderByIdAsc(id));
         sharedWorkspaceRepository.delete(workspace);
     }
@@ -210,6 +213,7 @@ public class WorkspaceService {
                     ensureAnotherActiveOwner(workspaceId, target.getId());
                 }
                 target.remove();
+                revokeWorkspaceCalendarFeedTokens(workspaceId, target.getUser().getId());
             } else if (request.status() == WorkspaceMemberStatus.ACTIVE) {
                 target.activate();
             } else {
@@ -234,6 +238,7 @@ public class WorkspaceService {
             ensureAnotherActiveOwner(workspaceId, target.getId());
         }
         target.remove();
+        revokeWorkspaceCalendarFeedTokens(workspaceId, target.getUser().getId());
     }
 
     private SharedWorkspace findWorkspace(Long id) {
@@ -283,6 +288,15 @@ public class WorkspaceService {
         if (user.getAccountType() == AccountType.GUEST) {
             throw new AccessDeniedException("게스트 계정은 workspace 기능을 사용할 수 없습니다.");
         }
+    }
+
+    private void revokeWorkspaceCalendarFeedTokens(Long workspaceId, Long userId) {
+        calendarFeedTokenRepository.findByOwnerIdAndWorkspaceIdAndScopeAndActiveTrue(
+                        userId,
+                        workspaceId,
+                        ResourceScope.WORKSPACE
+                )
+                .forEach(token -> token.revoke(null));
     }
 
     private String normalizeEmail(String email) {

@@ -2,6 +2,7 @@ package com.todolab.workspace.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import com.todolab.auth.service.JwtTokenService;
+import com.todolab.calendar.repository.CalendarFeedTokenRepository;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.dday.dto.DdayGoalRequest;
 import com.todolab.mail.MailService;
@@ -77,6 +78,9 @@ class WorkspaceV1IntegrationTest {
     @Autowired
     RecurrenceSeriesRepository recurrenceSeriesRepository;
 
+    @Autowired
+    CalendarFeedTokenRepository calendarFeedTokenRepository;
+
     @MockitoBean
     MailService mailService;
 
@@ -86,6 +90,7 @@ class WorkspaceV1IntegrationTest {
         taskRepository.deleteAll();
         ddayGoalRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();
+        calendarFeedTokenRepository.deleteAll();
         sharedWorkspaceRepository.deleteAll();
     }
 

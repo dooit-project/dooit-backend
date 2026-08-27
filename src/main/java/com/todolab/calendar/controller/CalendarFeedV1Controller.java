@@ -5,6 +5,8 @@ import com.todolab.calendar.dto.CalendarFeedTokenResponse;
 import com.todolab.calendar.service.CalendarFeedService;
 import com.todolab.common.api.ApiResponse;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
+import com.todolab.workspace.service.WorkspaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,13 +29,14 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "v1 Calendar Feed", description = "개인 iCalendar 읽기 전용 feed API")
+@Tag(name = "v1 Calendar Feed", description = "iCalendar 읽기 전용 feed API")
 public class CalendarFeedV1Controller {
 
     private static final MediaType TEXT_CALENDAR = new MediaType("text", "calendar", StandardCharsets.UTF_8);
 
     private final CalendarFeedService calendarFeedService;
     private final CurrentUserService currentUserService;
+    private final WorkspaceService workspaceService;
 
     @Operation(summary = "개인 calendar feed token 발급", description = "기존 활성 token을 폐기하고 새 iCalendar feed token을 발급합니다.")
     @SecurityRequirement(name = "bearerAuth")
@@ -49,6 +52,31 @@ public class CalendarFeedV1Controller {
     public ResponseEntity<ApiResponse<Void>> revokeToken(@AuthenticationPrincipal Jwt jwt) {
         User owner = currentUserService.requireUser(jwt);
         calendarFeedService.revokeTokens(owner);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "Workspace calendar feed token 발급", description = "ACTIVE 멤버가 해당 workspace 읽기 전용 iCalendar feed token을 발급합니다. 기존 활성 workspace feed token은 폐기됩니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/api/v1/workspaces/{workspaceId}/calendar-feed/token")
+    public ResponseEntity<ApiResponse<CalendarFeedTokenResponse>> issueWorkspaceToken(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId
+    ) {
+        User member = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireReadableWorkspace(workspaceId, member);
+        return ResponseEntity.ok(ApiResponse.success(calendarFeedService.issueWorkspaceToken(member, workspace)));
+    }
+
+    @Operation(summary = "Workspace calendar feed token 폐기", description = "ACTIVE 멤버가 자신이 발급한 해당 workspace iCalendar feed token을 모두 폐기합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @DeleteMapping("/api/v1/workspaces/{workspaceId}/calendar-feed/token")
+    public ResponseEntity<ApiResponse<Void>> revokeWorkspaceToken(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long workspaceId
+    ) {
+        User member = currentUserService.requireUser(jwt);
+        SharedWorkspace workspace = workspaceService.requireReadableWorkspace(workspaceId, member);
+        calendarFeedService.revokeWorkspaceTokens(member, workspace);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

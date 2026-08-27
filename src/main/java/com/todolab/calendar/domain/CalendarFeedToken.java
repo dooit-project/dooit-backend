@@ -1,9 +1,13 @@
 package com.todolab.calendar.domain;
 
 import com.todolab.Constant;
+import com.todolab.common.domain.ResourceScope;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,6 +43,14 @@ public class CalendarFeedToken {
     @JoinColumn(name = "`OWNER_USER_ID`", nullable = false)
     private User owner;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`SCOPE`", nullable = false, length = 30)
+    private ResourceScope scope;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`WORKSPACE_ID`")
+    private SharedWorkspace workspace;
+
     @Column(name = "`TOKEN_HASH`", nullable = false, length = 64)
     private String tokenHash;
 
@@ -59,6 +71,25 @@ public class CalendarFeedToken {
             throw new IllegalArgumentException("tokenHash는 필수입니다.");
         }
         this.owner = owner;
+        this.scope = ResourceScope.PERSONAL;
+        this.workspace = null;
+        this.tokenHash = tokenHash;
+        this.active = true;
+    }
+
+    public CalendarFeedToken(User owner, SharedWorkspace workspace, String tokenHash) {
+        if (owner == null) {
+            throw new IllegalArgumentException("owner는 필수입니다.");
+        }
+        if (workspace == null) {
+            throw new IllegalArgumentException("workspace는 필수입니다.");
+        }
+        if (tokenHash == null || tokenHash.isBlank()) {
+            throw new IllegalArgumentException("tokenHash는 필수입니다.");
+        }
+        this.owner = owner;
+        this.scope = ResourceScope.WORKSPACE;
+        this.workspace = workspace;
         this.tokenHash = tokenHash;
         this.active = true;
     }

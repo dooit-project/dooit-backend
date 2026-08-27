@@ -1,5 +1,6 @@
 package com.todolab.auth.service;
 
+import com.todolab.calendar.repository.CalendarFeedTokenRepository;
 import com.todolab.dday.domain.DdayGoal;
 import com.todolab.dday.repository.DdayGoalRepository;
 import com.todolab.auth.repository.RefreshTokenSessionRepository;
@@ -74,6 +75,9 @@ class GuestAccountCleanupServiceIntegrationTest {
     @Autowired
     RefreshTokenSessionRepository refreshTokenSessionRepository;
 
+    @Autowired
+    CalendarFeedTokenRepository calendarFeedTokenRepository;
+
     @MockitoBean
     MailService mailService;
 
@@ -81,12 +85,13 @@ class GuestAccountCleanupServiceIntegrationTest {
     void setUp() {
         pushNotificationHistoryRepository.deleteAll();
         pushDeviceTokenRepository.deleteAll();
+        calendarFeedTokenRepository.deleteAll();
         workspaceMemberRepository.deleteAll();
-        sharedWorkspaceRepository.deleteAll();
         taskTemplateRepository.deleteAll();
         taskRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();
         ddayGoalRepository.deleteAll();
+        sharedWorkspaceRepository.deleteAll();
         refreshTokenSessionRepository.deleteAll();
         userRepository.deleteAll();
     }

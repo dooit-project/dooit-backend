@@ -1568,6 +1568,8 @@ Cursor 기준:
 ```http
 POST /api/v1/calendar-feed/token
 DELETE /api/v1/calendar-feed/token
+POST /api/v1/workspaces/{workspaceId}/calendar-feed/token
+DELETE /api/v1/workspaces/{workspaceId}/calendar-feed/token
 GET /api/v1/calendar-feeds/{token}.ics
 ```
 
@@ -1575,9 +1577,13 @@ GET /api/v1/calendar-feeds/{token}.ics
 
 - `POST /api/v1/calendar-feed/token`은 인증 필요. 기존 활성 feed token을 폐기하고 새 token을 발급한다.
 - `DELETE /api/v1/calendar-feed/token`은 인증 필요. 로그인 사용자의 활성 feed token을 모두 폐기한다.
+- `POST /api/v1/workspaces/{workspaceId}/calendar-feed/token`은 인증 필요. ACTIVE 멤버가 자신이 속한 workspace의 feed token을 발급한다. 같은 멤버가 같은 workspace에 발급한 기존 활성 token은 폐기된다.
+- `DELETE /api/v1/workspaces/{workspaceId}/calendar-feed/token`은 인증 필요. ACTIVE 멤버가 자신이 발급한 해당 workspace feed token을 모두 폐기한다.
+- workspace 멤버가 REMOVED 상태가 되면 해당 멤버가 발급한 workspace feed token은 폐기된다.
 - `GET /api/v1/calendar-feeds/{token}.ics`는 인증 없이 `text/calendar`를 반환한다.
 - token 원본은 저장하지 않고 SHA-256 hash만 DB에 저장한다.
-- feed는 개인 scope의 날짜 있는 미완료 Task만 포함한다. workspace Task는 1차 범위에서 제외한다.
+- 개인 feed는 개인 scope의 날짜 있는 미완료 Task만 포함한다.
+- workspace feed는 해당 workspace scope의 날짜 있는 미완료 Task만 포함한다. 발급된 URL은 bearer token 없이 접근 가능하므로 workspace 멤버가 제거되거나 URL이 노출되면 token을 폐기해야 한다.
 - Task 설명, category, D-Day 제목, 멤버 이름, access token은 feed에 넣지 않는다.
 - 반복 Task는 feed 조회 범위의 occurrence를 materialize한 뒤 각 occurrence를 `VEVENT`로 반환한다.
 - token이 없거나 폐기됐으면 HTTP 404다.
