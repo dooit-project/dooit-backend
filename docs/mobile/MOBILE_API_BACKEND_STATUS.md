@@ -23,7 +23,7 @@ Last audited: 2026-08-28
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
 | Notifications | [x] | 로컬 알림 후보, push token, 발송 이력, Expo client, 개인/workspace scheduler 자동 발송 구현. 운영 credential 적용 후 실수신 smoke 필요 |
 | Production Android | [ ] | public HTTPS 또는 Tailscale HTTPS URL로 Android 실제 기기 smoke 필요 |
-| Production Web | [ ] | 사용 여부와 실제 origin 확정 전 |
+| Production Web | [x] | 현재 production Expo Web은 배포하지 않으므로 `TODOLAB_ALLOWED_ORIGINS`는 비워 둠 |
 
 ## 1. 실제 사용 전 최우선
 
@@ -248,7 +248,7 @@ Last audited: 2026-08-28
 - [x] Tailscale HTTPS recovery check: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`
 - [x] public HTTPS smoke 스크립트: `TODOLAB_PUBLIC_API_URL=https://api.example.com ./scripts/check-public-production.sh`
 - [ ] Android 실제 기기 production smoke: public HTTPS 또는 Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
-- [ ] Web production origin: 필요 시 `TODOLAB_ALLOWED_ORIGINS` 반영 후 preflight 확인
+- [x] Web production origin: 현재 production Expo Web 미사용. `TODOLAB_ALLOWED_ORIGINS`는 비워 두며 preflight는 해당 없음
 
 ## 9. 추천 구현 순서
 

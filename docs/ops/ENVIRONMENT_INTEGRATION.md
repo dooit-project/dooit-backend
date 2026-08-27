@@ -1,6 +1,6 @@
 # ToDoLab Environment Integration
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
@@ -8,7 +8,7 @@ Last updated: 2026-08-27
 
 ## 현재 운영 입력 상태
 
-2026-08-27 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke, 실제 도메인 public smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. 실제 도메인을 구매해 연결하면 `.env`의 `TODOLAB_PUBLIC_API_URL`과 `TODOLAB_JWT_ISSUER`를 같은 HTTPS origin으로 맞춘 뒤 public smoke를 실행한다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. backend metadata는 `GET /api/v1/system/metadata`로 공개 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, production Web origin, offsite backup 경로다.
+2026-08-28 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke, 실제 도메인 public smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. 실제 도메인을 구매해 연결하면 `.env`의 `TODOLAB_PUBLIC_API_URL`과 `TODOLAB_JWT_ISSUER`를 같은 HTTPS origin으로 맞춘 뒤 public smoke를 실행한다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. backend metadata는 `GET /api/v1/system/metadata`로 공개 확인한다. production Web은 현재 배포하지 않으므로 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과와 offsite backup 경로다.
 
 전원 정책은 아직 strict production 기준이 아니다. `TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`는 macOS 관리자 비밀번호 입력이 필요하므로 운영자 터미널에서 실행한다.
 
@@ -41,7 +41,7 @@ Last updated: 2026-08-27
 | local, 실제 기기 | CORS origin 없음 | 확인 필요 | Expo Go/native 요청은 브라우저 CORS 대상이 아님 |
 | staging | 사용하지 않음 | 해당 없음 | 이 PC 단일 production 운영에서는 별도 staging을 두지 않는다. |
 | production, native app | CORS origin 없음 | 확인 필요 | native 요청은 브라우저 CORS 대상이 아님 |
-| production, Expo Web | 미정 | 확인 필요 | Expo Web을 production에 연결할 때만 `TODOLAB_ALLOWED_ORIGINS`에 추가 |
+| production, Expo Web | 사용하지 않음 | 해당 없음 | production Web 배포 전까지 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다 |
 
 허용 request header:
 
@@ -70,7 +70,7 @@ Last updated: 2026-08-27
 ```bash
 TODOLAB_PUBLIC_API_URL=https://api.example.com
 TODOLAB_JWT_ISSUER=https://api.example.com
-TODOLAB_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
+TODOLAB_ALLOWED_ORIGINS=
 TODOLAB_DOCS_PUBLIC_ENABLED=false
 ```
 
@@ -81,7 +81,8 @@ TODOLAB_DOCS_PUBLIC_ENABLED=false
 - secret 값은 문서에 기록하지 않는다.
 - origin을 추가한 뒤 `Authorization`, `Content-Type`, `Idempotency-Key` header가 포함된 preflight를 확인한다.
 - iOS Simulator, Android Emulator, 실제 기기 native 앱 요청은 CORS 대상이 아니므로 API URL 접근성만 확인한다.
-- Expo Web은 브라우저 CORS 대상이므로 실제 접속 origin을 `TODOLAB_ALLOWED_ORIGINS`에 추가한다.
+- 현재 production Expo Web은 배포하지 않으므로 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다.
+- Expo Web을 나중에 production에 붙이면 브라우저 CORS 대상이므로 실제 접속 origin만 `TODOLAB_ALLOWED_ORIGINS`에 추가한다.
 - production에서는 `TODOLAB_DOCS_PUBLIC_ENABLED=false`를 기본값으로 유지한다.
 
 ## 4. 운영 환경 확정 입력값
@@ -91,10 +92,10 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 | 항목 | staging | production | 검증 기준 |
 | --- | --- | --- | --- |
 | API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, 외부 공개용 HTTPS URL은 `.env`의 `TODOLAB_PUBLIC_API_URL` 또는 `TODOLAB_TAILSCALE_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
-| Web origin | 사용하지 않음 | 미정 | `Authorization`, `Content-Type`, `Idempotency-Key` header 포함 preflight 성공 |
+| Web origin | 사용하지 않음 | 사용하지 않음 | production Web을 배포하기 전까지 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다 |
 | Native 앱 API 접근 | 사용하지 않음 | 공개 HTTPS URL 확정 필요 | Android 실제 기기에서 HTTPS API 접근 가능 |
 | 문서 UI 공개 여부 | 사용하지 않음 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 비공개 정책 확인 |
-| CORS 환경변수 | 사용하지 않음 | `TODOLAB_ALLOWED_ORIGINS` | Expo Web 사용 시 쉼표 구분 origin 목록 적용 |
+| CORS 환경변수 | 사용하지 않음 | 빈 `TODOLAB_ALLOWED_ORIGINS` | Expo Web 사용 시에만 쉼표 구분 origin 목록 적용 |
 | backend metadata | 사용하지 않음 | `GET /api/v1/system/metadata` | `commitSha`, `imageTag`, `version` 확인 |
 
 확정 후 반영 순서:

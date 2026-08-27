@@ -40,7 +40,7 @@ Last updated: 2026-08-28
 - [x] staging 미운영, production host 내부 URL, Tailscale/public HTTPS URL 환경변수 기준, readiness 공개 접근을 문서화한다.
 - [x] backend commit/image metadata endpoint를 구현한다.
 - [ ] Android 실제 기기에서 production HTTPS URL을 smoke한다.
-- [ ] production Web origin 사용 여부와 실제 origin을 확정한다.
+- [x] production Web origin 사용 여부와 실제 origin을 확정한다.
 - [x] 비밀번호 재설정 request/verify/confirm API, reset link 형식, TTL, rate limit, error code, session 처리 정책을 구현한다.
 - [x] 운영 Web CORS allow header와 인증/API 응답 `Cache-Control: no-store` 정책을 확정한다.
 
@@ -263,15 +263,15 @@ Last updated: 2026-08-28
 
 목표: Expo Web을 production API에 연결할 필요가 있는지 결정하고, 필요할 때만 CORS origin을 연다.
 
-- [ ] Expo Web production 배포 여부를 결정한다.
-- [ ] 사용하지 않으면 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다.
-- [ ] 사용하면 실제 origin만 `TODOLAB_ALLOWED_ORIGINS`에 추가한다.
-- [ ] `TODOLAB_EXPO_WEB_ORIGIN=... ./scripts/check-tailscale-production.sh`로 preflight를 확인한다.
+- [x] Expo Web production 배포 여부를 결정한다.
+- [x] 사용하지 않으면 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다.
+- [x] 추후 사용하면 실제 origin만 `TODOLAB_ALLOWED_ORIGINS`에 추가하는 정책을 확정한다.
+- [x] production Web 미사용 중에는 `TODOLAB_EXPO_WEB_ORIGIN=... ./scripts/check-tailscale-production.sh` preflight를 생략한다.
 
 증적:
 
-- `TODOLAB_ALLOWED_ORIGINS` 설정 여부
-- `OPTIONS /api/v1/auth/me` preflight 결과
+- `TODOLAB_ALLOWED_ORIGINS` 설정 여부: production Web 미사용이므로 비움
+- `OPTIONS /api/v1/auth/me` preflight 결과: production Web 미사용 동안 해당 없음
 
 ### P2. 제품 정책 후속 결정
 
