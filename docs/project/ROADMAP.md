@@ -182,8 +182,8 @@ Last updated: 2026-08-28
 
 목표: 31일 이상 미접속한 게스트의 데이터 복구가 제품 요구로 확정될 때 별도 인증 수단으로 해결한다.
 
-- [ ] refresh token, device-bound proof, recovery code 중 하나를 선택한다.
-- [ ] token 탈취 시 피해 범위와 회수 정책을 정의한다.
+- [x] refresh token, device-bound proof, recovery code 중 하나를 선택한다.
+- [x] token 탈취 시 피해 범위와 회수 정책을 정의한다.
 - [x] 이미 cleanup된 guest의 오류 코드와 UX 문구를 정한다.
 - [x] 새 guest id 발급을 복구 정책으로 사용하지 않는 원칙을 유지한다.
 
@@ -277,7 +277,7 @@ Last updated: 2026-08-28
 
 - [ ] 모바일 연결 완료 화면에서 병합 결과 count를 구체적으로 노출할지 결정한다.
 - [ ] 게스트가 31일 이상 미접속한 뒤 기존 데이터를 복구해야 하는지 결정한다.
-- [ ] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
+- [x] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
 - [ ] 서버 push 운영 credential을 실제 production에 적용할지 결정한다.
 
 ## 4. 현재 완료된 기준

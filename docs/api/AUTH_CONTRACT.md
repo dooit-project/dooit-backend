@@ -103,6 +103,15 @@ JWT claim:
 - IP나 단말 식별 정보로 만료 게스트를 복구하지 않는다.
 - 정리 결과 count는 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
 
+장기 복구 수단:
+
+- 게스트가 31일 이상 미접속한 뒤에도 기존 데이터를 복구해야 하는 제품 요구가 확정되면 `recovery code` 방식만 사용한다.
+- recovery code는 만료 전 게스트가 명시적으로 발급받은 1회성 비밀값으로 한정한다.
+- refresh token은 세션 연장/회전 수단이므로 cleanup 이후 데이터 복구 수단으로 사용하지 않는다.
+- device-bound proof는 앱 재설치, 단말 교체, OS 백업 복원에서 사용자 복구 실패 가능성이 커 1차 복구 수단에서 제외한다.
+- recovery code가 없고 cleanup이 완료된 게스트 token은 401/`11010`으로 종료하며, 새 guest id를 기존 데이터 복구에 재사용하지 않는다.
+- recovery code 탈취 시 cleanup 전 guest owner 데이터 전체가 이전될 수 있으므로, 실제 구현 시 code 원본 미저장, 1회 사용, 짧은 만료, 폐기 API, rate limit, 시도 로그를 함께 설계한다.
+
 ## 게스트 생성 Rate Limit
 
 운영 기본값:

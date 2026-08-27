@@ -184,6 +184,15 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 - 기본 cron은 `0 30 3 * * *`다.
 - IP나 단말 식별 정보만으로 게스트 계정을 복구하지 않는다.
 
+장기 복구 정책:
+
+- 31일 이상 미접속한 게스트 데이터 복구가 제품 요구로 확정되면 별도 `recovery code`를 사용한다.
+- recovery code는 게스트가 만료되기 전에 명시적으로 발급받은 1회성 비밀값이어야 한다.
+- refresh token은 로그인 세션 유지 수단이고, 장기 게스트 데이터 복구 수단으로 사용하지 않는다.
+- device-bound proof는 단말 교체, 앱 재설치, OS 백업 복원에서 실패 가능성이 커서 1차 장기 복구 수단으로 사용하지 않는다.
+- recovery code가 없고 cleanup이 완료된 게스트는 복구하지 않는다. 이 경우 401/`11010`을 반환하고, 모바일은 로그인 또는 새 게스트 시작을 안내한다.
+- recovery code가 탈취되면 cleanup 전까지 해당 guest owner 데이터 전체를 정식 계정으로 이전할 수 있으므로, 실제 구현 시 code hash 저장, 1회 사용, 만료, 사용자 폐기 API, 시도 rate limit을 함께 둔다.
+
 게스트 생성 제한:
 
 - `TODOLAB_GUEST_RATE_LIMIT_ENABLED=true`
