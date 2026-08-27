@@ -1,21 +1,29 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <https-tailscale-origin>" >&2
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+  echo "Usage: $0 <https-api-origin> [https-public-api-origin]" >&2
   exit 2
 fi
 
 issuer=${1%/}
+public_api_url=${2:-}
+public_api_url=${public_api_url%/}
 env_file=.env
 
-case "$issuer" in
-  https://*.ts.net) ;;
-  *)
-    echo "Issuer must be a Tailscale HTTPS origin ending in .ts.net" >&2
+validate_https_url() {
+  local label=$1
+  local value=$2
+  if [[ ! "$value" =~ ^https://[^[:space:]/]+(:[0-9]+)?$ ]]; then
+    echo "$label must be an HTTPS origin without a path" >&2
     exit 2
-    ;;
-esac
+  fi
+}
+
+validate_https_url "Issuer" "$issuer"
+if [ -n "$public_api_url" ]; then
+  validate_https_url "Public API URL" "$public_api_url"
+fi
 
 if [ ! -f "$env_file" ]; then
   cp .env.example "$env_file"
@@ -61,6 +69,9 @@ jwt_secret=$(openssl rand -base64 48)
 
 set_env_value "TODOLAB_JWT_ISSUER" "$issuer" "https://your-device.your-tailnet.ts.net"
 set_env_value "TODOLAB_JWT_SECRET" "$jwt_secret" "replace-with-at-least-32-random-bytes"
+if [ -n "$public_api_url" ]; then
+  set_env_value "TODOLAB_PUBLIC_API_URL" "$public_api_url" "https://api.example.com"
+fi
 
 if ! grep -q '^TODOLAB_JWT_ACCESS_TOKEN_TTL=' "$env_file"; then
   printf 'TODOLAB_JWT_ACCESS_TOKEN_TTL=PT24H\n' >> "$env_file"

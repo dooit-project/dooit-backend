@@ -79,12 +79,12 @@ GET /api/v1/tasks/notification-candidates?from=YYYY-MM-DD&to=YYYY-MM-DD
 | 반복 occurrence 건너뛰기 | `DELETE /api/v1/tasks/{occurrenceId}?recurrenceScope=THIS`, `recurrenceException=SKIPPED`, 일정 제거 | 예약 제거 |
 | 반복 occurrence 이동 | 향후 `recurrenceException=MOVED` | 원래 occurrence 예약 제거 후 이동된 occurrence 예약 |
 
-## 서버 Push 도입 전 정책
+## 서버 Push 비활성 또는 미수신 정책
 
-- 서버 push 발송 API가 도입되기 전까지 백엔드는 알림 발송 책임을 갖지 않는다.
+- `app.notification.push.enabled=false`이면 백엔드는 알림을 발송하지 않는다.
 - 모바일 로컬 알림은 best-effort UX로 취급한다.
 - 백엔드는 Task/occurrence 상태를 원본 데이터로 제공하고, 모바일은 동기화 결과를 기준으로 로컬 예약을 재구성한다.
-- 서버 push token 등록/해제는 가능하지만, 등록된 token으로 알림을 발송하지는 않는다.
+- 서버 push가 활성화되어도 활성 push token이 없는 사용자는 발송 대상이 아니며, 모바일 로컬 알림 책임으로 남는다.
 
 ## 서버 Push Token API
 

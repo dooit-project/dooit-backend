@@ -22,6 +22,8 @@ docker volume create todolab-mysql-data
 
 ```bash
 ./scripts/configure-production-env.sh https://<device>.<tailnet>.ts.net
+# 실제 도메인 연결 후에는 아래처럼 public API origin도 함께 기록한다.
+./scripts/configure-production-env.sh https://api.example.com https://api.example.com
 ```
 
 ## 2. build와 기동

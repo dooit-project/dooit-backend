@@ -8,7 +8,7 @@ Last updated: 2026-08-23
 
 ## 현재 운영 입력 상태
 
-2026-08-23 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. backend metadata는 `GET /api/v1/system/metadata`로 공개 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, Expo Web production origin, offsite backup 경로다.
+2026-08-23 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke 절차는 정리되어 있다. Android production Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장했고, 문서에는 실제 URL을 기록하지 않는다. 실제 도메인을 구매해 연결하면 `.env`의 `TODOLAB_PUBLIC_API_URL`과 `TODOLAB_JWT_ISSUER`를 같은 HTTPS origin으로 맞춘 뒤 public smoke를 실행한다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, `./scripts/check-production-routine.sh`는 local backup과 readiness 기준으로 통과했다. backend metadata는 `GET /api/v1/system/metadata`로 공개 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과, production Web origin, offsite backup 경로다.
 
 전원 정책은 아직 strict production 기준이 아니다. `TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`는 macOS 관리자 비밀번호 입력이 필요하므로 운영자 터미널에서 실행한다.
 
@@ -23,7 +23,8 @@ Last updated: 2026-08-23
 | local, 실제 기기 | `http://<dev-machine-lan-ip>:8080` | 확인 필요 | 같은 네트워크에서 개발 머신 IP로 접근 |
 | staging | 사용하지 않음 | 해당 없음 | 이 PC 단일 production 운영에서는 별도 staging을 두지 않는다. |
 | production, host 내부 | `http://127.0.0.1:8080` | 확정 | Docker Compose app port는 loopback에만 공개한다. |
-| production, Android | `.env`의 `TODOLAB_TAILSCALE_API_URL` | host smoke 확인됨, 실제 기기 확인 필요 | 실제 URL은 문서에 기록하지 않는다. |
+| production, Android | `.env`의 `TODOLAB_PUBLIC_API_URL` 또는 `TODOLAB_TAILSCALE_API_URL` | host smoke 확인됨, 실제 기기 확인 필요 | 실제 URL은 문서에 기록하지 않는다. |
+| production, 실제 도메인 | `.env`의 `TODOLAB_PUBLIC_API_URL` | 도메인 구매 후 확인 필요 | DNS/TLS/reverse proxy 연결 뒤 public smoke를 실행한다. |
 
 모바일 기본 base path는 모든 환경에서 `/api/v1`이다.
 
@@ -64,9 +65,11 @@ Last updated: 2026-08-23
 
 ## 3. 환경변수 운영 방식
 
-운영 프로필은 아래 환경변수로 CORS origin을 주입한다.
+운영 프로필은 아래 환경변수로 CORS origin을 주입한다. 실제 도메인을 API URL로 쓰면 `TODOLAB_PUBLIC_API_URL`과 `TODOLAB_JWT_ISSUER`는 같은 HTTPS origin을 사용한다.
 
 ```bash
+TODOLAB_PUBLIC_API_URL=https://api.example.com
+TODOLAB_JWT_ISSUER=https://api.example.com
 TODOLAB_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
 TODOLAB_DOCS_PUBLIC_ENABLED=false
 ```
@@ -87,9 +90,9 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 
 | 항목 | staging | production | 검증 기준 |
 | --- | --- | --- | --- |
-| API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, Android용 Tailscale HTTPS URL은 `.env`의 `TODOLAB_TAILSCALE_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
-| Expo Web origin | 사용하지 않음 | 미정 | `Authorization`, `Content-Type`, `Idempotency-Key` header 포함 preflight 성공 |
-| Native 앱 API 접근 | 사용하지 않음 | Tailscale HTTPS URL 확정 필요 | Android 실제 기기에서 HTTPS API 접근 가능 |
+| API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, 외부 공개용 HTTPS URL은 `.env`의 `TODOLAB_PUBLIC_API_URL` 또는 `TODOLAB_TAILSCALE_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
+| Web origin | 사용하지 않음 | 미정 | `Authorization`, `Content-Type`, `Idempotency-Key` header 포함 preflight 성공 |
+| Native 앱 API 접근 | 사용하지 않음 | 공개 HTTPS URL 확정 필요 | Android 실제 기기에서 HTTPS API 접근 가능 |
 | 문서 UI 공개 여부 | 사용하지 않음 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 비공개 정책 확인 |
 | CORS 환경변수 | 사용하지 않음 | `TODOLAB_ALLOWED_ORIGINS` | Expo Web 사용 시 쉼표 구분 origin 목록 적용 |
 | backend metadata | 사용하지 않음 | `GET /api/v1/system/metadata` | `commitSha`, `imageTag`, `version` 확인 |
@@ -107,6 +110,7 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 ```bash
 ./scripts/check-production-env.sh
 TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh
+TODOLAB_REQUIRE_PUBLIC_API_URL=true ./scripts/check-production-env.sh
 TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh
 ```
 
@@ -118,6 +122,13 @@ TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net TODOLAB_EXPO_WEB_ORI
 ```
 
 `TODOLAB_TAILSCALE_API_URL`을 아직 확정값으로 저장하지 않았더라도 `tailscale serve status`에 HTTPS URL이 있으면 `./scripts/check-tailscale-production.sh`는 해당 URL을 자동 감지해 host smoke를 실행한다. 자동 감지 결과는 점검 출력으로만 사용하고 문서에는 실제 URL을 기록하지 않는다.
+
+실제 도메인의 DNS, TLS, reverse proxy가 준비되면 Tailscale CLI 없이 아래 점검을 실행한다.
+
+```bash
+TODOLAB_PUBLIC_API_URL=https://api.example.com ./scripts/check-public-production.sh
+TODOLAB_PUBLIC_API_URL=https://api.example.com TODOLAB_WEB_ORIGIN=https://app.example.com ./scripts/check-public-production.sh
+```
 
 ## 5. Production Health Check
 

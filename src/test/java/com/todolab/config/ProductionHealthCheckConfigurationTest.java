@@ -96,10 +96,12 @@ class ProductionHealthCheckConfigurationTest {
 
         assertThat(script).contains("TODOLAB_JWT_SECRET must be at least 32 bytes");
         assertThat(script).contains("jwtSecretBytes=valid");
-        assertThat(script).contains("TODOLAB_JWT_ISSUER must be a Tailscale HTTPS origin");
+        assertThat(script).contains("TODOLAB_JWT_ISSUER \"$jwt_issuer\"");
         assertThat(script).contains("guestJwtTtl=");
         assertThat(script).contains("TODOLAB_REQUIRE_TAILSCALE_URL");
+        assertThat(script).contains("TODOLAB_REQUIRE_PUBLIC_API_URL");
         assertThat(script).contains("TODOLAB_REQUIRE_OFFSITE_BACKUP");
+        assertThat(script).contains("publicApiUrl=");
         assertThat(script).doesNotContain("echo \"$jwt_secret\"");
         assertThat(routine).contains("./scripts/check-production-env.sh");
         assertThat(report).contains("backendCommit=");
@@ -107,6 +109,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(report).contains("mergeResultCounts=supported");
         assertThat(report).doesNotContain("TODOLAB_JWT_SECRET");
         assertThat(envExample).contains("TODOLAB_TAILSCALE_API_URL=");
+        assertThat(envExample).contains("TODOLAB_PUBLIC_API_URL=");
         assertThat(envExample).contains("TODOLAB_TAILSCALE_CLI=tailscale");
         assertThat(envExample).contains("TODOLAB_OFFSITE_BACKUP_DIR=");
     }
@@ -149,8 +152,25 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(script).contains("set_env_value \"TODOLAB_JWT_ISSUER\"");
         assertThat(script).contains("set_env_value \"TODOLAB_JWT_SECRET\"");
         assertThat(script).contains("already has a non-placeholder value; refusing to overwrite .env");
-        assertThat(script).contains("https://*.ts.net");
+        assertThat(script).contains("set_env_value \"TODOLAB_PUBLIC_API_URL\"");
+        assertThat(script).contains("validate_https_url");
         assertThat(script).doesNotContain("printf 'TODOLAB_JWT_SECRET=%s\\n' \"$jwt_secret\"");
+    }
+
+    @Test
+    @DisplayName("public production 점검 스크립트는 실제 도메인 HTTPS API 계약을 확인한다")
+    void publicProductionCheckValidatesHttpsApiContract() throws Exception {
+        String script = Files.readString(Path.of("scripts/check-public-production.sh"));
+        String environment = Files.readString(Path.of("docs/ops/ENVIRONMENT_INTEGRATION.md"));
+
+        assertThat(script).contains("TODOLAB_PUBLIC_API_URL");
+        assertThat(script).contains("/actuator/health/readiness");
+        assertThat(script).contains("/api/v1/system/metadata");
+        assertThat(script).contains("/api/v1/auth/guest");
+        assertThat(script).contains("/api/v1/auth/me");
+        assertThat(script).contains("Access-Control-Request-Headers: Authorization,Content-Type,Idempotency-Key");
+        assertThat(script).contains("Public production check passed.");
+        assertThat(environment).contains("./scripts/check-public-production.sh");
     }
 
     @Test

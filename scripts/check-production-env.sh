@@ -3,6 +3,7 @@ set -euo pipefail
 
 env_file=${TODOLAB_ENV_FILE:-.env}
 require_tailscale_url=${TODOLAB_REQUIRE_TAILSCALE_URL:-false}
+require_public_api_url=${TODOLAB_REQUIRE_PUBLIC_API_URL:-false}
 require_offsite_backup=${TODOLAB_REQUIRE_OFFSITE_BACKUP:-false}
 
 require_command() {
@@ -31,6 +32,15 @@ require_env_value() {
       exit 1
       ;;
   esac
+}
+
+validate_https_url() {
+  local key=$1
+  local value=$2
+  if [[ ! "$value" =~ ^https://[^[:space:]/]+(:[0-9]+)?$ ]]; then
+    echo "$key must be an HTTPS origin without a path" >&2
+    exit 1
+  fi
 }
 
 validate_https_origin_list() {
@@ -76,13 +86,7 @@ do
 done
 
 jwt_issuer=$(env_value TODOLAB_JWT_ISSUER)
-case "$jwt_issuer" in
-  https://*.ts.net) ;;
-  *)
-    echo "TODOLAB_JWT_ISSUER must be a Tailscale HTTPS origin ending in .ts.net" >&2
-    exit 1
-    ;;
-esac
+validate_https_url TODOLAB_JWT_ISSUER "$jwt_issuer"
 
 jwt_secret=$(env_value TODOLAB_JWT_SECRET)
 jwt_secret_bytes=$(printf '%s' "$jwt_secret" | wc -c | xargs)
@@ -114,13 +118,23 @@ if [ -z "$tailscale_url" ]; then
   fi
   tailscale_url_status=missing
 else
+  validate_https_url TODOLAB_TAILSCALE_API_URL "$tailscale_url"
   case "$tailscale_url" in
     https://*.ts.net) tailscale_url_status=configured ;;
-    *)
-      echo "TODOLAB_TAILSCALE_API_URL must be a Tailscale HTTPS URL ending in .ts.net" >&2
-      exit 1
-      ;;
+    *) tailscale_url_status=configuredNonTailscale ;;
   esac
+fi
+
+public_api_url=$(env_value TODOLAB_PUBLIC_API_URL)
+if [ -z "$public_api_url" ]; then
+  if [ "$require_public_api_url" = "true" ]; then
+    echo "TODOLAB_PUBLIC_API_URL is required when TODOLAB_REQUIRE_PUBLIC_API_URL=true" >&2
+    exit 1
+  fi
+  public_api_url_status=missing
+else
+  validate_https_url TODOLAB_PUBLIC_API_URL "$public_api_url"
+  public_api_url_status=configured
 fi
 
 offsite_dir=$(env_value TODOLAB_OFFSITE_BACKUP_DIR)
@@ -140,10 +154,11 @@ cat <<EOF
 Production env check passed.
 envFile=$env_file
 dbConfig=present
-jwtIssuer=tailscaleHttps
+jwtIssuer=httpsOrigin
 jwtSecretBytes=valid
 guestJwtTtl=$guest_jwt_ttl_status
 allowedOrigins=$allowed_origins_status
 tailscaleApiUrl=$tailscale_url_status
+publicApiUrl=$public_api_url_status
 offsiteBackupDir=$offsite_backup_status
 EOF

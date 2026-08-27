@@ -23,8 +23,8 @@ Last updated: 2026-08-23
 | 빠른 등록 | API와 규칙 기반 파싱 구현 완료 | 모바일 실제 입력 로그 기반 날짜/시간 표현 보강 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
-| 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner scheduler 자동 발송 완료 | shared workspace push 수신자 정책 확정 |
-| production 접근 | host 내부와 Tailscale host smoke 가능, `.env` Tailscale URL 반영 완료 | Android 실제 기기 HTTPS smoke |
+| 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner와 shared workspace scheduler 자동 발송 완료 | 운영 credential 적용 후 실수신 smoke |
+| production 접근 | host 내부와 Tailscale host smoke 가능, 실제 도메인 연결 전 public smoke 스크립트 준비 완료 | 실제 도메인 DNS/TLS 연결 후 public smoke |
 | 운영 복구성 | launchd, Docker health, readiness, Tailscale recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 
