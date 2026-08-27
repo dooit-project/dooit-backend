@@ -1,6 +1,6 @@
 # ToDoLab v1 Frontend API
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -194,7 +194,8 @@ Authorization: Bearer <guest-access-token>
 
 - 갱신 가능 기간은 기존 guest token이 유효한 동안이다.
 - 성공 시 `guestExpiresAt`은 새 게스트 token TTL 기준으로 연장된다.
-- 만료된 guest token, 병합 완료 guest token, 정식 계정 token, 이미 정리된 guest는 401/`11002`로 처리한다.
+- 만료된 guest token, 병합 완료 guest token, 이미 정리된 guest는 401/`11010`으로 처리한다.
+- 정식 계정 token처럼 guest token이 아닌 인증 실패는 401/`11002`로 처리한다.
 - 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
 - 새로운 guest id 발급은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
 

@@ -1,6 +1,6 @@
 # ToDoLab Backend Roadmap
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -184,8 +184,8 @@ Last updated: 2026-08-27
 
 - [ ] refresh token, device-bound proof, recovery code 중 하나를 선택한다.
 - [ ] token 탈취 시 피해 범위와 회수 정책을 정의한다.
-- [ ] 이미 cleanup된 guest의 오류 코드와 UX 문구를 정한다.
-- [ ] 새 guest id 발급을 복구 정책으로 사용하지 않는 원칙을 유지한다.
+- [x] 이미 cleanup된 guest의 오류 코드와 UX 문구를 정한다.
+- [x] 새 guest id 발급을 복구 정책으로 사용하지 않는 원칙을 유지한다.
 
 ## 3. 운영 마무리 로드맵
 

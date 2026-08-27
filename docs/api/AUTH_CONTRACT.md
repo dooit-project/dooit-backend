@@ -1,6 +1,6 @@
 # Auth Contract
 
-Last updated: 2026-08-24
+Last updated: 2026-08-28
 
 이 문서는 ToDoLab 백엔드의 모바일/웹 클라이언트 JWT 인증 책임을 정리한다.
 
@@ -67,9 +67,9 @@ JWT claim:
 - `POST /api/v1/auth/register`에 유효한 게스트 Bearer token을 보내면 같은 user id를 유지하고 `REGISTERED`로 승격한다.
 - 승격 성공 후 기존 guest token은 DB의 현재 `accountType`과 token claim이 불일치하므로 401로 거부한다.
 - `POST /api/v1/auth/login`에 유효한 게스트 Bearer token을 보내고 정식 계정 이메일/비밀번호 검증이 성공하면 게스트 owner 데이터를 정식 계정으로 병합한다.
-- 병합 완료 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 401로 거부한다.
+- 병합 완료 guest token은 `mergedIntoUserId`가 기록된 사용자이므로 401/`11010`으로 거부한다.
 - `app.auth.guest.cleanup.enabled=true`이면 매일 03:30에 `guestExpiresAt`이 지난 미병합 게스트와 관련 owner 데이터를 삭제한다.
-- 만료된 guest token은 owner API와 `/auth/me`에서 401로 거부한다.
+- 만료된 guest token은 owner API와 `/auth/me`에서 401/`11010`으로 거부한다.
 - 게스트 token 갱신은 만료 전 유효한 guest token으로만 가능하며, 성공 시 같은 guest user id를 유지하고 `guestExpiresAt`을 새 게스트 token TTL 기준으로 연장한다.
 - `POST /api/v1/auth/guest`는 클라이언트 신호별 기본 30건/1시간 rate limit을 적용하고 초과 시 429/`11004`를 반환한다.
 
@@ -183,7 +183,8 @@ Logout 정책:
 
 - 갱신 가능 기간은 기존 guest token이 유효한 동안이다.
 - 만료 전 갱신 성공 시 HTTP 200과 새 `TokenResponse`를 반환한다.
-- 만료된 guest token, 병합 완료 guest token, 정식 계정 token, 이미 정리된 guest는 401/`11002`로 처리한다.
+- 만료된 guest token, 병합 완료 guest token, 이미 정리된 guest는 401/`11010`으로 처리한다.
+- 정식 계정 token처럼 guest token이 아닌 인증 실패는 401/`11002`로 처리한다.
 - 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
 
 새로운 guest id를 발급하는 방식은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.

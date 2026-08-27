@@ -333,7 +333,20 @@ class AuthSecurityIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/me")
                         .header("Authorization", "Bearer " + guestAccessToken))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error.code").value(ErrorCode.UNAUTHORIZED.getCode()));
+                .andExpect(jsonPath("$.error.code").value(ErrorCode.GUEST_SESSION_EXPIRED.getCode()));
+    }
+
+    @Test
+    @DisplayName("만료된 게스트 token은 전용 오류 코드로 인증 실패한다")
+    void me_expiredGuestSession() throws Exception {
+        User guest = userRepository.save(User.guest(java.time.LocalDateTime.of(2020, 1, 1, 0, 0)));
+        String guestAccessToken = jwtTokenService.createGuestAccessToken(guest).tokenValue();
+
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", "Bearer " + guestAccessToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value("fail"))
+                .andExpect(jsonPath("$.error.code").value(ErrorCode.GUEST_SESSION_EXPIRED.getCode()));
     }
 
     @Test
@@ -408,6 +421,38 @@ class AuthSecurityIntegrationTest {
                 .isEqualTo(guest.getId());
         assertThat(userRepository.findById(guest.getId())).get()
                 .satisfies(savedGuest -> assertThat(savedGuest.getMergedIntoUserId()).isNull());
+    }
+
+    @Test
+    @DisplayName("만료된 게스트 token으로 기존 계정 로그인하면 병합하지 않고 전용 오류 코드를 반환한다")
+    void login_mergeFailsForExpiredGuest() throws Exception {
+        User registered = userRepository.save(new User(
+                "merge-expired@example.com",
+                passwordEncoder.encode("password123"),
+                "정식 사용자"
+        ));
+        User guest = userRepository.save(User.guest(java.time.LocalDateTime.of(2020, 1, 1, 0, 0)));
+        Task task = taskRepository.save(Task.builder()
+                .title("만료 게스트 할 일")
+                .type(TaskType.TODO)
+                .targetDate(java.time.LocalDate.of(2026, 8, 9))
+                .owner(guest)
+                .build());
+        String guestAccessToken = jwtTokenService.createGuestAccessToken(guest).tokenValue();
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header("Authorization", "Bearer " + guestAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("merge-expired@example.com", "password123"))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value(ErrorCode.GUEST_SESSION_EXPIRED.getCode()));
+
+        assertThat(taskRepository.findById(task.getId())).get()
+                .extracting(saved -> saved.getOwner().getId())
+                .isEqualTo(guest.getId());
+        assertThat(userRepository.findById(guest.getId())).get()
+                .satisfies(savedGuest -> assertThat(savedGuest.getMergedIntoUserId()).isNull());
+        assertThat(taskRepository.findByOwnerId(registered.getId())).isEmpty();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.todolab.auth.service;
 
+import com.todolab.auth.exception.GuestSessionExpiredException;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -63,8 +64,8 @@ class CurrentUserServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(guest));
 
         assertThatThrownBy(() -> service.requireUser(jwt("1", "GUEST")))
-                .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
-                .hasMessage("인증 정보가 올바르지 않습니다.");
+                .isInstanceOf(GuestSessionExpiredException.class)
+                .hasMessage("게스트 세션이 만료되었습니다.");
 
         then(userRepository).should().findById(1L);
     }
@@ -77,10 +78,23 @@ class CurrentUserServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(guest));
 
         assertThatThrownBy(() -> service.requireUser(jwt("1", "GUEST")))
-                .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
-                .hasMessage("인증 정보가 올바르지 않습니다.");
+                .isInstanceOf(GuestSessionExpiredException.class)
+                .hasMessage("게스트 세션이 만료되었습니다.");
 
         then(userRepository).should().findById(1L);
+    }
+
+    @Test
+    @DisplayName("정리되어 user row가 없는 게스트 token은 게스트 세션 만료 예외를 던진다")
+    void requireUser_fail_cleanedGuest() {
+        CurrentUserService service = new CurrentUserService(userRepository);
+        given(userRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.requireUser(jwt("99", "GUEST")))
+                .isInstanceOf(GuestSessionExpiredException.class)
+                .hasMessage("게스트 세션이 만료되었습니다.");
+
+        then(userRepository).should().findById(99L);
     }
 
     @Test

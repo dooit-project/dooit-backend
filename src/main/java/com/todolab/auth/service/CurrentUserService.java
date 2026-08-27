@@ -1,6 +1,7 @@
 package com.todolab.auth.service;
 
 import com.todolab.Constant;
+import com.todolab.auth.exception.GuestSessionExpiredException;
 import com.todolab.user.domain.AccountType;
 import com.todolab.user.domain.User;
 import com.todolab.user.repository.UserRepository;
@@ -25,18 +26,23 @@ public class CurrentUserService {
 
         Long userId = parseUserId(jwt.getSubject());
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> {
+                    if (AccountType.GUEST.name().equals(jwt.getClaimAsString("accountType"))) {
+                        return new GuestSessionExpiredException();
+                    }
+                    return new UsernameNotFoundException("사용자를 찾을 수 없습니다.");
+                });
         if (jwt.getClaimAsString("accountType") != null
                 && !jwt.getClaimAsString("accountType").equals(user.getAccountType().name())) {
             throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
         }
         if (user.getMergedIntoUserId() != null) {
-            throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
+            throw new GuestSessionExpiredException();
         }
         if (user.getAccountType() == AccountType.GUEST
                 && user.getGuestExpiresAt() != null
                 && user.getGuestExpiresAt().isBefore(java.time.LocalDateTime.now(Constant.ZONE))) {
-            throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
+            throw new GuestSessionExpiredException();
         }
         return user;
     }

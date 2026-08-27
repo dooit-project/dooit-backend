@@ -1,6 +1,6 @@
 # API Error Codes
 
-Last updated: 2026-08-24
+Last updated: 2026-08-28
 
 이 문서는 모바일과 운영자가 함께 보는 ToDoLab v1 API 오류 코드 카탈로그다. 모든 API 오류 응답은 공통 envelope를 사용한다.
 
@@ -25,7 +25,7 @@ Last updated: 2026-08-24
 | `10003` | 404 | `요청한 리소스를 찾을 수 없습니다.` | 존재하지 않는 API/static path | 화면 갱신 또는 이전 화면 이동 | 아니오 |
 | `10004` | 409 | `Idempotency-Key가 다른 요청 본문으로 재사용되었습니다.` | 같은 scope/method/path/key로 다른 payload를 보낸 생성 요청 | 새 key로 다시 요청 | 아니오 |
 | `11001` | 401 | `이메일 또는 비밀번호가 올바르지 않습니다.` | 로그인 인증 정보 불일치 | 안전한 로그인 실패 문구 노출 | 아니오 |
-| `11002` | 401 | `인증이 필요합니다.` | access token 없음, 만료, 위변조, 병합 완료 guest token, 정리 완료 guest token, 게스트 token 갱신 불가 상태 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
+| `11002` | 401 | `인증이 필요합니다.` | access token 없음, 만료, 위변조, 정식 계정 token이 필요한 곳에 guest token 사용, guest token이 아닌 인증 실패 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
 | `11003` | 403 | `접근 권한이 없습니다.` | 인증은 됐지만 권한 부족 | 권한 오류 표시 | 아니오 |
 | `11004` | 429 | `게스트 계정 생성 요청이 너무 많습니다.` | 게스트 계정 생성 rate limit 초과 | 대기 후 재시도 안내 | 예 |
 | `11005` | 400 | `비밀번호 재설정 링크가 만료되었거나 올바르지 않습니다.` | password reset token 없음, 만료, 이미 사용됨 | 재설정 링크 재요청 안내 | 아니오 |
@@ -33,6 +33,7 @@ Last updated: 2026-08-24
 | `11007` | 401 | `refresh token이 올바르지 않습니다.` | refresh token 없음, 위변조, 폐기됨, 사용자 상태 불일치 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
 | `11008` | 401 | `refresh token이 만료되었습니다.` | refresh token idle TTL 또는 absolute TTL 만료 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
 | `11009` | 401 | `refresh token 재사용이 감지되었습니다.` | 이미 회전되었거나 폐기된 refresh token 재사용 | 저장 토큰 삭제 후 로그인 유도 | 아니오 |
+| `11010` | 401 | `게스트 세션이 만료되었습니다. 로그인하거나 새 게스트로 시작해주세요.` | 만료된 guest token, 병합 완료 guest token, 이미 정리되어 user row가 없는 guest token | 저장된 guest token 삭제 후 로그인 또는 새 게스트 시작 안내. 기존 데이터 복구 목적으로 새 guest id를 재사용하지 않음 | 아니오 |
 | `20001` | 404 | `일정을 찾을 수 없습니다.` | Task 없음 또는 owner scope 밖 | 목록 재조회 | 아니오 |
 | `20002` | 409 | `Today 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요.` | Today 일괄 재정렬 stale 목록 | Today 재조회 후 재시도 | 조건부 |
 | `30001` | 404 | `D-Day 목표를 찾을 수 없습니다.` | D-Day 목표 없음 또는 owner scope 밖 | 목록 재조회 | 아니오 |
@@ -53,7 +54,7 @@ Last updated: 2026-08-24
 ## 게스트 token 갱신 오류 정책
 
 - 만료 전 유효한 guest token은 `POST /api/v1/auth/guest/refresh`로 같은 guest user id의 token을 재발급한다.
-- 만료된 guest token, 병합 완료 guest token, 이미 정리되어 user row가 없는 guest token은 401/`11002`로 처리한다.
+- 만료된 guest token, 병합 완료 guest token, 이미 정리되어 user row가 없는 guest token은 401/`11010`으로 처리한다.
 - 새로운 guest id 발급은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
 - 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
 

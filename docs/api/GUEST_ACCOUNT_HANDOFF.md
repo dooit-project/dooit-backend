@@ -1,6 +1,6 @@
 # Guest Account Handoff
 
-Last updated: 2026-08-12
+Last updated: 2026-08-28
 
 이 문서는 모바일 게스트 계정 bootstrap, 정식 계정 승격, 기존 계정 병합 연동에 필요한 백엔드 확정 계약을 정리한다.
 
@@ -62,7 +62,8 @@ Authorization: Bearer <guest-access-token>
 
 - 갱신 가능 기간은 기존 guest token이 유효한 동안이다.
 - 성공 시 `guestExpiresAt`은 새 게스트 token TTL 기준으로 연장된다.
-- 만료된 guest token, 병합 완료 guest token, 정식 계정 token, 이미 정리된 guest는 401/`11002`로 처리한다.
+- 만료된 guest token, 병합 완료 guest token, 이미 정리된 guest는 401/`11010`으로 처리한다.
+- 정식 계정 token처럼 guest token이 아닌 인증 실패는 401/`11002`로 처리한다.
 - 갱신 실패 시 기존 게스트 row와 owner 데이터는 변경하지 않는다.
 - 새로운 guest id 발급은 기존 게스트 데이터 복구 정책으로 사용하지 않는다.
 
@@ -160,8 +161,8 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 | 상황 | HTTP | ErrorCode | 모바일 처리 |
 | --- | --- | --- | --- |
 | 이메일/비밀번호 불일치 | 401 | `11001` | 게스트 token 유지, 로그인 오류 표시 |
-| 잘못되거나 만료된 token | 401 | `11002` | 새 게스트 생성 가능 여부 판단 |
-| 병합 완료 guest token | 401 | `11002` | 로그인 결과 또는 `/auth/me` 재확인 |
+| 잘못된 일반 access token | 401 | `11002` | 저장 토큰 삭제 후 로그인 유도 |
+| 만료/병합 완료/정리 완료 guest token | 401 | `11010` | 저장된 guest token 삭제 후 로그인 또는 새 게스트 시작 안내 |
 | 이메일 중복 회원가입 | 409 | `40001` | 게스트 token 유지, 기존 계정 로그인 안내 |
 | 게스트 생성 rate limit 초과 | 429 | `11004` | 대기 후 재시도 |
 | 서버 오류 | 5xx | `99999` | 게스트 token 유지, 안전하게 재시도 |

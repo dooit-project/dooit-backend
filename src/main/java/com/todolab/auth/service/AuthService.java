@@ -8,6 +8,7 @@ import com.todolab.auth.dto.LogoutRequest;
 import com.todolab.auth.dto.RefreshRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
+import com.todolab.auth.exception.GuestSessionExpiredException;
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.exception.RefreshTokenExpiredException;
 import com.todolab.auth.exception.RefreshTokenInvalidException;
@@ -110,11 +111,11 @@ public class AuthService {
         }
 
         User guest = userRepository.findWithLockById(guestPrincipal.userId())
-                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다."));
+                .orElseThrow(GuestSessionExpiredException::new);
         if (guest.getAccountType() != AccountType.GUEST
                 || guest.getMergedIntoUserId() != null
                 || isExpiredGuest(guest)) {
-            throw new AuthenticationCredentialsNotFoundException("인증 정보가 올바르지 않습니다.");
+            throw new GuestSessionExpiredException();
         }
 
         guest.refreshGuestExpiration(LocalDateTime.now(Constant.ZONE).plus(jwtTokenService.guestAccessTokenTtl()));
@@ -139,9 +140,11 @@ public class AuthService {
         }
 
         User guest = userRepository.findWithLockById(guestPrincipal.userId())
-                .orElseThrow(InvalidCredentialsException::new);
-        if (guest.getAccountType() != AccountType.GUEST) {
-            throw new InvalidCredentialsException();
+                .orElseThrow(GuestSessionExpiredException::new);
+        if (guest.getAccountType() != AccountType.GUEST
+                || guest.getMergedIntoUserId() != null
+                || isExpiredGuest(guest)) {
+            throw new GuestSessionExpiredException();
         }
 
         guest.promoteGuest(
@@ -211,7 +214,7 @@ public class AuthService {
         User target = userRepository.findWithLockById(authenticatedTarget.getId())
                 .orElseThrow(InvalidCredentialsException::new);
         User guest = userRepository.findWithLockById(guestUserId)
-                .orElseThrow(InvalidCredentialsException::new);
+                .orElseThrow(GuestSessionExpiredException::new);
 
         if (guest.getAccountType() != AccountType.GUEST) {
             if (target.getId().equals(guest.getMergedIntoUserId())) {
@@ -224,6 +227,9 @@ public class AuthService {
                 return new GuestMergeResult(target, emptyMergeResult());
             }
             throw new InvalidCredentialsException();
+        }
+        if (isExpiredGuest(guest)) {
+            throw new GuestSessionExpiredException();
         }
         if (target.getId().equals(guest.getId())) {
             throw new InvalidCredentialsException();

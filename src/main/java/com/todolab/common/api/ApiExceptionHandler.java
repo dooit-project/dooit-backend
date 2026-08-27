@@ -2,6 +2,7 @@ package com.todolab.common.api;
 
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
+import com.todolab.auth.exception.GuestSessionExpiredException;
 import com.todolab.auth.exception.PasswordResetRateLimitExceededException;
 import com.todolab.auth.exception.PasswordResetTokenInvalidException;
 import com.todolab.auth.exception.RefreshTokenExpiredException;
@@ -157,6 +158,13 @@ public class ApiExceptionHandler {
         log.warn("Authentication Failed");
         return ResponseEntity.status(ErrorCode.UNAUTHORIZED.getStatus())
                 .body(ApiResponse.failure(ErrorCode.UNAUTHORIZED));
+    }
+
+    @ExceptionHandler(GuestSessionExpiredException.class)
+    public ResponseEntity<ApiResponse<?>> handleGuestSessionExpiredException(GuestSessionExpiredException e) {
+        log.warn("Guest Session Expired");
+        return ResponseEntity.status(ErrorCode.GUEST_SESSION_EXPIRED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GUEST_SESSION_EXPIRED));
     }
 
     @ExceptionHandler(GuestCreationRateLimitExceededException.class)

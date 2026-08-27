@@ -24,6 +24,7 @@ public enum ErrorCode {
     REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, 11007, "refresh token이 올바르지 않습니다."),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, 11008, "refresh token이 만료되었습니다."),
     REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, 11009, "refresh token 재사용이 감지되었습니다."),
+    GUEST_SESSION_EXPIRED(HttpStatus.UNAUTHORIZED, 11010, "게스트 세션이 만료되었습니다. 로그인하거나 새 게스트로 시작해주세요."),
 
     // Task
     TASK_NOT_FOUND(HttpStatus.NOT_FOUND, 20001, "일정을 찾을 수 없습니다."),

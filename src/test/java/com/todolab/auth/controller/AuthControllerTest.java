@@ -4,6 +4,7 @@ import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
 import com.todolab.auth.exception.GuestCreationRateLimitExceededException;
+import com.todolab.auth.exception.GuestSessionExpiredException;
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.service.AuthService;
 import com.todolab.auth.service.CurrentUserService;
@@ -297,6 +298,27 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.data.accessToken").value("refreshed-guest-token"))
                 .andExpect(jsonPath("$.data.user.id").value(10))
                 .andExpect(jsonPath("$.data.user.accountType").value("GUEST"));
+
+        then(authService).should().refreshGuest(any(AuthService.JwtTokenPrincipal.class));
+    }
+
+    @Test
+    @DisplayName("게스트 token 갱신 실패 - 만료된 게스트 세션이면 11010을 반환한다")
+    void refreshGuest_expiredSession() throws Exception {
+        given(jwtDecoder.decode("guest-token")).willReturn(Jwt.withTokenValue("guest-token")
+                .header("alg", "HS256")
+                .subject("10")
+                .claim("accountType", "GUEST")
+                .build());
+        willThrow(new GuestSessionExpiredException())
+                .given(authService)
+                .refreshGuest(any(AuthService.JwtTokenPrincipal.class));
+
+        mockMvc.perform(post("/api/v1/auth/guest/refresh")
+                        .header("Authorization", "Bearer guest-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value("fail"))
+                .andExpect(jsonPath("$.error.code").value(ErrorCode.GUEST_SESSION_EXPIRED.getCode()));
 
         then(authService).should().refreshGuest(any(AuthService.JwtTokenPrincipal.class));
     }

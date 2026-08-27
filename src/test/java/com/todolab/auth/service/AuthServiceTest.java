@@ -4,6 +4,7 @@ import com.todolab.auth.config.RefreshTokenProperties;
 import com.todolab.auth.dto.LoginRequest;
 import com.todolab.auth.dto.RegisterRequest;
 import com.todolab.auth.dto.TokenResponse;
+import com.todolab.auth.exception.GuestSessionExpiredException;
 import com.todolab.auth.exception.InvalidCredentialsException;
 import com.todolab.auth.repository.RefreshTokenSessionRepository;
 import com.todolab.dday.repository.DdayGoalRepository;
@@ -181,6 +182,21 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("만료된 게스트 token 갱신은 게스트 세션 만료 예외를 던진다")
+    void refreshGuest_failsForExpiredGuest() {
+        User guest = User.guest(LocalDateTime.of(2020, 1, 1, 0, 0));
+        org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 10L);
+        given(userRepository.findWithLockById(10L)).willReturn(Optional.of(guest));
+
+        assertThatThrownBy(() -> authService.refreshGuest(
+                new AuthService.JwtTokenPrincipal(10L, AccountType.GUEST)
+        )).isInstanceOf(GuestSessionExpiredException.class);
+
+        then(userRepository).should().findWithLockById(10L);
+        then(jwtTokenService).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("게스트 회원가입 승격은 같은 사용자 id를 유지하고 정식 token을 반환한다")
     void promoteGuest_success() {
         User guest = User.guest(LocalDateTime.of(2026, 9, 9, 0, 0));
@@ -224,6 +240,27 @@ class AuthServiceTest {
 
         then(userRepository).should().existsByEmail("test@example.com");
         then(userRepository).shouldHaveNoMoreInteractions();
+        then(passwordEncoder).shouldHaveNoInteractions();
+        then(jwtTokenService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("만료된 게스트 회원가입 승격은 게스트 세션 만료 예외를 던진다")
+    void promoteGuest_failsForExpiredGuest() {
+        User guest = User.guest(LocalDateTime.of(2020, 1, 1, 0, 0));
+        org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 10L);
+        RegisterRequest request = new RegisterRequest("test@example.com", "password123", "테스터");
+
+        given(userRepository.existsByEmail("test@example.com")).willReturn(false);
+        given(userRepository.findWithLockById(10L)).willReturn(Optional.of(guest));
+
+        assertThatThrownBy(() -> authService.promoteGuest(
+                new AuthService.JwtTokenPrincipal(10L, AccountType.GUEST),
+                request
+        )).isInstanceOf(GuestSessionExpiredException.class);
+
+        then(userRepository).should().existsByEmail("test@example.com");
+        then(userRepository).should().findWithLockById(10L);
         then(passwordEncoder).shouldHaveNoInteractions();
         then(jwtTokenService).shouldHaveNoInteractions();
     }
