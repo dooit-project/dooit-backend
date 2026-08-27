@@ -10,6 +10,9 @@ import com.todolab.notification.repository.PushDeviceTokenRepository;
 import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.service.TaskService;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.WorkspaceMember;
+import com.todolab.workspace.domain.WorkspaceMemberStatus;
+import com.todolab.workspace.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ public class PushNotificationDispatchService {
     private final PushNotificationHistoryService pushNotificationHistoryService;
     private final TaskService taskService;
     private final ExpoPushClient expoPushClient;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     public int dispatchDueNotifications() {
         if (!properties.enabled()) {
@@ -72,6 +76,43 @@ public class PushNotificationDispatchService {
             }
             sentCount += dispatchCandidate(owner, tokens, candidate);
         }
+        sentCount += dispatchWorkspaceCandidates(owner, tokens, now, windowEnd);
+        return sentCount;
+    }
+
+    private int dispatchWorkspaceCandidates(
+            User recipient,
+            List<PushDeviceToken> tokens,
+            LocalDateTime now,
+            LocalDateTime windowEnd
+    ) {
+        LocalDate from = now.toLocalDate();
+        LocalDate to = windowEnd.toLocalDate();
+        int sentCount = 0;
+        for (WorkspaceMember member : workspaceMemberRepository.findByUserIdAndStatusOrderByIdAsc(
+                recipient.getId(),
+                WorkspaceMemberStatus.ACTIVE
+        )) {
+            for (TaskNotificationCandidateResponse candidate : taskService.getNotificationCandidatesForWorkspace(
+                    from,
+                    to,
+                    member.getUser(),
+                    member.getWorkspace()
+            )) {
+                if (candidate.scheduledAt() == null
+                        || candidate.scheduledAt().isBefore(now)
+                        || candidate.scheduledAt().isAfter(windowEnd)
+                        || pushNotificationHistoryService.shouldSkipServerPush(
+                        recipient,
+                        candidate.taskId(),
+                        candidate.recurrenceSeriesId(),
+                        candidate.occurrenceDate()
+                )) {
+                    continue;
+                }
+                sentCount += dispatchCandidate(recipient, tokens, candidate, member.getWorkspace().getId());
+            }
+        }
         return sentCount;
     }
 
@@ -80,6 +121,15 @@ public class PushNotificationDispatchService {
             List<PushDeviceToken> tokens,
             TaskNotificationCandidateResponse candidate
     ) {
+        return dispatchCandidate(owner, tokens, candidate, null);
+    }
+
+    private int dispatchCandidate(
+            User owner,
+            List<PushDeviceToken> tokens,
+            TaskNotificationCandidateResponse candidate,
+            Long workspaceId
+    ) {
         int sentCount = 0;
         String idempotencyKey = pushNotificationHistoryService.serverIdempotencyKey(
                 candidate.taskId(),
@@ -87,7 +137,7 @@ public class PushNotificationDispatchService {
                 candidate.occurrenceDate()
         );
         for (PushDeviceToken token : tokens) {
-            ExpoPushTicket ticket = expoPushClient.send(message(token, candidate));
+            ExpoPushTicket ticket = expoPushClient.send(message(token, candidate, workspaceId));
             record(owner, token, candidate, idempotencyKey, ticket);
             if (ticket.successful()) {
                 sentCount++;
@@ -96,16 +146,24 @@ public class PushNotificationDispatchService {
         return sentCount;
     }
 
-    private ExpoPushMessage message(PushDeviceToken token, TaskNotificationCandidateResponse candidate) {
+    private ExpoPushMessage message(PushDeviceToken token, TaskNotificationCandidateResponse candidate, Long workspaceId) {
+        Map<String, Object> data = workspaceId == null
+                ? Map.of(
+                "source", "SERVER",
+                "notificationKey", candidate.notificationKey(),
+                "taskId", candidate.taskId()
+        )
+                : Map.of(
+                "source", "SERVER",
+                "notificationKey", candidate.notificationKey(),
+                "taskId", candidate.taskId(),
+                "workspaceId", workspaceId
+        );
         return new ExpoPushMessage(
                 token.getDeviceToken(),
                 "ToDoLab",
                 candidate.task().title(),
-                Map.of(
-                        "source", "SERVER",
-                        "notificationKey", candidate.notificationKey(),
-                        "taskId", candidate.taskId()
-                )
+                data
         );
     }
 

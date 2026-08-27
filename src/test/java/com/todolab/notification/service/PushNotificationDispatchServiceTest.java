@@ -12,6 +12,11 @@ import com.todolab.task.dto.TaskNotificationCandidateResponse;
 import com.todolab.task.dto.TaskResponse;
 import com.todolab.task.service.TaskService;
 import com.todolab.user.domain.User;
+import com.todolab.workspace.domain.SharedWorkspace;
+import com.todolab.workspace.domain.WorkspaceMember;
+import com.todolab.workspace.domain.WorkspaceMemberStatus;
+import com.todolab.workspace.domain.WorkspaceRole;
+import com.todolab.workspace.repository.WorkspaceMemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +52,9 @@ class PushNotificationDispatchServiceTest {
     @Mock
     ExpoPushClient expoPushClient;
 
+    @Mock
+    WorkspaceMemberRepository workspaceMemberRepository;
+
     @Test
     @DisplayName("push가 비활성화되어 있으면 발송 후보를 조회하지 않는다")
     void dispatchDueNotifications_skip_disabled() {
@@ -69,6 +77,8 @@ class PushNotificationDispatchServiceTest {
         given(pushDeviceTokenRepository.findByOwnerIdAndActiveTrueOrderByLastRegisteredAtDescIdDesc(1L))
                 .willReturn(List.of(token));
         given(taskService.getNotificationCandidatesForOwner(any(), any(), any())).willReturn(List.of(candidate));
+        given(workspaceMemberRepository.findByUserIdAndStatusOrderByIdAsc(1L, WorkspaceMemberStatus.ACTIVE))
+                .willReturn(List.of());
         given(pushNotificationHistoryService.shouldSkipServerPush(owner, 42L, null, null)).willReturn(false);
         given(pushNotificationHistoryService.serverIdempotencyKey(42L, null, null)).willReturn("SERVER:42");
         given(expoPushClient.send(any())).willReturn(ExpoPushTicket.success("ticket-42"));
@@ -88,6 +98,38 @@ class PushNotificationDispatchServiceTest {
     }
 
     @Test
+    @DisplayName("ACTIVE workspace 멤버에게 workspace 알림 후보를 자동 발송한다")
+    void dispatchDueNotifications_success_workspaceCandidate() {
+        PushNotificationDispatchService service = service(true, Duration.ofMinutes(10));
+        User recipient = owner();
+        PushDeviceToken token = token(recipient);
+        WorkspaceMember member = activeWorkspaceMember(recipient);
+        TaskNotificationCandidateResponse candidate = candidate(84L, LocalDateTime.now(Constant.ZONE).plusMinutes(5));
+        given(pushDeviceTokenRepository.findDistinctActiveOwners()).willReturn(List.of(recipient));
+        given(pushDeviceTokenRepository.findByOwnerIdAndActiveTrueOrderByLastRegisteredAtDescIdDesc(1L))
+                .willReturn(List.of(token));
+        given(taskService.getNotificationCandidatesForOwner(any(), any(), any())).willReturn(List.of());
+        given(workspaceMemberRepository.findByUserIdAndStatusOrderByIdAsc(1L, WorkspaceMemberStatus.ACTIVE))
+                .willReturn(List.of(member));
+        given(taskService.getNotificationCandidatesForWorkspace(any(), any(), any(), any())).willReturn(List.of(candidate));
+        given(pushNotificationHistoryService.shouldSkipServerPush(recipient, 84L, null, null)).willReturn(false);
+        given(pushNotificationHistoryService.serverIdempotencyKey(84L, null, null)).willReturn("SERVER:84");
+        given(expoPushClient.send(any())).willReturn(ExpoPushTicket.success("ticket-84"));
+
+        int sentCount = service.dispatchDueNotifications();
+
+        assertThat(sentCount).isEqualTo(1);
+        ArgumentCaptor<ExpoPushMessage> messageCaptor = ArgumentCaptor.forClass(ExpoPushMessage.class);
+        then(expoPushClient).should(times(1)).send(messageCaptor.capture());
+        assertThat(messageCaptor.getValue().data()).containsEntry("workspaceId", 100L);
+        ArgumentCaptor<PushNotificationHistoryRecordCommand> commandCaptor =
+                ArgumentCaptor.forClass(PushNotificationHistoryRecordCommand.class);
+        then(pushNotificationHistoryService).should(times(1)).recordForOwner(commandCaptor.capture(), any());
+        assertThat(commandCaptor.getValue().taskId()).isEqualTo(84L);
+        assertThat(commandCaptor.getValue().idempotencyKey()).isEqualTo("SERVER:84");
+    }
+
+    @Test
     @DisplayName("이미 성공 이력이 있는 후보는 발송하지 않는다")
     void dispatchDueNotifications_skip_successHistory() {
         PushNotificationDispatchService service = service(true, Duration.ofMinutes(10));
@@ -97,6 +139,8 @@ class PushNotificationDispatchServiceTest {
                 .willReturn(List.of(token(owner)));
         given(taskService.getNotificationCandidatesForOwner(any(), any(), any()))
                 .willReturn(List.of(candidate(LocalDateTime.now(Constant.ZONE).plusMinutes(5))));
+        given(workspaceMemberRepository.findByUserIdAndStatusOrderByIdAsc(1L, WorkspaceMemberStatus.ACTIVE))
+                .willReturn(List.of());
         given(pushNotificationHistoryService.shouldSkipServerPush(owner, 42L, null, null)).willReturn(true);
 
         int sentCount = service.dispatchDueNotifications();
@@ -104,6 +148,28 @@ class PushNotificationDispatchServiceTest {
         assertThat(sentCount).isZero();
         then(expoPushClient).should(never()).send(any());
     }
+
+    @Test
+    @DisplayName("workspace 후보도 같은 수신자의 성공 이력이 있으면 다시 발송하지 않는다")
+    void dispatchDueNotifications_skip_workspaceSuccessHistory() {
+        PushNotificationDispatchService service = service(true, Duration.ofMinutes(10));
+        User recipient = owner();
+        given(pushDeviceTokenRepository.findDistinctActiveOwners()).willReturn(List.of(recipient));
+        given(pushDeviceTokenRepository.findByOwnerIdAndActiveTrueOrderByLastRegisteredAtDescIdDesc(1L))
+                .willReturn(List.of(token(recipient)));
+        given(taskService.getNotificationCandidatesForOwner(any(), any(), any())).willReturn(List.of());
+        given(workspaceMemberRepository.findByUserIdAndStatusOrderByIdAsc(1L, WorkspaceMemberStatus.ACTIVE))
+                .willReturn(List.of(activeWorkspaceMember(recipient)));
+        given(taskService.getNotificationCandidatesForWorkspace(any(), any(), any(), any()))
+                .willReturn(List.of(candidate(84L, LocalDateTime.now(Constant.ZONE).plusMinutes(5))));
+        given(pushNotificationHistoryService.shouldSkipServerPush(recipient, 84L, null, null)).willReturn(true);
+
+        int sentCount = service.dispatchDueNotifications();
+
+        assertThat(sentCount).isZero();
+        then(expoPushClient).should(never()).send(any());
+    }
+
 
     private PushNotificationDispatchService service(boolean enabled, Duration lookAheadWindow) {
         return new PushNotificationDispatchService(
@@ -118,7 +184,8 @@ class PushNotificationDispatchServiceTest {
                 pushDeviceTokenRepository,
                 pushNotificationHistoryService,
                 taskService,
-                expoPushClient
+                expoPushClient,
+                workspaceMemberRepository
         );
     }
 
@@ -142,20 +209,38 @@ class PushNotificationDispatchServiceTest {
     }
 
     private TaskNotificationCandidateResponse candidate(LocalDateTime scheduledAt) {
+        return candidate(42L, scheduledAt);
+    }
+
+    private TaskNotificationCandidateResponse candidate(Long taskId, LocalDateTime scheduledAt) {
         return new TaskNotificationCandidateResponse(
-                "task:42",
-                42L,
+                "task:%d".formatted(taskId),
+                taskId,
                 scheduledAt,
                 null,
                 null,
                 null,
                 true,
                 TaskResponse.builder()
-                        .id(42L)
+                        .id(taskId)
                         .type(TaskType.TODO)
                         .title("알림 대상")
                         .startAt(scheduledAt)
                         .build()
         );
+    }
+
+    private WorkspaceMember activeWorkspaceMember(User user) {
+        SharedWorkspace workspace = new SharedWorkspace("공유 일정", null, user);
+        ReflectionTestUtils.setField(workspace, "id", 100L);
+        WorkspaceMember member = new WorkspaceMember(
+                workspace,
+                user,
+                WorkspaceRole.EDITOR,
+                WorkspaceMemberStatus.ACTIVE,
+                user
+        );
+        ReflectionTestUtils.setField(member, "id", 200L);
+        return member;
     }
 }

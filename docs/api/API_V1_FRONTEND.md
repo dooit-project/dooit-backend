@@ -840,7 +840,8 @@ Response: `PushNotificationHistoryResponse[]`
 - 로그인 사용자 본인의 서버 push 전송 이력만 최신순으로 반환한다.
 - 응답은 실제 `deviceToken` 전체를 반환하지 않고 `tokenSuffix`만 반환한다.
 - `idempotencyKey`는 서버 push 중복 발송 방지 기준이며, 단건 Task는 `SERVER:{taskId}`, 반복 occurrence는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` 형식을 사용한다.
-- 같은 owner와 idempotency key의 `SUCCESS` 이력이 있으면 서버 push scheduler는 다시 발송하지 않는다. `FAILED` 이력만 있으면 다음 scheduler cycle에서 재시도할 수 있다.
+- 같은 수신자 owner와 idempotency key의 `SUCCESS` 이력이 있으면 서버 push scheduler는 다시 발송하지 않는다. `FAILED` 이력만 있으면 다음 scheduler cycle에서 재시도할 수 있다.
+- shared workspace push는 ACTIVE 멤버 중 활성 push token이 있는 사용자를 수신자로 하며 payload에 `workspaceId`를 포함한다. PENDING/REMOVED 멤버는 제외된다.
 
 ### 지난 미완료
 

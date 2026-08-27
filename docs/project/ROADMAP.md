@@ -149,7 +149,7 @@ Last updated: 2026-08-23
 - [x] provider 실패 응답에 따라 token 비활성화 정책을 적용한다.
 - [x] Expo Push Service 단건 발송 client와 ticket 해석을 추가한다.
 - [x] scheduler 기반 자동 발송을 구현한다.
-- [ ] shared workspace push 수신자/멤버별 중복 정책을 확정하고 자동 발송 범위에 포함한다.
+- [x] shared workspace push 수신자/멤버별 중복 정책을 확정하고 자동 발송 범위에 포함한다.
 - [x] 모바일 로컬 알림과 중복되지 않도록 `suppressLocalNotification` 정책을 검증한다.
 
 선행 조건:

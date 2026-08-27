@@ -160,8 +160,9 @@ DELETE /api/v1/workspaces/{workspaceId}/dday-goals/{goalId}
 
 - 1차 구현에서 workspace 알림 후보는 개인 알림 후보 API에 포함하지 않는다.
 - workspace 알림 후보 API는 `/api/v1/workspaces/{workspaceId}/tasks/notification-candidates` path를 사용한다.
-- 서버 push 실제 발송 전까지 workspace 알림도 모바일 로컬 알림 책임으로 둔다.
-- workspace 알림 이력은 전송자를 기록할 수 있도록 별도 정책 확정 후 구현한다.
+- 서버 push가 활성화되면 workspace 알림 후보도 ACTIVE 멤버별로 자동 발송한다.
+- workspace push 이력 owner는 실제 수신자 user이며, 같은 수신자 owner와 `SERVER:{taskId}` 또는 `SERVER:{recurrenceSeriesId}:{occurrenceDate}` idempotency key의 `SUCCESS` 이력이 있으면 중복 발송하지 않는다.
+- PENDING/REMOVED 멤버와 활성 push token이 없는 사용자는 workspace push 수신자에서 제외한다.
 
 ## Guest 정책
 
