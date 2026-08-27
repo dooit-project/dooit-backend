@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-27
+Last audited: 2026-08-28
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -85,6 +85,7 @@ Last audited: 2026-08-27
    - 완료: 만료 게스트 정리 스케줄러와 게스트 생성 rate limit 429/`11004` 구현
    - 완료: `POST /api/v1/auth/guest/refresh`는 같은 guest user id를 유지하며 만료 전 token을 갱신
    - 완료: 기존 계정 로그인 병합 성공 응답에 `mergeResult.tasks`, `schedules`, `ddayGoals`, `recurrenceSeries` 포함
+   - 완료: 모바일 연결 완료 화면은 `mergeResult`가 있을 때 이전된 전체 count를 노출하고, 항목별 count는 선택적으로 표시하는 정책 확정
    - 문서: `docs/api/GUEST_ACCOUNT_HANDOFF.md`
 
 ## 2. 여러 날 일정 / Calendar 범위 조회

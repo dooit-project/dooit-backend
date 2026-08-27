@@ -275,7 +275,7 @@ Last updated: 2026-08-28
 
 ### P2. 제품 정책 후속 결정
 
-- [ ] 모바일 연결 완료 화면에서 병합 결과 count를 구체적으로 노출할지 결정한다.
+- [x] 모바일 연결 완료 화면에서 병합 결과 count를 구체적으로 노출할지 결정한다.
 - [ ] 게스트가 31일 이상 미접속한 뒤 기존 데이터를 복구해야 하는지 결정한다.
 - [x] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
 - [ ] 서버 push 운영 credential을 실제 production에 적용할지 결정한다.

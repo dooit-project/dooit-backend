@@ -155,6 +155,8 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 - target 계정에 같은 push device token이 이미 있으면 guest token row는 비활성화하고 중복 이전하지 않는다.
 - 잘못된 비밀번호, 이메일 중복 등 검증 실패 시 게스트 상태와 데이터는 유지된다.
 - 같은 guest token으로 같은 target 계정 로그인을 재시도하면 중복 이전 없이 정식 token을 반환하는 멱등 성공으로 처리한다.
+- 모바일 연결 완료 화면에는 `mergeResult`가 있을 때 이전된 전체 개수를 노출한다.
+- 전체 개수는 `tasks + schedules + ddayGoals + recurrenceSeries` 합계다. 항목별 개수 노출은 선택 사항이며 0인 항목은 숨길 수 있다.
 
 ## 5. 오류 코드
 

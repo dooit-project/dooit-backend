@@ -264,6 +264,13 @@ Content-Type: application/json
 - 병합 성공 응답은 `mergeResult.tasks`, `mergeResult.schedules`, `mergeResult.ddayGoals`, `mergeResult.recurrenceSeries`를 포함한다.
 - 일반 로그인처럼 병합이 없으면 `mergeResult`는 `null`이다.
 
+모바일 노출 정책:
+
+- 기존 계정 로그인 병합이 성공했고 `mergeResult`가 있으면 연결 완료 화면에 이전된 전체 개수를 노출한다.
+- 전체 개수는 `tasks + schedules + ddayGoals + recurrenceSeries` 합계다.
+- 항목별 개수 노출은 선택 사항이며, 0인 항목은 숨길 수 있다.
+- `mergeResult=null`이면 일반 로그인 완료로 처리하고 병합 count를 노출하지 않는다.
+
 ### 등록 계정 token 갱신
 
 ```http
