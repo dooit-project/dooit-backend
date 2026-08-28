@@ -186,7 +186,8 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(migration).contains("CREATE TABLE PUSH_NOTIFICATION_HISTORY");
         assertThat(migration).contains("COMMIT;");
         assertThat(runbook).contains("docs/db/migrations/20260803_prepare_local_production.sql");
-        assertThat(runbook).contains("docs/db/migrations/20260809_add_guest_account_columns.sql");
+        assertThat(runbook).contains("docs/db/migrations/*.sql");
+        assertThat(runbook).contains("docs/db/migrations/<pending-migration>.sql");
         assertThat(runbook).contains("이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.");
     }
 

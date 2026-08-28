@@ -1,6 +1,6 @@
 # Local PC Production Runbook
 
-Last updated: 2026-08-11
+Last updated: 2026-08-29
 
 이 문서는 이 Mac의 Docker Compose를 ToDoLab의 단일 production 서버로 사용하고 Android APK에서 Tailscale HTTPS로 접근하는 절차다.
 
@@ -143,19 +143,18 @@ release 후 `./scripts/smoke-production-api.sh`로 게스트 발급, `/auth/me`,
 현재 schema 변경은 자동 migration 도구로 추적되지 않는다. 기존 volume에는 `docker-entrypoint-initdb.d`의 `schema.sql`이 다시 적용되지 않으므로, migration SQL 적용과 백업을 release의 필수 수동 단계로 유지한다. Flyway 도입 전에는 schema 변경이 있는 release를 자동 배포하지 않는다.
 수동 적용 이력은 [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)에 기록한다. 현재는 Flyway를 도입하지 않고, schema 변경 빈도나 다중 환경 순서 관리가 필요해질 때 별도 작업으로 전환한다.
 
-기존 production DB가 현재 schema보다 오래된 경우에는 app 업데이트 전에 백업 후 필요한 migration SQL을 수동 적용한다.
+기존 production DB가 현재 schema보다 오래된 경우에는 app 업데이트 전에 백업 후 `docs/db/migrations/*.sql` 중 아직 적용되지 않은 파일을 날짜 순서대로 수동 적용한다. 적용 전에는 현재 schema를 확인하고, 이미 존재하는 table, column, index, constraint를 다시 만들지 않는다.
 
 ```bash
 ./scripts/backup-db.sh
 docker compose stop app
-docker compose exec -T mysql sh -c 'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < docs/db/migrations/20260803_prepare_local_production.sql
-docker compose exec -T mysql sh -c 'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < docs/db/migrations/20260809_add_guest_account_columns.sql
+docker compose exec -T mysql sh -c 'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < docs/db/migrations/<pending-migration>.sql
 docker compose up -d app
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ```
 
 `docs/db/migrations/20260803_prepare_local_production.sql`은 local production으로 전환하기 전 legacy DB를 현재 app schema에 맞추는 일회성 수동 migration이다. 이미 같은 table, column, index, constraint가 적용된 DB에는 다시 실행하지 않는다.
-`docs/db/migrations/20260809_add_guest_account_columns.sql`은 게스트 계정 도입을 위해 `APP_USER`에 `accountType`, 병합 상태, 게스트 만료 필드를 추가하고 이메일/비밀번호/표시 이름을 nullable로 전환한다.
+개별 migration 적용 여부와 결과는 [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)에 기록한다.
 
 app image tag는 기본적으로 현재 git short SHA를 사용한다. 특정 tag로 release하려면 `TODOLAB_APP_IMAGE_TAG`를 지정한다.
 

@@ -1,12 +1,12 @@
 # ToDoLab Backend Docs
 
-Last updated: 2026-08-27
+Last updated: 2026-08-29
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
 
 ## 현재 기준 요약
 
-2026-08-27 현재 문서 원본은 아래 순서로 판단한다.
+2026-08-29 현재 문서 원본은 아래 순서로 판단한다.
 
 | 우선순위 | 문서/원본 | 기준 |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ Last updated: 2026-08-27
 | 4 | `docs/ops/**` | local production 운영, 환경변수, 배포·백업·복구 절차 |
 | 5 | `docs/project/ROADMAP.md` | 아직 닫히지 않은 제품/운영 작업 |
 
-현재 로드맵에서 닫아야 할 최우선 작업은 실제 도메인 DNS/TLS 연결 후 public production smoke, Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
+현재 로드맵에서 닫아야 할 최우선 작업은 실제 도메인 DNS/TLS 연결 후 public production smoke, Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다. 빠른 등록은 상대 주 표현과 한국어 날짜 표현까지 지원하며, 이후 보강은 실제 모바일 입력 로그를 기준으로만 추가한다.
 
 ## 프론트/모바일 전달 문서
 

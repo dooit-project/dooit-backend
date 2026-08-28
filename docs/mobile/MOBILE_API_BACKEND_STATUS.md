@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-28
+Last audited: 2026-08-29
 
 이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -12,81 +12,33 @@ Last audited: 2026-08-28
 
 ## 0. 현재 요약
 
-2026-08-27 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 남은 최우선 확인은 backend 구현 문제가 아니라 실제 도메인 연결, production 접근 경로, 실제 기기 검증이다.
+2026-08-29 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 남은 최우선 확인은 backend 구현 문제가 아니라 실제 도메인 연결, production 접근 경로, 실제 기기 검증이다.
 
 | 영역 | 상태 | 현재 기준 |
 | --- | --- | --- |
 | Auth/Guest | [x] | JWT, guest 생성/갱신/승격/병합/cleanup/rate limit 계약 구현 |
 | Task/D-Day | [x] | owner scope, Today/Calendar, 검색, D-Day 연결, 반복 occurrence 구현 |
-| Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 실제 입력 로그 기반 파싱 보강만 남음 |
+| Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 상대 주 표현과 한국어 날짜 표현 포함. 실제 입력 로그 기반 파싱 보강만 남음 |
 | Templates | [x] | `TaskTemplate` CRUD와 template 기반 Task 생성 구현 |
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
 | Notifications | [x] | 로컬 알림 후보, push token, 발송 이력, Expo client, 개인/workspace scheduler 자동 발송 구현. 운영 credential 적용 후 실수신 smoke 필요 |
 | Production Android | [ ] | public HTTPS 또는 Tailscale HTTPS URL로 Android 실제 기기 smoke 필요 |
 | Production Web | [x] | 현재 production Expo Web은 배포하지 않으므로 `TODOLAB_ALLOWED_ORIGINS`는 비워 둠 |
 
-## 1. 실제 사용 전 최우선
+## 1. 현재 보존할 검증 기준
 
-최근 모바일 연동 테스트 결과:
+완료 이력은 이 문서에 길게 누적하지 않는다. 상세 계약은 `docs/api/**`, 운영 절차는 `docs/ops/**`, 수동 DB 변경 이력은 `docs/db/MIGRATION_HISTORY.md`를 원본으로 본다.
 
-- [x] Expo Web에서 JWT 요청 preflight 시 `Authorization` header가 CORS 허용 목록에 없어 막히는 문제 수정
-- [x] CORS preflight 회귀 테스트 추가
-- [x] OpenAPI JSON `/v3/api-docs`, Swagger UI `/swagger-ui`, Scalar `/scalar.html` 노출
-- [x] `UserResponse.updatedAt` 문서/모바일 타입/백엔드 DTO 계약 일치
-- [x] 2026-07-14 문서 기준: local CORS origin, 인증 smoke test, Today/Calendar/D-Day real-mode 확인 절차를 runbook으로 정리
-- [x] 2026-07-14 OpenAPI JSON 기준: v1 Auth/Task/D-Day tag, operation summary, Bearer security, error response schema 노출 검증
-- [x] 2026-07-15 OpenAPI JSON 기준: request schema enum, 날짜 형식, validation 제약 노출 검증
-- [x] 2026-07-15 문서 UI 기준: Swagger UI/Scalar 노출, Bearer security scheme, v1 tag 순서 검증
-- [x] 2026-07-15 정책 기준: OpenAPI JSON snapshot diff는 보류하고 CI의 OpenAPI 문서 회귀 테스트와 릴리스 전 계약 검토로 관리하기로 결정
-- [x] 2026-07-22 v1 D-Day 목표 생성 응답 기준: `DdayGoalResponse`의 `id`, `title`, `targetDate`, `daysLeft`, `createdAt`은 모두 non-null
-- [x] 2026-07-22 v1 Task 생성 응답 기준: nullable/default/date 규칙을 OpenAPI와 `API_V1_FRONTEND.md`에 반영
-- [x] 2026-07-22 v1 MONTH Task 조회 기준: `date=YYYY-MM` 바인딩, `YYYY-MM-DD` 거부, owner scope 검증
-- [x] 2026-07-22 v1 리소스 삭제 응답 기준: Task/D-Day 삭제 성공 envelope의 `data`는 `null`
-- [x] 2026-07-22 legacy 정책 기준: `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로 유지하고 모바일 alias는 추가하지 않음
-- [x] 2026-08-09 게스트 계정 기준: 생성, `/auth/me`, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약 구현
-- [x] 2026-08-11 production guest smoke 기준: `./scripts/smoke-production-api.sh`로 게스트 발급, `/auth/me`, token refresh, 회원가입 승격, 기존 계정 병합, 병합 재시도 멱등성 확인 가능
-- [x] 2026-08-11 production Tailscale smoke 기준: `./scripts/check-tailscale-production.sh`로 HTTPS readiness, guest 발급, `/auth/me`, 선택적 Expo Web CORS preflight 확인 가능
-- [x] 2026-08-20 production Tailscale URL 기준: MagicDNS HTTPS URL을 `.env`의 `TODOLAB_TAILSCALE_API_URL`에 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh` 통과
-- [x] 2026-08-20 production Tailscale host smoke 기준: HTTPS readiness, guest 발급, guest `/auth/me` 확인. 실제 URL, token, guest id는 기록하지 않음
-- [x] 2026-08-21 production recovery 기준: launchd, Docker Desktop, app/mysql health, readiness, Tailscale HTTPS recovery check 통과. 실제 URL은 기록하지 않음
-- [x] 2026-08-27 public production 준비 기준: `TODOLAB_PUBLIC_API_URL`과 `./scripts/check-public-production.sh`로 실제 도메인 HTTPS readiness, metadata, guest 발급, `/auth/me`, 선택적 Web CORS preflight를 확인할 수 있음
+현재 보존할 모바일 연동 기준:
 
-1. [x] 인증 사용자 소유권
-   - 완료: `Task`, `DdayGoal` owner 필드와 owner-aware repository/service path 추가
-   - 완료: `/api/v1/tasks`, `/api/v1/dday-goals`의 주요 조회/수정/삭제 endpoint를 owner-aware service path로 확장
-   - 완료: 기존 `/api/tasks`, `/api/ddays`는 웹/과거 호환 범위로 유지하고 모바일 alias는 추가하지 않는 정책 확정
-   - 완료: access token TTL, refresh token 회전, logout, 401/403 오류 계약 확정
-   - 문서: `docs/api/AUTH_CONTRACT.md`
-
-2. [x] Today / Calendar 여러 날 일정 범위 조회
-   - 완료: `GET /api/tasks/today?date=...`는 요청 날짜와 겹치는 `SCHEDULE`을 포함한다.
-   - 완료: `DAY/WEEK/MONTH` 범위 조회는 `startAt/endAt` overlap 조건을 사용한다.
-   - 완료: 여러 날 일정은 Today 조회에 포함되지만 일괄 재정렬 대상에서는 제외한다.
-
-3. [x] 통합 검색 API
-   - 완료: `GET /api/v1/tasks/search` 구현.
-   - 완료: 검색어, 필터, relevantDate/dateSource, cursor/limit, owner scope 검증.
-   - 완료: cursor를 offset에서 마지막 Task id anchor로 변경해 offset shift 중복/누락을 방지.
-
-4. [x] 기존 D-Day 500 이슈 확인
-   - 현재 `GET /api/ddays/{id}` endpoint 자체가 없음.
-   - 현재 `POST /api/ddays/{id}/tasks` endpoint 자체가 없음.
-   - 현재 Task와 D-Day 연결은 `PATCH /api/tasks/{id}/dday-goal?ddayGoalId=...`로 제공됨.
-   - 완료: v1 기준 `GET /api/v1/dday-goals/{id}`와 `POST /api/v1/dday-goals/{id}/tasks` 추가.
-   - 완료: legacy `/api/ddays/**` alias는 추가하지 않고 모바일을 v1 계약으로 전환하기로 결정.
-   - 완료: v1 D-Day 연결 Task Today 이동 회귀 테스트 추가.
-
-5. [x] 게스트 계정 및 정식 계정 연동
-   - 완료: `POST /api/v1/auth/guest` 서버 발급형 게스트 사용자와 token 발급
-   - 완료: `/api/v1/auth/me`와 token claim에 `accountType=GUEST|REGISTERED` 반영
-   - 완료: 게스트 상태 `POST /api/v1/auth/register`는 같은 user id를 유지하고 `REGISTERED`로 승격
-   - 완료: 기존 계정 `POST /api/v1/auth/login`에 guest Bearer token을 보내면 Task/D-Day/반복/알림 owner 데이터를 정식 계정으로 병합
-   - 완료: 병합 완료 guest token, 만료 guest token은 owner API와 `/auth/me`에서 401 처리
-   - 완료: 만료 게스트 정리 스케줄러와 게스트 생성 rate limit 429/`11004` 구현
-   - 완료: `POST /api/v1/auth/guest/refresh`는 같은 guest user id를 유지하며 만료 전 token을 갱신
-   - 완료: 기존 계정 로그인 병합 성공 응답에 `mergeResult.tasks`, `schedules`, `ddayGoals`, `recurrenceSeries` 포함
-   - 완료: 모바일 연결 완료 화면은 `mergeResult`가 있을 때 이전된 전체 count를 노출하고, 항목별 count는 선택적으로 표시하는 정책 확정
-   - 문서: `docs/api/GUEST_ACCOUNT_HANDOFF.md`
+- v1 API는 Bearer JWT, 공통 response envelope, 안전한 error message, `Cache-Control: no-store`를 사용한다.
+- OpenAPI JSON `/v3/api-docs`, Swagger UI `/swagger-ui`, Scalar `/scalar.html`은 local/test에서 노출되고 production 기본값은 비공개다.
+- Expo Web local CORS는 `Authorization`, `Content-Type`, `Idempotency-Key` preflight를 허용한다. production Web을 배포하기 전까지 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다.
+- legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다. 모바일은 `/api/v1/**` 계약을 사용한다.
+- 게스트 생성, `/auth/me`, refresh, logout, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 구현되어 있다.
+- Today/Calendar 범위 조회, 검색, D-Day 연결, 반복 occurrence, 알림 후보, push token/history, workspace 1차 API는 구현되어 있다.
+- Tailscale HTTPS host smoke와 recovery check는 스크립트로 확인 가능하며, 실제 URL/token/guest id는 문서에 기록하지 않는다.
+- 아직 남은 확인은 Android 실제 기기 production smoke, 허가되지 않은 Tailscale 접근 차단 확인, 실제 도메인 public smoke, host 전원 정책 strict 확인, offsite backup 확정이다.
 
 ## 2. 여러 날 일정 / Calendar 범위 조회
 
@@ -250,14 +202,10 @@ Last audited: 2026-08-28
 - [ ] Android 실제 기기 production smoke: public HTTPS 또는 Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
 - [x] Web production origin: 현재 production Expo Web 미사용. `TODOLAB_ALLOWED_ORIGINS`는 비워 두며 preflight는 해당 없음
 
-## 9. 추천 구현 순서
+## 9. 다음 확인 순서
 
-1. [x] `/api/v1/tasks` 조회/수정/삭제를 owner-aware service path로 확장
-2. [x] `/api/v1/dday-goals` 조회/삭제/연결 Task 조회를 owner-aware service path로 확장
-3. [x] Today 조회에 여러 날 schedule overlap 포함
-4. [x] OpenAPI/Swagger/Scalar 문서 UI 추가
-5. [x] Expo Web Authorization CORS preflight 허용
-6. [x] D-Day legacy 500 이슈 재현 테스트 또는 endpoint 계약 정리
-7. [x] `GET /api/v1/tasks/search` 구현
-8. [x] Today 일괄 재정렬 API 구현
-9. [x] 반복/알림 계약 설계 확정 후 recurrence 모델링
+1. Android production build에 public HTTPS 또는 Tailscale HTTPS API URL을 반영한다.
+2. 실제 Android 기기에서 login/me, Today 조회·생성·완료, guest 발급과 병합 흐름을 확인한다.
+3. 허가되지 않은 Tailscale 사용자 또는 연결이 끊긴 기기가 API에 접근하지 못하는지 확인한다.
+4. host 전원 정책 strict check와 재부팅/재로그인 후 recovery check를 통과시킨다.
+5. offsite backup 경로를 확정하고 sync, routine check, 임시 DB restore를 검증한다.

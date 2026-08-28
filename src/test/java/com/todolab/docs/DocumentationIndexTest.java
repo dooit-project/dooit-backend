@@ -82,7 +82,7 @@ class DocumentationIndexTest {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
         assertThat(roadmap).contains("## 2. 제품 기능 로드맵");
-        assertThat(roadmap).contains("### 2026-08-27 정리");
+        assertThat(roadmap).contains("### 2026-08-29 정리");
         assertThat(roadmap).contains("현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증");
         assertThat(roadmap).contains("서버 push 실제 발송");
         assertThat(roadmap).contains("### P0. 프론트 출시 연동 요청");

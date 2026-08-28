@@ -1,6 +1,6 @@
 # ToDoLab Mobile Integration Runbook
 
-Last updated: 2026-08-11
+Last updated: 2026-08-29
 
 이 문서는 모바일 real mode smoke test를 반복 가능한 절차로 남기기 위한 백엔드 기준 runbook이다.
 
@@ -228,7 +228,7 @@ TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tail
 
 ## 7. 결과 기록 템플릿
 
-`docs/mobile/MOBILE_API_BACKEND_STATUS.md`의 "최근 모바일 연동 테스트 결과"에 아래 형식으로 기록한다.
+`docs/mobile/MOBILE_API_BACKEND_STATUS.md`의 "현재 보존할 검증 기준" 또는 운영 연결 확인 목록에 아래 형식으로 기록한다.
 
 ```text
 - [x] 2026-07-14 local real mode: register/login/me, Today, Calendar, D-Day Today Task 생성 확인

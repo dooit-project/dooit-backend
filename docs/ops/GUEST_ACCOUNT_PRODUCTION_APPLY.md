@@ -1,23 +1,16 @@
 # Guest Account Production Apply Runbook
 
-Last updated: 2026-08-11
+Last updated: 2026-08-29
 
-이 문서는 모바일 게스트 계정 연동을 production에 적용하기 전후의 필수 확인 절차를 정리한다. 실제 secret, access token, DB 비밀번호, 백업 파일 내용은 문서와 공유 로그에 남기지 않는다.
+이 문서는 모바일 게스트 계정 계약을 production에 반영하거나 점검할 때 확인할 항목만 남긴다. 상세 API 계약은 [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md)와 [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md), 일반 배포/백업/복구 절차는 [`LOCAL_PRODUCTION_RUNBOOK.md`](./LOCAL_PRODUCTION_RUNBOOK.md)를 원본으로 본다. 실제 secret, access token, DB 비밀번호, 백업 파일 내용은 문서와 공유 로그에 남기지 않는다.
 
 ## 1. 적용 범위
 
-production에는 최소 다음 backend commit 이후의 깨끗한 작업 트리에서 만든 image를 배포한다.
-
-- `f28c938` 게스트 계정 발급 계약 추가
-- `cc0b8e7` 게스트 회원가입 승격 처리
-- `b8247f7` 게스트 로그인 데이터 병합 처리
-- `da97c15` 게스트 병합 재시도 검증 추가
-
-Redis 기반 게스트 생성 rate-limit 변경이 미커밋 상태라면 production image에 포함하지 않는다. 포함하려면 `./gradlew test` 통과 후 별도 커밋으로 확정한다.
+production에는 현재 `main`의 깨끗한 작업 트리에서 만든 image를 배포한다. 배포 전에는 `./gradlew test`, DB migration 적용 필요 여부, API 호환성, readiness를 확인한다.
 
 ## 2. DB Migration
 
-적용 파일:
+관련 migration:
 
 - `docs/db/migrations/20260809_add_guest_account_columns.sql`
 
@@ -44,13 +37,13 @@ SHOW INDEX FROM APP_USER WHERE Key_name = 'IDX_APP_USER_ACCOUNT_TYPE_EXPIRES';
 
 컬럼 또는 index가 이미 있으면 migration을 그대로 재실행하지 않는다. 현재 schema와 migration 차이를 확인한 뒤 누락된 변경만 수동 적용한다.
 
-## 3. 적용 순서
+## 3. 배포 확인 순서
 
 1. production DB 백업을 생성한다.
 2. 백업 파일이 생성됐는지 확인한다.
 3. 별도 임시 DB 또는 검증용 volume에서 복구 가능 여부를 확인한다.
-4. production app container를 중지한다.
-5. `20260809_add_guest_account_columns.sql`을 적용한다.
+4. `docs/db/MIGRATION_HISTORY.md` 기준으로 관련 migration 적용 여부를 확인한다.
+5. 미적용 상태면 production app container를 중지한 뒤 필요한 migration만 수동 적용한다.
 6. 변경된 column, nullable, index를 확인한다.
 7. 깨끗한 git 작업 트리에서 최신 backend image를 빌드하고 배포한다.
 8. `/actuator/health/readiness`가 `UP`인지 확인한다.
