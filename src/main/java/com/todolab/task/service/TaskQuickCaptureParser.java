@@ -28,6 +28,7 @@ public class TaskQuickCaptureParser {
     private static final int TITLE_MAX_LENGTH = 30;
     private static final int DESCRIPTION_MAX_LENGTH = 300;
     private static final Pattern ISO_DATE = Pattern.compile("\\b(\\d{4})-(\\d{2})-(\\d{2})\\b");
+    private static final Pattern KOREAN_DATE = Pattern.compile("(?<!\\d)(?:(\\d{4})년\\s*)?(\\d{1,2})월\\s*(\\d{1,2})일(?!\\d)");
     private static final Pattern SLASH_DATE = Pattern.compile("\\b(\\d{1,2})/(\\d{1,2})\\b");
     private static final Pattern TIME = Pattern.compile("(오전|오후)?\\s*(\\d{1,2})시(?:\\s*(\\d{1,2})분)?");
     private static final Pattern WEEKLY = Pattern.compile("매주\\s*(월요일|화요일|수요일|목요일|금요일|토요일|일요일|월|화|수|목|금|토|일)");
@@ -153,6 +154,21 @@ public class TaskQuickCaptureParser {
             consumedTokens.add(isoDate.group());
             try {
                 return new ParsedDate(LocalDate.parse(isoDate.group()));
+            } catch (DateTimeException e) {
+                throw new TaskValidationException("올바르지 않은 날짜입니다.");
+            }
+        }
+
+        Matcher koreanDate = KOREAN_DATE.matcher(text);
+        if (koreanDate.find()) {
+            consumedTokens.add(koreanDate.group());
+            int year = koreanDate.group(1) == null
+                    ? referenceDate.getYear()
+                    : Integer.parseInt(koreanDate.group(1));
+            int month = Integer.parseInt(koreanDate.group(2));
+            int day = Integer.parseInt(koreanDate.group(3));
+            try {
+                return new ParsedDate(LocalDate.of(year, month, day));
             } catch (DateTimeException e) {
                 throw new TaskValidationException("올바르지 않은 날짜입니다.");
             }

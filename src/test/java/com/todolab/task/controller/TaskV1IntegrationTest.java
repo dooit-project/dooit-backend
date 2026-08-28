@@ -198,6 +198,58 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Task 빠른 등록은 월일 날짜 표현을 기준 연도 날짜로 파싱한다")
+    void quickCapture_koreanMonthDay_success() throws Exception {
+        String accessToken = accessToken("task-quick-capture-korean-month-day@example.com");
+        TaskQuickCaptureRequest request = new TaskQuickCaptureRequest(
+                "8월 15일 오전 11시 광복절 행사",
+                LocalDate.of(2026, 8, 13),
+                "Asia/Seoul",
+                "기념일"
+        );
+
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.parsed").value(true))
+                .andExpect(jsonPath("$.data.parsedDate").value("2026-08-15"))
+                .andExpect(jsonPath("$.data.parsedTime").value("11:00:00"))
+                .andExpect(jsonPath("$.data.task.title").value("광복절 행사"))
+                .andExpect(jsonPath("$.data.task.startAt").value("2026-08-15T11:00:00"))
+                .andExpect(jsonPath("$.data.task.endAt").value("2026-08-15T12:00:00"))
+                .andExpect(jsonPath("$.data.task.allDay").value(false))
+                .andExpect(jsonPath("$.data.task.category").value("기념일"));
+    }
+
+    @Test
+    @DisplayName("v1 Task 빠른 등록은 연도 포함 한국어 날짜 표현을 파싱한다")
+    void quickCapture_koreanYearMonthDay_success() throws Exception {
+        String accessToken = accessToken("task-quick-capture-korean-year-month-day@example.com");
+        TaskQuickCaptureRequest request = new TaskQuickCaptureRequest(
+                "2027년 1월 3일 여행 준비",
+                LocalDate.of(2026, 8, 13),
+                "Asia/Seoul",
+                "여행"
+        );
+
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.parsed").value(true))
+                .andExpect(jsonPath("$.data.parsedDate").value("2027-01-03"))
+                .andExpect(jsonPath("$.data.parsedTime").isEmpty())
+                .andExpect(jsonPath("$.data.task.title").value("여행 준비"))
+                .andExpect(jsonPath("$.data.task.startAt").value("2027-01-03T00:00:00"))
+                .andExpect(jsonPath("$.data.task.endAt").value("2027-01-04T00:00:00"))
+                .andExpect(jsonPath("$.data.task.allDay").value(true))
+                .andExpect(jsonPath("$.data.task.category").value("여행"));
+    }
+
+    @Test
     @DisplayName("v1 Task 빠른 등록은 이번 주 요일 표현을 해당 주 날짜로 파싱한다")
     void quickCapture_thisWeekday_success() throws Exception {
         String accessToken = accessToken("task-quick-capture-this-week@example.com");
