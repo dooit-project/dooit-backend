@@ -31,6 +31,7 @@ public class TaskQuickCaptureParser {
     private static final Pattern SLASH_DATE = Pattern.compile("\\b(\\d{1,2})/(\\d{1,2})\\b");
     private static final Pattern TIME = Pattern.compile("(오전|오후)?\\s*(\\d{1,2})시(?:\\s*(\\d{1,2})분)?");
     private static final Pattern WEEKLY = Pattern.compile("매주\\s*(월요일|화요일|수요일|목요일|금요일|토요일|일요일|월|화|수|목|금|토|일)");
+    private static final Pattern RELATIVE_WEEK = Pattern.compile("(이번\\s*주|다음\\s*주)\\s*(월요일|화요일|수요일|목요일|금요일|토요일|일요일|월|화|수|목|금|토|일)");
     private static final Pattern SINGLE_WEEKDAY = Pattern.compile("(월요일|화요일|수요일|목요일|금요일|토요일|일요일|(?<![가-힣])(월|화|수|목|금|토|일)(?![가-힣]))");
 
     public ParsedQuickCapture parse(TaskQuickCaptureRequest request, User owner) {
@@ -167,6 +168,16 @@ public class TaskQuickCaptureParser {
             } catch (DateTimeException e) {
                 throw new TaskValidationException("올바르지 않은 날짜입니다.");
             }
+        }
+
+        Matcher relativeWeek = RELATIVE_WEEK.matcher(text);
+        if (relativeWeek.find()) {
+            consumedTokens.add(relativeWeek.group());
+            LocalDate weekStart = referenceDate.with(DayOfWeek.MONDAY);
+            if (relativeWeek.group(1).replace(" ", "").equals("다음주")) {
+                weekStart = weekStart.plusWeeks(1);
+            }
+            return new ParsedDate(weekStart.with(toDayOfWeek(relativeWeek.group(2))));
         }
 
         Matcher weekday = SINGLE_WEEKDAY.matcher(text);
