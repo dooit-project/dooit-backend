@@ -182,7 +182,7 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 게스트 만료:
 
 - 기본 만료 기간은 게스트 access token TTL과 같은 31일이다.
-- `TODOLAB_GUEST_CLEANUP_ENABLED=true`이면 `TODOLAB_GUEST_CLEANUP_CRON` 기준으로 만료 게스트와 관련 owner 데이터를 삭제한다.
+- `DOOIT_GUEST_CLEANUP_ENABLED=true`이면 `DOOIT_GUEST_CLEANUP_CRON` 기준으로 만료 게스트와 관련 owner 데이터를 삭제한다.
 - 기본 cron은 `0 30 3 * * *`다.
 - IP나 단말 식별 정보만으로 게스트 계정을 복구하지 않는다.
 
@@ -197,12 +197,12 @@ Rollback은 운영 DB 상태에 따라 수동으로 결정한다. 게스트 row�
 
 게스트 생성 제한:
 
-- `TODOLAB_GUEST_RATE_LIMIT_ENABLED=true`
-- `TODOLAB_GUEST_RATE_LIMIT_STORE=memory`
-- `TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS=30`
-- `TODOLAB_GUEST_RATE_LIMIT_WINDOW=PT1H`
+- `DOOIT_GUEST_RATE_LIMIT_ENABLED=true`
+- `DOOIT_GUEST_RATE_LIMIT_STORE=memory`
+- `DOOIT_GUEST_RATE_LIMIT_MAX_REQUESTS=30`
+- `DOOIT_GUEST_RATE_LIMIT_WINDOW=PT1H`
 - 단일 서버는 `memory`, 다중 서버는 `redis`를 사용한다.
-- Redis 저장소는 Spring Redis 접속 설정과 함께 `TODOLAB_GUEST_RATE_LIMIT_STORE=redis`로 활성화한다.
+- Redis 저장소는 Spring Redis 접속 설정과 함께 `DOOIT_GUEST_RATE_LIMIT_STORE=redis`로 활성화한다.
 
 ## 8. 테스트
 

@@ -57,7 +57,7 @@ SHOW INDEX FROM APP_USER WHERE Key_name = 'IDX_APP_USER_ACCOUNT_TYPE_EXPIRES';
 
 ```bash
 ./scripts/smoke-production-api.sh
-TODOLAB_SMOKE_BASE_URL=https://<device>.<tailnet>.ts.net ./scripts/smoke-production-api.sh
+DOOIT_SMOKE_BASE_URL=https://<device>.<tailnet>.ts.net ./scripts/smoke-production-api.sh
 ```
 
 ### 게스트 발급

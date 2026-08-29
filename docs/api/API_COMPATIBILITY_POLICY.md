@@ -1,4 +1,4 @@
-# ToDoLab API Compatibility Policy
+# Dooit API Compatibility Policy
 
 Last updated: 2026-08-21
 

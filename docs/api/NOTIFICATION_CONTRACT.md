@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-27
 
-이 문서는 ToDoLab 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API, 서버 push token 등록 API, 개인 owner Task와 shared workspace Task 서버 push 자동 발송을 제공하며, 별도 서버 push 수동 발송 API는 제공하지 않는다.
+이 문서는 Dooit 모바일 알림 구현 전 백엔드와 모바일의 책임 경계를 정리한다. 현재 단계에서는 로컬 알림 예약 후보 API, 서버 push token 등록 API, 개인 owner Task와 shared workspace Task 서버 push 자동 발송을 제공하며, 별도 서버 push 수동 발송 API는 제공하지 않는다.
 
 ## 현재 구현 상태
 
@@ -127,11 +127,11 @@ GET /api/v1/push-notification-histories?limit=50
 - 1차 provider는 `EXPO`로 확정한다.
 - 모바일은 Expo Push Service용 `ExpoPushToken`을 등록한다. FCM/APNs native token은 1차 범위에서 사용하지 않는다.
 - Android/iOS push credentials는 EAS/Expo project에 보관하고 백엔드 저장소나 DB에 저장하지 않는다.
-- Expo enhanced push security를 켜면 백엔드는 Expo access token을 `TODOLAB_PUSH_ACCESS_TOKEN` 환경변수로만 주입받는다.
-- `TODOLAB_PUSH_ACCESS_TOKEN` 값은 문서, git, 로그, 전송 이력에 남기지 않는다.
+- Expo enhanced push security를 켜면 백엔드는 Expo access token을 `DOOIT_PUSH_ACCESS_TOKEN` 환경변수로만 주입받는다.
+- `DOOIT_PUSH_ACCESS_TOKEN` 값은 문서, git, 로그, 전송 이력에 남기지 않는다.
 - access token이 비어 있으면 백엔드는 Authorization header 없이 Expo Push API를 호출하는 설정으로 간주한다.
 - 운영 설정 prefix는 `app.notification.push`다.
-- production 환경변수는 `TODOLAB_PUSH_ENABLED`, `TODOLAB_PUSH_PROVIDER`, `TODOLAB_PUSH_ENDPOINT`, `TODOLAB_PUSH_ACCESS_TOKEN`, `TODOLAB_PUSH_SCHEDULER_FIXED_DELAY`, `TODOLAB_PUSH_LOOK_AHEAD_WINDOW`를 사용한다.
+- production 환경변수는 `DOOIT_PUSH_ENABLED`, `DOOIT_PUSH_PROVIDER`, `DOOIT_PUSH_ENDPOINT`, `DOOIT_PUSH_ACCESS_TOKEN`, `DOOIT_PUSH_SCHEDULER_FIXED_DELAY`, `DOOIT_PUSH_LOOK_AHEAD_WINDOW`를 사용한다.
 - 기본값은 `enabled=false`, `provider=EXPO`, `endpoint=https://exp.host/--/api/v2/push/send`다.
 - provider 설정은 발송 준비 계약이며, `enabled=true`만으로 발송 스케줄러가 동작하지는 않는다.
 
@@ -143,8 +143,8 @@ GET /api/v1/push-notification-histories?limit=50
 - Expo ticket의 `status=ok`와 `id`는 성공 이력의 `providerMessageId`로 저장할 값이다.
 - Expo ticket의 `details.error`는 실패 이력의 `errorCode`와 token 비활성화 판단에 사용한다.
 - scheduler는 `app.notification.push.enabled=true`일 때만 동작한다.
-- scheduler는 `TODOLAB_PUSH_SCHEDULER_FIXED_DELAY=PT1M` 기본값에 따라 1분 주기로 실행한다.
-- 발송 후보 window는 `TODOLAB_PUSH_LOOK_AHEAD_WINDOW=PT10M` 기본값에 따라 현재 시각부터 10분 뒤까지다.
+- scheduler는 `DOOIT_PUSH_SCHEDULER_FIXED_DELAY=PT1M` 기본값에 따라 1분 주기로 실행한다.
+- 발송 후보 window는 `DOOIT_PUSH_LOOK_AHEAD_WINDOW=PT10M` 기본값에 따라 현재 시각부터 10분 뒤까지다.
 - 후보 산출은 `GET /api/v1/tasks/notification-candidates`와 같은 기준을 사용한다.
 - 서버 push는 활성 push token이 있는 사용자만 대상으로 한다.
 - 자동 발송 범위는 개인 owner Task 알림 후보와 ACTIVE membership이 있는 shared workspace Task 알림 후보다.

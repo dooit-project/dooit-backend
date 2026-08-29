@@ -18,7 +18,7 @@ Last updated: 2026-07-25
 
 | 증상 | 우선 확인 |
 | --- | --- |
-| CORS preflight 실패 | `Origin`, `Access-Control-Request-Headers`, `TODOLAB_ALLOWED_ORIGINS` |
+| CORS preflight 실패 | `Origin`, `Access-Control-Request-Headers`, `DOOIT_ALLOWED_ORIGINS` |
 | 401 | access token 존재 여부, 만료, Bearer prefix, issuer |
 | 403 | 인증 사용자 role과 owner scope |
 | 400 | enum/date 형식, required field, request body JSON |

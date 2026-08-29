@@ -1,4 +1,4 @@
-# ToDoLab Mobile Integration Runbook
+# Dooit Mobile Integration Runbook
 
 Last updated: 2026-08-29
 
@@ -57,10 +57,10 @@ curl -i -X OPTIONS 'http://localhost:8080/api/v1/tasks/today' \
 
 대체 local origin `http://localhost:8090`도 같은 방식으로 확인한다.
 
-production Expo Web origin을 사용할 때만 운영 origin을 `TODOLAB_ALLOWED_ORIGINS`에 추가하고 아래처럼 확인한다.
+production Expo Web origin을 사용할 때만 운영 origin을 `DOOIT_ALLOWED_ORIGINS`에 추가하고 아래처럼 확인한다.
 
 ```bash
-TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net TODOLAB_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
+DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net DOOIT_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
 ```
 
 ## 4. 인증 Smoke Test
@@ -213,7 +213,7 @@ DELETE /api/v1/dday-goals/{id}
 Mac과 Android가 같은 tailnet에 있고 Tailscale Serve가 local app `8080`으로 연결된 뒤 실행한다.
 
 ```bash
-TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
+DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
 ```
 
 성공 기준:

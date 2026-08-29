@@ -1,4 +1,4 @@
-# ToDoLab v1 Frontend API
+# Dooit v1 Frontend API
 
 Last updated: 2026-08-29
 
@@ -377,7 +377,7 @@ type PasswordResetVerifyResponse = {
 
 - request는 가입 여부와 무관하게 HTTP 200과 `requested=true`를 반환한다.
 - 등록 계정이면 backend가 reset link를 email로 발송한다.
-- reset link 기본 형식은 `todolab://password-reset?token={token}`이다.
+- reset link 기본 형식은 `dooit://password-reset?token={token}`이다.
 - token TTL은 기본 30분이다.
 - request rate limit은 normalized email 기준 기본 5건/1시간이며 초과 시 429/`11006`이다.
 - token이 없거나 만료되었거나 이미 사용되었으면 verify/confirm은 400/`11005`를 반환한다.

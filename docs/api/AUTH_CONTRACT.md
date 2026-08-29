@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-28
 
-이 문서는 ToDoLab 백엔드의 모바일/웹 클라이언트 JWT 인증 책임을 정리한다.
+이 문서는 Dooit 백엔드의 모바일/웹 클라이언트 JWT 인증 책임을 정리한다.
 
 ## 인증 방식
 
@@ -26,18 +26,18 @@ Last updated: 2026-08-28
 
 ## Access Token
 
-이 PC의 Docker Compose production access token TTL 기본값은 24시간이다. 애플리케이션 prod profile 자체의 fallback은 `PT1H`이지만, local production은 Compose가 `TODOLAB_JWT_ACCESS_TOKEN_TTL:-PT24H`를 주입한다.
+이 PC의 Docker Compose production access token TTL 기본값은 24시간이다. 애플리케이션 prod profile 자체의 fallback은 `PT1H`이지만, local production은 Compose가 `DOOIT_JWT_ACCESS_TOKEN_TTL:-PT24H`를 주입한다.
 
 게스트 access token TTL은 31일이다.
 
 | 환경 | 설정 |
 | --- | --- |
 | local/test 기본값 | `PT1H` |
-| application prod fallback | `TODOLAB_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT1H` |
-| local production Compose 기본값 | `TODOLAB_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT24H` |
-| production override | `TODOLAB_JWT_ACCESS_TOKEN_TTL=PT24H` 형식의 ISO-8601 duration |
+| application prod fallback | `DOOIT_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT1H` |
+| local production Compose 기본값 | `DOOIT_JWT_ACCESS_TOKEN_TTL` 미설정 시 `PT24H` |
+| production override | `DOOIT_JWT_ACCESS_TOKEN_TTL=PT24H` 형식의 ISO-8601 duration |
 | guest local/prod 기본값 | `P31D` |
-| guest production override | `TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL=P31D` 형식의 ISO-8601 duration |
+| guest production override | `DOOIT_GUEST_JWT_ACCESS_TOKEN_TTL=P31D` 형식의 ISO-8601 duration |
 
 JWT claim:
 
@@ -80,8 +80,8 @@ JWT claim:
 | 항목 | 값 |
 | --- | --- |
 | 게스트 계정 미사용 만료 기간 | 게스트 access token TTL과 같은 31일 |
-| 정리 스케줄 활성화 | `TODOLAB_GUEST_CLEANUP_ENABLED=false` 기본값 |
-| 정리 cron | `TODOLAB_GUEST_CLEANUP_CRON=0 30 3 * * *` |
+| 정리 스케줄 활성화 | `DOOIT_GUEST_CLEANUP_ENABLED=false` 기본값 |
+| 정리 cron | `DOOIT_GUEST_CLEANUP_CRON=0 30 3 * * *` |
 
 정리 대상:
 
@@ -118,11 +118,11 @@ JWT claim:
 
 | 항목 | 값 |
 | --- | --- |
-| 활성화 | `TODOLAB_GUEST_RATE_LIMIT_ENABLED=true` |
-| 저장소 | `TODOLAB_GUEST_RATE_LIMIT_STORE=memory` 기본값. 다중 서버는 `redis` |
-| 한도 | `TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS=30` |
-| window | `TODOLAB_GUEST_RATE_LIMIT_WINDOW=PT1H` |
-| 추적 key 최대 수 | `TODOLAB_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS=10000` |
+| 활성화 | `DOOIT_GUEST_RATE_LIMIT_ENABLED=true` |
+| 저장소 | `DOOIT_GUEST_RATE_LIMIT_STORE=memory` 기본값. 다중 서버는 `redis` |
+| 한도 | `DOOIT_GUEST_RATE_LIMIT_MAX_REQUESTS=30` |
+| window | `DOOIT_GUEST_RATE_LIMIT_WINDOW=PT1H` |
+| 추적 key 최대 수 | `DOOIT_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS=10000` |
 
 정책:
 
@@ -211,7 +211,7 @@ Logout 정책:
 - `PASSWORD_RESET_TOKEN`에 `USER_ID`, normalized `EMAIL`, `TOKEN_HASH`, `EXPIRES_AT`, `USED_AT`, `CREATED_AT`을 저장한다.
 - 원본 token은 저장하지 않고 SHA-256 hash만 저장한다.
 - token은 URL-safe opaque string이다.
-- reset link 기본 형식은 `todolab://password-reset?token={token}`이며, production에서는 `TODOLAB_PASSWORD_RESET_LINK_TEMPLATE`로 변경할 수 있다.
+- reset link 기본 형식은 `dooit://password-reset?token={token}`이며, production에서는 `DOOIT_PASSWORD_RESET_LINK_TEMPLATE`로 변경할 수 있다.
 
 정책:
 

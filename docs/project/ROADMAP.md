@@ -1,6 +1,6 @@
-# ToDoLab Backend Roadmap
+# Dooit Backend Roadmap
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -9,12 +9,13 @@ Last updated: 2026-08-29
 - 모바일 API 기준 경로는 `/api/v1/**`다.
 - 인증은 `/api/v1/**` 모바일/웹 클라이언트 API에서 Bearer JWT를 사용한다.
 - API 원본 계약은 실행 중인 백엔드의 `/v3/api-docs` OpenAPI JSON이다.
+- Java base package는 `pj.dooit`, Gradle project name은 `Dooit`이다.
 - local production은 이 Mac의 Docker Compose와 external MySQL volume을 사용한다.
-- production app port는 `127.0.0.1:8080`에만 bind하고, 외부 접근은 Tailscale HTTPS 또는 실제 도메인의 reverse proxy HTTPS 경로로만 연다.
+- production app port는 `127.0.0.1:8080`에만 bind하고, 외부 API는 Cloudflare Tunnel의 `https://dooitapi.hsng.pe.kr`로만 연다.
 - staging은 현재 운영하지 않는다. 환경은 local 개발 환경과 이 PC의 production 환경으로만 구분한다.
 - 실제 secret, access token, DB dump 내용, private production URL은 문서에 기록하지 않는다.
 
-### 2026-08-29 정리
+### 2026-08-30 정리
 
 현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증에 몰려 있다.
 
@@ -22,9 +23,10 @@ Last updated: 2026-08-29
 | --- | --- | --- |
 | 빠른 등록 | API와 규칙 기반 파싱 구현 완료. 상대 주 표현과 한국어 날짜 표현 포함 | 모바일 실제 입력 로그 기반 예외 표현 보강 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
+| 카테고리 탐색 | Task `category` 필드와 검색 exact match/suggestion은 구현 완료 | TickTick식 좌상단 메뉴 UX에 맞춰 category 목록/count/order API 필요 여부 결정 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
 | 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner와 shared workspace scheduler 자동 발송 완료 | 운영 credential 적용 후 실수신 smoke |
-| production 접근 | host 내부와 Tailscale host smoke 가능, 실제 도메인 연결 전 public smoke 스크립트 준비 완료 | 실제 도메인 DNS/TLS 연결 후 public smoke |
+| production 접근 | Cloudflare Tunnel로 Web·API 도메인 연결, HTTPS 강제, readiness·CORS public smoke 완료 | Android 실제 기기 smoke |
 | 운영 복구성 | launchd, Docker health, readiness, Tailscale recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 
@@ -169,7 +171,7 @@ Last updated: 2026-08-29
 
 ### P1. 외부 캘린더 읽기 전용 feed
 
-목표: Google Calendar, Apple Calendar 같은 외부 캘린더 앱에서 개인 ToDoLab 일정을 읽기 전용으로 구독할 수 있게 한다.
+목표: Google Calendar, Apple Calendar 같은 외부 캘린더 앱에서 개인 Dooit 일정을 읽기 전용으로 구독할 수 있게 한다.
 
 - [x] 개인 iCalendar feed token 발급/폐기 API를 추가한다.
 - [x] token 원본은 저장하지 않고 hash만 저장한다.
@@ -199,8 +201,8 @@ Last updated: 2026-08-29
 - [ ] Mac과 Android 기기를 같은 tailnet에 연결한다.
 - [x] Tailscale MagicDNS 이름을 production API 주소로 확정한다.
 - [x] Tailscale Serve 또는 동등한 reverse proxy로 `https://<device>.<tailnet>.ts.net`을 `http://127.0.0.1:8080`에 연결한다.
-- [x] `.env`에 `TODOLAB_TAILSCALE_API_URL`을 저장하고 `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`를 통과시킨다.
-- [x] `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-tailscale-production.sh`를 통과시킨다.
+- [x] `.env`에 `DOOIT_TAILSCALE_API_URL`을 저장하고 `DOOIT_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`를 통과시킨다.
+- [x] `DOOIT_TAILSCALE_API_URL=... ./scripts/check-tailscale-production.sh`를 통과시킨다.
 - [ ] Android 실제 기기에서 `GET /api/v1/auth/me`까지 HTTPS로 접근되는지 확인한다.
 - [ ] Tailscale 연결이 끊긴 기기와 허가되지 않은 tailnet 사용자가 API에 접근하지 못하는지 확인한다.
 
@@ -222,17 +224,17 @@ Last updated: 2026-08-29
 
 증적:
 
-- `TODOLAB_SMOKE_BASE_URL=https://<device>.<tailnet>.ts.net ./scripts/smoke-production-api.sh`
+- `DOOIT_SMOKE_BASE_URL=https://<device>.<tailnet>.ts.net ./scripts/smoke-production-api.sh`
 - `docs/mobile/MOBILE_INTEGRATION_RUNBOOK.md`의 production 결과 기록 템플릿
 
 ### P0. host 상시 가용성 검증
 
 목표: 재부팅, 재로그인, Docker Desktop 재시작 뒤 수동 코드 실행 없이 production API가 복구된다.
 
-- [ ] `TODOLAB_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`를 관리자 권한으로 실행한다.
-- [ ] `TODOLAB_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
+- [ ] `DOOIT_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`를 관리자 권한으로 실행한다.
+- [ ] `DOOIT_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
 - [x] 현재 부팅 상태에서 `./scripts/check-production-recovery.sh`를 통과시킨다.
-- [x] Tailscale URL 확정 후 `TODOLAB_TAILSCALE_API_URL=... ./scripts/check-production-recovery.sh`를 통과시킨다.
+- [x] Tailscale URL 확정 후 `DOOIT_TAILSCALE_API_URL=... ./scripts/check-production-recovery.sh`를 통과시킨다.
 - [ ] 실제 재부팅 또는 로그아웃/로그인 후 `./scripts/check-production-recovery.sh`를 통과시킨다.
 - [ ] Docker Desktop 재시작, 네트워크 변경, 절전 복귀 뒤 readiness와 Android 접근을 확인한다.
 
@@ -247,10 +249,10 @@ Last updated: 2026-08-29
 목표: PC 디스크 장애에도 복구 가능한 외부 매체 또는 신뢰할 수 있는 동기화 위치를 운영 절차에 포함한다.
 
 - [x] local backup gzip, backup age, disk 여유 공간, readiness를 `./scripts/check-production-routine.sh`로 확인한다.
-- [ ] 외부 디스크, NAS, cloud sync 중 하나를 `TODOLAB_OFFSITE_BACKUP_DIR`로 결정한다.
-- [ ] `TODOLAB_OFFSITE_BACKUP_DIR=... ./scripts/sync-production-backup.sh`를 통과시킨다.
-- [ ] `TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh`를 통과시킨다.
-- [ ] `TODOLAB_OFFSITE_BACKUP_DIR=... ./scripts/check-production-routine.sh`를 통과시킨다.
+- [ ] 외부 디스크, NAS, cloud sync 중 하나를 `DOOIT_OFFSITE_BACKUP_DIR`로 결정한다.
+- [ ] `DOOIT_OFFSITE_BACKUP_DIR=... ./scripts/sync-production-backup.sh`를 통과시킨다.
+- [ ] `DOOIT_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh`를 통과시킨다.
+- [ ] `DOOIT_OFFSITE_BACKUP_DIR=... ./scripts/check-production-routine.sh`를 통과시킨다.
 - [ ] offsite 복사본에서 임시 DB restore를 1회 검증한다.
 
 증적:
@@ -259,23 +261,25 @@ Last updated: 2026-08-29
 - SHA-256 checksum 일치
 - 임시 DB restore 결과
 
-### P1. Expo Web production origin 결정
+### P1. Expo Web production origin 운영
 
-목표: Expo Web을 production API에 연결할 필요가 있는지 결정하고, 필요할 때만 CORS origin을 연다.
+목표: 공개 Web origin만 production API CORS에 허용하고, origin 변경 시 preflight를 다시 검증한다.
 
 - [x] Expo Web production 배포 여부를 결정한다.
-- [x] 사용하지 않으면 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다.
-- [x] 추후 사용하면 실제 origin만 `TODOLAB_ALLOWED_ORIGINS`에 추가하는 정책을 확정한다.
-- [x] production Web 미사용 중에는 `TODOLAB_EXPO_WEB_ORIGIN=... ./scripts/check-tailscale-production.sh` preflight를 생략한다.
+- [x] 실제 Web origin `https://dooit.hsng.pe.kr`만 `DOOIT_ALLOWED_ORIGINS`에 허용한다.
+- [x] public API `https://dooitapi.hsng.pe.kr`에 대해 Web CORS preflight를 확인한다.
+- [x] origin을 추가하거나 바꾸면 실제 origin만 허용하는 정책을 유지한다.
 
 증적:
 
-- `TODOLAB_ALLOWED_ORIGINS` 설정 여부: production Web 미사용이므로 비움
-- `OPTIONS /api/v1/auth/me` preflight 결과: production Web 미사용 동안 해당 없음
+- `DOOIT_ALLOWED_ORIGINS` 설정 여부: `https://dooit.hsng.pe.kr`
+- `OPTIONS /api/v1/auth/me` preflight 결과: public API와 Web origin 기준 통과
 
 ### P2. 제품 정책 후속 결정
 
 - [x] 모바일 연결 완료 화면에서 병합 결과 count를 구체적으로 노출할지 결정한다.
+- [ ] TickTick처럼 좌측 상단 메뉴에서 Inbox, Today, Calendar, category를 한 번에 탐색하는 UX를 채택할지 결정한다.
+- [ ] 채택 시 기존 검색 `category` 필터와 추천 category만으로 충분한지, 별도 category 목록/count/order API가 필요한지 계약한다.
 - [ ] 게스트가 31일 이상 미접속한 뒤 기존 데이터를 복구해야 하는지 결정한다.
 - [x] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
 - [ ] 서버 push 운영 credential을 실제 production에 적용할지 결정한다.
@@ -314,10 +318,10 @@ Last updated: 2026-08-29
 Tailscale URL과 offsite backup 경로가 확정된 뒤에는 strict 검증을 추가한다.
 
 ```bash
-TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh
-TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
-TODOLAB_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh
-TODOLAB_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
+DOOIT_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh
+DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
+DOOIT_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh
+DOOIT_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
 ```
 
 ## 6. 문서 유지 원칙

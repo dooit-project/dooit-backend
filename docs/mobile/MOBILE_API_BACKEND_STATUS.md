@@ -1,8 +1,8 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-29
+Last audited: 2026-08-30
 
-이 문서는 `todolab-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `todolab-backend` 현재 코드 기준으로 대조한 관리 문서다.
+이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
 상태 기준:
 
@@ -12,7 +12,7 @@ Last audited: 2026-08-29
 
 ## 0. 현재 요약
 
-2026-08-29 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 남은 최우선 확인은 backend 구현 문제가 아니라 실제 도메인 연결, production 접근 경로, 실제 기기 검증이다.
+2026-08-30 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 실제 도메인과 production Web 연결은 완료됐으며, 남은 최우선 확인은 Android 실제 기기 검증이다. 현재 코드 식별자는 Dooit 기준으로 정리 중이며 Java package는 `pj.dooit`을 사용한다.
 
 | 영역 | 상태 | 현재 기준 |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Last audited: 2026-08-29
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
 | Notifications | [x] | 로컬 알림 후보, push token, 발송 이력, Expo client, 개인/workspace scheduler 자동 발송 구현. 운영 credential 적용 후 실수신 smoke 필요 |
 | Production Android | [ ] | public HTTPS 또는 Tailscale HTTPS URL로 Android 실제 기기 smoke 필요 |
-| Production Web | [x] | 현재 production Expo Web은 배포하지 않으므로 `TODOLAB_ALLOWED_ORIGINS`는 비워 둠 |
+| Production Web | [x] | `https://dooit.hsng.pe.kr` 배포 및 API CORS preflight 확인 |
 
 ## 1. 현재 보존할 검증 기준
 
@@ -33,16 +33,16 @@ Last audited: 2026-08-29
 
 - v1 API는 Bearer JWT, 공통 response envelope, 안전한 error message, `Cache-Control: no-store`를 사용한다.
 - OpenAPI JSON `/v3/api-docs`, Swagger UI `/swagger-ui`, Scalar `/scalar.html`은 local/test에서 노출되고 production 기본값은 비공개다.
-- Expo Web local CORS는 `Authorization`, `Content-Type`, `Idempotency-Key` preflight를 허용한다. production Web을 배포하기 전까지 `TODOLAB_ALLOWED_ORIGINS`는 비워 둔다.
+- Expo Web CORS는 `Authorization`, `Content-Type`, `Idempotency-Key` preflight를 허용한다. production에서는 공개 Web origin만 허용한다.
 - legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다. 모바일은 `/api/v1/**` 계약을 사용한다.
 - 게스트 생성, `/auth/me`, refresh, logout, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 구현되어 있다.
 - Today/Calendar 범위 조회, 검색, D-Day 연결, 반복 occurrence, 알림 후보, push token/history, workspace 1차 API는 구현되어 있다.
 - Tailscale HTTPS host smoke와 recovery check는 스크립트로 확인 가능하며, 실제 URL/token/guest id는 문서에 기록하지 않는다.
-- 아직 남은 확인은 Android 실제 기기 production smoke, 허가되지 않은 Tailscale 접근 차단 확인, 실제 도메인 public smoke, host 전원 정책 strict 확인, offsite backup 확정이다.
+- 아직 남은 확인은 Android 실제 기기 production smoke, 허가되지 않은 Tailscale 접근 차단 확인, host 전원 정책 strict 확인, offsite backup 확정이다.
 
 ## 2. 여러 날 일정 / Calendar 범위 조회
 
-문서: `todolab-mobile/docs/API_SCHEDULE_RANGE.md`
+문서: `dooit-mobile/docs/API_SCHEDULE_RANGE.md`
 
 | 항목 | 상태 | 백엔드 현재 상태 |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ Last audited: 2026-08-29
 
 ## 3. 통합 검색 API
 
-문서: `todolab-mobile/docs/API_SEARCH_FILTER.md`
+문서: `dooit-mobile/docs/API_SEARCH_FILTER.md`
 
 현재 상태: [x] 구현
 
@@ -83,7 +83,7 @@ Last audited: 2026-08-29
 
 ## 4. 반복 Task / 반복 일정
 
-문서: `todolab-mobile/docs/API_RECURRENCE.md`
+문서: `dooit-mobile/docs/API_RECURRENCE.md`
 
 현재 상태: [x] 모델/계약 확정
 
@@ -112,7 +112,7 @@ Last audited: 2026-08-29
 
 ## 5. 반복 일정과 알림 책임
 
-문서: `todolab-mobile/docs/API_NOTIFICATIONS.md`
+문서: `dooit-mobile/docs/API_NOTIFICATIONS.md`
 
 현재 상태: [x] 로컬 알림 후보 API 구현
 
@@ -135,7 +135,7 @@ Last audited: 2026-08-29
 
 ## 6. Today 재정렬 API
 
-문서: `todolab-mobile/docs/API_TODAY_REORDER.md`
+문서: `dooit-mobile/docs/API_TODAY_REORDER.md`
 
 현재 상태: [x] 구현
 
@@ -156,7 +156,7 @@ Last audited: 2026-08-29
 
 ## 7. 날짜·시간 기준
 
-문서: `todolab-mobile/docs/API_DATE_TIME.md`
+문서: `dooit-mobile/docs/API_DATE_TIME.md`
 
 | 항목 | 상태 | 백엔드 현재 상태 |
 | --- | --- | --- |
@@ -177,7 +177,7 @@ Last audited: 2026-08-29
 
 ## 8. 기존 백엔드 이슈와 운영 확인
 
-문서: `todolab-mobile/docs/ROADMAP.md`
+문서: `dooit-mobile/docs/ROADMAP.md`
 
 | 항목 | 상태 | 메모 |
 | --- | --- | --- |
@@ -195,12 +195,12 @@ Last audited: 2026-08-29
 운영 연결 확인:
 
 - [x] host 내부 production API smoke: `./scripts/smoke-production-api.sh`
-- [x] Tailscale HTTPS host smoke 스크립트: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh`
-- [x] Tailscale HTTPS URL `.env` 반영: `TODOLAB_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`
-- [x] Tailscale HTTPS recovery check: `TODOLAB_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`
-- [x] public HTTPS smoke 스크립트: `TODOLAB_PUBLIC_API_URL=https://api.example.com ./scripts/check-public-production.sh`
+- [x] Tailscale HTTPS host smoke 스크립트: `DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh`
+- [x] Tailscale HTTPS URL `.env` 반영: `DOOIT_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`
+- [x] Tailscale HTTPS recovery check: `DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`
+- [x] public HTTPS smoke 스크립트: `DOOIT_PUBLIC_API_URL=https://api.example.com ./scripts/check-public-production.sh`
 - [ ] Android 실제 기기 production smoke: public HTTPS 또는 Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
-- [x] Web production origin: 현재 production Expo Web 미사용. `TODOLAB_ALLOWED_ORIGINS`는 비워 두며 preflight는 해당 없음
+- [x] Web production origin: `https://dooit.hsng.pe.kr`; 공개 API CORS preflight 통과
 
 ## 9. 다음 확인 순서
 
