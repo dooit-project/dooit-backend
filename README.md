@@ -1,8 +1,12 @@
-# ToDoLab Backend
+<p align="center">
+  <img src="./docs/assets/dooit-icon.png" width="128" alt="Dooit 아이콘" />
+</p>
 
-> 작은 기록이 오늘의 실행으로 이어지도록, 데이터를 안전하게 연결하는 서버.
+# Dooit Backend
 
-ToDoLab Backend는 할 일, 일정, D-Day, 반복 계획과 Workspace 협업을 하나의 API 계약으로 제공하는 Spring Boot 백엔드입니다.
+> 생각난 일은 가볍게 기록하고, 오늘 해야 할 일은 선명하게.
+
+Dooit Backend는 할 일, 일정, D-Day, 반복 계획과 Workspace 협업을 하나의 API 계약으로 제공하는 Spring Boot 백엔드입니다.
 모바일 앱이 게스트 시작, 계정 연결, Today 정렬, 반복 일정, 알림과 공유 작업공간을 끊김 없이 다룰 수 있도록 인증, 데이터 모델, 운영 절차를 함께 관리합니다.
 
 프론트엔드가 사용자 경험을 조용하고 명확하게 만드는 동안, 이 서버는 그 경험이 실제 데이터와 production 환경에서도 일관되게 유지되도록 받칩니다.
@@ -62,7 +66,7 @@ Authorization: Bearer <accessToken>
 
 ```bash
 cp .env.example .env
-docker volume create todolab-mysql-data
+docker volume create dooit-mysql-data
 docker compose up --build
 ```
 
@@ -84,7 +88,7 @@ docker compose up --build
 ## 프로젝트 구조
 
 ```text
-src/main/java/com/todolab/
+src/main/java/pj/dooit/
 ├── auth/          # 회원, 게스트, JWT, refresh, 비밀번호 재설정
 ├── task/          # Task, quick capture, template, recurrence
 ├── dday/          # D-Day 목표와 연결 Task
@@ -101,7 +105,7 @@ src/main/java/com/todolab/
 
 ## 운영까지 포함한 백엔드
 
-production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 접근은 Tailscale HTTPS 또는 실제 도메인의 reverse proxy HTTPS 경로로만 엽니다. MySQL port는 host에 공개하지 않습니다.
+production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로 공개합니다. Web은 별도 정적 서버의 `127.0.0.1:4173`을 `https://dooit.hsng.pe.kr`에 연결하며, 두 공개 주소 모두 Cloudflare edge에서 HTTPS를 강제합니다. MySQL port는 host에 공개하지 않습니다.
 
 대표 점검 명령:
 
@@ -155,10 +159,10 @@ production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 접근은 
 
 ## 관련 저장소
 
-- [todolab-mobile](https://github.com/todolab-project/todolab-mobile) - Android, iOS, Web 클라이언트
+- [dooit-mobile](https://github.com/dooit-project/dooit-mobile) - Android, iOS, Web 클라이언트
 
 ---
 
 <p align="center">
-  작은 기록이 오늘의 실행으로 이어지도록.
+  생각난 일은 가볍게 기록하고, 오늘 해야 할 일은 선명하게.
 </p>
