@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-backup_dir=${TODOLAB_BACKUP_DIR:-./backups}
-retention_days=${TODOLAB_BACKUP_RETENTION_DAYS:-14}
+backup_dir=${DOOIT_BACKUP_DIR:-./backups}
+retention_days=${DOOIT_BACKUP_RETENTION_DAYS:-14}
 timestamp=$(date '+%Y%m%d-%H%M%S')
-backup_file="${backup_dir}/todolab-${timestamp}.sql.gz"
+backup_file="${backup_dir}/dooit-${timestamp}.sql.gz"
 
 mkdir -p "$backup_dir"
 
@@ -18,6 +18,6 @@ if ! gzip -dc "$backup_file" | grep -q -- '-- MySQL dump'; then
   rm -f "$backup_file"
   exit 1
 fi
-find "$backup_dir" -type f -name 'todolab-*.sql.gz' -mtime "+$retention_days" -delete
+find "$backup_dir" -type f -name 'dooit-*.sql.gz' -mtime "+$retention_days" -delete
 
 echo "Database backup created: $backup_file"

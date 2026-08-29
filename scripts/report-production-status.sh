@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-backup_dir=${TODOLAB_BACKUP_DIR:-/Users/hyunseung/todolab-backups}
-base_url=${TODOLAB_SMOKE_BASE_URL:-http://127.0.0.1:8080}
+backup_dir=${DOOIT_BACKUP_DIR:-/Users/hyunseung/dooit-backups}
+base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -12,7 +12,7 @@ require_command() {
 }
 
 latest_backup() {
-  find "$backup_dir" -type f -name 'todolab-*.sql.gz' -print0 \
+  find "$backup_dir" -type f -name 'dooit-*.sql.gz' -print0 \
     | xargs -0 ls -t 2>/dev/null \
     | head -1
 }
@@ -38,8 +38,8 @@ if [ -z "$(git status --short)" ]; then
 fi
 
 app_image=missing
-if docker inspect todolab-app >/dev/null 2>&1; then
-  app_image=$(docker inspect todolab-app --format '{{.Config.Image}}')
+if docker inspect dooit-app >/dev/null 2>&1; then
+  app_image=$(docker inspect dooit-app --format '{{.Config.Image}}')
 fi
 
 backup_file=missing
@@ -69,7 +69,7 @@ if ./scripts/check-production-recovery.sh >/dev/null; then
 fi
 
 tailscale=skipped
-if [ -n "${TODOLAB_TAILSCALE_API_URL:-}" ]; then
+if [ -n "${DOOIT_TAILSCALE_API_URL:-}" ]; then
   if ./scripts/check-tailscale-production.sh >/dev/null; then
     tailscale=passed
   else

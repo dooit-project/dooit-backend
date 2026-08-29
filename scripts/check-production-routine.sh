@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-backup_dir=${TODOLAB_BACKUP_DIR:-/Users/hyunseung/todolab-backups}
-offsite_dir=${TODOLAB_OFFSITE_BACKUP_DIR:-}
-max_backup_age_hours=${TODOLAB_MAX_BACKUP_AGE_HOURS:-30}
-min_free_gb=${TODOLAB_MIN_FREE_GB:-10}
-base_url=${TODOLAB_SMOKE_BASE_URL:-http://127.0.0.1:8080}
+backup_dir=${DOOIT_BACKUP_DIR:-/Users/hyunseung/dooit-backups}
+offsite_dir=${DOOIT_OFFSITE_BACKUP_DIR:-}
+max_backup_age_hours=${DOOIT_MAX_BACKUP_AGE_HOURS:-30}
+min_free_gb=${DOOIT_MIN_FREE_GB:-10}
+base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -15,7 +15,7 @@ require_command() {
 }
 
 latest_backup() {
-  find "$backup_dir" -type f -name 'todolab-*.sql.gz' -print0 \
+  find "$backup_dir" -type f -name 'dooit-*.sql.gz' -print0 \
     | xargs -0 ls -t 2>/dev/null \
     | head -1
 }

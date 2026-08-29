@@ -10,6 +10,6 @@ spring:
 app:
   auth:
     jwt:
-      issuer: https://todolab.test
+      issuer: https://dooit.test
       secret: test-only-jwt-secret-at-least-32-bytes
       access-token-ttl: PT15M

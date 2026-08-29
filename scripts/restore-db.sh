@@ -15,9 +15,9 @@ fi
 
 gzip -t "$backup_file"
 
-if [ "${TODOLAB_CONFIRM_RESTORE:-}" != "RESTORE" ]; then
-  echo "Restore replaces the current ToDoLab database." >&2
-  echo "Re-run with TODOLAB_CONFIRM_RESTORE=RESTORE after stopping the app service." >&2
+if [ "${DOOIT_CONFIRM_RESTORE:-}" != "RESTORE" ]; then
+  echo "Restore replaces the current Dooit database." >&2
+  echo "Re-run with DOOIT_CONFIRM_RESTORE=RESTORE after stopping the app service." >&2
   exit 2
 fi
 

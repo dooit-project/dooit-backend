@@ -67,14 +67,14 @@ set_env_value() {
 
 jwt_secret=$(openssl rand -base64 48)
 
-set_env_value "TODOLAB_JWT_ISSUER" "$issuer" "https://your-device.your-tailnet.ts.net"
-set_env_value "TODOLAB_JWT_SECRET" "$jwt_secret" "replace-with-at-least-32-random-bytes"
+set_env_value "DOOIT_JWT_ISSUER" "$issuer" "https://your-device.your-tailnet.ts.net"
+set_env_value "DOOIT_JWT_SECRET" "$jwt_secret" "replace-with-at-least-32-random-bytes"
 if [ -n "$public_api_url" ]; then
-  set_env_value "TODOLAB_PUBLIC_API_URL" "$public_api_url" "https://api.example.com"
+  set_env_value "DOOIT_PUBLIC_API_URL" "$public_api_url" "https://api.example.com"
 fi
 
-if ! grep -q '^TODOLAB_JWT_ACCESS_TOKEN_TTL=' "$env_file"; then
-  printf 'TODOLAB_JWT_ACCESS_TOKEN_TTL=PT24H\n' >> "$env_file"
+if ! grep -q '^DOOIT_JWT_ACCESS_TOKEN_TTL=' "$env_file"; then
+  printf 'DOOIT_JWT_ACCESS_TOKEN_TTL=PT24H\n' >> "$env_file"
 fi
 
 echo "Production JWT settings added to .env without printing the secret."

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-backup_dir=${TODOLAB_BACKUP_DIR:-/Users/hyunseung/todolab-backups}
-offsite_dir=${TODOLAB_OFFSITE_BACKUP_DIR:-}
+backup_dir=${DOOIT_BACKUP_DIR:-/Users/hyunseung/dooit-backups}
+offsite_dir=${DOOIT_OFFSITE_BACKUP_DIR:-}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -12,7 +12,7 @@ require_command() {
 }
 
 latest_backup() {
-  find "$backup_dir" -type f -name 'todolab-*.sql.gz' -print0 \
+  find "$backup_dir" -type f -name 'dooit-*.sql.gz' -print0 \
     | xargs -0 ls -t 2>/dev/null \
     | head -1
 }
@@ -22,7 +22,7 @@ require_command gzip
 require_command shasum
 
 if [ -z "$offsite_dir" ]; then
-  echo "TODOLAB_OFFSITE_BACKUP_DIR is required" >&2
+  echo "DOOIT_OFFSITE_BACKUP_DIR is required" >&2
   exit 2
 fi
 if [ ! -d "$backup_dir" ]; then

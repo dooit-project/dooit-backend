@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-base_url=${TODOLAB_PUBLIC_API_URL:-${TODOLAB_SMOKE_BASE_URL:-}}
-web_origin=${TODOLAB_WEB_ORIGIN:-${TODOLAB_EXPO_WEB_ORIGIN:-}}
+base_url=${DOOIT_PUBLIC_API_URL:-${DOOIT_SMOKE_BASE_URL:-}}
+web_origin=${DOOIT_WEB_ORIGIN:-${DOOIT_EXPO_WEB_ORIGIN:-}}
 tmpdir=$(mktemp -d)
 
 cleanup() {
@@ -45,7 +45,7 @@ require_command curl
 require_command jq
 
 if [ -z "$base_url" ]; then
-  echo "TODOLAB_PUBLIC_API_URL or TODOLAB_SMOKE_BASE_URL is required" >&2
+  echo "DOOIT_PUBLIC_API_URL or DOOIT_SMOKE_BASE_URL is required" >&2
   exit 2
 fi
 if [[ "$base_url" != https://* ]]; then

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
-base_url=${TODOLAB_SMOKE_BASE_URL:-http://127.0.0.1:8080}
-image_tag=${TODOLAB_APP_IMAGE_TAG:-}
+base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
+image_tag=${DOOIT_APP_IMAGE_TAG:-}
 
 wait_for_docker() {
   for attempt in {1..60}; do
@@ -38,17 +38,17 @@ wait_for_docker
 
 cd "$repo_root"
 
-if [ -z "$image_tag" ] && docker inspect todolab-app >/dev/null 2>&1; then
-  current_image=$(docker inspect todolab-app --format '{{.Config.Image}}')
-  if [[ "$current_image" == todolab-backend:* ]]; then
-    image_tag=${current_image#todolab-backend:}
+if [ -z "$image_tag" ] && docker inspect dooit-app >/dev/null 2>&1; then
+  current_image=$(docker inspect dooit-app --format '{{.Config.Image}}')
+  if [[ "$current_image" == dooit-backend:* ]]; then
+    image_tag=${current_image#dooit-backend:}
   fi
 fi
 if [ -z "$image_tag" ]; then
   image_tag=$(git rev-parse --short HEAD)
 fi
 
-TODOLAB_APP_IMAGE_TAG="$image_tag" docker compose up -d mysql app
+DOOIT_APP_IMAGE_TAG="$image_tag" docker compose up -d mysql app
 wait_for_readiness
 
-echo "Production stack is up: todolab-backend:${image_tag}"
+echo "Production stack is up: dooit-backend:${image_tag}"

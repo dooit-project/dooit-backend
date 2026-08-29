@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-label=${TODOLAB_PRODUCTION_LAUNCHD_LABEL:-com.todolab.backend.production}
-base_url=${TODOLAB_SMOKE_BASE_URL:-http://127.0.0.1:8080}
-tailscale_url=${TODOLAB_TAILSCALE_API_URL:-}
+label=${DOOIT_PRODUCTION_LAUNCHD_LABEL:-pj.dooit.backend.production}
+base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
+tailscale_url=${DOOIT_TAILSCALE_API_URL:-}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -48,8 +48,8 @@ fi
 docker compose ps --status running --services | grep -qx mysql
 docker compose ps --status running --services | grep -qx app
 
-app_health=$(docker inspect todolab-app --format '{{.State.Health.Status}}')
-mysql_health=$(docker inspect todolab-mysql --format '{{.State.Health.Status}}')
+app_health=$(docker inspect dooit-app --format '{{.State.Health.Status}}')
+mysql_health=$(docker inspect dooit-mysql --format '{{.State.Health.Status}}')
 if [ "$app_health" != "healthy" ] || [ "$mysql_health" != "healthy" ]; then
   echo "Unexpected container health: app=${app_health}, mysql=${mysql_health}" >&2
   exit 1
@@ -66,7 +66,7 @@ fi
 
 tailscale_check=skipped
 if [ -n "$tailscale_url" ]; then
-  TODOLAB_TAILSCALE_API_URL="$tailscale_url" ./scripts/check-tailscale-production.sh >/dev/null
+  DOOIT_TAILSCALE_API_URL="$tailscale_url" ./scripts/check-tailscale-production.sh >/dev/null
   tailscale_check=passed
 fi
 

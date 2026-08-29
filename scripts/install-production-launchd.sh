@@ -2,9 +2,9 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
-label=${TODOLAB_PRODUCTION_LAUNCHD_LABEL:-com.todolab.backend.production}
-log_dir=${TODOLAB_PRODUCTION_LAUNCHD_LOG_DIR:-"$repo_root/logs/launchd"}
-interval_seconds=${TODOLAB_PRODUCTION_LAUNCHD_INTERVAL_SECONDS:-300}
+label=${DOOIT_PRODUCTION_LAUNCHD_LABEL:-pj.dooit.backend.production}
+log_dir=${DOOIT_PRODUCTION_LAUNCHD_LOG_DIR:-"$repo_root/logs/launchd"}
+interval_seconds=${DOOIT_PRODUCTION_LAUNCHD_INTERVAL_SECONDS:-300}
 plist_dir="$HOME/Library/LaunchAgents"
 plist_file="${plist_dir}/${label}.plist"
 

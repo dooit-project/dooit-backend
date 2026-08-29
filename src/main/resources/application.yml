@@ -9,8 +9,8 @@ spring:
 app:
   auth:
     jwt:
-      issuer: https://todolab.local
-      secret: ${TODOLAB_JWT_SECRET:dev-only-not-for-production-jwt-secret}
+      issuer: https://dooit.local
+      secret: ${DOOIT_JWT_SECRET:dev-only-not-for-production-jwt-secret}
       access-token-ttl: PT15M
       guest-access-token-ttl: P31D
     guest:
@@ -27,7 +27,7 @@ app:
       token-ttl: PT30M
       rate-limit-window: PT1H
       max-requests-per-window: 5
-      link-template: "${TODOLAB_PASSWORD_RESET_LINK_TEMPLATE:todolab://password-reset?token={token}}"
+      link-template: "${DOOIT_PASSWORD_RESET_LINK_TEMPLATE:dooit://password-reset?token={token}}"
     refresh-token:
       idle-ttl: P30D
       absolute-ttl: P90D
@@ -39,9 +39,9 @@ app:
     public-enabled: true
 
   metadata:
-    version: ${TODOLAB_APP_VERSION:1.0-SNAPSHOT}
-    commit-sha: ${TODOLAB_APP_COMMIT_SHA:local}
-    image-tag: ${TODOLAB_APP_IMAGE_TAG:local}
+    version: ${DOOIT_APP_VERSION:1.0-SNAPSHOT}
+    commit-sha: ${DOOIT_APP_COMMIT_SHA:local}
+    image-tag: ${DOOIT_APP_IMAGE_TAG:local}
 
   api-logging:
     enabled: true

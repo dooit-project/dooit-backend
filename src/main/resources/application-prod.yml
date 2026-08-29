@@ -4,9 +4,9 @@ spring:
       on-profile: prod
 
   datasource:
-    url: ${TODOLAB_DB_URL}
-    username: ${TODOLAB_DB_USERNAME}
-    password: ${TODOLAB_DB_PASSWORD}
+    url: ${DOOIT_DB_URL}
+    username: ${DOOIT_DB_USERNAME}
+    password: ${DOOIT_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -26,8 +26,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${TODOLAB_MAIL_USERNAME}
-    password: ${TODOLAB_MAIL_PASSWORD}
+    username: ${DOOIT_MAIL_USERNAME}
+    password: ${DOOIT_MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -37,56 +37,56 @@ spring:
 app:
   auth:
     jwt:
-      issuer: ${TODOLAB_JWT_ISSUER}
-      secret: ${TODOLAB_JWT_SECRET}
-      access-token-ttl: ${TODOLAB_JWT_ACCESS_TOKEN_TTL:PT15M}
-      guest-access-token-ttl: ${TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL:P31D}
+      issuer: ${DOOIT_JWT_ISSUER}
+      secret: ${DOOIT_JWT_SECRET}
+      access-token-ttl: ${DOOIT_JWT_ACCESS_TOKEN_TTL:PT15M}
+      guest-access-token-ttl: ${DOOIT_GUEST_JWT_ACCESS_TOKEN_TTL:P31D}
     guest:
       cleanup:
-        enabled: ${TODOLAB_GUEST_CLEANUP_ENABLED:false}
-        cron: ${TODOLAB_GUEST_CLEANUP_CRON:0 30 3 * * *}
+        enabled: ${DOOIT_GUEST_CLEANUP_ENABLED:false}
+        cron: ${DOOIT_GUEST_CLEANUP_CRON:0 30 3 * * *}
       rate-limit:
-        enabled: ${TODOLAB_GUEST_RATE_LIMIT_ENABLED:true}
-        store: ${TODOLAB_GUEST_RATE_LIMIT_STORE:memory}
-        max-requests: ${TODOLAB_GUEST_RATE_LIMIT_MAX_REQUESTS:30}
-        window: ${TODOLAB_GUEST_RATE_LIMIT_WINDOW:PT1H}
-        max-tracked-keys: ${TODOLAB_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS:10000}
+        enabled: ${DOOIT_GUEST_RATE_LIMIT_ENABLED:true}
+        store: ${DOOIT_GUEST_RATE_LIMIT_STORE:memory}
+        max-requests: ${DOOIT_GUEST_RATE_LIMIT_MAX_REQUESTS:30}
+        window: ${DOOIT_GUEST_RATE_LIMIT_WINDOW:PT1H}
+        max-tracked-keys: ${DOOIT_GUEST_RATE_LIMIT_MAX_TRACKED_KEYS:10000}
     password-reset:
-      token-ttl: ${TODOLAB_PASSWORD_RESET_TOKEN_TTL:PT30M}
-      rate-limit-window: ${TODOLAB_PASSWORD_RESET_RATE_LIMIT_WINDOW:PT1H}
-      max-requests-per-window: ${TODOLAB_PASSWORD_RESET_MAX_REQUESTS_PER_WINDOW:5}
-      link-template: "${TODOLAB_PASSWORD_RESET_LINK_TEMPLATE:todolab://password-reset?token={token}}"
+      token-ttl: ${DOOIT_PASSWORD_RESET_TOKEN_TTL:PT30M}
+      rate-limit-window: ${DOOIT_PASSWORD_RESET_RATE_LIMIT_WINDOW:PT1H}
+      max-requests-per-window: ${DOOIT_PASSWORD_RESET_MAX_REQUESTS_PER_WINDOW:5}
+      link-template: "${DOOIT_PASSWORD_RESET_LINK_TEMPLATE:dooit://password-reset?token={token}}"
     refresh-token:
-      idle-ttl: ${TODOLAB_REFRESH_TOKEN_IDLE_TTL:P30D}
-      absolute-ttl: ${TODOLAB_REFRESH_TOKEN_ABSOLUTE_TTL:P90D}
+      idle-ttl: ${DOOIT_REFRESH_TOKEN_IDLE_TTL:P30D}
+      absolute-ttl: ${DOOIT_REFRESH_TOKEN_ABSOLUTE_TTL:P90D}
 
   cors:
-    allowed-origins: ${TODOLAB_ALLOWED_ORIGINS:}
+    allowed-origins: ${DOOIT_ALLOWED_ORIGINS:}
 
   docs:
-    public-enabled: ${TODOLAB_DOCS_PUBLIC_ENABLED:false}
+    public-enabled: ${DOOIT_DOCS_PUBLIC_ENABLED:false}
 
   metadata:
-    version: ${TODOLAB_APP_VERSION:1.0-SNAPSHOT}
-    commit-sha: ${TODOLAB_APP_COMMIT_SHA:${TODOLAB_APP_IMAGE_TAG:local}}
-    image-tag: ${TODOLAB_APP_IMAGE_TAG:local}
+    version: ${DOOIT_APP_VERSION:1.0-SNAPSHOT}
+    commit-sha: ${DOOIT_APP_COMMIT_SHA:${DOOIT_APP_IMAGE_TAG:local}}
+    image-tag: ${DOOIT_APP_IMAGE_TAG:local}
 
   api-logging:
-    enabled: ${TODOLAB_API_LOGGING_ENABLED:true}
-    payload-enabled: ${TODOLAB_API_LOGGING_PAYLOAD_ENABLED:false}
-    max-payload-length: ${TODOLAB_API_LOGGING_MAX_PAYLOAD_LENGTH:4096}
+    enabled: ${DOOIT_API_LOGGING_ENABLED:true}
+    payload-enabled: ${DOOIT_API_LOGGING_PAYLOAD_ENABLED:false}
+    max-payload-length: ${DOOIT_API_LOGGING_MAX_PAYLOAD_LENGTH:4096}
     payload-excluded-paths:
       - /api/auth
       - /api/v1/auth
 
   notification:
     push:
-      enabled: ${TODOLAB_PUSH_ENABLED:false}
-      provider: ${TODOLAB_PUSH_PROVIDER:EXPO}
-      endpoint: ${TODOLAB_PUSH_ENDPOINT:https://exp.host/--/api/v2/push/send}
-      access-token: ${TODOLAB_PUSH_ACCESS_TOKEN:}
-      scheduler-fixed-delay: ${TODOLAB_PUSH_SCHEDULER_FIXED_DELAY:PT1M}
-      look-ahead-window: ${TODOLAB_PUSH_LOOK_AHEAD_WINDOW:PT10M}
+      enabled: ${DOOIT_PUSH_ENABLED:false}
+      provider: ${DOOIT_PUSH_PROVIDER:EXPO}
+      endpoint: ${DOOIT_PUSH_ENDPOINT:https://exp.host/--/api/v2/push/send}
+      access-token: ${DOOIT_PUSH_ACCESS_TOKEN:}
+      scheduler-fixed-delay: ${DOOIT_PUSH_SCHEDULER_FIXED_DELAY:PT1M}
+      look-ahead-window: ${DOOIT_PUSH_LOOK_AHEAD_WINDOW:PT10M}
 
   batch:
     scheduler:
@@ -94,22 +94,22 @@ app:
 
   mail:
     daily-summary:
-      to: ${TODOLAB_DAILY_SUMMARY_TO}
+      to: ${DOOIT_DAILY_SUMMARY_TO}
 
 logging:
   file:
-    path: ${TODOLAB_LOG_PATH:./logs}
+    path: ${DOOIT_LOG_PATH:./logs}
   level:
     org.hibernate.SQL: INFO
     org.hibernate.orm.jdbc.bind: INFO
 
 springdoc:
   api-docs:
-    enabled: ${TODOLAB_SPRINGDOC_API_DOCS_ENABLED:false}
+    enabled: ${DOOIT_SPRINGDOC_API_DOCS_ENABLED:false}
   swagger-ui:
-    enabled: ${TODOLAB_SPRINGDOC_SWAGGER_UI_ENABLED:false}
+    enabled: ${DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED:false}
 
 management:
   health:
     redis:
-      enabled: ${TODOLAB_REDIS_HEALTH_ENABLED:false}
+      enabled: ${DOOIT_REDIS_HEALTH_ENABLED:false}

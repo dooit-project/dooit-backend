@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-base_url=${TODOLAB_SMOKE_BASE_URL:-http://127.0.0.1:8080}
-run_db_outage=${TODOLAB_CONFIRM_DB_OUTAGE:-}
+base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
+run_db_outage=${DOOIT_CONFIRM_DB_OUTAGE:-}
 tmpdir=$(mktemp -d)
 
 cleanup() {
@@ -40,8 +40,8 @@ wait_readiness_up() {
 
 compose_up_with_current_app_image() {
   local current_app_image=$1
-  if [[ "$current_app_image" == todolab-backend:* ]]; then
-    TODOLAB_APP_IMAGE_TAG="${current_app_image#todolab-backend:}" docker compose up -d mysql app >/dev/null
+  if [[ "$current_app_image" == dooit-backend:* ]]; then
+    DOOIT_APP_IMAGE_TAG="${current_app_image#dooit-backend:}" docker compose up -d mysql app >/dev/null
     return
   fi
   docker compose up -d mysql app >/dev/null
@@ -84,7 +84,7 @@ fi
 
 db_outage_result="skipped"
 if [ "$run_db_outage" = "STOP_MYSQL" ]; then
-  current_app_image=$(docker inspect todolab-app --format '{{.Config.Image}}')
+  current_app_image=$(docker inspect dooit-app --format '{{.Config.Image}}')
   docker compose stop mysql >/dev/null
   set +e
   db_down_status=$(request "$db_down_json" "$base_url/actuator/health/readiness")
@@ -99,7 +99,7 @@ if [ "$run_db_outage" = "STOP_MYSQL" ]; then
   wait_readiness_up "$recovered_json"
   db_outage_result="recovered"
 elif [ -n "$run_db_outage" ]; then
-  echo "Invalid TODOLAB_CONFIRM_DB_OUTAGE value. Use STOP_MYSQL to run the DB outage drill." >&2
+  echo "Invalid DOOIT_CONFIRM_DB_OUTAGE value. Use STOP_MYSQL to run the DB outage drill." >&2
   exit 2
 fi
 

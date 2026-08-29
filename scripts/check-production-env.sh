@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-env_file=${TODOLAB_ENV_FILE:-.env}
-require_tailscale_url=${TODOLAB_REQUIRE_TAILSCALE_URL:-false}
-require_public_api_url=${TODOLAB_REQUIRE_PUBLIC_API_URL:-false}
-require_offsite_backup=${TODOLAB_REQUIRE_OFFSITE_BACKUP:-false}
+env_file=${DOOIT_ENV_FILE:-.env}
+require_tailscale_url=${DOOIT_REQUIRE_TAILSCALE_URL:-false}
+require_public_api_url=${DOOIT_REQUIRE_PUBLIC_API_URL:-false}
+require_offsite_backup=${DOOIT_REQUIRE_OFFSITE_BACKUP:-false}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -73,74 +73,74 @@ if [ ! -f "$env_file" ]; then
 fi
 
 for key in \
-  TODOLAB_MYSQL_ROOT_PASSWORD \
-  TODOLAB_MYSQL_DATABASE \
-  TODOLAB_DB_URL \
-  TODOLAB_DB_USERNAME \
-  TODOLAB_DB_PASSWORD \
-  TODOLAB_JWT_ISSUER \
-  TODOLAB_JWT_SECRET \
-  TODOLAB_JWT_ACCESS_TOKEN_TTL
+  DOOIT_MYSQL_ROOT_PASSWORD \
+  DOOIT_MYSQL_DATABASE \
+  DOOIT_DB_URL \
+  DOOIT_DB_USERNAME \
+  DOOIT_DB_PASSWORD \
+  DOOIT_JWT_ISSUER \
+  DOOIT_JWT_SECRET \
+  DOOIT_JWT_ACCESS_TOKEN_TTL
 do
   require_env_value "$key"
 done
 
-jwt_issuer=$(env_value TODOLAB_JWT_ISSUER)
-validate_https_url TODOLAB_JWT_ISSUER "$jwt_issuer"
+jwt_issuer=$(env_value DOOIT_JWT_ISSUER)
+validate_https_url DOOIT_JWT_ISSUER "$jwt_issuer"
 
-jwt_secret=$(env_value TODOLAB_JWT_SECRET)
+jwt_secret=$(env_value DOOIT_JWT_SECRET)
 jwt_secret_bytes=$(printf '%s' "$jwt_secret" | wc -c | xargs)
 if [ "$jwt_secret_bytes" -lt 32 ]; then
-  echo "TODOLAB_JWT_SECRET must be at least 32 bytes" >&2
+  echo "DOOIT_JWT_SECRET must be at least 32 bytes" >&2
   exit 1
 fi
 
-allowed_origins=$(env_value TODOLAB_ALLOWED_ORIGINS)
-validate_https_origin_list TODOLAB_ALLOWED_ORIGINS "$allowed_origins"
+allowed_origins=$(env_value DOOIT_ALLOWED_ORIGINS)
+validate_https_origin_list DOOIT_ALLOWED_ORIGINS "$allowed_origins"
 if [ -z "$allowed_origins" ]; then
   allowed_origins_status=empty
 else
   allowed_origins_status=configured
 fi
 
-guest_jwt_ttl=$(env_value TODOLAB_GUEST_JWT_ACCESS_TOKEN_TTL)
+guest_jwt_ttl=$(env_value DOOIT_GUEST_JWT_ACCESS_TOKEN_TTL)
 if [ -z "$guest_jwt_ttl" ]; then
   guest_jwt_ttl_status=defaultP31D
 else
   guest_jwt_ttl_status=configured
 fi
 
-tailscale_url=$(env_value TODOLAB_TAILSCALE_API_URL)
+tailscale_url=$(env_value DOOIT_TAILSCALE_API_URL)
 if [ -z "$tailscale_url" ]; then
   if [ "$require_tailscale_url" = "true" ]; then
-    echo "TODOLAB_TAILSCALE_API_URL is required when TODOLAB_REQUIRE_TAILSCALE_URL=true" >&2
+    echo "DOOIT_TAILSCALE_API_URL is required when DOOIT_REQUIRE_TAILSCALE_URL=true" >&2
     exit 1
   fi
   tailscale_url_status=missing
 else
-  validate_https_url TODOLAB_TAILSCALE_API_URL "$tailscale_url"
+  validate_https_url DOOIT_TAILSCALE_API_URL "$tailscale_url"
   case "$tailscale_url" in
     https://*.ts.net) tailscale_url_status=configured ;;
     *) tailscale_url_status=configuredNonTailscale ;;
   esac
 fi
 
-public_api_url=$(env_value TODOLAB_PUBLIC_API_URL)
+public_api_url=$(env_value DOOIT_PUBLIC_API_URL)
 if [ -z "$public_api_url" ]; then
   if [ "$require_public_api_url" = "true" ]; then
-    echo "TODOLAB_PUBLIC_API_URL is required when TODOLAB_REQUIRE_PUBLIC_API_URL=true" >&2
+    echo "DOOIT_PUBLIC_API_URL is required when DOOIT_REQUIRE_PUBLIC_API_URL=true" >&2
     exit 1
   fi
   public_api_url_status=missing
 else
-  validate_https_url TODOLAB_PUBLIC_API_URL "$public_api_url"
+  validate_https_url DOOIT_PUBLIC_API_URL "$public_api_url"
   public_api_url_status=configured
 fi
 
-offsite_dir=$(env_value TODOLAB_OFFSITE_BACKUP_DIR)
+offsite_dir=$(env_value DOOIT_OFFSITE_BACKUP_DIR)
 if [ -z "$offsite_dir" ]; then
   if [ "$require_offsite_backup" = "true" ]; then
-    echo "TODOLAB_OFFSITE_BACKUP_DIR is required when TODOLAB_REQUIRE_OFFSITE_BACKUP=true" >&2
+    echo "DOOIT_OFFSITE_BACKUP_DIR is required when DOOIT_REQUIRE_OFFSITE_BACKUP=true" >&2
     exit 1
   fi
   offsite_backup_status=missing

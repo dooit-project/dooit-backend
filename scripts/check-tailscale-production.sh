@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-base_url=${TODOLAB_TAILSCALE_API_URL:-${TODOLAB_SMOKE_BASE_URL:-}}
-expo_origin=${TODOLAB_EXPO_WEB_ORIGIN:-}
-tailscale_cli=${TODOLAB_TAILSCALE_CLI:-}
+base_url=${DOOIT_TAILSCALE_API_URL:-${DOOIT_SMOKE_BASE_URL:-}}
+expo_origin=${DOOIT_EXPO_WEB_ORIGIN:-}
+tailscale_cli=${DOOIT_TAILSCALE_CLI:-}
 default_macos_tailscale_cli=/Applications/Tailscale.app/Contents/MacOS/Tailscale
 tmpdir=$(mktemp -d)
 
@@ -44,7 +44,7 @@ require_tailscale_cli() {
   fi
   if [ -d /Applications/Tailscale.app ]; then
     echo "Tailscale.app is installed, but the tailscale CLI is not available." >&2
-    echo "Install or link the CLI, or set TODOLAB_TAILSCALE_CLI to its executable path." >&2
+    echo "Install or link the CLI, or set DOOIT_TAILSCALE_CLI to its executable path." >&2
     exit 2
   fi
   echo "Required command not found: tailscale" >&2
@@ -98,11 +98,11 @@ if [ -z "$base_url" ]; then
   base_url=$(grep -Eo 'https://[^[:space:]]+' "$serve_status" | head -n 1 || true)
 fi
 if [ -z "$base_url" ]; then
-  echo "TODOLAB_TAILSCALE_API_URL is required, or Tailscale Serve must expose an HTTPS URL" >&2
+  echo "DOOIT_TAILSCALE_API_URL is required, or Tailscale Serve must expose an HTTPS URL" >&2
   exit 2
 fi
 if [[ "$base_url" != https://* ]]; then
-  echo "TODOLAB_TAILSCALE_API_URL must be an HTTPS URL" >&2
+  echo "DOOIT_TAILSCALE_API_URL must be an HTTPS URL" >&2
   exit 2
 fi
 base_url=${base_url%/}

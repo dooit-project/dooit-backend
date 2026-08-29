@@ -1,6 +1,6 @@
-# ToDoLab Backend 작업 규칙
+# Dooit Backend 작업 규칙
 
-이 저장소에서는 ToDoLab 백엔드만 작업한다.
+이 저장소에서는 Dooit 백엔드만 작업한다.
 
 ## 작업 범위
 

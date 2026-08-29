@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-base_url=${TODOLAB_SMOKE_BASE_URL:-http://127.0.0.1:8080}
-suffix=${TODOLAB_SMOKE_SUFFIX:-$(date '+%Y%m%d%H%M%S')}
+base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
+suffix=${DOOIT_SMOKE_SUFFIX:-$(date '+%Y%m%d%H%M%S')}
 password="SmokePass-${suffix}!"
 tmpdir=$(mktemp -d)
 

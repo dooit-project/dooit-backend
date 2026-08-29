@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-strict_power=${TODOLAB_STRICT_POWER:-false}
+strict_power=${DOOIT_STRICT_POWER:-false}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -34,8 +34,8 @@ if ! echo "$docker_status" | grep -qi 'running'; then
   exit 1
 fi
 
-app_restart=$(docker inspect todolab-app --format '{{.HostConfig.RestartPolicy.Name}}')
-mysql_restart=$(docker inspect todolab-mysql --format '{{.HostConfig.RestartPolicy.Name}}')
+app_restart=$(docker inspect dooit-app --format '{{.HostConfig.RestartPolicy.Name}}')
+mysql_restart=$(docker inspect dooit-mysql --format '{{.HostConfig.RestartPolicy.Name}}')
 if [ "$app_restart" != "unless-stopped" ] || [ "$mysql_restart" != "unless-stopped" ]; then
   echo "Unexpected restart policy: app=${app_restart}, mysql=${mysql_restart}" >&2
   exit 1
