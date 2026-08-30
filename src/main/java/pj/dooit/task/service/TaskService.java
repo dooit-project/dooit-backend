@@ -119,6 +119,7 @@ public class TaskService {
                 .endAt(req.endAt())
                 .allDay(req.allDay())
                 .category(req.category())
+                .estimatedDurationMinutes(req.estimatedDurationMinutes())
                 .notificationEnabled(req.notificationEnabled())
                 .notifyAt(req.notifyAt())
                 .owner(owner)

@@ -139,7 +139,10 @@ public class TaskTemplateService {
                 startAt,
                 endAt,
                 category,
+                template.getDefaultDurationMinutes(),
                 allDay,
+                null,
+                null,
                 recurrence
         );
     }

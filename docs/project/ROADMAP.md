@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-08-30
+Last updated: 2026-08-31
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -23,7 +23,8 @@ Last updated: 2026-08-30
 | --- | --- | --- |
 | 빠른 등록 | API와 규칙 기반 파싱 구현 완료. 상대 주 표현과 한국어 날짜 표현 포함 | 모바일 실제 입력 로그 기반 예외 표현 보강 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
-| 일일 계획 | 미구현. 현재 Today 목록/정렬은 있지만 focus 1~3개와 계획 확정 상태는 없음 | `daily-plans` resource와 예상 소요 시간 계약/구현 |
+| 일일 계획 | 미구현. 현재 Today 목록/정렬은 있지만 focus 1~3개와 계획 확정 상태는 없음 | `daily-plans` resource 계약/구현 |
+| 예상 소요 시간 | Task nullable 필드와 template 기본값 적용 구현 완료 | 모바일 연동 후 입력 preset/표시 정책 검증 |
 | 카테고리 탐색 | Task `category` 필드와 검색 exact match/suggestion은 구현 완료 | TickTick식 좌상단 메뉴 UX에 맞춰 category 목록/count/order API 필요 여부 결정 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
 | 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner와 shared workspace scheduler 자동 발송 완료 | 운영 credential 적용 후 실수신 smoke |
@@ -80,16 +81,16 @@ Last updated: 2026-08-30
 
 목표: 오늘 계획 수립과 실행량 조절을 위해 Task 단위 예상 소요 시간을 저장하고 응답한다.
 
-상태: 미구현. Task와 TaskTemplate 계약 변경이 필요하다.
+상태: 구현 완료. Task와 TaskTemplate 계약에 반영했다.
 
-- [ ] `TASK.estimated_duration_minutes` nullable column migration을 추가한다.
-- [ ] `TaskRequest`, `TaskResponse`, `TaskSearchItemResponse`에 `estimatedDurationMinutes`를 추가한다.
-- [ ] 허용 범위 5~1440분 validation을 추가한다.
-- [ ] `null`은 사용자가 시간을 정하지 않은 상태로 유지한다.
-- [ ] `SCHEDULE`의 `startAt`/`endAt` 길이를 예상 시간에 자동 중복 저장하지 않는다.
-- [ ] `TaskTemplate.defaultDurationMinutes`가 template 기반 Task의 `estimatedDurationMinutes` 기본값으로 적용되는지 계약을 정리한다.
-- [ ] 반복 series/occurrence 수정 범위와 예상 시간 적용 규칙을 테스트한다.
-- [ ] Today 응답에는 합계 필드를 추가하지 않고 Task별 값을 내려준다.
+- [x] `TASK.estimated_duration_minutes` nullable column migration을 추가한다.
+- [x] `TaskRequest`, `TaskResponse`, `TaskSearchItemResponse`에 `estimatedDurationMinutes`를 추가한다.
+- [x] 허용 범위 5~1440분 validation을 추가한다.
+- [x] `null`은 사용자가 시간을 정하지 않은 상태로 유지한다.
+- [x] `SCHEDULE`의 `startAt`/`endAt` 길이를 예상 시간에 자동 중복 저장하지 않는다.
+- [x] `TaskTemplate.defaultDurationMinutes`가 template 기반 Task의 `estimatedDurationMinutes` 기본값으로 적용되는지 계약을 정리한다.
+- [x] 반복 series/occurrence 수정 범위와 예상 시간 적용 규칙을 테스트한다.
+- [x] Today 응답에는 합계 필드를 추가하지 않고 Task별 값을 내려준다.
 
 선행 조건:
 

@@ -52,6 +52,7 @@ public class TaskTxService {
                 req.endAt(),
                 req.allDay(),
                 req.category(),
+                req.estimatedDurationMinutes(),
                 req.notificationEnabled(),
                 req.notifyAt()
         );
@@ -480,6 +481,7 @@ public class TaskTxService {
                 req.endAt(),
                 req.allDay(),
                 req.category(),
+                req.estimatedDurationMinutes(),
                 req.notificationEnabled(),
                 req.notifyAt()
         );
@@ -498,6 +500,7 @@ public class TaskTxService {
                 occurrenceRequest.endAt(),
                 occurrenceRequest.allDay(),
                 occurrenceRequest.category(),
+                occurrenceRequest.estimatedDurationMinutes(),
                 occurrenceRequest.notificationEnabled(),
                 occurrenceRequest.notifyAt()
         );
@@ -512,7 +515,7 @@ public class TaskTxService {
         LocalDateTime startAt = req.startAt().plusDays(daysToMove);
         LocalDateTime endAt = req.endAt() == null ? null : req.endAt().plusDays(daysToMove);
         LocalDateTime notifyAt = req.notifyAt() == null ? null : req.notifyAt().plusDays(daysToMove);
-        return new TaskRequest(req.title(), req.description(), req.type(), startAt, endAt, req.category(), req.allDay(), req.notificationEnabled(), notifyAt, null);
+        return new TaskRequest(req.title(), req.description(), req.type(), startAt, endAt, req.category(), req.estimatedDurationMinutes(), req.allDay(), req.notificationEnabled(), notifyAt, null);
     }
 
     private LocalDate originalOccurrenceDate(Task task) {

@@ -34,6 +34,8 @@ public record TaskResponse(
         boolean unscheduled,
         @Schema(description = "카테고리명", example = "업무", nullable = true)
         String category,
+        @Schema(description = "예상 소요 시간(분). 사용자가 시간을 정하지 않았으면 null입니다.", example = "30", nullable = true)
+        Integer estimatedDurationMinutes,
         @Schema(description = "Task 알림 사용 여부", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean notificationEnabled,
         @Schema(description = "알림 예약 시각. null이면 startAt을 사용합니다.", example = "2026-07-22T08:50:00", nullable = true)
@@ -90,7 +92,7 @@ public record TaskResponse(
             String category,
             LocalDateTime createdAt
     ) {
-        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, true, null, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, null, createdAt, null);
+        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, true, null, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, null, createdAt, null);
     }
 
     public static TaskResponse from(Task t) {
@@ -106,6 +108,7 @@ public record TaskResponse(
                 .allDay(t.isAllDay())
                 .unscheduled(t.isUnscheduled())
                 .category(t.getCategory())
+                .estimatedDurationMinutes(t.getEstimatedDurationMinutes())
                 .notificationEnabled(t.isNotificationEnabled())
                 .notifyAt(t.getNotifyAt())
                 .status(t.getStatus())

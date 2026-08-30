@@ -37,6 +37,9 @@ public record TaskRequest(
         @Schema(description = "카테고리명. '미분류'는 시스템 예약어라 사용할 수 없습니다.", example = "업무", maxLength = 30, nullable = true)
         String category,
 
+        @Schema(description = "예상 소요 시간(분). null이면 사용자가 시간을 정하지 않은 상태입니다.", example = "30", minimum = "5", maximum = "1440", nullable = true)
+        Integer estimatedDurationMinutes,
+
         @Schema(description = "종일 일정 여부. true이면 startAt/endAt은 모두 00:00이어야 합니다.", example = "false")
         boolean allDay,
 
@@ -59,7 +62,7 @@ public record TaskRequest(
             String category,
             boolean allDay
     ) {
-        this(title, description, type, startAt, endAt, category, allDay, null, null, null);
+        this(title, description, type, startAt, endAt, category, null, allDay, null, null, null);
     }
 
     public TaskRequest(
@@ -70,7 +73,7 @@ public record TaskRequest(
             String category,
             boolean allDay
     ) {
-        this(title, description, null, startAt, endAt, category, allDay, null, null, null);
+        this(title, description, null, startAt, endAt, category, null, allDay, null, null, null);
     }
 
     public TaskRequest(
@@ -83,7 +86,22 @@ public record TaskRequest(
             boolean allDay,
             TaskRecurrenceRequest recurrence
     ) {
-        this(title, description, type, startAt, endAt, category, allDay, null, null, recurrence);
+        this(title, description, type, startAt, endAt, category, null, allDay, null, null, recurrence);
+    }
+
+    public TaskRequest(
+            String title,
+            String description,
+            TaskType type,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            String category,
+            boolean allDay,
+            Boolean notificationEnabled,
+            LocalDateTime notifyAt,
+            TaskRecurrenceRequest recurrence
+    ) {
+        this(title, description, type, startAt, endAt, category, null, allDay, notificationEnabled, notifyAt, recurrence);
     }
 
     public TaskType normalizedType() {
@@ -104,6 +122,7 @@ public record TaskRequest(
         validateDateTimeOrder();
         validateUnscheduledAllDay();
         validateCategory();
+        validateEstimatedDurationMinutes();
         validateNotification();
         validateRecurrence();
     }
@@ -164,6 +183,15 @@ public record TaskRequest(
             return;
         }
         recurrence.validate(startAt);
+    }
+
+    private void validateEstimatedDurationMinutes() {
+        if (estimatedDurationMinutes == null) {
+            return;
+        }
+        if (estimatedDurationMinutes < 5 || estimatedDurationMinutes > 1440) {
+            throw new TaskValidationException("예상 소요 시간은 5분 이상 1440분 이하여야 합니다.");
+        }
     }
 
     private void validateNotification() {

@@ -168,6 +168,7 @@ class TaskTemplateV1IntegrationTest {
                 .andExpect(jsonPath("$.data.startAt").value("2026-08-17T09:00:00"))
                 .andExpect(jsonPath("$.data.endAt").value("2026-08-17T10:30:00"))
                 .andExpect(jsonPath("$.data.category").value("건강"))
+                .andExpect(jsonPath("$.data.estimatedDurationMinutes").value(90))
                 .andExpect(jsonPath("$.data.recurrenceSeriesId").value(notNullValue()))
                 .andExpect(jsonPath("$.data.recurrence.frequency").value("WEEKLY"))
                 .andExpect(jsonPath("$.data.recurrence.recurrenceRule").value("FREQ=WEEKLY;INTERVAL=1;BYDAY=MO"));

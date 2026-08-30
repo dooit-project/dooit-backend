@@ -448,6 +448,7 @@ type TaskResponse = {
   allDay: boolean;
   unscheduled: boolean;
   category: string | null;
+  estimatedDurationMinutes: number | null;
   notificationEnabled: boolean;
   notifyAt: string | null;
   status: TaskStatus;
@@ -490,6 +491,7 @@ type TaskRequest = {
   startAt?: string | null;
   endAt?: string | null;
   category?: string | null; // 30자 이하
+  estimatedDurationMinutes?: number | null; // 5-1440
   allDay: boolean;
   notificationEnabled?: boolean | null; // 생략하면 true
   notifyAt?: string | null; // null이면 startAt 기준 알림
@@ -522,7 +524,7 @@ type TaskTemplateRequest = {
   category?: string | null; // 30자 이하
   allDay: boolean;
   defaultStartTime?: string | null; // HH:mm:ss
-  defaultDurationMinutes?: number | null; // 1-1440, 생략하면 Task 생성 시 60분
+  defaultDurationMinutes?: number | null; // 5-1440, 생략하면 일정 endAt 계산 시 60분
   recurrenceFrequency?: RecurrenceFrequency | null;
   recurrenceInterval?: number | null; // 생략하면 1
   recurrenceByDays?: string[] | null; // 예: ['MO']
@@ -618,14 +620,13 @@ type PushNotificationHistoryResponse = {
 };
 ```
 
-## 3-1. 예정 계약: 일일 계획과 예상 소요 시간
+## 3-1. 예정 계약: 일일 계획
 
-아래 계약은 아직 구현되지 않았다. 프론트의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 위해 백엔드에서 우선 검토할 초안은 [`DAILY_PLANNING_CONTRACT.md`](./DAILY_PLANNING_CONTRACT.md)를 원본으로 한다.
+아래 일일 계획 resource 계약은 아직 구현되지 않았다. 프론트의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 위해 백엔드에서 우선 검토할 초안은 [`DAILY_PLANNING_CONTRACT.md`](./DAILY_PLANNING_CONTRACT.md)를 원본으로 한다.
 
 우선순위:
 
 - B0: `GET /api/v1/daily-plans/{date}`, `PUT /api/v1/daily-plans/{date}`
-- B0: Task `estimatedDurationMinutes` nullable field
 - B1: `POST /api/v1/daily-plans/{date}/apply` batch mutation
 - B1: Task checklist item
 - B2: `GET /api/v1/daily-plans/{date}/summary`
@@ -647,6 +648,8 @@ Task 생성 규칙:
 - `byDays`를 지정한 `WEEKLY` 반복은 `startAt` 날짜의 요일이 `byDays`에 포함되어야 한다.
 - `byMonthDays`를 지정한 `MONTHLY`, `YEARLY` 반복은 `startAt` 날짜가 `byMonthDays`에 포함되어야 한다. 월말은 `-1`이다.
 - `BYDAY`는 `WEEKLY`, `BYMONTHDAY`는 `MONTHLY` 또는 `YEARLY`에서만 지원한다.
+- `estimatedDurationMinutes`는 nullable이며 값이 있으면 5분 이상 1440분 이하여야 한다.
+- `estimatedDurationMinutes`는 `SCHEDULE`의 `startAt`/`endAt` 길이와 별개로 저장된다.
 
 Task 응답 nullable/default 규칙:
 
@@ -654,7 +657,7 @@ Task 응답 nullable/default 규칙:
 - 저장된 Task의 `createdAt`은 내려온다. 일부 legacy 테스트/생성자 기반 응답에서는 null일 수 있으나 v1 API 응답에서는 non-null로 본다.
 - 날짜 없는 Task는 `startAt`, `endAt`, `plannedDate`, `targetDate`, `todayOrder`, `completedAt`이 null이고 `status=INBOX`, `unscheduled=true`, `allDay=false`다.
 - 날짜가 있는 Task는 생성 직후 `status=TODAY`, `targetDate=startAt 날짜`, `plannedDate=targetDate`, `unscheduled=false`다.
-- `description`, `category`, `deferReason`, `deferReasonLabel`, D-Day 연결 필드, 반복 occurrence 필드는 값이 없으면 null이다.
+- `description`, `category`, `estimatedDurationMinutes`, `deferReason`, `deferReasonLabel`, D-Day 연결 필드, 반복 occurrence 필드는 값이 없으면 null이다.
 - `updatedAt`은 생성 직후 null이고 수정 후 값이 생긴다.
 - 반복 occurrence Task를 완료하면 해당 occurrence row만 `DONE`으로 바뀌며 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`는 유지된다.
 
@@ -682,6 +685,7 @@ Response: `TaskResponse`
   "startAt": "2026-07-07T09:00:00",
   "endAt": "2026-07-07T10:00:00",
   "category": "업무",
+  "estimatedDurationMinutes": 45,
   "allDay": false,
   "recurrence": {
     "frequency": "WEEKLY",
@@ -1068,7 +1072,7 @@ Response: `TaskTemplateResponse`
 - `type`을 생략하면 `TODO` 템플릿으로 저장한다.
 - `SCHEDULE` 또는 반복 템플릿으로 Task를 생성하려면 `targetDate`가 필요하다.
 - `allDay=true`이면 `defaultStartTime`을 함께 보낼 수 없다.
-- `defaultDurationMinutes`는 1분 이상 1440분 이하이며, Task 생성 시 생략되어 있으면 60분을 사용한다.
+- `defaultDurationMinutes`는 5분 이상 1440분 이하이며, 일정 템플릿의 `endAt` 계산과 생성 Task의 `estimatedDurationMinutes` 기본값으로 사용한다. 일정 템플릿에서 생략되어 있으면 `endAt` 계산에는 60분을 사용하고 생성 Task의 `estimatedDurationMinutes`는 null이다.
 - `recurrenceByDays`는 `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, `SU`만 허용한다.
 - 템플릿은 guest 승격 시 같은 사용자 ID로 유지되고, 기존 계정 로그인 병합과 만료 guest cleanup 대상에 포함된다.
 - 템플릿 자체에는 D-Day를 저장하지 않는다. 템플릿 기반 Task 생성 시 `ddayGoalId`를 보내면 생성된 개인 Task에 같은 owner의 개인 D-Day를 연결한다.

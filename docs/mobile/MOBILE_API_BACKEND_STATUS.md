@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-30
+Last audited: 2026-08-31
 
 이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -18,7 +18,7 @@ Last audited: 2026-08-30
 | --- | --- | --- |
 | Auth/Guest | [x] | JWT, guest 생성/갱신/승격/병합/cleanup/rate limit 계약 구현 |
 | Task/D-Day | [x] | owner scope, Today/Calendar, 검색, D-Day 연결, 반복 occurrence 구현 |
-| Daily Planning | [ ] | `daily-plans`, focus task 1~3개, 계획 확정/마감 상태, Task 예상 소요 시간은 신규 요청. 계약 초안은 `docs/api/DAILY_PLANNING_CONTRACT.md` 기준 |
+| Daily Planning | [~] | `daily-plans`, focus task 1~3개, 계획 확정/마감 상태는 미구현. Task 예상 소요 시간은 구현됨. 계약 초안은 `docs/api/DAILY_PLANNING_CONTRACT.md` 기준 |
 | Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 상대 주 표현과 한국어 날짜 표현 포함. 실제 입력 로그 기반 파싱 보강만 남음 |
 | Templates | [x] | `TaskTemplate` CRUD와 template 기반 Task 생성 구현 |
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
@@ -95,8 +95,8 @@ Last audited: 2026-08-30
 - [ ] `focusTaskIds` 최대 3개, 같은 사용자/날짜/미완료 Today Task validation
 - [ ] 계획 상태 `DRAFT`, `CONFIRMED`, `CLOSED`
 - [ ] Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 자동 제거
-- [ ] Task `estimatedDurationMinutes` nullable 필드
-- [ ] template 기반 Task 생성 시 `defaultDurationMinutes` 적용 규칙 정리
+- [x] Task `estimatedDurationMinutes` nullable 필드
+- [x] template 기반 Task 생성 시 `defaultDurationMinutes` 적용 규칙 정리
 - [ ] 반복 series/occurrence와 Workspace Task 적용 범위 결정
 - [ ] OpenAPI, migration, integration test 추가
 

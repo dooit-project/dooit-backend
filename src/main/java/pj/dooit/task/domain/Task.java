@@ -60,6 +60,9 @@ public class Task {
     @Column(name = "`CATEGORY`")
     private String category;
 
+    @Column(name = "`ESTIMATED_DURATION_MINUTES`")
+    private Integer estimatedDurationMinutes;
+
     @Column(name = "`NOTIFICATION_ENABLED`", nullable = false)
     private boolean notificationEnabled = true;
 
@@ -146,11 +149,11 @@ public class Task {
 
     @Builder
     public Task(String title, String description, TaskType type, LocalDateTime startAt, LocalDateTime endAt, boolean allDay, String category,
-                Boolean notificationEnabled, LocalDateTime notifyAt,
+                Integer estimatedDurationMinutes, Boolean notificationEnabled, LocalDateTime notifyAt,
                 TaskStatus status, LocalDate targetDate, Integer todayOrder, LocalDateTime completedAt, Integer carryOverCount,
                 DeferReason deferReason, DdayGoal ddayGoal, RecurrenceSeries recurrenceSeries, LocalDate occurrenceDate,
                 LocalDate originalOccurrenceDate, RecurrenceExceptionType recurrenceException, User owner) {
-        apply(title, description, type, startAt, endAt, allDay, category, notificationEnabled, notifyAt);
+        apply(title, description, type, startAt, endAt, allDay, category, estimatedDurationMinutes, notificationEnabled, notifyAt);
         applyStatus(status, targetDate, completedAt);
         this.todayOrder = todayOrder;
         this.carryOverCount = carryOverCount == null ? 0 : Math.max(0, carryOverCount);
@@ -166,7 +169,7 @@ public class Task {
     }
 
     public void update(String title, String description, TaskType type, LocalDateTime startAt, LocalDateTime endAt, boolean allDay, String category) {
-        update(title, description, type, startAt, endAt, allDay, category, null, null);
+        update(title, description, type, startAt, endAt, allDay, category, null, null, null);
     }
 
     public void update(
@@ -177,10 +180,11 @@ public class Task {
             LocalDateTime endAt,
             boolean allDay,
             String category,
+            Integer estimatedDurationMinutes,
             Boolean notificationEnabled,
             LocalDateTime notifyAt
     ) {
-        apply(title, description, type, startAt, endAt, allDay, category, notificationEnabled, notifyAt);
+        apply(title, description, type, startAt, endAt, allDay, category, estimatedDurationMinutes, notificationEnabled, notifyAt);
         if (this.status != TaskStatus.DONE && !isUnscheduled()) {
             applyInitialStatus();
         }
@@ -338,10 +342,12 @@ public class Task {
             LocalDateTime endAt,
             boolean allDay,
             String category,
+            Integer estimatedDurationMinutes,
             Boolean notificationEnabled,
             LocalDateTime notifyAt
     ) {
         validateSchedule(startAt, endAt, allDay);
+        validateEstimatedDurationMinutes(estimatedDurationMinutes);
         validateNotification(startAt, notificationEnabled, notifyAt);
 
         String normalizedCategory = normalizeCategory(category);
@@ -354,6 +360,7 @@ public class Task {
         this.endAt = endAt;
         this.allDay = allDay;
         this.category = normalizedCategory;
+        this.estimatedDurationMinutes = estimatedDurationMinutes;
         this.notificationEnabled = notificationEnabled == null || notificationEnabled;
         this.notifyAt = notifyAt;
 
@@ -508,6 +515,15 @@ public class Task {
 
         if (Constant.UNCATEGORIZED.equals(category)) {
             throw new IllegalArgumentException("'미분류'는 카테고리명으로 사용할 수 없습니다.");
+        }
+    }
+
+    private void validateEstimatedDurationMinutes(Integer estimatedDurationMinutes) {
+        if (estimatedDurationMinutes == null) {
+            return;
+        }
+        if (estimatedDurationMinutes < 5 || estimatedDurationMinutes > 1440) {
+            throw new IllegalArgumentException("예상 소요 시간은 5분 이상 1440분 이하여야 합니다.");
         }
     }
 

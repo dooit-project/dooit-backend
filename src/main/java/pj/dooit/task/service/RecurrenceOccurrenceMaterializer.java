@@ -155,6 +155,7 @@ public class RecurrenceOccurrenceMaterializer {
                 .endAt(endAt)
                 .allDay(template.isAllDay())
                 .category(template.getCategory())
+                .estimatedDurationMinutes(template.getEstimatedDurationMinutes())
                 .notificationEnabled(template.isNotificationEnabled())
                 .notifyAt(notifyAt)
                 .status(TaskStatus.TODAY)

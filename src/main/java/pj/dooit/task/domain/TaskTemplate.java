@@ -156,8 +156,8 @@ public class TaskTemplate {
         if (allDay && defaultStartTime != null) {
             throw new TaskValidationException("종일 템플릿에는 기본 시작 시간을 함께 설정할 수 없습니다.");
         }
-        if (defaultDurationMinutes != null && (defaultDurationMinutes < 1 || defaultDurationMinutes > 1440)) {
-            throw new TaskValidationException("기본 소요 시간은 1분 이상 1440분 이하여야 합니다.");
+        if (defaultDurationMinutes != null && (defaultDurationMinutes < 5 || defaultDurationMinutes > 1440)) {
+            throw new TaskValidationException("기본 소요 시간은 5분 이상 1440분 이하여야 합니다.");
         }
         if (recurrenceInterval != null && recurrenceInterval < 1) {
             throw new TaskValidationException("반복 간격은 1 이상이어야 합니다.");

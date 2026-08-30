@@ -1,6 +1,6 @@
 # Daily Planning Contract
 
-Last updated: 2026-08-30
+Last updated: 2026-08-31
 
 이 문서는 Dooit 모바일의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 지원하기 위해 백엔드에 추가할 계약 초안이다. 현재 문서는 구현 완료 계약이 아니라 프론트 요청을 백엔드 구현 단위로 정리한 backlog 원본이다.
 
@@ -11,7 +11,7 @@ Last updated: 2026-08-30
 | 우선순위 | 항목 | 상태 | 백엔드 판단 |
 | --- | --- | --- | --- |
 | B0 | 일일 계획 영속화 | 미구현 | 오늘의 핵심 1~3개와 계획 확정 상태를 저장하기 위해 필요 |
-| B0 | 예상 소요 시간 | 미구현 | 계획 수립과 하루 실행량 조절에 바로 필요 |
+| B0 | 예상 소요 시간 | 구현 | 계획 수립과 하루 실행량 조절에 바로 필요 |
 | B1 | 계획/마감 batch mutation | 보류 | 단건 mutation으로 MVP 검증 후 부분 실패 문제가 확인되면 추가 |
 | B1 | Checklist | 미구현 | 한 단계 item 모델로 제한해 Task 하위 실행 단위를 제공 |
 | B2 | 일일 결과 summary | 보류 | 여러 조회 조합 비용 또는 기기 간 결과 불일치가 확인될 때 추가 |
@@ -82,7 +82,7 @@ type DailyPlanRequest = {
 
 ## B0. 예상 소요 시간
 
-Task 생성, 수정, 응답에 nullable 필드를 추가한다.
+Task 생성, 수정, 응답에 nullable 필드를 추가했다.
 
 ```json
 {
@@ -100,11 +100,11 @@ Task 생성, 수정, 응답에 nullable 필드를 추가한다.
 - 반복 Task는 series 생성 시 기본 예상 시간을 저장하고, occurrence별 수정 범위는 기존 `recurrenceScope` 정책과 맞춘다.
 - Today 응답에는 합계를 별도 필드로 중복 저장하지 않는다. 프론트는 Task 목록의 `estimatedDurationMinutes`를 합산한다.
 
-필요 변경:
+반영 상태:
 
 - `TASK.estimated_duration_minutes` nullable column 추가
-- `TASK_TEMPLATE.default_duration_minutes`와 Task 생성 매핑 규칙 재검토
-- `TaskRequest`, `TaskResponse`, `TaskSearchItemResponse`, `TaskTemplateRequest`, `TaskTemplateResponse` 계약 갱신
+- `TaskTemplate.defaultDurationMinutes`는 template 기반 Task의 `estimatedDurationMinutes` 기본값으로 적용
+- `TaskRequest`, `TaskResponse`, 검색 응답의 nested `TaskResponse` 계약 갱신
 - validation, OpenAPI schema, integration test 추가
 
 ## B1. 계획/마감 Batch Mutation
@@ -208,4 +208,3 @@ GET /api/v1/daily-plans/{date}/summary
 5. Android, iOS, Web의 같은 계정에서 계획과 예상 시간 동기화 smoke를 진행한다.
 6. 부분 실패 근거가 확인되면 batch mutation을 추가한다.
 7. checklist, summary, category 순으로 확장한다.
-

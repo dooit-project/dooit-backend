@@ -139,7 +139,7 @@ class DocumentationIndexTest {
         assertThat(dailyPlanning).contains("Checklist");
         assertThat(dailyPlanning).contains("GET /api/v1/daily-plans/{date}/summary");
         assertThat(dailyPlanning).contains("Category entity");
-        assertThat(api).contains("예정 계약: 일일 계획과 예상 소요 시간");
+        assertThat(api).contains("예정 계약: 일일 계획");
         assertThat(mobile).contains("Daily Planning");
         assertThat(mobile).contains("docs/api/DAILY_PLANNING_CONTRACT.md");
     }

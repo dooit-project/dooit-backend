@@ -89,6 +89,7 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.allDay").value(false))
                 .andExpect(jsonPath("$.data.unscheduled").value(true))
                 .andExpect(jsonPath("$.data.category").isEmpty())
+                .andExpect(jsonPath("$.data.estimatedDurationMinutes").isEmpty())
                 .andExpect(jsonPath("$.data.status").value("INBOX"))
                 .andExpect(jsonPath("$.data.plannedDate").isEmpty())
                 .andExpect(jsonPath("$.data.targetDate").isEmpty())
@@ -110,10 +111,15 @@ class TaskV1IntegrationTest {
         TaskRequest request = new TaskRequest(
                 "출시 회의",
                 "릴리스 범위 확인",
+                TaskType.SCHEDULE,
                 LocalDateTime.of(2026, 7, 22, 9, 0),
                 LocalDateTime.of(2026, 7, 22, 10, 0),
                 "업무",
-                false
+                30,
+                false,
+                null,
+                null,
+                null
         );
 
         mockMvc.perform(post("/api/v1/tasks")
@@ -128,6 +134,7 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.allDay").value(false))
                 .andExpect(jsonPath("$.data.unscheduled").value(false))
                 .andExpect(jsonPath("$.data.category").value("업무"))
+                .andExpect(jsonPath("$.data.estimatedDurationMinutes").value(30))
                 .andExpect(jsonPath("$.data.status").value("TODAY"))
                 .andExpect(jsonPath("$.data.plannedDate").value("2026-07-22"))
                 .andExpect(jsonPath("$.data.targetDate").value("2026-07-22"))
@@ -135,6 +142,32 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.completedAt").isEmpty())
                 .andExpect(jsonPath("$.data.createdAt").value(notNullValue()))
                 .andExpect(jsonPath("$.data.updatedAt").isEmpty());
+    }
+
+    @Test
+    @DisplayName("v1 Task 생성은 예상 소요 시간이 범위를 벗어나면 400을 반환한다")
+    void create_invalidEstimatedDuration_badRequest() throws Exception {
+        String accessToken = accessToken("task-estimated-duration-invalid@example.com");
+        TaskRequest request = new TaskRequest(
+                "짧은 작업",
+                null,
+                TaskType.TODO,
+                null,
+                null,
+                null,
+                4,
+                false,
+                null,
+                null,
+                null
+        );
+
+        mockMvc.perform(post("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value(10001));
     }
 
     @Test
@@ -1095,6 +1128,7 @@ class TaskV1IntegrationTest {
                 .startAt(LocalDateTime.of(2026, 7, 6, 9, 0))
                 .endAt(LocalDateTime.of(2026, 7, 6, 10, 0))
                 .category("업무")
+                .estimatedDurationMinutes(30)
                 .owner(owner)
                 .recurrenceSeries(series)
                 .occurrenceDate(java.time.LocalDate.of(2026, 7, 6))
@@ -1187,6 +1221,7 @@ class TaskV1IntegrationTest {
                 .startAt(LocalDateTime.of(2026, 7, 6, 9, 0))
                 .endAt(LocalDateTime.of(2026, 7, 6, 10, 0))
                 .category("업무")
+                .estimatedDurationMinutes(30)
                 .owner(owner)
                 .recurrenceSeries(series)
                 .occurrenceDate(java.time.LocalDate.of(2026, 7, 6))
@@ -1211,7 +1246,11 @@ class TaskV1IntegrationTest {
                 LocalDateTime.of(2026, 7, 13, 11, 0),
                 LocalDateTime.of(2026, 7, 13, 12, 0),
                 "변경",
-                false
+                45,
+                false,
+                null,
+                null,
+                null
         );
 
         mockMvc.perform(put("/api/v1/tasks/{id}", secondOccurrenceId)
@@ -1221,7 +1260,8 @@ class TaskV1IntegrationTest {
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.title").value("변경 회의"))
-                .andExpect(jsonPath("$.data.startAt").value("2026-07-13T11:00:00"));
+                .andExpect(jsonPath("$.data.startAt").value("2026-07-13T11:00:00"))
+                .andExpect(jsonPath("$.data.estimatedDurationMinutes").value(45));
 
         mockMvc.perform(get("/api/v1/tasks")
                         .header("Authorization", "Bearer " + accessToken)
@@ -1231,12 +1271,16 @@ class TaskV1IntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].title").value("반복 회의"))
                 .andExpect(jsonPath("$.data[0].startAt").value("2026-07-06T09:00:00"))
+                .andExpect(jsonPath("$.data[0].estimatedDurationMinutes").value(30))
                 .andExpect(jsonPath("$.data[1].title").value("변경 회의"))
                 .andExpect(jsonPath("$.data[1].startAt").value("2026-07-13T11:00:00"))
+                .andExpect(jsonPath("$.data[1].estimatedDurationMinutes").value(45))
                 .andExpect(jsonPath("$.data[2].title").value("변경 회의"))
                 .andExpect(jsonPath("$.data[2].startAt").value("2026-07-20T11:00:00"))
+                .andExpect(jsonPath("$.data[2].estimatedDurationMinutes").value(45))
                 .andExpect(jsonPath("$.data[3].title").value("변경 회의"))
-                .andExpect(jsonPath("$.data[3].startAt").value("2026-07-27T11:00:00"));
+                .andExpect(jsonPath("$.data[3].startAt").value("2026-07-27T11:00:00"))
+                .andExpect(jsonPath("$.data[3].estimatedDurationMinutes").value(45));
 
         mockMvc.perform(delete("/api/v1/tasks/{id}", secondOccurrenceId)
                         .header("Authorization", "Bearer " + accessToken)
