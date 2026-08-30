@@ -16,6 +16,7 @@ Dooit Backend는 할 일, 일정, D-Day, 반복 계획과 Workspace 협업을 �
 - **계정 흐름** - JWT 인증, refresh token rotation, logout, 비밀번호 재설정
 - **게스트 경험** - 게스트 발급, 만료 전 갱신, 회원가입 승격, 기존 계정 병합
 - **일정과 할 일** - Today, Inbox, Calendar, 여러 날 일정, 완료와 미룸 상태
+- **일일 계획** - focus task, 예상 소요 시간, 하루 마감 흐름은 계약 초안 정리 중
 - **빠른 등록** - `내일 3시 회의`, `이번 주 금요일 병원`, `8월 15일 행사`, `매주 월요일 운동` 같은 규칙 기반 입력
 - **반복 계획** - RRULE 기반 반복 series, occurrence 생성, 개별/이후/전체 수정과 삭제
 - **D-Day 목표** - 목표 관리, 연결 Task 생성, Today 흐름과의 연결
@@ -133,6 +134,7 @@ production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Clo
 | 문서 | 무엇을 볼 수 있나요? |
 | --- | --- |
 | [v1 API 계약](./docs/api/API_V1_FRONTEND.md) | 모바일/프론트엔드가 호출하는 endpoint, request/response, 오류 기준 |
+| [일일 계획 계약 초안](./docs/api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 후속 계약 |
 | [게스트 계정 인수인계](./docs/api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 시작, 승격, 기존 계정 병합, 만료와 rate limit |
 | [환경 연동 기준](./docs/ops/ENVIRONMENT_INTEGRATION.md) | local, production, Tailscale, CORS, 문서 UI 공개 기준 |
 | [인증 계약](./docs/api/AUTH_CONTRACT.md) | JWT claim, token TTL, refresh rotation, logout, 비밀번호 재설정 |

@@ -17,12 +17,13 @@ Last updated: 2026-08-30
 
 ### 2026-08-30 정리
 
-현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증에 몰려 있다.
+현재 남은 P0는 production 접근성과 운영 복구성 검증, 그리고 프론트의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 막는 B0 계약에 몰려 있다.
 
 | 구분 | 현재 상태 | 다음에 닫을 일 |
 | --- | --- | --- |
 | 빠른 등록 | API와 규칙 기반 파싱 구현 완료. 상대 주 표현과 한국어 날짜 표현 포함 | 모바일 실제 입력 로그 기반 예외 표현 보강 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
+| 일일 계획 | 미구현. 현재 Today 목록/정렬은 있지만 focus 1~3개와 계획 확정 상태는 없음 | `daily-plans` resource와 예상 소요 시간 계약/구현 |
 | 카테고리 탐색 | Task `category` 필드와 검색 exact match/suggestion은 구현 완료 | TickTick식 좌상단 메뉴 UX에 맞춰 category 목록/count/order API 필요 여부 결정 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
 | 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner와 shared workspace scheduler 자동 발송 완료 | 운영 credential 적용 후 실수신 smoke |
@@ -53,10 +54,86 @@ Last updated: 2026-08-30
 - [x] Task별 알림 preference와 notification candidate `notifyAt`을 추가한다.
 - [x] Workspace PENDING 초대 거절 계약과 권한 테스트를 추가한다.
 
+### B0. 일일 계획 영속화
+
+목표: 모바일의 `오늘 계획 -> 실행 -> 하루 마감` 흐름에서 사용자가 오늘의 핵심으로 확정한 1~3개 Task와 계획 상태를 서버에 저장한다.
+
+상태: 미구현. 계약 초안은 `docs/api/DAILY_PLANNING_CONTRACT.md`를 원본으로 본다.
+
+- [ ] `GET /api/v1/daily-plans/{date}` 계약을 추가한다.
+- [ ] `PUT /api/v1/daily-plans/{date}` 계약을 추가한다.
+- [ ] `DailyPlanStatus`를 `DRAFT`, `CONFIRMED`, `CLOSED`로 정의한다.
+- [ ] `focusTaskIds`는 같은 사용자, 같은 날짜, 미완료 Today Task만 허용한다.
+- [ ] 최대 3개와 배열 순서 보존을 validation으로 고정한다.
+- [ ] Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 목록에서 자동 제거한다.
+- [ ] 같은 사용자와 날짜에 하나의 plan만 존재하도록 DB 제약을 둔다.
+- [ ] `Idempotency-Key` replay 또는 version 기반 충돌 처리 중 하나를 확정한다.
+- [ ] 사용자 timezone 기준 local date 처리와 integration test를 추가한다.
+- [ ] Workspace Task를 focus에 포함할지 1차 범위에서 결정한다.
+
+선행 조건:
+
+- `DAILY_PLANNING_CONTRACT.md` 초안을 프론트와 합의한다.
+- API 추가는 non-breaking change로 진행한다.
+
+### B0. 예상 소요 시간
+
+목표: 오늘 계획 수립과 실행량 조절을 위해 Task 단위 예상 소요 시간을 저장하고 응답한다.
+
+상태: 미구현. Task와 TaskTemplate 계약 변경이 필요하다.
+
+- [ ] `TASK.estimated_duration_minutes` nullable column migration을 추가한다.
+- [ ] `TaskRequest`, `TaskResponse`, `TaskSearchItemResponse`에 `estimatedDurationMinutes`를 추가한다.
+- [ ] 허용 범위 5~1440분 validation을 추가한다.
+- [ ] `null`은 사용자가 시간을 정하지 않은 상태로 유지한다.
+- [ ] `SCHEDULE`의 `startAt`/`endAt` 길이를 예상 시간에 자동 중복 저장하지 않는다.
+- [ ] `TaskTemplate.defaultDurationMinutes`가 template 기반 Task의 `estimatedDurationMinutes` 기본값으로 적용되는지 계약을 정리한다.
+- [ ] 반복 series/occurrence 수정 범위와 예상 시간 적용 규칙을 테스트한다.
+- [ ] Today 응답에는 합계 필드를 추가하지 않고 Task별 값을 내려준다.
+
+선행 조건:
+
+- 기존 template의 `defaultDurationMinutes` 의미와 Task 예상 시간의 관계를 프론트와 합의한다.
+
 ### P2. 조건부 프론트 요청
 
 - [ ] 서버 push 기기 등록과 발송 멱등성은 로컬 예약 알림 한계가 실제로 확인된 뒤 도입한다.
 - [ ] Workspace 템플릿은 제품 필요성이 확정된 뒤 별도 scope/권한/반복/D-Day 정책을 먼저 계약한다.
+
+### B1. 계획/마감 Batch Mutation
+
+목표: 하루 마감 중 여러 Task 이동/미룸/완료 변경을 한 번에 적용해야 할 때 atomic endpoint를 제공한다.
+
+상태: 보류. 프론트 MVP는 기존 단건 mutation으로 먼저 검증한다.
+
+- [ ] 부분 성공 문제가 실제 사용자 흐름에서 확인되면 `POST /api/v1/daily-plans/{date}/apply`를 추가한다.
+- [ ] operation 전체 성공 또는 전체 rollback을 transaction으로 보장한다.
+- [ ] 중복 Task ID, 권한 없음, 리소스 없음, 상태 충돌을 400/403/404/409로 구분한다.
+- [ ] `Idempotency-Key`를 지원한다.
+- [ ] 응답에는 갱신된 Task와 plan을 포함한다.
+
+### B1. Checklist
+
+목표: 깊은 subtask가 아니라 Task 아래 한 단계 checklist item으로 실행 단위를 쪼갠다.
+
+상태: 미구현. B0 완료 뒤 계약한다.
+
+- [ ] Task 상세 response 포함 방식과 별도 checklist endpoint 방식 중 하나를 선택한다.
+- [ ] item 생성, 제목 수정, 완료, 재개, 삭제 API를 설계한다.
+- [ ] 한 Task 안의 checklist item 정렬 방식을 설계한다.
+- [ ] 부모 Task 완료 시 미완료 item 처리 정책을 결정한다.
+- [ ] 반복 Task occurrence에서 checklist 복제와 수정 범위를 결정한다.
+- [ ] Workspace Task 권한은 기존 OWNER/EDITOR/VIEWER 계약과 일치시킨다.
+
+### B2. 일일 결과 Summary
+
+목표: 여러 조회 조합 비용이나 기기 간 결과 불일치가 실제로 확인될 때 하루 결과 요약을 제공한다.
+
+상태: 보류.
+
+- [ ] 필요성이 확인되면 `GET /api/v1/daily-plans/{date}/summary`를 추가한다.
+- [ ] 계획 시점 focus 수, 완료 수, 다른 날짜 이동 수, Inbox 이동 수, 미결정 수만 1차 범위로 둔다.
+- [ ] 생산성 점수, 연속 달성, 비교 ranking은 범위에서 제외한다.
 
 ### P0. 일정 빠른 등록 API
 

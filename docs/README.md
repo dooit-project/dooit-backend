@@ -16,7 +16,7 @@ Last updated: 2026-08-30
 | 4 | `docs/ops/**` | local production 운영, 환경변수, 배포·백업·복구 절차 |
 | 5 | `docs/project/ROADMAP.md` | 아직 닫히지 않은 제품/운영 작업 |
 
-Cloudflare Tunnel 기반 실제 도메인 연결과 public production smoke는 완료됐다. Web은 `https://dooit.hsng.pe.kr`, API는 `https://dooitapi.hsng.pe.kr`을 사용하며 HTTP 요청은 HTTPS로 전환한다. 코드 식별자는 Dooit 기준으로 정리 중이며 Java base package는 `pj.dooit`, Gradle project name은 `Dooit`이다. 현재 로드맵에서 닫아야 할 최우선 작업은 Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
+Cloudflare Tunnel 기반 실제 도메인 연결과 public production smoke는 완료됐다. Web은 `https://dooit.hsng.pe.kr`, API는 `https://dooitapi.hsng.pe.kr`을 사용하며 HTTP 요청은 HTTPS로 전환한다. 코드 식별자는 Dooit 기준으로 정리 중이며 Java base package는 `pj.dooit`, Gradle project name은 `Dooit`이다. 현재 로드맵에서 닫아야 할 최우선 작업은 Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정, 일일 계획 B0 계약이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
 
 ## 프론트/모바일 전달 문서
 
@@ -25,6 +25,7 @@ Cloudflare Tunnel 기반 실제 도메인 연결과 public production smoke는 �
 | 문서 | 용도 |
 | --- | --- |
 | [`api/API_V1_FRONTEND.md`](./api/API_V1_FRONTEND.md) | v1 API endpoint, request/response, 검색, Today 재정렬, D-Day 계약 |
+| [`api/DAILY_PLANNING_CONTRACT.md`](./api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 후속 계약 초안 |
 | [`api/GUEST_ACCOUNT_HANDOFF.md`](./api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 계정 생성, 승격, 병합, 만료, rate limit 모바일 전달 계약 |
 | [`ops/ENVIRONMENT_INTEGRATION.md`](./ops/ENVIRONMENT_INTEGRATION.md) | 환경별 URL, CORS origin, Expo/iOS/Android/실기기 차이 |
 | [`api/AUTH_CONTRACT.md`](./api/AUTH_CONTRACT.md) | JWT claim, access token TTL, refresh token rotation, 로그아웃, 401/403 |

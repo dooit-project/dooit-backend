@@ -13,6 +13,7 @@ class DocumentationIndexTest {
 
     private static final List<DocumentLink> FRONTEND_DOCS = List.of(
             new DocumentLink("docs/api/API_V1_FRONTEND.md", "api/API_V1_FRONTEND.md"),
+            new DocumentLink("docs/api/DAILY_PLANNING_CONTRACT.md", "api/DAILY_PLANNING_CONTRACT.md"),
             new DocumentLink("docs/api/GUEST_ACCOUNT_HANDOFF.md", "api/GUEST_ACCOUNT_HANDOFF.md"),
             new DocumentLink("docs/ops/ENVIRONMENT_INTEGRATION.md", "ops/ENVIRONMENT_INTEGRATION.md"),
             new DocumentLink("docs/api/AUTH_CONTRACT.md", "api/AUTH_CONTRACT.md"),
@@ -82,13 +83,21 @@ class DocumentationIndexTest {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
         assertThat(roadmap).contains("## 2. 제품 기능 로드맵");
-        assertThat(roadmap).contains("### 2026-08-29 정리");
-        assertThat(roadmap).contains("현재 남은 P0는 기능 구현보다 production 접근성과 운영 복구성 검증");
+        assertThat(roadmap).contains("### 2026-08-30 정리");
+        assertThat(roadmap).contains("오늘 계획 -> 실행 -> 하루 마감");
+        assertThat(roadmap).contains("B0 계약");
         assertThat(roadmap).contains("서버 push 실제 발송");
         assertThat(roadmap).contains("### P0. 프론트 출시 연동 요청");
         assertThat(roadmap).contains("비밀번호 재설정 request/verify/confirm API");
         assertThat(roadmap).contains("### P1. 프론트 계약 후속 요청");
         assertThat(roadmap).contains("Task별 알림 preference");
+        assertThat(roadmap).contains("### B0. 일일 계획 영속화");
+        assertThat(roadmap).contains("GET /api/v1/daily-plans/{date}");
+        assertThat(roadmap).contains("### B0. 예상 소요 시간");
+        assertThat(roadmap).contains("estimatedDurationMinutes");
+        assertThat(roadmap).contains("### B1. 계획/마감 Batch Mutation");
+        assertThat(roadmap).contains("### B1. Checklist");
+        assertThat(roadmap).contains("### B2. 일일 결과 Summary");
         assertThat(roadmap).contains("### P0. 일정 빠른 등록 API");
         assertThat(roadmap).contains("### P0. 빠른 등록 템플릿");
         assertThat(roadmap).contains("### P1. 일정 공유 설계");
@@ -110,6 +119,29 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("### P2. 제품 정책 후속 결정");
         assertThat(roadmap).contains("DOOIT_REQUIRE_TAILSCALE_URL=true");
         assertThat(roadmap).contains("완료 이력은 로드맵에 길게 누적하지 않고");
+    }
+
+    @Test
+    @DisplayName("일일 계획 계약 초안은 프론트 요청 우선순위를 백엔드 구현 단위로 정리한다")
+    void dailyPlanningContractDocumentsFrontendBacklog() throws Exception {
+        String dailyPlanning = Files.readString(Path.of("docs/api/DAILY_PLANNING_CONTRACT.md"));
+        String api = Files.readString(Path.of("docs/api/API_V1_FRONTEND.md"));
+        String mobile = Files.readString(Path.of("docs/mobile/MOBILE_API_BACKEND_STATUS.md"));
+
+        assertThat(dailyPlanning).contains("오늘 계획 -> 실행 -> 하루 마감");
+        assertThat(dailyPlanning).contains("B0. 일일 계획 영속화");
+        assertThat(dailyPlanning).contains("GET /api/v1/daily-plans/{date}");
+        assertThat(dailyPlanning).contains("PUT /api/v1/daily-plans/{date}");
+        assertThat(dailyPlanning).contains("focusTaskIds");
+        assertThat(dailyPlanning).contains("estimatedDurationMinutes");
+        assertThat(dailyPlanning).contains("TaskTemplate.defaultDurationMinutes");
+        assertThat(dailyPlanning).contains("POST /api/v1/daily-plans/{date}/apply");
+        assertThat(dailyPlanning).contains("Checklist");
+        assertThat(dailyPlanning).contains("GET /api/v1/daily-plans/{date}/summary");
+        assertThat(dailyPlanning).contains("Category entity");
+        assertThat(api).contains("예정 계약: 일일 계획과 예상 소요 시간");
+        assertThat(mobile).contains("Daily Planning");
+        assertThat(mobile).contains("docs/api/DAILY_PLANNING_CONTRACT.md");
     }
 
     @Test

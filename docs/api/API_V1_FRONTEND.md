@@ -618,6 +618,19 @@ type PushNotificationHistoryResponse = {
 };
 ```
 
+## 3-1. 예정 계약: 일일 계획과 예상 소요 시간
+
+아래 계약은 아직 구현되지 않았다. 프론트의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 위해 백엔드에서 우선 검토할 초안은 [`DAILY_PLANNING_CONTRACT.md`](./DAILY_PLANNING_CONTRACT.md)를 원본으로 한다.
+
+우선순위:
+
+- B0: `GET /api/v1/daily-plans/{date}`, `PUT /api/v1/daily-plans/{date}`
+- B0: Task `estimatedDurationMinutes` nullable field
+- B1: `POST /api/v1/daily-plans/{date}/apply` batch mutation
+- B1: Task checklist item
+- B2: `GET /api/v1/daily-plans/{date}/summary`
+- B2: category entity/count/order 계약
+
 Task 생성 규칙:
 
 - `startAt`/`endAt`이 모두 없으면 `INBOX`로 저장된다.
