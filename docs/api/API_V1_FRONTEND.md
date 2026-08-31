@@ -437,6 +437,7 @@ type DeferReason = 'TOO_BIG' | 'NOT_NEEDED_NOW' | 'AVOIDING' | 'NO_DEADLINE' | '
 type TodayOrderDirection = 'UP' | 'DOWN';
 type RecurrenceExceptionType = 'SKIPPED' | 'MOVED' | 'MODIFIED';
 type RecurrenceFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+type DailyPlanStatus = 'DRAFT' | 'CONFIRMED' | 'CLOSED';
 
 type TaskResponse = {
   id: number;
@@ -576,6 +577,20 @@ type TaskNotificationCandidateResponse = {
   task: TaskResponse;
 };
 
+type DailyPlanRequest = {
+  focusTaskIds: number[]; // 같은 날짜의 미완료 개인 Today Task, 최대 3개
+  status: DailyPlanStatus;
+};
+
+type DailyPlanResponse = {
+  date: string; // YYYY-MM-DD
+  status: DailyPlanStatus;
+  focusTaskIds: number[];
+  confirmedAt: string | null;
+  closedAt: string | null;
+  updatedAt: string | null;
+};
+
 type PushPlatform = 'IOS' | 'ANDROID' | 'EXPO';
 
 type PushDeviceTokenRequest = {
@@ -620,13 +635,27 @@ type PushNotificationHistoryResponse = {
 };
 ```
 
-## 3-1. 예정 계약: 일일 계획
+## 3-1. 일일 계획
 
-아래 일일 계획 resource 계약은 아직 구현되지 않았다. 프론트의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 위해 백엔드에서 우선 검토할 초안은 [`DAILY_PLANNING_CONTRACT.md`](./DAILY_PLANNING_CONTRACT.md)를 원본으로 한다.
+프론트의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 위해 사용자가 확정한 focus Task와 계획 상태를 저장한다.
 
-우선순위:
+제공 API:
 
-- B0: `GET /api/v1/daily-plans/{date}`, `PUT /api/v1/daily-plans/{date}`
+- `GET /api/v1/daily-plans/{date}`
+- `PUT /api/v1/daily-plans/{date}`
+
+규칙:
+
+- 저장 전 조회는 빈 `DRAFT` 계획을 반환한다.
+- `PUT`은 전체 교체 방식이다. 같은 요청을 반복해도 같은 focus 목록과 상태로 수렴한다.
+- `focusTaskIds`는 로그인 사용자 소유의 개인 Task만 허용한다.
+- `focusTaskIds`는 같은 날짜의 미완료 Today Task만 허용한다.
+- `focusTaskIds`는 최대 3개이며 배열 순서가 집중 순서다.
+- Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 목록에서 자동 제거된다.
+- 1차 범위에서 workspace Task는 focus에 포함하지 않는다.
+
+후속 후보:
+
 - B1: `POST /api/v1/daily-plans/{date}/apply` batch mutation
 - B1: Task checklist item
 - B2: `GET /api/v1/daily-plans/{date}/summary`

@@ -10,7 +10,7 @@ Last updated: 2026-08-31
 
 | 우선순위 | 항목 | 상태 | 백엔드 판단 |
 | --- | --- | --- | --- |
-| B0 | 일일 계획 영속화 | 미구현 | 오늘의 핵심 1~3개와 계획 확정 상태를 저장하기 위해 필요 |
+| B0 | 일일 계획 영속화 | 구현 | 오늘의 핵심 1~3개와 계획 확정 상태를 저장 |
 | B0 | 예상 소요 시간 | 구현 | 계획 수립과 하루 실행량 조절에 바로 필요 |
 | B1 | 계획/마감 batch mutation | 보류 | 단건 mutation으로 MVP 검증 후 부분 실패 문제가 확인되면 추가 |
 | B1 | Checklist | 미구현 | 한 단계 item 모델로 제한해 Task 하위 실행 단위를 제공 |
@@ -21,7 +21,7 @@ Last updated: 2026-08-31
 
 현재 `status=TODAY`, `plannedDate`, `todayOrder`는 오늘 목록과 순서를 표현하지만, 사용자가 오늘의 핵심으로 확정한 1~3개와 계획 완료 상태는 표현하지 못한다.
 
-권장 resource:
+구현 resource:
 
 ```http
 GET /api/v1/daily-plans/{date}
@@ -76,9 +76,9 @@ type DailyPlanRequest = {
 - 최대 3개이며 배열 순서가 집중 순서다.
 - Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 목록에서 자동 제거한다.
 - 같은 사용자와 날짜에는 하나의 plan만 존재한다.
-- `PUT`은 `Idempotency-Key` replay 또는 명시적인 version 기반 충돌 처리를 지원한다. 우선안은 기존 생성 API와 같은 `Idempotency-Key` 정책이다.
+- `PUT`은 전체 교체 방식이다. 같은 요청을 반복해도 같은 focus 목록과 상태로 수렴한다.
 - 날짜 경계는 사용자 timezone을 따른다. 세부 기준은 `TIMEZONE_CONTRACT.md`를 원본으로 한다.
-- Workspace Task를 focus에 포함할지는 1차 구현 전 결정한다. 기본안은 개인 Today Task만 허용하고 workspace focus는 후속 계약으로 분리한다.
+- 1차 구현은 개인 Today Task만 허용하고 workspace focus는 후속 계약으로 분리한다.
 
 ## B0. 예상 소요 시간
 

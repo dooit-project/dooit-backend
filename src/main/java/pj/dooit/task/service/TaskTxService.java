@@ -1,6 +1,7 @@
 package pj.dooit.task.service;
 
 import pj.dooit.common.domain.ResourceScope;
+import pj.dooit.dailyplan.service.DailyPlanService;
 import pj.dooit.dday.domain.DdayGoal;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.dday.repository.DdayGoalRepository;
@@ -37,6 +38,7 @@ public class TaskTxService {
 
     private final TaskRepository taskRepository;
     private final DdayGoalRepository ddayGoalRepository;
+    private final DailyPlanService dailyPlanService;
 
     @Transactional
     public Task updateTx(Long id, TaskRequest req) {
@@ -44,6 +46,7 @@ public class TaskTxService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
+        LocalDate previousPlannedDate = task.getPlannedDate();
         task.update(
                 req.title(),
                 req.description(),
@@ -56,6 +59,7 @@ public class TaskTxService {
                 req.notificationEnabled(),
                 req.notifyAt()
         );
+        removeFocusIfNoLongerSameDate(task, previousPlannedDate);
         return taskRepository.save(task);
     }
 
@@ -70,15 +74,19 @@ public class TaskTxService {
         Task task = findTaskForOwner(id, owner);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
+            LocalDate previousPlannedDate = task.getPlannedDate();
             applySingleUpdate(task, req);
             task.markUpdatedBy(owner);
+            removeFocusIfNoLongerSameDate(task, previousPlannedDate);
             return taskRepository.save(task);
         }
 
         List<Task> scopedTasks = scopedRecurringTasks(task, ownerId(owner), effectiveScope);
         scopedTasks.forEach(scopedTask -> {
+            LocalDate previousPlannedDate = scopedTask.getPlannedDate();
             applyScopedOccurrenceUpdate(scopedTask, req);
             scopedTask.markUpdatedBy(owner);
+            removeFocusIfNoLongerSameDate(scopedTask, previousPlannedDate);
         });
         taskRepository.saveAll(scopedTasks);
         return scopedTasks.stream()
@@ -104,15 +112,19 @@ public class TaskTxService {
         Task task = findTaskForWorkspace(id, workspace);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
+            LocalDate previousPlannedDate = task.getPlannedDate();
             applySingleUpdate(task, req);
             task.markUpdatedBy(actor);
+            removeFocusIfNoLongerSameDate(task, previousPlannedDate);
             return taskRepository.save(task);
         }
 
         List<Task> scopedTasks = scopedRecurringTasksForWorkspace(task, workspaceId(workspace), effectiveScope);
         scopedTasks.forEach(scopedTask -> {
+            LocalDate previousPlannedDate = scopedTask.getPlannedDate();
             applyScopedOccurrenceUpdate(scopedTask, req);
             scopedTask.markUpdatedBy(actor);
+            removeFocusIfNoLongerSameDate(scopedTask, previousPlannedDate);
         });
         taskRepository.saveAll(scopedTasks);
         return scopedTasks.stream()
@@ -124,7 +136,9 @@ public class TaskTxService {
     @Transactional
     public Task moveToTodayTx(Long id, LocalDate targetDate) {
         Task task = findTask(id);
+        LocalDate previousPlannedDate = task.getPlannedDate();
         task.moveToToday(targetDate);
+        removeFocusIfNoLongerSameDate(task, previousPlannedDate);
         assignLastTodayOrder(task, targetDate);
         return taskRepository.save(task);
     }
@@ -132,7 +146,9 @@ public class TaskTxService {
     @Transactional
     public Task moveToTodayTxForOwner(Long id, LocalDate targetDate, User owner) {
         Task task = findTaskForOwner(id, owner);
+        LocalDate previousPlannedDate = task.getPlannedDate();
         task.moveToToday(targetDate);
+        removeFocusIfNoLongerSameDate(task, previousPlannedDate);
         assignLastTodayOrder(task, targetDate, ownerId(owner));
         return taskRepository.save(task);
     }
@@ -141,6 +157,7 @@ public class TaskTxService {
     public Task moveToInboxTx(Long id) {
         Task task = findTask(id);
         task.moveToInbox();
+        removeFocus(task);
         return taskRepository.save(task);
     }
 
@@ -148,6 +165,7 @@ public class TaskTxService {
     public Task moveToInboxTxForOwner(Long id, User owner) {
         Task task = findTaskForOwner(id, owner);
         task.moveToInbox();
+        removeFocus(task);
         return taskRepository.save(task);
     }
 
@@ -155,6 +173,7 @@ public class TaskTxService {
     public Task completeTx(Long id, LocalDateTime completedAt) {
         Task task = findTask(id);
         task.complete(completedAt);
+        removeFocus(task);
         return taskRepository.save(task);
     }
 
@@ -162,6 +181,7 @@ public class TaskTxService {
     public Task completeTxForOwner(Long id, LocalDateTime completedAt, User owner) {
         Task task = findTaskForOwner(id, owner);
         task.complete(completedAt);
+        removeFocus(task);
         return taskRepository.save(task);
     }
 
@@ -184,7 +204,9 @@ public class TaskTxService {
     @Transactional
     public Task carryOverTx(Long id, LocalDate nextDate) {
         Task task = findTask(id);
+        LocalDate previousPlannedDate = task.getPlannedDate();
         task.carryOverTo(nextDate);
+        removeFocusIfNoLongerSameDate(task, previousPlannedDate);
         assignLastTodayOrder(task, nextDate);
         return taskRepository.save(task);
     }
@@ -192,7 +214,9 @@ public class TaskTxService {
     @Transactional
     public Task carryOverTxForOwner(Long id, LocalDate nextDate, User owner) {
         Task task = findTaskForOwner(id, owner);
+        LocalDate previousPlannedDate = task.getPlannedDate();
         task.carryOverTo(nextDate);
+        removeFocusIfNoLongerSameDate(task, previousPlannedDate);
         assignLastTodayOrder(task, nextDate, ownerId(owner));
         return taskRepository.save(task);
     }
@@ -364,6 +388,7 @@ public class TaskTxService {
         Task task = findTaskForOwner(id, owner);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task)) {
+            removeFocus(task);
             taskRepository.deleteById(id);
             return;
         }
@@ -371,7 +396,10 @@ public class TaskTxService {
         List<Task> scopedTasks = effectiveScope == RecurrenceEditScope.THIS
                 ? List.of(task)
                 : scopedRecurringTasks(task, ownerId(owner), effectiveScope);
-        scopedTasks.forEach(this::skipRecurringOccurrence);
+        scopedTasks.forEach(scopedTask -> {
+            skipRecurringOccurrence(scopedTask);
+            removeFocus(scopedTask);
+        });
         truncateSeriesIfNeeded(task, effectiveScope);
         taskRepository.saveAll(scopedTasks);
     }
@@ -386,6 +414,7 @@ public class TaskTxService {
         Task task = findTaskForWorkspace(id, workspace);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task)) {
+            removeFocus(task);
             taskRepository.deleteById(id);
             return;
         }
@@ -393,7 +422,10 @@ public class TaskTxService {
         List<Task> scopedTasks = effectiveScope == RecurrenceEditScope.THIS
                 ? List.of(task)
                 : scopedRecurringTasksForWorkspace(task, workspaceId(workspace), effectiveScope);
-        scopedTasks.forEach(this::skipRecurringOccurrence);
+        scopedTasks.forEach(scopedTask -> {
+            skipRecurringOccurrence(scopedTask);
+            removeFocus(scopedTask);
+        });
         truncateSeriesIfNeeded(task, effectiveScope);
         taskRepository.saveAll(scopedTasks);
     }
@@ -462,6 +494,19 @@ public class TaskTxService {
         for (int i = 0; i < tasks.size(); i++) {
             tasks.get(i).assignTodayOrder(i);
         }
+    }
+
+    private void removeFocusIfNoLongerSameDate(Task task, LocalDate previousPlannedDate) {
+        if (task.getStatus() != TaskStatus.TODAY
+                || task.getCompletedAt() != null
+                || previousPlannedDate == null
+                || !previousPlannedDate.equals(task.getPlannedDate())) {
+            removeFocus(task);
+        }
+    }
+
+    private void removeFocus(Task task) {
+        dailyPlanService.removeFocusTask(task.getId());
     }
 
     private RecurrenceEditScope normalizeScope(RecurrenceEditScope recurrenceScope) {

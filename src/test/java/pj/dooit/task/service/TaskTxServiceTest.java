@@ -1,5 +1,6 @@
 package pj.dooit.task.service;
 
+import pj.dooit.dailyplan.service.DailyPlanService;
 import pj.dooit.dday.domain.DdayGoal;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.dday.repository.DdayGoalRepository;
@@ -40,6 +41,13 @@ class TaskTxServiceTest {
     @Mock
     DdayGoalRepository ddayGoalRepository;
 
+    @Mock
+    DailyPlanService dailyPlanService;
+
+    private TaskTxService service() {
+        return new TaskTxService(taskRepository, ddayGoalRepository, dailyPlanService);
+    }
+
     @Test
     @DisplayName("updateTx는 날짜 없는 Today Task의 설명을 수정해도 실행 상태를 유지한다")
     void updateTx_unscheduledToday_preservesWorkflowState() {
@@ -60,7 +68,7 @@ class TaskTxServiceTest {
                 null,
                 false
         );
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);
@@ -95,7 +103,7 @@ class TaskTxServiceTest {
                 null,
                 false
         );
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findByIdAndOwnerId(id, 10L)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);
@@ -121,7 +129,7 @@ class TaskTxServiceTest {
                 null,
                 false
         );
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
         given(taskRepository.findByIdAndOwnerId(id, 10L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.updateTxForOwner(id, request, owner))
@@ -141,7 +149,7 @@ class TaskTxServiceTest {
                 .title("task")
                 .type(TaskType.TODO)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.findMaxTodayOrder(targetDate)).willReturn(4);
@@ -177,7 +185,7 @@ class TaskTxServiceTest {
                 .startAt(startAt)
                 .endAt(endAt)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.findMaxTodayOrder(targetDate)).willReturn(null);
@@ -212,7 +220,7 @@ class TaskTxServiceTest {
                 .status(TaskStatus.TODAY)
                 .targetDate(targetDate)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);
@@ -242,7 +250,7 @@ class TaskTxServiceTest {
                 .status(TaskStatus.TODAY)
                 .targetDate(LocalDate.of(2026, 6, 11))
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);
@@ -272,7 +280,7 @@ class TaskTxServiceTest {
                 .targetDate(LocalDate.of(2026, 5, 21))
                 .carryOverCount(1)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);
@@ -299,7 +307,7 @@ class TaskTxServiceTest {
                 .status(TaskStatus.DONE)
                 .completedAt(LocalDateTime.of(2026, 5, 21, 22, 0))
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.findMaxTodayOrder(targetDate)).willReturn(2);
@@ -338,7 +346,7 @@ class TaskTxServiceTest {
                 .targetDate(currentDate)
                 .carryOverCount(1)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.findMaxTodayOrder(nextDate)).willReturn(7);
@@ -377,7 +385,7 @@ class TaskTxServiceTest {
                 .targetDate(LocalDate.of(2026, 5, 21))
                 .carryOverCount(1)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.findMaxTodayOrder(nextDate)).willReturn(null);
@@ -406,7 +414,7 @@ class TaskTxServiceTest {
         Task first = orderedTodayTask(1L, "first", targetDate, 0);
         Task second = orderedTodayTask(2L, "second", targetDate, 1);
         Task third = orderedTodayTask(3L, "third", targetDate, 2);
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(second));
         given(taskRepository.findPlannedTasks(targetDate, targetDate.plusDays(1)))
@@ -433,7 +441,7 @@ class TaskTxServiceTest {
         long id = 1L;
         LocalDate targetDate = LocalDate.of(2026, 5, 22);
         Task task = orderedTodayTask(id, "task", targetDate.minusDays(1), 0);
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
 
@@ -449,7 +457,7 @@ class TaskTxServiceTest {
     void changeStatus_notFound() {
         // given
         long id = 999L;
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
         given(taskRepository.findById(id)).willReturn(Optional.empty());
 
         // when & then
@@ -469,7 +477,7 @@ class TaskTxServiceTest {
                 .title("기출 20문제 풀기")
                 .build();
         DdayGoal goal = new DdayGoal("정보처리기사", LocalDate.of(2026, 6, 10));
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(ddayGoalRepository.findById(ddayGoalId)).willReturn(Optional.of(goal));
@@ -497,7 +505,7 @@ class TaskTxServiceTest {
                 .owner(owner)
                 .build();
         DdayGoal goal = new DdayGoal("정보처리기사", LocalDate.of(2026, 6, 10), owner);
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findByIdAndOwnerId(id, 10L)).willReturn(Optional.of(task));
         given(ddayGoalRepository.findByIdAndOwnerId(ddayGoalId, 10L)).willReturn(Optional.of(goal));
@@ -521,7 +529,7 @@ class TaskTxServiceTest {
                 .title("기출 20문제 풀기")
                 .owner(owner)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findByIdAndOwnerId(id, 10L)).willReturn(Optional.of(task));
         given(ddayGoalRepository.findByIdAndOwnerId(ddayGoalId, 10L)).willReturn(Optional.empty());
@@ -540,7 +548,7 @@ class TaskTxServiceTest {
         User owner = persistedOwner(10L);
         LocalDate targetDate = LocalDate.of(2026, 7, 13);
         DdayGoal goal = new DdayGoal("정보처리기사", LocalDate.of(2026, 8, 1), owner);
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(ddayGoalRepository.findByIdAndOwnerId(ddayGoalId, 10L)).willReturn(Optional.of(goal));
         given(taskRepository.findMaxTodayOrder(10L, targetDate)).willReturn(2);
@@ -574,7 +582,7 @@ class TaskTxServiceTest {
         long ddayGoalId = 2L;
         User owner = persistedOwner(10L);
         LocalDate targetDate = LocalDate.of(2026, 7, 13);
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(ddayGoalRepository.findByIdAndOwnerId(ddayGoalId, 10L)).willReturn(Optional.empty());
 
@@ -598,7 +606,7 @@ class TaskTxServiceTest {
         Task task = Task.builder()
                 .title("기출 20문제 풀기")
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(ddayGoalRepository.findById(ddayGoalId)).willReturn(Optional.empty());
@@ -621,7 +629,7 @@ class TaskTxServiceTest {
                 .title("기출 20문제 풀기")
                 .ddayGoal(goal)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);
@@ -645,7 +653,7 @@ class TaskTxServiceTest {
                 .title("task")
                 .carryOverCount(3)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);
@@ -669,7 +677,7 @@ class TaskTxServiceTest {
                 .title("task")
                 .deferReason(DeferReason.TOO_BIG)
                 .build();
-        TaskTxService service = new TaskTxService(taskRepository, ddayGoalRepository);
+        TaskTxService service = service();
 
         given(taskRepository.findById(id)).willReturn(Optional.of(task));
         given(taskRepository.save(task)).willReturn(task);

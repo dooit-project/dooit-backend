@@ -16,6 +16,7 @@ Last updated: 2026-08-31
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 미적용 | `docs/db/migrations/20260831_add_daily_plan.sql` | local production Docker MySQL | 일일 계획 release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260830_add_task_estimated_duration.sql` | local production Docker MySQL | Task 예상 소요 시간 release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | 2026-08-29 문서 점검 기준 미적용. 개인/workspace iCalendar feed token release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | 2026-08-29 문서 점검 기준 미적용. Task 알림 preference release 전 적용 필요 |

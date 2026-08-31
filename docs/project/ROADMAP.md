@@ -23,7 +23,7 @@ Last updated: 2026-08-31
 | --- | --- | --- |
 | 빠른 등록 | API와 규칙 기반 파싱 구현 완료. 상대 주 표현과 한국어 날짜 표현 포함 | 모바일 실제 입력 로그 기반 예외 표현 보강 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
-| 일일 계획 | 미구현. 현재 Today 목록/정렬은 있지만 focus 1~3개와 계획 확정 상태는 없음 | `daily-plans` resource 계약/구현 |
+| 일일 계획 | `daily-plans` resource와 focus 1~3개, 계획 확정/마감 상태 구현 완료 | 모바일 연동 후 하루 마감 UX에서 batch mutation 필요 여부 확인 |
 | 예상 소요 시간 | Task nullable 필드와 template 기본값 적용 구현 완료 | 모바일 연동 후 입력 preset/표시 정책 검증 |
 | 카테고리 탐색 | Task `category` 필드와 검색 exact match/suggestion은 구현 완료 | TickTick식 좌상단 메뉴 UX에 맞춰 category 목록/count/order API 필요 여부 결정 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
@@ -59,18 +59,18 @@ Last updated: 2026-08-31
 
 목표: 모바일의 `오늘 계획 -> 실행 -> 하루 마감` 흐름에서 사용자가 오늘의 핵심으로 확정한 1~3개 Task와 계획 상태를 서버에 저장한다.
 
-상태: 미구현. 계약 초안은 `docs/api/DAILY_PLANNING_CONTRACT.md`를 원본으로 본다.
+상태: 구현 완료. 계약은 `docs/api/DAILY_PLANNING_CONTRACT.md`를 원본으로 본다.
 
-- [ ] `GET /api/v1/daily-plans/{date}` 계약을 추가한다.
-- [ ] `PUT /api/v1/daily-plans/{date}` 계약을 추가한다.
-- [ ] `DailyPlanStatus`를 `DRAFT`, `CONFIRMED`, `CLOSED`로 정의한다.
-- [ ] `focusTaskIds`는 같은 사용자, 같은 날짜, 미완료 Today Task만 허용한다.
-- [ ] 최대 3개와 배열 순서 보존을 validation으로 고정한다.
-- [ ] Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 목록에서 자동 제거한다.
-- [ ] 같은 사용자와 날짜에 하나의 plan만 존재하도록 DB 제약을 둔다.
-- [ ] `Idempotency-Key` replay 또는 version 기반 충돌 처리 중 하나를 확정한다.
-- [ ] 사용자 timezone 기준 local date 처리와 integration test를 추가한다.
-- [ ] Workspace Task를 focus에 포함할지 1차 범위에서 결정한다.
+- [x] `GET /api/v1/daily-plans/{date}` 계약을 추가한다.
+- [x] `PUT /api/v1/daily-plans/{date}` 계약을 추가한다.
+- [x] `DailyPlanStatus`를 `DRAFT`, `CONFIRMED`, `CLOSED`로 정의한다.
+- [x] `focusTaskIds`는 같은 사용자, 같은 날짜, 미완료 Today Task만 허용한다.
+- [x] 최대 3개와 배열 순서 보존을 validation으로 고정한다.
+- [x] Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 목록에서 자동 제거한다.
+- [x] 같은 사용자와 날짜에 하나의 plan만 존재하도록 DB 제약을 둔다.
+- [x] `PUT` 전체 교체 방식으로 멱등성을 보장한다.
+- [x] 사용자 timezone 기준 local date 처리와 integration test를 추가한다.
+- [x] Workspace Task는 1차 범위에서 제외한다.
 
 선행 조건:
 
