@@ -10,6 +10,7 @@ import pj.dooit.auth.exception.RefreshTokenInvalidException;
 import pj.dooit.auth.exception.RefreshTokenReusedException;
 import pj.dooit.common.idempotency.IdempotencyKeyReusedException;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
+import pj.dooit.task.exception.TaskChecklistItemNotFoundException;
 import pj.dooit.task.exception.TaskOrderConflictException;
 import pj.dooit.task.exception.TaskTemplateNotFoundException;
 import pj.dooit.task.exception.TaskValidationException;
@@ -116,6 +117,13 @@ public class ApiExceptionHandler {
         log.warn("Task Template Not Found : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.TASK_TEMPLATE_NOT_FOUND.getStatus())
                 .body(ApiResponse.failure(ErrorCode.TASK_TEMPLATE_NOT_FOUND));
+    }
+
+    @ExceptionHandler(TaskChecklistItemNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleTaskChecklistItemNotFoundException(TaskChecklistItemNotFoundException e) {
+        log.warn("Task Checklist Item Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.TASK_CHECKLIST_ITEM_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.TASK_CHECKLIST_ITEM_NOT_FOUND));
     }
 
     @ExceptionHandler(DdayGoalNotFoundException.class)

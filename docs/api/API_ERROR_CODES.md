@@ -1,6 +1,6 @@
 # API Error Codes
 
-Last updated: 2026-08-28
+Last updated: 2026-09-01
 
 이 문서는 모바일과 운영자가 함께 보는 Dooit v1 API 오류 코드 카탈로그다. 모든 API 오류 응답은 공통 envelope를 사용한다.
 
@@ -36,6 +36,7 @@ Last updated: 2026-08-28
 | `11010` | 401 | `게스트 세션이 만료되었습니다. 로그인하거나 새 게스트로 시작해주세요.` | 만료된 guest token, 병합 완료 guest token, 이미 정리되어 user row가 없는 guest token | 저장된 guest token 삭제 후 로그인 또는 새 게스트 시작 안내. 기존 데이터 복구 목적으로 새 guest id를 재사용하지 않음 | 아니오 |
 | `20001` | 404 | `일정을 찾을 수 없습니다.` | Task 없음 또는 owner scope 밖 | 목록 재조회 | 아니오 |
 | `20002` | 409 | `Today 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요.` | Today 일괄 재정렬 stale 목록 | Today 재조회 후 재시도 | 조건부 |
+| `20004` | 404 | `Task checklist item을 찾을 수 없습니다.` | checklist item 없음 또는 Task scope 밖 | Task 상세/checklist 재조회 | 아니오 |
 | `30001` | 404 | `D-Day 목표를 찾을 수 없습니다.` | D-Day 목표 없음 또는 owner scope 밖 | 목록 재조회 | 아니오 |
 | `40001` | 409 | `이미 가입된 이메일입니다.` | 회원가입 email 중복 | 로그인 안내 또는 다른 email 입력 | 아니오 |
 | `50001` | 404 | `공유 workspace를 찾을 수 없습니다.` | workspace 없음, membership 없음, ACTIVE 멤버가 아님 | workspace 목록 재조회 | 아니오 |

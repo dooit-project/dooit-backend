@@ -44,8 +44,11 @@ class TaskTxServiceTest {
     @Mock
     DailyPlanService dailyPlanService;
 
+    @Mock
+    TaskChecklistItemService checklistItemService;
+
     private TaskTxService service() {
-        return new TaskTxService(taskRepository, ddayGoalRepository, dailyPlanService);
+        return new TaskTxService(taskRepository, ddayGoalRepository, dailyPlanService, checklistItemService);
     }
 
     @Test

@@ -39,6 +39,7 @@ public class TaskTxService {
     private final TaskRepository taskRepository;
     private final DdayGoalRepository ddayGoalRepository;
     private final DailyPlanService dailyPlanService;
+    private final TaskChecklistItemService checklistItemService;
 
     @Transactional
     public Task updateTx(Long id, TaskRequest req) {
@@ -174,6 +175,7 @@ public class TaskTxService {
         Task task = findTask(id);
         task.complete(completedAt);
         removeFocus(task);
+        checklistItemService.completeAllForTask(task.getId(), completedAt);
         return taskRepository.save(task);
     }
 
@@ -182,6 +184,7 @@ public class TaskTxService {
         Task task = findTaskForOwner(id, owner);
         task.complete(completedAt);
         removeFocus(task);
+        checklistItemService.completeAllForTask(task.getId(), completedAt);
         return taskRepository.save(task);
     }
 
@@ -389,6 +392,7 @@ public class TaskTxService {
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task)) {
             removeFocus(task);
+            checklistItemService.deleteAllForTask(task.getId());
             taskRepository.deleteById(id);
             return;
         }
@@ -396,9 +400,11 @@ public class TaskTxService {
         List<Task> scopedTasks = effectiveScope == RecurrenceEditScope.THIS
                 ? List.of(task)
                 : scopedRecurringTasks(task, ownerId(owner), effectiveScope);
+        LocalDateTime skippedAt = LocalDateTime.now(pj.dooit.Constant.ZONE);
         scopedTasks.forEach(scopedTask -> {
             skipRecurringOccurrence(scopedTask);
             removeFocus(scopedTask);
+            checklistItemService.completeAllForTask(scopedTask.getId(), skippedAt);
         });
         truncateSeriesIfNeeded(task, effectiveScope);
         taskRepository.saveAll(scopedTasks);
@@ -415,6 +421,7 @@ public class TaskTxService {
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task)) {
             removeFocus(task);
+            checklistItemService.deleteAllForTask(task.getId());
             taskRepository.deleteById(id);
             return;
         }
@@ -422,9 +429,11 @@ public class TaskTxService {
         List<Task> scopedTasks = effectiveScope == RecurrenceEditScope.THIS
                 ? List.of(task)
                 : scopedRecurringTasksForWorkspace(task, workspaceId(workspace), effectiveScope);
+        LocalDateTime skippedAt = LocalDateTime.now(pj.dooit.Constant.ZONE);
         scopedTasks.forEach(scopedTask -> {
             skipRecurringOccurrence(scopedTask);
             removeFocus(scopedTask);
+            checklistItemService.completeAllForTask(scopedTask.getId(), skippedAt);
         });
         truncateSeriesIfNeeded(task, effectiveScope);
         taskRepository.saveAll(scopedTasks);

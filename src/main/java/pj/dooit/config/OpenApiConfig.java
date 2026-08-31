@@ -25,6 +25,7 @@ public class OpenApiConfig {
     private static final Set<String> IDEMPOTENT_POST_PATHS = Set.of(
             "/api/v1/auth/guest",
             "/api/v1/tasks",
+            "/api/v1/tasks/{taskId}/checklist-items",
             "/api/v1/tasks/quick-capture",
             "/api/v1/task-templates",
             "/api/v1/task-templates/{id}/tasks",
@@ -49,6 +50,7 @@ public class OpenApiConfig {
                 .tags(List.of(
                         new Tag().name("v1 Auth").description("모바일 JWT 인증 API"),
                         new Tag().name("v1 Task").description("모바일 Task API"),
+                        new Tag().name("v1 Task Checklist").description("모바일 Task checklist API"),
                         new Tag().name("v1 Daily Plan").description("모바일 일일 계획 API"),
                         new Tag().name("v1 Workspace").description("공유 workspace API"),
                         new Tag().name("v1 Workspace Invitation").description("현재 사용자 workspace 초대 API"),

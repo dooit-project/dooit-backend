@@ -13,7 +13,7 @@ Last updated: 2026-08-31
 | B0 | 일일 계획 영속화 | 구현 | 오늘의 핵심 1~3개와 계획 확정 상태를 저장 |
 | B0 | 예상 소요 시간 | 구현 | 계획 수립과 하루 실행량 조절에 바로 필요 |
 | B1 | 계획/마감 batch mutation | 보류 | 단건 mutation으로 MVP 검증 후 부분 실패 문제가 확인되면 추가 |
-| B1 | Checklist | 미구현 | 한 단계 item 모델로 제한해 Task 하위 실행 단위를 제공 |
+| B1 | Checklist | 구현 | 한 단계 item 모델로 제한해 Task 하위 실행 단위를 제공 |
 | B2 | 일일 결과 summary | 보류 | 여러 조회 조합 비용 또는 기기 간 결과 불일치가 확인될 때 추가 |
 | B2 | Category entity | 보류 | 좌측 메뉴/정보구조 확정 후 별도 계약 |
 
@@ -148,19 +148,19 @@ POST /api/v1/daily-plans/{date}/apply
 
 깊은 계층형 subtask 대신 Task 아래 한 단계 checklist를 우선한다.
 
-필요 계약:
+구현 계약:
 
-- Task 상세 response에 checklist item 목록을 포함하거나 별도 조회 API를 제공한다.
+- 별도 checklist endpoint를 제공한다.
 - item 생성, 제목 수정, 완료, 재개, 삭제를 제공한다.
-- 한 Task 안에서 item 정렬을 지원한다.
-- 부모 Task 완료 시 미완료 item을 함께 완료할지, 미완료 상태로 보존할지 정책을 정한다.
-- 반복 Task occurrence에서 checklist 복제와 수정 범위를 정의한다.
+- 한 Task 안에서 item 전체 ID 목록 기반 정렬을 지원한다.
+- 부모 Task 완료 시 미완료 item은 같은 완료 시각으로 함께 완료한다.
+- 반복 Task occurrence의 checklist는 occurrence Task row별로 독립 관리한다.
 
 권장 제한:
 
 - item 제목 최대 길이와 Task당 item 최대 개수를 명시한다.
 - checklist item에는 별도 날짜, 알림, 담당자, 재귀 checklist를 두지 않는다.
-- Workspace Task에 적용할 경우 OWNER, EDITOR, VIEWER 권한을 기존 Task 계약과 일치시킨다.
+- 1차 범위에서 Workspace Task checklist는 제외한다. 적용할 경우 OWNER, EDITOR, VIEWER 권한을 기존 Task 계약과 일치시킨다.
 
 ## B2. 일일 결과 Summary
 

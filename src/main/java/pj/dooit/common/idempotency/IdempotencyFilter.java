@@ -42,6 +42,7 @@ public class IdempotencyFilter extends OncePerRequestFilter {
     private static final List<Pattern> IDEMPOTENT_POST_PATHS = List.of(
             Pattern.compile("^/api/v1/auth/guest$"),
             Pattern.compile("^/api/v1/tasks$"),
+            Pattern.compile("^/api/v1/tasks/\\d+/checklist-items$"),
             Pattern.compile("^/api/v1/tasks/quick-capture$"),
             Pattern.compile("^/api/v1/task-templates$"),
             Pattern.compile("^/api/v1/task-templates/\\d+/tasks$"),

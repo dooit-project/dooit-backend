@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-08-31
+Last audited: 2026-09-01
 
 이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -19,6 +19,7 @@ Last audited: 2026-08-31
 | Auth/Guest | [x] | JWT, guest 생성/갱신/승격/병합/cleanup/rate limit 계약 구현 |
 | Task/D-Day | [x] | owner scope, Today/Calendar, 검색, D-Day 연결, 반복 occurrence 구현 |
 | Daily Planning | [x] | `daily-plans`, focus task 1~3개, 계획 확정/마감 상태, Task 예상 소요 시간 구현. 계약은 `docs/api/DAILY_PLANNING_CONTRACT.md` 기준 |
+| Checklist | [x] | 개인 Task 하위 checklist item CRUD, 완료/재개, 정렬, Task 완료 시 자동 완료 구현 |
 | Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 상대 주 표현과 한국어 날짜 표현 포함. 실제 입력 로그 기반 파싱 보강만 남음 |
 | Templates | [x] | `TaskTemplate` CRUD와 template 기반 Task 생성 구현 |
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |

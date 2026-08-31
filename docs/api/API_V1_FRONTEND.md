@@ -577,6 +577,25 @@ type TaskNotificationCandidateResponse = {
   task: TaskResponse;
 };
 
+type TaskChecklistItemRequest = {
+  title: string; // 30자 이하
+};
+
+type TaskChecklistItemOrderRequest = {
+  orderedItemIds: number[]; // 현재 Task의 checklist item 전체 ID
+};
+
+type TaskChecklistItemResponse = {
+  id: number;
+  taskId: number;
+  title: string;
+  done: boolean;
+  sortOrder: number;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
 type DailyPlanRequest = {
   focusTaskIds: number[]; // 같은 날짜의 미완료 개인 Today Task, 최대 3개
   status: DailyPlanStatus;
@@ -657,7 +676,6 @@ type PushNotificationHistoryResponse = {
 후속 후보:
 
 - B1: `POST /api/v1/daily-plans/{date}/apply` batch mutation
-- B1: Task checklist item
 - B2: `GET /api/v1/daily-plans/{date}/summary`
 - B2: category entity/count/order 계약
 
@@ -1081,6 +1099,34 @@ DELETE /api/v1/tasks/{id}/dday-goal
 ```
 
 Response: `TaskResponse`
+
+## 4-1. Task Checklist API
+
+모든 `/api/v1/tasks/{taskId}/checklist-items/**` 요청은 현재 로그인 사용자의 개인 Task만 대상으로 한다. 다른 사용자의 Task ID는 `TASK_NOT_FOUND`, 다른 item ID는 `TASK_CHECKLIST_ITEM_NOT_FOUND`처럼 처리된다.
+
+제공 API:
+
+```http
+GET /api/v1/tasks/{taskId}/checklist-items
+POST /api/v1/tasks/{taskId}/checklist-items
+PUT /api/v1/tasks/{taskId}/checklist-items/{itemId}
+PATCH /api/v1/tasks/{taskId}/checklist-items/{itemId}/done
+PATCH /api/v1/tasks/{taskId}/checklist-items/{itemId}/done/cancel
+DELETE /api/v1/tasks/{taskId}/checklist-items/{itemId}
+PUT /api/v1/tasks/{taskId}/checklist-items/order
+```
+
+규칙:
+
+- checklist item은 Task 아래 한 단계만 제공한다.
+- item 제목은 30자 이하이며 Task당 최대 100개다.
+- item에는 별도 날짜, 알림, 담당자, 하위 checklist를 두지 않는다.
+- 생성 응답은 `201 Created`와 `TaskChecklistItemResponse`다.
+- `done` 처리 시 `completedAt`을 생략하면 서버 현재 시각을 사용한다.
+- Task 완료 시 미완료 checklist item은 같은 완료 시각으로 함께 완료된다.
+- Task 삭제 시 checklist item도 함께 삭제된다.
+- 정렬은 `orderedItemIds`에 현재 Task의 item 전체 ID를 중복 없이 보내는 전체 교체 방식이다.
+- 1차 범위에서 workspace Task checklist는 제공하지 않는다.
 
 ## 5. Task 템플릿 API
 
