@@ -1,5 +1,6 @@
 package pj.dooit.task.service;
 
+import pj.dooit.common.domain.ResourceScope;
 import pj.dooit.task.domain.Task;
 import pj.dooit.task.domain.TaskChecklistItem;
 import pj.dooit.task.dto.TaskChecklistItemOrderRequest;
@@ -11,7 +12,12 @@ import pj.dooit.task.exception.TaskValidationException;
 import pj.dooit.task.repository.TaskChecklistItemRepository;
 import pj.dooit.task.repository.TaskRepository;
 import pj.dooit.user.domain.User;
+import pj.dooit.workspace.domain.WorkspaceMember;
+import pj.dooit.workspace.domain.WorkspaceMemberStatus;
+import pj.dooit.workspace.domain.WorkspaceRole;
+import pj.dooit.workspace.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +37,11 @@ public class TaskChecklistItemService {
 
     private final TaskChecklistItemRepository checklistItemRepository;
     private final TaskRepository taskRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @Transactional(readOnly = true)
     public List<TaskChecklistItemResponse> findAllForOwner(Long taskId, User owner) {
-        requireTaskForOwner(taskId, owner);
+        requireReadableTask(taskId, owner);
         return checklistItemRepository.findAllByTaskIdOrderBySortOrderAscIdAsc(taskId).stream()
                 .map(TaskChecklistItemResponse::from)
                 .toList();
@@ -42,7 +49,7 @@ public class TaskChecklistItemService {
 
     @Transactional
     public TaskChecklistItemResponse createForOwner(Long taskId, TaskChecklistItemRequest request, User owner) {
-        Task task = requireTaskForOwner(taskId, owner);
+        Task task = requireEditableTask(taskId, owner);
         if (checklistItemRepository.countByTaskId(taskId) >= MAX_ITEMS_PER_TASK) {
             throw new TaskValidationException("Task checklist item은 최대 100개까지 만들 수 있습니다.");
         }
@@ -56,7 +63,7 @@ public class TaskChecklistItemService {
 
     @Transactional
     public TaskChecklistItemResponse updateForOwner(Long taskId, Long itemId, TaskChecklistItemRequest request, User owner) {
-        requireTaskForOwner(taskId, owner);
+        requireEditableTask(taskId, owner);
         TaskChecklistItem item = findItem(taskId, itemId);
         item.updateTitle(request.title());
         return TaskChecklistItemResponse.from(checklistItemRepository.save(item));
@@ -64,7 +71,7 @@ public class TaskChecklistItemService {
 
     @Transactional
     public TaskChecklistItemResponse completeForOwner(Long taskId, Long itemId, LocalDateTime completedAt, User owner) {
-        requireTaskForOwner(taskId, owner);
+        requireEditableTask(taskId, owner);
         TaskChecklistItem item = findItem(taskId, itemId);
         item.complete(completedAt);
         return TaskChecklistItemResponse.from(checklistItemRepository.save(item));
@@ -72,7 +79,7 @@ public class TaskChecklistItemService {
 
     @Transactional
     public TaskChecklistItemResponse reopenForOwner(Long taskId, Long itemId, User owner) {
-        requireTaskForOwner(taskId, owner);
+        requireEditableTask(taskId, owner);
         TaskChecklistItem item = findItem(taskId, itemId);
         item.reopen();
         return TaskChecklistItemResponse.from(checklistItemRepository.save(item));
@@ -80,7 +87,7 @@ public class TaskChecklistItemService {
 
     @Transactional
     public void deleteForOwner(Long taskId, Long itemId, User owner) {
-        requireTaskForOwner(taskId, owner);
+        requireEditableTask(taskId, owner);
         TaskChecklistItem item = findItem(taskId, itemId);
         checklistItemRepository.delete(item);
         normalizeSortOrder(taskId);
@@ -88,7 +95,7 @@ public class TaskChecklistItemService {
 
     @Transactional
     public List<TaskChecklistItemResponse> reorderForOwner(Long taskId, TaskChecklistItemOrderRequest request, User owner) {
-        requireTaskForOwner(taskId, owner);
+        requireEditableTask(taskId, owner);
         List<TaskChecklistItem> items = checklistItemRepository.findAllByTaskIdOrderBySortOrderAscIdAsc(taskId);
         List<Long> orderedItemIds = validateOrderRequest(request, items);
         Map<Long, TaskChecklistItem> itemById = items.stream()
@@ -121,9 +128,45 @@ public class TaskChecklistItemService {
         }
     }
 
-    private Task requireTaskForOwner(Long taskId, User owner) {
-        return taskRepository.findByIdAndOwnerId(taskId, ownerId(owner))
+    private Task requireReadableTask(Long taskId, User actor) {
+        Task task = taskRepository.findByIdAndOwnerId(taskId, ownerId(actor))
+                .orElse(null);
+        if (task != null) {
+            return task;
+        }
+        task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
+        requireWorkspaceAccess(task, actor, false);
+        return task;
+    }
+
+    private Task requireEditableTask(Long taskId, User actor) {
+        Task task = taskRepository.findByIdAndOwnerId(taskId, ownerId(actor))
+                .orElse(null);
+        if (task != null) {
+            return task;
+        }
+        task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        requireWorkspaceAccess(task, actor, true);
+        return task;
+    }
+
+    private void requireWorkspaceAccess(Task task, User actor, boolean editable) {
+        if (task.getScope() != ResourceScope.WORKSPACE || task.getWorkspace() == null) {
+            throw new TaskNotFoundException(task.getId());
+        }
+        WorkspaceMember member = workspaceMemberRepository.findByWorkspaceIdAndUserId(
+                        task.getWorkspace().getId(),
+                        ownerId(actor)
+                )
+                .orElseThrow(() -> new TaskNotFoundException(task.getId()));
+        if (member.getStatus() != WorkspaceMemberStatus.ACTIVE) {
+            throw new TaskNotFoundException(task.getId());
+        }
+        if (editable && member.getRole() == WorkspaceRole.VIEWER) {
+            throw new AccessDeniedException("workspace editor 권한이 필요합니다.");
+        }
     }
 
     private TaskChecklistItem findItem(Long taskId, Long itemId) {

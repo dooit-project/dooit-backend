@@ -1102,7 +1102,7 @@ Response: `TaskResponse`
 
 ## 4-1. Task Checklist API
 
-모든 `/api/v1/tasks/{taskId}/checklist-items/**` 요청은 현재 로그인 사용자의 개인 Task만 대상으로 한다. 다른 사용자의 Task ID는 `TASK_NOT_FOUND`, 다른 item ID는 `TASK_CHECKLIST_ITEM_NOT_FOUND`처럼 처리된다.
+모든 `/api/v1/tasks/{taskId}/checklist-items/**` 요청은 현재 로그인 사용자의 개인 Task 또는 ACTIVE 멤버인 workspace Task를 대상으로 한다. 다른 사용자의 개인 Task ID와 멤버가 아닌 workspace Task ID는 `TASK_NOT_FOUND`, 다른 item ID는 `TASK_CHECKLIST_ITEM_NOT_FOUND`처럼 처리된다.
 
 제공 API:
 
@@ -1126,7 +1126,7 @@ PUT /api/v1/tasks/{taskId}/checklist-items/order
 - Task 완료 시 미완료 checklist item은 같은 완료 시각으로 함께 완료된다.
 - Task 삭제 시 checklist item도 함께 삭제된다.
 - 정렬은 `orderedItemIds`에 현재 Task의 item 전체 ID를 중복 없이 보내는 전체 교체 방식이다.
-- 1차 범위에서 workspace Task checklist는 제공하지 않는다.
+- workspace Task checklist는 기존 workspace Task 권한과 동일하게 ACTIVE 멤버가 조회하고, OWNER/EDITOR만 생성, 수정, 완료, 재개, 삭제, 정렬할 수 있다. VIEWER의 변경 요청은 `FORBIDDEN`이다.
 
 ## 5. Task 템플릿 API
 

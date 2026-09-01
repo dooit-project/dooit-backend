@@ -160,7 +160,7 @@ POST /api/v1/daily-plans/{date}/apply
 
 - item 제목 최대 길이와 Task당 item 최대 개수를 명시한다.
 - checklist item에는 별도 날짜, 알림, 담당자, 재귀 checklist를 두지 않는다.
-- 1차 범위에서 Workspace Task checklist는 제외한다. 적용할 경우 OWNER, EDITOR, VIEWER 권한을 기존 Task 계약과 일치시킨다.
+- Workspace Task checklist는 기존 Task 권한과 일치시킨다. ACTIVE 멤버가 조회하고 OWNER/EDITOR만 변경할 수 있다.
 
 ## B2. 일일 결과 Summary
 

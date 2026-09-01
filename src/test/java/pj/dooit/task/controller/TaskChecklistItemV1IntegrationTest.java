@@ -8,6 +8,11 @@ import pj.dooit.task.dto.TaskChecklistItemRequest;
 import pj.dooit.task.dto.TaskRequest;
 import pj.dooit.user.domain.User;
 import pj.dooit.user.repository.UserRepository;
+import pj.dooit.workspace.domain.WorkspaceMemberStatus;
+import pj.dooit.workspace.domain.WorkspaceRole;
+import pj.dooit.workspace.dto.WorkspaceInviteRequest;
+import pj.dooit.workspace.dto.WorkspaceMemberUpdateRequest;
+import pj.dooit.workspace.dto.WorkspaceRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -148,6 +153,74 @@ class TaskChecklistItemV1IntegrationTest {
                 .andExpect(jsonPath("$.data[1].completedAt").value("2026-09-01T18:00:00"));
     }
 
+    @Test
+    @DisplayName("v1 Workspace Task checklist item은 EDITOR가 변경하고 VIEWER가 조회한다")
+    void workspaceChecklist_editorMutatesViewerReads() throws Exception {
+        String ownerToken = accessToken("checklist-workspace-owner@example.com");
+        String editorToken = accessToken("checklist-workspace-editor@example.com");
+        String viewerToken = accessToken("checklist-workspace-viewer@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long editorMemberId = invite(ownerToken, workspaceId, "checklist-workspace-editor@example.com", WorkspaceRole.EDITOR);
+        Long viewerMemberId = invite(ownerToken, workspaceId, "checklist-workspace-viewer@example.com", WorkspaceRole.VIEWER);
+        accept(editorToken, workspaceId, editorMemberId);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, "공유 체크리스트 대상");
+
+        Long firstId = createItem(editorToken, taskId, "자료 확인");
+        Long secondId = createItem(editorToken, taskId, "초안 작성");
+
+        mockMvc.perform(get("/api/v1/tasks/{taskId}/checklist-items", taskId)
+                        .header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].id").value(firstId))
+                .andExpect(jsonPath("$.data[1].id").value(secondId));
+
+        mockMvc.perform(patch("/api/v1/tasks/{taskId}/checklist-items/{itemId}/done", taskId, firstId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .param("completedAt", "2026-09-01T10:00:00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.done").value(true));
+
+        mockMvc.perform(put("/api/v1/tasks/{taskId}/checklist-items/order", taskId)
+                        .header("Authorization", "Bearer " + editorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskChecklistItemOrderRequest(List.of(secondId, firstId)))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(secondId))
+                .andExpect(jsonPath("$.data[1].id").value(firstId));
+    }
+
+    @Test
+    @DisplayName("v1 Workspace Task checklist item 변경은 VIEWER에게 403, non-member에게 404를 반환한다")
+    void workspaceChecklist_permissionBoundaries() throws Exception {
+        String ownerToken = accessToken("checklist-workspace-owner-boundary@example.com");
+        String viewerToken = accessToken("checklist-workspace-viewer-boundary@example.com");
+        String outsiderToken = accessToken("checklist-workspace-outsider-boundary@example.com");
+        Long workspaceId = createWorkspace(ownerToken, "제품팀 일정");
+        Long viewerMemberId = invite(ownerToken, workspaceId, "checklist-workspace-viewer-boundary@example.com", WorkspaceRole.VIEWER);
+        accept(viewerToken, workspaceId, viewerMemberId);
+        Long taskId = createWorkspaceTask(ownerToken, workspaceId, "공유 체크리스트 권한");
+        Long itemId = createItem(ownerToken, taskId, "공유 item");
+
+        mockMvc.perform(post("/api/v1/tasks/{taskId}/checklist-items", taskId)
+                        .header("Authorization", "Bearer " + viewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskChecklistItemRequest("viewer 생성"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+
+        mockMvc.perform(patch("/api/v1/tasks/{taskId}/checklist-items/{itemId}/done", taskId, itemId)
+                        .header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(11003));
+
+        mockMvc.perform(get("/api/v1/tasks/{taskId}/checklist-items", taskId)
+                        .header("Authorization", "Bearer " + outsiderToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value(20001));
+    }
+
     private String accessToken(String email) {
         User owner = userRepository.save(new User(email, "encoded-password", "Checklist 사용자"));
         return jwtTokenService.createAccessToken(owner).tokenValue();
@@ -180,5 +253,59 @@ class TaskChecklistItemV1IntegrationTest {
                 .getContentAsString();
         Number id = JsonPath.read(response, "$.data.id");
         return id.longValue();
+    }
+
+    private Long createWorkspace(String accessToken, String name) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/workspaces")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceRequest(name, null))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").value(notNullValue()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private Long createWorkspaceTask(String accessToken, Long workspaceId, String title) throws Exception {
+        TaskRequest request = new TaskRequest(title, null, null, null, null, false);
+        String response = mockMvc.perform(post("/api/v1/workspaces/{workspaceId}/tasks", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").value(notNullValue()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private Long invite(String accessToken, Long workspaceId, String email, WorkspaceRole role) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/workspaces/{workspaceId}/members", workspaceId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceInviteRequest(email, role))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").value(notNullValue()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Number id = JsonPath.read(response, "$.data.id");
+        return id.longValue();
+    }
+
+    private void accept(String accessToken, Long workspaceId, Long memberId) throws Exception {
+        mockMvc.perform(patch("/api/v1/workspaces/{workspaceId}/members/{memberId}", workspaceId, memberId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceMemberUpdateRequest(
+                                null,
+                                WorkspaceMemberStatus.ACTIVE
+                        ))))
+                .andExpect(status().isOk());
     }
 }
