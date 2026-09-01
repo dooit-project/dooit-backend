@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -26,7 +26,7 @@ Last updated: 2026-09-01
 | 일일 계획 | `daily-plans` resource와 focus 1~3개, 계획 확정/마감 상태 구현 완료 | 모바일 연동 후 하루 마감 UX에서 batch mutation 필요 여부 확인 |
 | 예상 소요 시간 | Task nullable 필드와 template 기본값 적용 구현 완료 | 모바일 연동 후 입력 preset/표시 정책 검증 |
 | Checklist | 개인/Workspace Task 하위 한 단계 checklist item API 구현 완료 | 모바일 연동 후 담당자/알림 같은 추가 필드 필요 여부 결정 |
-| 카테고리 탐색 | Task `category` 필드와 검색 exact match/suggestion은 구현 완료 | TickTick식 좌상단 메뉴 UX에 맞춰 category 목록/count/order API 필요 여부 결정 |
+| 카테고리 탐색 | 개인 Task category 목록/count API 구현 완료 | 모바일 연동 후 수동 category order 필요 여부 결정 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
 | 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner와 shared workspace scheduler 자동 발송 완료 | 운영 credential 적용 후 실수신 smoke |
 | production 접근 | Cloudflare Tunnel로 Web·API 도메인 연결, HTTPS 강제, readiness·CORS public smoke 완료 | Android 실제 기기 smoke |
@@ -357,8 +357,8 @@ Last updated: 2026-09-01
 ### P2. 제품 정책 후속 결정
 
 - [x] 모바일 연결 완료 화면에서 병합 결과 count를 구체적으로 노출할지 결정한다.
-- [ ] TickTick처럼 좌측 상단 메뉴에서 Inbox, Today, Calendar, category를 한 번에 탐색하는 UX를 채택할지 결정한다.
-- [ ] 채택 시 기존 검색 `category` 필터와 추천 category만으로 충분한지, 별도 category 목록/count/order API가 필요한지 계약한다.
+- [x] TickTick처럼 좌측 상단 메뉴에서 Inbox, Today, Calendar, category를 한 번에 탐색하는 UX를 채택할 때 쓸 category 목록/count API를 추가한다.
+- [x] 채택 시 기존 검색 `category` 필터와 추천 category만으로 충분한지, 별도 category 목록/count/order API가 필요한지 계약한다.
 - [ ] 게스트가 31일 이상 미접속한 뒤 기존 데이터를 복구해야 하는지 결정한다.
 - [x] 장기 게스트 복구가 필요하면 refresh token, device-bound proof, recovery code 중 별도 인증 수단을 먼저 설계한다.
 - [ ] 서버 push 운영 credential을 실제 production에 적용할지 결정한다.

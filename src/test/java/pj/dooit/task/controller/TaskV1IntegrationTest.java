@@ -1637,6 +1637,48 @@ class TaskV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("v1 Task 카테고리 요약은 개인 Task의 상태별 count를 반환하고 미분류를 마지막에 둔다")
+    void getCategorySummaries_ownerScopedCounts() throws Exception {
+        String accessToken = accessToken("task-category-summary@example.com");
+        String otherAccessToken = accessToken("task-category-summary-other@example.com");
+        createTask(accessToken, new TaskRequest("업무 인박스", null, TaskType.TODO, null, null, "업무", false));
+        createTask(accessToken, new TaskRequest(
+                "업무 오늘",
+                null,
+                TaskType.SCHEDULE,
+                LocalDateTime.of(2026, 9, 2, 9, 0),
+                LocalDateTime.of(2026, 9, 2, 10, 0),
+                "업무",
+                false
+        ));
+        Long personalDoneId = createTask(accessToken, new TaskRequest("개인 완료", null, TaskType.TODO, null, null, "개인", false));
+        createTask(accessToken, new TaskRequest("미분류 인박스", null, TaskType.TODO, null, null, null, false));
+        createTask(otherAccessToken, new TaskRequest("타인 업무", null, TaskType.TODO, null, null, "업무", false));
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done", personalDoneId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("completedAt", "2026-09-02T18:00:00"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/tasks/categories")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].category").value("개인"))
+                .andExpect(jsonPath("$.data[0].displayName").value("개인"))
+                .andExpect(jsonPath("$.data[0].taskCount").value(1))
+                .andExpect(jsonPath("$.data[0].doneCount").value(1))
+                .andExpect(jsonPath("$.data[1].category").value("업무"))
+                .andExpect(jsonPath("$.data[1].taskCount").value(2))
+                .andExpect(jsonPath("$.data[1].inboxCount").value(1))
+                .andExpect(jsonPath("$.data[1].todayCount").value(1))
+                .andExpect(jsonPath("$.data[2].category").isEmpty())
+                .andExpect(jsonPath("$.data[2].displayName").value("미분류"))
+                .andExpect(jsonPath("$.data[2].taskCount").value(1))
+                .andExpect(jsonPath("$.data[2].inboxCount").value(1));
+    }
+
+    @Test
     @DisplayName("v1 Task 삭제 응답은 data null envelope를 반환한다")
     void deleteTask_success_dataNull() throws Exception {
         String accessToken = accessToken("task-delete@example.com");

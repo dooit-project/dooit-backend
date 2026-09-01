@@ -652,6 +652,15 @@ type PushNotificationHistoryResponse = {
   attemptedAt: string;
   createdAt: string;
 };
+
+type TaskCategorySummaryResponse = {
+  category: string | null; // null이면 미분류
+  displayName: string;
+  taskCount: number;
+  inboxCount: number;
+  todayCount: number;
+  doneCount: number;
+};
 ```
 
 ## 3-1. 일일 계획
@@ -1662,6 +1671,23 @@ Cursor 기준:
 - 다음 페이지 요청은 이전 응답의 `nextCursor`를 그대로 보낸다.
 - cursor Task가 더 이상 검색 조건에 포함되지 않으면 HTTP 400이다.
 - 중간에 Task가 생성/수정/삭제되어도 이전 페이지 마지막 항목 이후부터 이어서 조회하므로 offset shift 중복/누락을 피한다.
+
+## 8-1. Task 카테고리 요약
+
+TickTick식 좌측 메뉴처럼 Inbox, Today, Calendar와 category를 한 화면에서 탐색할 때 사용할 수 있는 개인 Task category 목록이다.
+
+```http
+GET /api/v1/tasks/categories
+```
+
+Response: `TaskCategorySummaryResponse[]`
+
+정렬과 범위:
+
+- 로그인 사용자의 개인 Task만 집계한다. Workspace Task는 workspace 메뉴와 혼합하지 않는다.
+- `category`가 없는 Task는 `category: null`, `displayName: "미분류"`로 내려간다.
+- 정렬은 category 이름 오름차순이며 미분류는 마지막이다.
+- 별도 category entity나 사용자 지정 order는 아직 두지 않는다. 모바일에서 수동 category order가 필요해지면 별도 계약으로 추가한다.
 
 ## 9. Calendar Feed API
 

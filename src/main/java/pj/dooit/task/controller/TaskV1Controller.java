@@ -6,6 +6,7 @@ import pj.dooit.common.api.ApiResponse;
 import pj.dooit.task.domain.DeferReason;
 import pj.dooit.task.domain.RecurrenceEditScope;
 import pj.dooit.task.domain.TodayOrderDirection;
+import pj.dooit.task.dto.TaskCategorySummaryResponse;
 import pj.dooit.task.dto.TaskQueryRequest;
 import pj.dooit.task.dto.TaskNotificationCandidateResponse;
 import pj.dooit.task.dto.TaskQuickCaptureRequest;
@@ -227,6 +228,15 @@ public class TaskV1Controller {
         );
 
         return ResponseEntity.ok(ApiResponse.success(taskService.searchTasksForOwner(request, owner)));
+    }
+
+    @Operation(summary = "Task 카테고리 요약 조회", description = "로그인 사용자의 개인 Task를 category별 count와 함께 조회합니다.")
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse<List<TaskCategorySummaryResponse>>> getCategorySummaries(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        User owner = currentUserService.requireUser(jwt);
+        return ResponseEntity.ok(ApiResponse.success(taskService.getCategorySummariesForOwner(owner)));
     }
 
     @Operation(summary = "Inbox Task 조회", description = "로그인 사용자의 Inbox Task 목록을 조회합니다.")

@@ -1,5 +1,6 @@
 package pj.dooit.task.service;
 
+import pj.dooit.Constant;
 import pj.dooit.notification.config.PushNotificationProperties;
 import pj.dooit.common.domain.ResourceScope;
 import pj.dooit.task.domain.DeferReason;
@@ -15,6 +16,7 @@ import pj.dooit.task.domain.query.TaskSearchDateSource;
 import pj.dooit.task.domain.query.TaskSearchMatchedField;
 import pj.dooit.task.domain.query.TaskSearchSort;
 import pj.dooit.task.dto.TaskCategoryGroupResponse;
+import pj.dooit.task.dto.TaskCategorySummaryResponse;
 import pj.dooit.task.dto.TaskNotificationCandidateResponse;
 import pj.dooit.task.dto.TaskQuickCaptureRequest;
 import pj.dooit.task.dto.TaskQuickCaptureResponse;
@@ -219,6 +221,27 @@ public class TaskService {
         return taskCategoryGrouper.group(findUnscheduledTasks());
     }
 
+    @Transactional(readOnly = true)
+    public List<TaskCategorySummaryResponse> getCategorySummariesForOwner(User owner) {
+        return taskRepository.findByOwnerId(ownerId(owner)).stream()
+                .collect(Collectors.groupingBy(task -> task.getCategory() == null ? Constant.UNCATEGORIZED : task.getCategory()))
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    List<Task> tasks = entry.getValue();
+                    return new TaskCategorySummaryResponse(
+                            Constant.UNCATEGORIZED.equals(entry.getKey()) ? null : entry.getKey(),
+                            entry.getKey(),
+                            tasks.size(),
+                            countByStatus(tasks, TaskStatus.INBOX),
+                            countByStatus(tasks, TaskStatus.TODAY),
+                            countByStatus(tasks, TaskStatus.DONE)
+                    );
+                })
+                .sorted(categorySummaryComparator())
+                .toList();
+    }
+
     public TaskSearchResponse searchTasksForOwner(TaskSearchRequest request, User owner) {
         List<SearchCandidate> baseCandidates = taskRepository.findByOwnerId(ownerId(owner)).stream()
                 .filter(task -> request.getStatuses().isEmpty() || request.getStatuses().contains(task.getStatus()))
@@ -352,6 +375,18 @@ public class TaskService {
                 .map(Task::getCategory)
                 .filter(category -> category != null && !category.isBlank())
                 .collect(Collectors.groupingBy(category -> category, Collectors.counting()));
+    }
+
+    private long countByStatus(List<Task> tasks, TaskStatus status) {
+        return tasks.stream()
+                .filter(task -> task.getStatus() == status)
+                .count();
+    }
+
+    private Comparator<TaskCategorySummaryResponse> categorySummaryComparator() {
+        return Comparator
+                .comparing((TaskCategorySummaryResponse response) -> response.category() == null)
+                .thenComparing(TaskCategorySummaryResponse::displayName, Comparator.nullsLast(String::compareTo));
     }
 
     @Transactional
