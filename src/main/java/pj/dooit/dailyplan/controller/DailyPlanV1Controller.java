@@ -4,6 +4,7 @@ import pj.dooit.auth.service.CurrentUserService;
 import pj.dooit.common.api.ApiResponse;
 import pj.dooit.dailyplan.dto.DailyPlanRequest;
 import pj.dooit.dailyplan.dto.DailyPlanResponse;
+import pj.dooit.dailyplan.dto.DailyPlanSummaryResponse;
 import pj.dooit.dailyplan.service.DailyPlanService;
 import pj.dooit.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,6 +42,16 @@ public class DailyPlanV1Controller {
     ) {
         User owner = currentUserService.requireUser(jwt);
         return ResponseEntity.ok(ApiResponse.success(dailyPlanService.getForOwner(date, owner)));
+    }
+
+    @Operation(summary = "일일 계획 결과 요약 조회", description = "계획 확정 시점 focus Task의 현재 결과 count를 조회합니다.")
+    @GetMapping("/{date}/summary")
+    public ResponseEntity<ApiResponse<DailyPlanSummaryResponse>> getDailyPlanSummary(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable LocalDate date
+    ) {
+        User owner = currentUserService.requireUser(jwt);
+        return ResponseEntity.ok(ApiResponse.success(dailyPlanService.getSummaryForOwner(date, owner)));
     }
 
     @Operation(summary = "일일 계획 저장", description = "로그인 사용자의 지정 날짜 일일 계획을 전체 교체 방식으로 저장합니다.")

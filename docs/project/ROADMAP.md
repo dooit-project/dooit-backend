@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -23,7 +23,7 @@ Last updated: 2026-09-02
 | --- | --- | --- |
 | 빠른 등록 | API와 규칙 기반 파싱 구현 완료. 상대 주 표현과 한국어 날짜 표현 포함 | 모바일 실제 입력 로그 기반 예외 표현 보강 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
-| 일일 계획 | `daily-plans` resource와 focus 1~3개, 계획 확정/마감 상태 구현 완료 | 모바일 연동 후 하루 마감 UX에서 batch mutation 필요 여부 확인 |
+| 일일 계획 | `daily-plans` resource, focus 1~3개, 계획 확정/마감 상태, 결과 summary 구현 완료 | 모바일 연동 후 하루 마감 UX에서 batch mutation 필요 여부 확인 |
 | 예상 소요 시간 | Task nullable 필드와 template 기본값 적용 구현 완료 | 모바일 연동 후 입력 preset/표시 정책 검증 |
 | Checklist | 개인/Workspace Task 하위 한 단계 checklist item API 구현 완료 | 모바일 연동 후 담당자/알림 같은 추가 필드 필요 여부 결정 |
 | 카테고리 탐색 | 개인 Task category 목록/count API 구현 완료 | 모바일 연동 후 수동 category order 필요 여부 결정 |
@@ -131,11 +131,11 @@ Last updated: 2026-09-02
 
 목표: 여러 조회 조합 비용이나 기기 간 결과 불일치가 실제로 확인될 때 하루 결과 요약을 제공한다.
 
-상태: 보류.
+상태: 구현 완료. 생산성 점수나 ranking 없이 focus Task 결과 count만 제공한다.
 
-- [ ] 필요성이 확인되면 `GET /api/v1/daily-plans/{date}/summary`를 추가한다.
-- [ ] 계획 시점 focus 수, 완료 수, 다른 날짜 이동 수, Inbox 이동 수, 미결정 수만 1차 범위로 둔다.
-- [ ] 생산성 점수, 연속 달성, 비교 ranking은 범위에서 제외한다.
+- [x] `GET /api/v1/daily-plans/{date}/summary`를 추가한다.
+- [x] 계획 시점 focus 수, 완료 수, 다른 날짜 이동 수, Inbox 이동 수, 미결정 수만 1차 범위로 둔다.
+- [x] 생산성 점수, 연속 달성, 비교 ranking은 범위에서 제외한다.
 
 ### P0. 일정 빠른 등록 API
 

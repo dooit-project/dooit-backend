@@ -144,6 +144,85 @@ class DailyPlanV1IntegrationTest {
                 .andExpect(jsonPath("$.data.focusTaskIds.length()").value(0));
     }
 
+    @Test
+    @DisplayName("v1 Daily Plan summary는 확정 시점 focus Task의 현재 결과 count를 반환한다")
+    void getDailyPlanSummary_countsInitialFocusOutcomes() throws Exception {
+        String accessToken = accessToken("daily-plan-summary@example.com");
+        Long doneTaskId = createTodayTask(accessToken, "완료", "2026-09-03");
+        Long inboxTaskId = createTodayTask(accessToken, "인박스 이동", "2026-09-03");
+        Long movedTaskId = createTodayTask(accessToken, "날짜 이동", "2026-09-03");
+        DailyPlanRequest request = new DailyPlanRequest(List.of(doneTaskId, inboxTaskId, movedTaskId), DailyPlanStatus.CONFIRMED);
+
+        mockMvc.perform(put("/api/v1/daily-plans/{date}", "2026-09-03")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.focusTaskIds.length()").value(3));
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done", doneTaskId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("completedAt", "2026-09-03T18:00:00"))
+                .andExpect(status().isOk());
+        mockMvc.perform(patch("/api/v1/tasks/{id}/inbox", inboxTaskId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(patch("/api/v1/tasks/{id}/today", movedTaskId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", "2026-09-04"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/daily-plans/{date}/summary", "2026-09-03")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.date").value("2026-09-03"))
+                .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.data.plannedFocusCount").value(3))
+                .andExpect(jsonPath("$.data.completedCount").value(1))
+                .andExpect(jsonPath("$.data.movedToInboxCount").value(1))
+                .andExpect(jsonPath("$.data.movedToOtherDateCount").value(1))
+                .andExpect(jsonPath("$.data.undecidedCount").value(0));
+
+        mockMvc.perform(get("/api/v1/daily-plans/{date}", "2026-09-03")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.focusTaskIds.length()").value(0));
+
+        mockMvc.perform(put("/api/v1/daily-plans/{date}", "2026-09-03")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new DailyPlanRequest(List.of(), DailyPlanStatus.CLOSED))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CLOSED"));
+
+        mockMvc.perform(get("/api/v1/daily-plans/{date}/summary", "2026-09-03")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CLOSED"))
+                .andExpect(jsonPath("$.data.plannedFocusCount").value(3))
+                .andExpect(jsonPath("$.data.completedCount").value(1))
+                .andExpect(jsonPath("$.data.movedToInboxCount").value(1))
+                .andExpect(jsonPath("$.data.movedToOtherDateCount").value(1))
+                .andExpect(jsonPath("$.data.undecidedCount").value(0));
+    }
+
+    @Test
+    @DisplayName("v1 Daily Plan summary는 저장 전 빈 DRAFT 요약을 반환한다")
+    void getDailyPlanSummary_emptyDraft() throws Exception {
+        String accessToken = accessToken("daily-plan-summary-empty@example.com");
+
+        mockMvc.perform(get("/api/v1/daily-plans/{date}/summary", "2026-09-03")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.date").value("2026-09-03"))
+                .andExpect(jsonPath("$.data.status").value("DRAFT"))
+                .andExpect(jsonPath("$.data.plannedFocusCount").value(0))
+                .andExpect(jsonPath("$.data.completedCount").value(0))
+                .andExpect(jsonPath("$.data.movedToInboxCount").value(0))
+                .andExpect(jsonPath("$.data.movedToOtherDateCount").value(0))
+                .andExpect(jsonPath("$.data.undecidedCount").value(0));
+    }
+
     private String accessToken(String email) {
         User owner = userRepository.save(new User(email, "encoded-password", "Daily Plan 사용자"));
         return jwtTokenService.createAccessToken(owner).tokenValue();

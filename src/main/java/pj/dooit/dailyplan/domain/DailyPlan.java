@@ -55,6 +55,12 @@ public class DailyPlan {
     @Column(name = "`TASK_ID`", nullable = false)
     private List<Long> focusTaskIds = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(name = "`DAILY_PLAN_INITIAL_FOCUS_TASK`", joinColumns = @JoinColumn(name = "`DAILY_PLAN_ID`"))
+    @OrderColumn(name = "`FOCUS_ORDER`")
+    @Column(name = "`TASK_ID`", nullable = false)
+    private List<Long> initialFocusTaskIds = new ArrayList<>();
+
     @Column(name = "`CONFIRMED_AT`")
     private LocalDateTime confirmedAt;
 
@@ -92,7 +98,19 @@ public class DailyPlan {
         DailyPlanStatus nextStatus = status == null ? DailyPlanStatus.DRAFT : status;
         this.focusTaskIds.clear();
         this.focusTaskIds.addAll(focusTaskIds == null ? List.of() : focusTaskIds);
+        updateInitialFocusSnapshot(nextStatus, focusTaskIds);
         applyStatus(nextStatus);
+    }
+
+    private void updateInitialFocusSnapshot(DailyPlanStatus nextStatus, List<Long> focusTaskIds) {
+        if (nextStatus == DailyPlanStatus.DRAFT) {
+            this.initialFocusTaskIds.clear();
+            return;
+        }
+        if (nextStatus == DailyPlanStatus.CONFIRMED || this.initialFocusTaskIds.isEmpty()) {
+            this.initialFocusTaskIds.clear();
+            this.initialFocusTaskIds.addAll(focusTaskIds == null ? List.of() : focusTaskIds);
+        }
     }
 
     private void applyStatus(DailyPlanStatus nextStatus) {

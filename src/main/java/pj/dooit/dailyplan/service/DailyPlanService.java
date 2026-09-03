@@ -3,6 +3,7 @@ package pj.dooit.dailyplan.service;
 import pj.dooit.dailyplan.domain.DailyPlan;
 import pj.dooit.dailyplan.dto.DailyPlanRequest;
 import pj.dooit.dailyplan.dto.DailyPlanResponse;
+import pj.dooit.dailyplan.dto.DailyPlanSummaryResponse;
 import pj.dooit.dailyplan.repository.DailyPlanRepository;
 import pj.dooit.task.domain.Task;
 import pj.dooit.task.domain.TaskStatus;
@@ -16,7 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,51 @@ public class DailyPlanService {
         return dailyPlanRepository.findByOwnerIdAndDate(ownerId, date)
                 .map(DailyPlanResponse::from)
                 .orElseGet(() -> DailyPlanResponse.empty(date));
+    }
+
+    @Transactional(readOnly = true)
+    public DailyPlanSummaryResponse getSummaryForOwner(LocalDate date, User owner) {
+        Long ownerId = ownerId(owner);
+        DailyPlan dailyPlan = dailyPlanRepository.findByOwnerIdAndDate(ownerId, date)
+                .orElse(null);
+        if (dailyPlan == null) {
+            return DailyPlanSummaryResponse.empty(date);
+        }
+
+        List<Long> plannedFocusTaskIds = plannedFocusTaskIds(dailyPlan);
+        Map<Long, Task> tasksById = taskRepository.findAllById(plannedFocusTaskIds)
+                .stream()
+                .filter(task -> task.getOwner() != null && ownerId.equals(task.getOwner().getId()))
+                .collect(Collectors.toMap(Task::getId, Function.identity()));
+
+        int completedCount = 0;
+        int movedToOtherDateCount = 0;
+        int movedToInboxCount = 0;
+        int undecidedCount = 0;
+        for (Long taskId : plannedFocusTaskIds) {
+            Task task = tasksById.get(taskId);
+            if (task == null) {
+                undecidedCount++;
+            } else if (task.getStatus() == TaskStatus.DONE) {
+                completedCount++;
+            } else if (task.getStatus() == TaskStatus.INBOX) {
+                movedToInboxCount++;
+            } else if (task.getStatus() == TaskStatus.TODAY && !date.equals(task.getPlannedDate())) {
+                movedToOtherDateCount++;
+            } else {
+                undecidedCount++;
+            }
+        }
+
+        return new DailyPlanSummaryResponse(
+                date,
+                dailyPlan.getStatus(),
+                plannedFocusTaskIds.size(),
+                completedCount,
+                movedToOtherDateCount,
+                movedToInboxCount,
+                undecidedCount
+        );
     }
 
     @Transactional
@@ -68,6 +117,13 @@ public class DailyPlanService {
             }
         }
         return List.copyOf(focusTaskIds);
+    }
+
+    private List<Long> plannedFocusTaskIds(DailyPlan dailyPlan) {
+        if (!dailyPlan.getInitialFocusTaskIds().isEmpty()) {
+            return List.copyOf(dailyPlan.getInitialFocusTaskIds());
+        }
+        return List.copyOf(dailyPlan.getFocusTaskIds());
     }
 
     private void validateFocusTasks(List<Long> focusTaskIds, LocalDate date, Long ownerId) {

@@ -1,8 +1,8 @@
 # Daily Planning Contract
 
-Last updated: 2026-08-31
+Last updated: 2026-09-03
 
-이 문서는 Dooit 모바일의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 지원하기 위해 백엔드에 추가할 계약 초안이다. 현재 문서는 구현 완료 계약이 아니라 프론트 요청을 백엔드 구현 단위로 정리한 backlog 원본이다.
+이 문서는 Dooit 모바일의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 지원하기 위한 백엔드 계약이다.
 
 구현 전에는 이 문서, `API_V1_FRONTEND.md`, OpenAPI annotation, migration, integration test를 함께 갱신한다.
 
@@ -14,8 +14,9 @@ Last updated: 2026-08-31
 | B0 | 예상 소요 시간 | 구현 | 계획 수립과 하루 실행량 조절에 바로 필요 |
 | B1 | 계획/마감 batch mutation | 보류 | 단건 mutation으로 MVP 검증 후 부분 실패 문제가 확인되면 추가 |
 | B1 | Checklist | 구현 | 한 단계 item 모델로 제한해 Task 하위 실행 단위를 제공 |
-| B2 | 일일 결과 summary | 보류 | 여러 조회 조합 비용 또는 기기 간 결과 불일치가 확인될 때 추가 |
-| B2 | Category entity | 보류 | 좌측 메뉴/정보구조 확정 후 별도 계약 |
+| B2 | 일일 결과 summary | 구현 | 계획 확정 시점 focus Task의 현재 결과 count 제공 |
+| B2 | Category summary | 구현 | 좌측 메뉴용 개인 Task category 목록/count 제공 |
+| B2 | Category entity | 보류 | 수동 정렬/숨김/기본 category 필요 시 별도 계약 |
 
 ## B0. 일일 계획 영속화
 
@@ -26,6 +27,7 @@ Last updated: 2026-08-31
 ```http
 GET /api/v1/daily-plans/{date}
 PUT /api/v1/daily-plans/{date}
+GET /api/v1/daily-plans/{date}/summary
 ```
 
 요청 예시:
@@ -68,6 +70,16 @@ type DailyPlanRequest = {
   focusTaskIds: number[];
   status: DailyPlanStatus;
 };
+
+type DailyPlanSummaryResponse = {
+  date: string;
+  status: DailyPlanStatus;
+  plannedFocusCount: number;
+  completedCount: number;
+  movedToOtherDateCount: number;
+  movedToInboxCount: number;
+  undecidedCount: number;
+};
 ```
 
 계약 조건:
@@ -77,6 +89,8 @@ type DailyPlanRequest = {
 - Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 목록에서 자동 제거한다.
 - 같은 사용자와 날짜에는 하나의 plan만 존재한다.
 - `PUT`은 전체 교체 방식이다. 같은 요청을 반복해도 같은 focus 목록과 상태로 수렴한다.
+- `CONFIRMED` 또는 `CLOSED` 상태 저장 시 계획 확정 시점의 focus Task ID snapshot을 보존한다.
+- `DRAFT` 상태로 되돌리면 focus Task ID snapshot도 비운다.
 - 날짜 경계는 사용자 timezone을 따른다. 세부 기준은 `TIMEZONE_CONTRACT.md`를 원본으로 한다.
 - 1차 구현은 개인 Today Task만 허용하고 workspace focus는 후속 계약으로 분리한다.
 
@@ -170,7 +184,7 @@ POST /api/v1/daily-plans/{date}/apply
 GET /api/v1/daily-plans/{date}/summary
 ```
 
-최소 후보:
+집계 기준:
 
 - 계획 시점의 focus 수
 - 완료 수

@@ -610,6 +610,16 @@ type DailyPlanResponse = {
   updatedAt: string | null;
 };
 
+type DailyPlanSummaryResponse = {
+  date: string; // YYYY-MM-DD
+  status: DailyPlanStatus;
+  plannedFocusCount: number;
+  completedCount: number;
+  movedToOtherDateCount: number;
+  movedToInboxCount: number;
+  undecidedCount: number;
+};
+
 type PushPlatform = 'IOS' | 'ANDROID' | 'EXPO';
 
 type PushDeviceTokenRequest = {
@@ -671,6 +681,7 @@ type TaskCategorySummaryResponse = {
 
 - `GET /api/v1/daily-plans/{date}`
 - `PUT /api/v1/daily-plans/{date}`
+- `GET /api/v1/daily-plans/{date}/summary`
 
 규칙:
 
@@ -681,11 +692,12 @@ type TaskCategorySummaryResponse = {
 - `focusTaskIds`는 최대 3개이며 배열 순서가 집중 순서다.
 - Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 목록에서 자동 제거된다.
 - 1차 범위에서 workspace Task는 focus에 포함하지 않는다.
+- summary는 계획 확정 시점의 focus Task snapshot을 기준으로 현재 상태를 집계한다.
+- `completedCount`는 `DONE`, `movedToInboxCount`는 `INBOX`, `movedToOtherDateCount`는 계획일이 아닌 다른 날짜의 `TODAY`, `undecidedCount`는 아직 완료/이동/Inbox 처리되지 않은 항목이다.
 
 후속 후보:
 
 - B1: `POST /api/v1/daily-plans/{date}/apply` batch mutation
-- B2: `GET /api/v1/daily-plans/{date}/summary`
 - B2: category entity/count/order 계약
 
 Task 생성 규칙:
