@@ -30,9 +30,10 @@ public class TaskQuickCaptureParser {
     private static final Pattern ISO_DATE = Pattern.compile("\\b(\\d{4})-(\\d{2})-(\\d{2})\\b");
     private static final Pattern KOREAN_DATE = Pattern.compile("(?<!\\d)(?:(\\d{4})년\\s*)?(\\d{1,2})월\\s*(\\d{1,2})일(?!\\d)");
     private static final Pattern SLASH_DATE = Pattern.compile("\\b(\\d{1,2})/(\\d{1,2})\\b");
-    private static final Pattern TIME = Pattern.compile("(오전|오후)?\\s*(\\d{1,2})시(?:\\s*(\\d{1,2})분)?");
+    private static final Pattern KOREAN_TIME = Pattern.compile("(오전|오후)?\\s*(\\d{1,2})시(?:\\s*(?:(\\d{1,2})분|반))?");
+    private static final Pattern COLON_TIME = Pattern.compile("(오전|오후)?\\s*\\b(\\d{1,2}):(\\d{2})\\b");
     private static final Pattern WEEKLY = Pattern.compile("매주\\s*(월요일|화요일|수요일|목요일|금요일|토요일|일요일|월|화|수|목|금|토|일)");
-    private static final Pattern RELATIVE_WEEK = Pattern.compile("(이번\\s*주|다음\\s*주)\\s*(월요일|화요일|수요일|목요일|금요일|토요일|일요일|월|화|수|목|금|토|일)");
+    private static final Pattern RELATIVE_WEEK = Pattern.compile("(이번\\s*주|이번주|다음\\s*주|다음주|담주|다다음\\s*주|다다음주|다담주)\\s*(월요일|화요일|수요일|목요일|금요일|토요일|일요일|월|화|수|목|금|토|일)");
     private static final Pattern SINGLE_WEEKDAY = Pattern.compile("(월요일|화요일|수요일|목요일|금요일|토요일|일요일|(?<![가-힣])(월|화|수|목|금|토|일)(?![가-힣]))");
 
     public ParsedQuickCapture parse(TaskQuickCaptureRequest request, User owner) {
@@ -140,13 +141,15 @@ public class TaskQuickCaptureParser {
             consumedTokens.add("오늘");
             return new ParsedDate(referenceDate);
         }
-        if (text.contains("내일")) {
-            consumedTokens.add("내일");
-            return new ParsedDate(referenceDate.plusDays(1));
-        }
-        if (text.contains("모레")) {
-            consumedTokens.add("모레");
+        String dayAfterTomorrowToken = findToken(text, "내일모레", "낼모레", "모레");
+        if (dayAfterTomorrowToken != null) {
+            consumedTokens.add(dayAfterTomorrowToken);
             return new ParsedDate(referenceDate.plusDays(2));
+        }
+        String tomorrowToken = findToken(text, "내일", "낼");
+        if (tomorrowToken != null) {
+            consumedTokens.add(tomorrowToken);
+            return new ParsedDate(referenceDate.plusDays(1));
         }
 
         Matcher isoDate = ISO_DATE.matcher(text);
@@ -190,9 +193,12 @@ public class TaskQuickCaptureParser {
         if (relativeWeek.find()) {
             consumedTokens.add(relativeWeek.group());
             LocalDate weekStart = referenceDate.with(DayOfWeek.MONDAY);
-            if (relativeWeek.group(1).replace(" ", "").equals("다음주")) {
-                weekStart = weekStart.plusWeeks(1);
-            }
+            int weeksToAdd = switch (relativeWeek.group(1).replace(" ", "")) {
+                case "다음주", "담주" -> 1;
+                case "다다음주", "다담주" -> 2;
+                default -> 0;
+            };
+            weekStart = weekStart.plusWeeks(weeksToAdd);
             return new ParsedDate(weekStart.with(toDayOfWeek(relativeWeek.group(2))));
         }
 
@@ -247,15 +253,34 @@ public class TaskQuickCaptureParser {
     }
 
     private ParsedTime parseTime(String text, List<String> consumedTokens) {
-        Matcher matcher = TIME.matcher(text);
+        Matcher matcher = KOREAN_TIME.matcher(text);
+        if (matcher.find()) {
+            int hour = Integer.parseInt(matcher.group(2));
+            int minute = "반".equals(matcher.group().substring(matcher.group().length() - 1))
+                    ? 30
+                    : matcher.group(3) == null ? 0 : Integer.parseInt(matcher.group(3));
+            String meridiem = matcher.group(1);
+            LocalTime time = toLocalTime(hour, minute, meridiem);
+
+            consumedTokens.add(matcher.group());
+            return new ParsedTime(time);
+        }
+
+        matcher = COLON_TIME.matcher(text);
         if (!matcher.find()) {
             return new ParsedTime(null);
         }
 
         int hour = Integer.parseInt(matcher.group(2));
-        int minute = matcher.group(3) == null ? 0 : Integer.parseInt(matcher.group(3));
+        int minute = Integer.parseInt(matcher.group(3));
         String meridiem = matcher.group(1);
+        LocalTime time = toLocalTime(hour, minute, meridiem);
 
+        consumedTokens.add(matcher.group());
+        return new ParsedTime(time);
+    }
+
+    private LocalTime toLocalTime(int hour, int minute, String meridiem) {
         if (minute > 59 || hour > 23 || (meridiem != null && hour > 12)) {
             throw new TaskValidationException("올바르지 않은 시간입니다.");
         }
@@ -268,9 +293,16 @@ public class TaskQuickCaptureParser {
         if (meridiem == null && hour >= 1 && hour <= 7) {
             hour += 12;
         }
+        return LocalTime.of(hour, minute);
+    }
 
-        consumedTokens.add(matcher.group());
-        return new ParsedTime(LocalTime.of(hour, minute));
+    private String findToken(String text, String... tokens) {
+        for (String token : tokens) {
+            if (text.contains(token)) {
+                return token;
+            }
+        }
+        return null;
     }
 
     private String buildTitle(String originalText, List<String> consumedTokens) {
