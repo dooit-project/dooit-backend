@@ -71,7 +71,7 @@ class ProductionHealthCheckConfigurationTest {
     }
 
     @Test
-    @DisplayName("로컬 production runbook은 release, Tailscale, 백업, 복구 절차를 안내한다")
+    @DisplayName("로컬 production runbook은 release, 실제 도메인, 백업, 복구 절차를 안내한다")
     void localProductionRunbookDocumentsOperations() throws Exception {
         String runbook = Files.readString(Path.of("docs/ops/LOCAL_PRODUCTION_RUNBOOK.md"));
         String docsIndex = Files.readString(Path.of("docs/README.md"));
@@ -79,7 +79,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(docsIndex).contains("ops/LOCAL_PRODUCTION_RUNBOOK.md");
         assertThat(runbook).contains("docker compose up -d --build");
         assertThat(runbook).contains("./scripts/check-production-env.sh");
-        assertThat(runbook).contains("tailscale serve --bg http://127.0.0.1:8080");
+        assertThat(runbook).contains("./scripts/check-public-production.sh");
         assertThat(runbook).contains("./scripts/backup-db.sh");
         assertThat(runbook).contains("DOOIT_CONFIRM_RESTORE=RESTORE ./scripts/restore-db.sh");
         assertThat(runbook).contains("./scripts/release-production.sh");
@@ -99,33 +99,35 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(script).contains("jwtSecretBytes=valid");
         assertThat(script).contains("DOOIT_JWT_ISSUER \"$jwt_issuer\"");
         assertThat(script).contains("guestJwtTtl=");
-        assertThat(script).contains("DOOIT_REQUIRE_TAILSCALE_URL");
         assertThat(script).contains("DOOIT_REQUIRE_PUBLIC_API_URL");
         assertThat(script).contains("DOOIT_REQUIRE_OFFSITE_BACKUP");
         assertThat(script).contains("publicApiUrl=");
+        assertThat(script).doesNotContain("DOOIT_TAILSCALE_API_URL");
         assertThat(script).doesNotContain("echo \"$jwt_secret\"");
         assertThat(routine).contains("./scripts/check-production-env.sh");
         assertThat(report).contains("backendCommit=");
+        assertThat(report).contains("publicProductionCheck=");
         assertThat(report).contains("guestRefreshApi=supported");
         assertThat(report).contains("mergeResultCounts=supported");
+        assertThat(report).doesNotContain("check-tailscale-production.sh");
         assertThat(report).doesNotContain("DOOIT_JWT_SECRET");
-        assertThat(envExample).contains("DOOIT_TAILSCALE_API_URL=");
         assertThat(envExample).contains("DOOIT_PUBLIC_API_URL=");
-        assertThat(envExample).contains("DOOIT_TAILSCALE_CLI=tailscale");
+        assertThat(envExample).doesNotContain("DOOIT_TAILSCALE_API_URL=");
+        assertThat(envExample).doesNotContain("DOOIT_TAILSCALE_CLI=");
         assertThat(envExample).contains("DOOIT_OFFSITE_BACKUP_DIR=");
     }
 
     @Test
-    @DisplayName("Tailscale production 점검은 macOS Tailscale.app CLI 경로를 fallback으로 사용한다")
-    void tailscaleProductionCheckFallsBackToMacosAppCli() throws Exception {
-        String script = Files.readString(Path.of("scripts/check-tailscale-production.sh"));
+    @DisplayName("사용자 문서는 실제 도메인 production 점검을 기본 경로로 안내한다")
+    void docsUsePublicProductionCheckAsDefaultPath() throws Exception {
+        String script = Files.readString(Path.of("scripts/check-public-production.sh"));
         String runbook = Files.readString(Path.of("docs/ops/LOCAL_PRODUCTION_RUNBOOK.md"));
 
-        assertThat(script).contains("/Applications/Tailscale.app/Contents/MacOS/Tailscale");
-        assertThat(script).contains("command -v tailscale");
-        assertThat(script).contains("tailscale_cli=$default_macos_tailscale_cli");
-        assertThat(script).contains("grep -Eo 'https://[^[:space:]]+' \"$serve_status\"");
-        assertThat(runbook).contains("점검 스크립트는 `/Applications/Tailscale.app/Contents/MacOS/Tailscale`을 자동 사용한다");
+        assertThat(script).contains("DOOIT_PUBLIC_API_URL");
+        assertThat(script).contains("Public production check passed.");
+        assertThat(runbook).contains("## 3. 실제 도메인 HTTPS");
+        assertThat(runbook).contains("모바일 production build의 API base URL은 실제 API 도메인을 사용한다.");
+        assertThat(runbook).doesNotContain("tailnet");
     }
 
     @Test

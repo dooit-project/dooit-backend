@@ -49,7 +49,7 @@ class DocumentationIndexTest {
         assertThat(docsIndex).contains("## 유지 원칙");
         assertThat(docsIndex).contains("## 현재 기준 요약");
         assertThat(docsIndex).contains("아직 닫히지 않은 제품/운영 작업");
-        assertThat(docsIndex).contains("Cloudflare Tunnel 기반 실제 도메인 연결과 public production smoke는 완료됐다");
+        assertThat(docsIndex).contains("실제 도메인 기반 production 연결과 public smoke는 완료됐다");
         assertThat(docsIndex).contains("완료 이력만 남은 문서는 별도로 유지하지 않고");
         assertThat(docsIndex).doesNotContain("history/TASK_DATE_MIGRATION.md");
         assertThat(docsIndex).doesNotContain("BACKEND_DOCUMENTATION_PLAN.md");
@@ -83,46 +83,30 @@ class DocumentationIndexTest {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
         assertThat(roadmap).contains("## 2. 제품 기능 로드맵");
-        assertThat(roadmap).contains("### 2026-08-30 정리");
-        assertThat(roadmap).contains("오늘 계획 -> 실행 -> 하루 마감");
-        assertThat(roadmap).contains("B0 계약");
-        assertThat(roadmap).contains("서버 push 실제 발송");
-        assertThat(roadmap).contains("### P0. 프론트 출시 연동 요청");
-        assertThat(roadmap).contains("비밀번호 재설정 request/verify/confirm API");
-        assertThat(roadmap).contains("### P1. 프론트 계약 후속 요청");
-        assertThat(roadmap).contains("Task별 알림 preference");
-        assertThat(roadmap).contains("### B0. 일일 계획 영속화");
-        assertThat(roadmap).contains("GET /api/v1/daily-plans/{date}");
-        assertThat(roadmap).contains("### B0. 예상 소요 시간");
-        assertThat(roadmap).contains("estimatedDurationMinutes");
-        assertThat(roadmap).contains("### B1. 계획/마감 Batch Mutation");
-        assertThat(roadmap).contains("### B1. Checklist");
-        assertThat(roadmap).contains("### B2. 일일 결과 Summary");
-        assertThat(roadmap).contains("### P0. 일정 빠른 등록 API");
-        assertThat(roadmap).contains("### P0. 빠른 등록 템플릿");
-        assertThat(roadmap).contains("### P1. 일정 공유 설계");
-        assertThat(roadmap).contains("### P1. 일정 공유 1차 구현");
-        assertThat(roadmap).contains("### P1. 서버 push 실제 발송");
-        assertThat(roadmap).contains("### P1. 검색/추천 고도화");
-        assertThat(roadmap).contains("검색 결과에 `matchedFields`와 `highlight`를 반환한다");
-        assertThat(roadmap).contains("반복 여부 필터와 반복 매칭 ranking을 추가한다");
-        assertThat(roadmap).contains("모바일에서 빈 검색 결과일 때 추천 query/category를 반환한다");
-        assertThat(roadmap).contains("### P1. 외부 캘린더 읽기 전용 feed");
-        assertThat(roadmap).contains("### P2. 장기 게스트 복구");
+        assertThat(roadmap).contains("### 2026-09-04 정리");
+        assertThat(roadmap).contains("일일 계획");
+        assertThat(roadmap).contains("PRD 배포 차단 항목");
+        assertThat(roadmap).contains("### P0. 프론트 출시 연동 차단 해소");
+        assertThat(roadmap).contains("production DB에 미적용 migration");
+        assertThat(roadmap).contains("### P1. 모바일 실사용 로그 기반 개선");
         assertThat(roadmap).contains("POST /api/v1/tasks/quick-capture");
-        assertThat(roadmap).contains("SHARED_WORKSPACE");
+        assertThat(roadmap).contains("POST /api/v1/daily-plans/{date}/apply");
+        assertThat(roadmap).contains("### P1. 서버 push 운영 전환");
+        assertThat(roadmap).contains("### P2. 제품 정책 후속 결정");
+        assertThat(roadmap).contains("Workspace template");
         assertThat(roadmap).contains("## 3. 운영 마무리 로드맵");
-        assertThat(roadmap).contains("### P0. production 접근 경로 확정");
+        assertThat(roadmap).contains("### P0. production DB migration 적용");
+        assertThat(roadmap).contains("### P0. 실제 도메인 production 접근 경로 확정");
         assertThat(roadmap).contains("### P0. Android production smoke");
         assertThat(roadmap).contains("### P0. host 상시 가용성 검증");
         assertThat(roadmap).contains("### P1. offsite backup 확정");
         assertThat(roadmap).contains("### P2. 제품 정책 후속 결정");
-        assertThat(roadmap).contains("DOOIT_REQUIRE_TAILSCALE_URL=true");
+        assertThat(roadmap).contains("DOOIT_REQUIRE_PUBLIC_API_URL=true");
         assertThat(roadmap).contains("완료 이력은 로드맵에 길게 누적하지 않고");
     }
 
     @Test
-    @DisplayName("일일 계획 계약 초안은 프론트 요청 우선순위를 백엔드 구현 단위로 정리한다")
+    @DisplayName("일일 계획 계약은 프론트 요청 우선순위를 백엔드 구현 단위로 정리한다")
     void dailyPlanningContractDocumentsFrontendBacklog() throws Exception {
         String dailyPlanning = Files.readString(Path.of("docs/api/DAILY_PLANNING_CONTRACT.md"));
         String api = Files.readString(Path.of("docs/api/API_V1_FRONTEND.md"));
@@ -220,7 +204,7 @@ class DocumentationIndexTest {
 
         assertThat(environment).contains("## 4. 운영 환경 확정 입력값");
         assertThat(environment).contains("## 현재 운영 입력 상태");
-        assertThat(environment).contains("Cloudflare Tunnel 기반 public smoke가 확인됐다");
+        assertThat(environment).contains("실제 도메인 기반 public smoke가 확인됐다");
         assertThat(environment).contains("API base URL");
         assertThat(environment).contains("Web origin");
         assertThat(environment).contains("production Expo Web은 브라우저 CORS 대상");

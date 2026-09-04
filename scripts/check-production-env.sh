@@ -2,7 +2,6 @@
 set -euo pipefail
 
 env_file=${DOOIT_ENV_FILE:-.env}
-require_tailscale_url=${DOOIT_REQUIRE_TAILSCALE_URL:-false}
 require_public_api_url=${DOOIT_REQUIRE_PUBLIC_API_URL:-false}
 require_offsite_backup=${DOOIT_REQUIRE_OFFSITE_BACKUP:-false}
 
@@ -27,7 +26,7 @@ require_env_value() {
     exit 1
   fi
   case "$value" in
-    replace-with-*|https://your-device.your-tailnet.ts.net)
+    replace-with-*)
       echo "Production env value still uses placeholder: $key" >&2
       exit 1
       ;;
@@ -110,21 +109,6 @@ else
   guest_jwt_ttl_status=configured
 fi
 
-tailscale_url=$(env_value DOOIT_TAILSCALE_API_URL)
-if [ -z "$tailscale_url" ]; then
-  if [ "$require_tailscale_url" = "true" ]; then
-    echo "DOOIT_TAILSCALE_API_URL is required when DOOIT_REQUIRE_TAILSCALE_URL=true" >&2
-    exit 1
-  fi
-  tailscale_url_status=missing
-else
-  validate_https_url DOOIT_TAILSCALE_API_URL "$tailscale_url"
-  case "$tailscale_url" in
-    https://*.ts.net) tailscale_url_status=configured ;;
-    *) tailscale_url_status=configuredNonTailscale ;;
-  esac
-fi
-
 public_api_url=$(env_value DOOIT_PUBLIC_API_URL)
 if [ -z "$public_api_url" ]; then
   if [ "$require_public_api_url" = "true" ]; then
@@ -158,7 +142,6 @@ jwtIssuer=httpsOrigin
 jwtSecretBytes=valid
 guestJwtTtl=$guest_jwt_ttl_status
 allowedOrigins=$allowed_origins_status
-tailscaleApiUrl=$tailscale_url_status
 publicApiUrl=$public_api_url_status
 offsiteBackupDir=$offsite_backup_status
 EOF

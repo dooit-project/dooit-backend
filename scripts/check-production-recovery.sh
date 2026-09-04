@@ -3,7 +3,6 @@ set -euo pipefail
 
 label=${DOOIT_PRODUCTION_LAUNCHD_LABEL:-pj.dooit.backend.production}
 base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
-tailscale_url=${DOOIT_TAILSCALE_API_URL:-}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -64,12 +63,6 @@ if [ "$readiness_status" != "200" ] || [ "$(jq -r '.status' "$readiness_json")" 
   exit 1
 fi
 
-tailscale_check=skipped
-if [ -n "$tailscale_url" ]; then
-  DOOIT_TAILSCALE_API_URL="$tailscale_url" ./scripts/check-tailscale-production.sh >/dev/null
-  tailscale_check=passed
-fi
-
 cat <<EOF
 Production recovery check passed.
 bootTimeEpoch=$boot_time
@@ -81,5 +74,4 @@ dockerDesktop=running
 appHealth=$app_health
 mysqlHealth=$mysql_health
 readiness=UP
-tailscaleCheck=$tailscale_check
 EOF

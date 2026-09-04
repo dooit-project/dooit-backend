@@ -1,14 +1,13 @@
 # Local PC Production Runbook
 
-Last updated: 2026-08-29
+Last updated: 2026-09-04
 
-이 문서는 이 Mac의 Docker Compose를 Dooit의 단일 production 서버로 사용하고 Android APK에서 Tailscale HTTPS로 접근하는 절차다.
+이 문서는 이 Mac의 Docker Compose를 Dooit의 단일 production 서버로 사용하고 실제 HTTPS 도메인으로 Android/Web이 접근하는 절차다.
 
 ## 1. 사전 준비
 
 - Docker Desktop을 설치하고 로그인 시 자동 시작을 켠다.
 - production DB image는 MySQL 8.4 LTS의 검증된 patch release인 `mysql:8.4.11`로 고정한다.
-- Mac과 Android에 Tailscale을 설치하고 같은 tailnet에 로그인한다.
 - 저장소의 `.env.example`을 `.env`로 복사한 뒤 실제 비밀번호와 JWT 값을 저장소 밖에서 관리한다.
 - JWT secret은 `openssl rand -base64 48`로 생성한다.
 - 최초 1회 external DB volume을 만든다.
@@ -19,11 +18,9 @@ docker volume create dooit-mysql-data
 
 `.env`와 백업 파일은 Git에 커밋하지 않는다.
 
-기존 `.env`에 production JWT 값이 아직 없다면 Tailscale HTTPS origin으로 한 번만 초기화한다. 스크립트는 기존 값을 덮어쓰지 않으며 생성한 secret을 화면에 출력하지 않는다.
+기존 `.env`에 production JWT 값이 아직 없다면 실제 API 도메인 origin으로 한 번만 초기화한다. 스크립트는 기존 값을 덮어쓰지 않으며 생성한 secret을 화면에 출력하지 않는다.
 
 ```bash
-./scripts/configure-production-env.sh https://<device>.<tailnet>.ts.net
-# 실제 도메인 연결 후에는 아래처럼 public API origin도 함께 기록한다.
 ./scripts/configure-production-env.sh https://api.example.com https://api.example.com
 ```
 
@@ -40,7 +37,7 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ./scripts/smoke-production-api.sh
 ```
 
-MySQL port는 host에 공개하지 않는다. app port도 `127.0.0.1:8080`에만 공개하고 Tailscale Serve가 HTTPS 진입점이 된다.
+MySQL port는 host에 공개하지 않는다. app port도 `127.0.0.1:8080`에만 공개하고 Cloudflare Tunnel 또는 동등한 reverse proxy가 실제 HTTPS 도메인의 진입점이 된다.
 
 로그인 후 Docker Desktop과 Compose stack 자동 복구가 필요하면 LaunchAgent를 설치한다.
 
@@ -53,35 +50,29 @@ launchctl print gui/$(id -u)/pj.dooit.backend.production
 ```
 
 이 LaunchAgent는 `RunAtLoad`와 5분 `StartInterval`로 `./scripts/ensure-production-up.sh`를 실행한다. 스크립트는 Docker Desktop을 시작하고 Docker engine 준비를 기다린 뒤 기존 app image tag를 보존해 `docker compose up -d mysql app`을 실행하고 readiness `UP`까지 대기한다.
-재부팅 또는 재로그인 뒤에는 `./scripts/check-production-recovery.sh`로 현재 부팅 시각, LaunchAgent 실행 이력, Docker/Compose 상태, readiness를 증적화한다. Tailscale URL까지 확정된 뒤에는 `DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`로 HTTPS 경로까지 함께 확인한다.
+재부팅 또는 재로그인 뒤에는 `./scripts/check-production-recovery.sh`로 현재 부팅 시각, LaunchAgent 실행 이력, Docker/Compose 상태, readiness를 증적화한다. 실제 도메인 HTTPS 경로는 `DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh`로 별도 확인한다.
 
-## 3. Tailscale HTTPS
+## 3. 실제 도메인 HTTPS
 
-Tailscale의 HTTPS와 MagicDNS를 활성화한 뒤 Mac에서 다음과 같이 local app을 공개한다.
+실제 API 도메인은 Cloudflare Tunnel 또는 동등한 reverse proxy를 통해 local app으로 연결한다. app은 host에서 `127.0.0.1:8080`에만 bind한다.
 
 ```bash
-command -v tailscale
-tailscale serve --bg http://127.0.0.1:8080
-tailscale serve status
-DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
+DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh
 ```
 
-명령이 출력한 `https://<device>.<tailnet>.ts.net` 주소를 모바일 `EXPO_PUBLIC_API_URL`로 사용한다. 공유기 포트포워딩은 사용하지 않는다.
-`DOOIT_TAILSCALE_API_URL`을 아직 `.env`에 넣지 않았더라도 `tailscale serve status`에 HTTPS URL이 있으면 점검 스크립트가 base URL을 자동 감지한다.
-`Tailscale.app`만 설치되어 있고 `tailscale` CLI가 PATH에 없어도 점검 스크립트는 `/Applications/Tailscale.app/Contents/MacOS/Tailscale`을 자동 사용한다.
-CLI가 다른 경로에 있으면 `DOOIT_TAILSCALE_CLI=/absolute/path/to/tailscale`로 지정한다.
+모바일 production build의 API base URL은 실제 API 도메인을 사용한다. 공유기 포트포워딩은 사용하지 않는다.
 
 확인 순서:
 
-1. Android Tailscale을 켠다.
-2. Android 브라우저에서 `https://<device>.<tailnet>.ts.net/actuator/health/readiness`를 연다.
+1. host에서 `DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh`를 통과시킨다.
+2. Android 브라우저에서 `https://<api-origin>/actuator/health/readiness`를 연다.
 3. APK에서 로그인, Today 조회·생성·완료를 확인한다.
-4. Wi-Fi를 끄고 모바일 데이터에서도 같은 주소로 확인한다.
+4. Wi-Fi와 모바일 데이터에서 같은 주소로 확인한다.
 
 Expo Web production origin까지 함께 확인해야 하면 아래처럼 origin을 지정해 preflight를 점검한다.
 
 ```bash
-DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net DOOIT_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
+DOOIT_PUBLIC_API_URL=https://<api-origin> DOOIT_WEB_ORIGIN=https://<web-origin> ./scripts/check-public-production.sh
 ```
 
 ## 4. 백업
@@ -124,7 +115,7 @@ docker compose up -d app
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ```
 
-복구 후 Android에서 로그인, Today, Calendar의 기존 데이터가 보이는지 확인한다. production 데이터에 처음 시도하지 말고 별도 임시 Compose project/volume에서 최소 1회 복구를 검증한다.
+복구 후 Android에서 실제 API 도메인으로 로그인, Today, Calendar의 기존 데이터가 보이는지 확인한다. production 데이터에 처음 시도하지 말고 별도 임시 Compose project/volume에서 최소 1회 복구를 검증한다.
 
 ## 6. 업데이트와 rollback
 
@@ -179,13 +170,12 @@ docker compose ps
 docker compose logs --tail=200 app
 docker compose logs --tail=200 mysql
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
-tailscale status
-tailscale serve status
+DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh
 ```
 
 - local readiness 실패: app/MySQL/schema 상태를 확인한다.
-- local readiness 성공, Android 실패: Android Tailscale 연결과 production API URL을 확인한다.
-- Tailscale CLI 또는 Serve 설정 실패: `tailscale status`, `tailscale serve status`, `./scripts/check-tailscale-production.sh` 순서로 확인한다.
+- local readiness 성공, 실제 도메인 실패: Cloudflare Tunnel 또는 reverse proxy 상태와 `DOOIT_PUBLIC_API_URL`을 확인한다.
+- 실제 도메인 host smoke는 통과하지만 Android 실패: Android 네트워크, production API URL, 앱 빌드 설정을 확인한다.
 - PC 절전·종료 중에는 앱을 사용할 수 없다. 상시 사용하려면 전원 연결 시 절전 정책을 별도로 정한다.
 
 ### 로그 인코딩 깨짐
@@ -252,7 +242,7 @@ DB outage 리허설은 production API가 일시적으로 내려갈 수 있으므
 DOOIT_CONFIRM_DB_OUTAGE=STOP_MYSQL ./scripts/drill-production-incident.sh
 ```
 
-이 모드는 MySQL container를 중지해 readiness가 내려가는지 확인한 뒤 MySQL/app을 다시 올리고 readiness `UP`까지 대기한다. 실행 전 모바일 사용자가 없는지 확인한다. Tailscale 연결 끊김과 Android production build smoke는 실제 기기에서 별도로 검증한다.
+이 모드는 MySQL container를 중지해 readiness가 내려가는지 확인한 뒤 MySQL/app을 다시 올리고 readiness `UP`까지 대기한다. 실행 전 모바일 사용자가 없는지 확인한다. Android production build smoke는 실제 기기에서 별도로 검증한다.
 
 ## 10. 전원 정책
 

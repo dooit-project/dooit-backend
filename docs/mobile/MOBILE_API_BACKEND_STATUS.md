@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-09-01
+Last audited: 2026-09-04
 
 이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -12,19 +12,19 @@ Last audited: 2026-09-01
 
 ## 0. 현재 요약
 
-2026-08-30 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 대부분 제공한다. 실제 도메인과 production Web 연결은 완료됐으며, 남은 최우선 확인은 Android 실제 기기 검증이다. 현재 코드 식별자는 Dooit 기준으로 정리 중이며 Java package는 `pj.dooit`을 사용한다.
+2026-09-04 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 제공한다. 실제 도메인과 production Web 연결은 완료됐으며, 남은 최우선 확인은 production DB migration 적용 후 Android 실제 기기 검증이다. Java package는 `pj.dooit`을 사용한다.
 
 | 영역 | 상태 | 현재 기준 |
 | --- | --- | --- |
 | Auth/Guest | [x] | JWT, guest 생성/갱신/승격/병합/cleanup/rate limit 계약 구현 |
 | Task/D-Day | [x] | owner scope, Today/Calendar, 검색, D-Day 연결, 반복 occurrence 구현 |
-| Daily Planning | [x] | `daily-plans`, focus task 1~3개, 계획 확정/마감 상태, Task 예상 소요 시간 구현. 계약은 `docs/api/DAILY_PLANNING_CONTRACT.md` 기준 |
-| Checklist | [x] | 개인 Task 하위 checklist item CRUD, 완료/재개, 정렬, Task 완료 시 자동 완료 구현 |
-| Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 상대 주 표현과 한국어 날짜 표현 포함. 실제 입력 로그 기반 파싱 보강만 남음 |
+| Daily Planning | [x] | `daily-plans`, focus task 1~3개, 계획 확정/마감 상태, 결과 summary, Task 예상 소요 시간 구현. 계약은 `docs/api/DAILY_PLANNING_CONTRACT.md` 기준 |
+| Checklist | [x] | 개인/Workspace Task 하위 checklist item CRUD, 완료/재개, 정렬, Task 완료 시 자동 완료 구현 |
+| Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 상대 주, 한국어 날짜, 축약 상대일, 시 반/콜론 시간 표현 포함. 실제 입력 로그 기반 파싱 보강만 남음 |
 | Templates | [x] | `TaskTemplate` CRUD와 template 기반 Task 생성 구현 |
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
 | Notifications | [x] | 로컬 알림 후보, push token, 발송 이력, Expo client, 개인/workspace scheduler 자동 발송 구현. 운영 credential 적용 후 실수신 smoke 필요 |
-| Production Android | [ ] | public HTTPS 또는 Tailscale HTTPS URL로 Android 실제 기기 smoke 필요 |
+| Production Android | [ ] | 실제 도메인 HTTPS URL로 Android 실제 기기 smoke 필요 |
 | Production Web | [x] | `https://dooit.hsng.pe.kr` 배포 및 API CORS preflight 확인 |
 
 ## 1. 현재 보존할 검증 기준
@@ -39,8 +39,8 @@ Last audited: 2026-09-01
 - legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다. 모바일은 `/api/v1/**` 계약을 사용한다.
 - 게스트 생성, `/auth/me`, refresh, logout, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 구현되어 있다.
 - Today/Calendar 범위 조회, 검색, D-Day 연결, 반복 occurrence, 알림 후보, push token/history, workspace 1차 API는 구현되어 있다.
-- Tailscale HTTPS host smoke와 recovery check는 스크립트로 확인 가능하며, 실제 URL/token/guest id는 문서에 기록하지 않는다.
-- 아직 남은 확인은 Android 실제 기기 production smoke, 허가되지 않은 Tailscale 접근 차단 확인, host 전원 정책 strict 확인, offsite backup 확정이다.
+- 실제 도메인 public HTTPS smoke와 Web CORS preflight는 host에서 확인 가능하며, 실제 token/guest id는 문서에 기록하지 않는다.
+- 아직 남은 확인은 production DB migration 적용, Android 실제 기기 production smoke, host 전원 정책 strict 확인, offsite backup 확정이다.
 
 ## 2. 여러 날 일정 / Calendar 범위 조회
 
@@ -85,14 +85,15 @@ Last audited: 2026-09-01
 
 ## 3-1. 일일 계획과 예상 소요 시간
 
-문서: `dooit-mobile`의 일일 계획/실행 백엔드 요청, 백엔드 초안 `docs/api/DAILY_PLANNING_CONTRACT.md`
+문서: `dooit-mobile`의 일일 계획/실행 백엔드 요청, 백엔드 계약 `docs/api/DAILY_PLANNING_CONTRACT.md`
 
-현재 상태: [ ] 미구현
+현재 상태: [x] 구현
 
 필요 작업:
 
 - [x] `GET /api/v1/daily-plans/{date}`
 - [x] `PUT /api/v1/daily-plans/{date}`
+- [x] `GET /api/v1/daily-plans/{date}/summary`
 - [x] `focusTaskIds` 최대 3개, 같은 사용자/날짜/미완료 Today Task validation
 - [x] 계획 상태 `DRAFT`, `CONFIRMED`, `CLOSED`
 - [x] Task 완료, 삭제, Inbox 이동, 다른 날짜 이동 시 focus 자동 제거
@@ -100,6 +101,7 @@ Last audited: 2026-09-01
 - [x] template 기반 Task 생성 시 `defaultDurationMinutes` 적용 규칙 정리
 - [x] 반복 series/occurrence와 Workspace Task 적용 범위 결정
 - [x] OpenAPI, migration, integration test 추가
+- [x] category summary `GET /api/v1/tasks/categories` 추가
 
 ## 4. 반복 Task / 반복 일정
 
@@ -201,7 +203,7 @@ Last audited: 2026-09-01
 
 | 항목 | 상태 | 메모 |
 | --- | --- | --- |
-| 개발 / 스테이징 / 운영 API URL | [~] | local과 host 내부 production은 확정. public HTTPS 도메인, Android 실제 기기, Web production origin은 외부 연결 후 확인 필요 |
+| 개발 / 스테이징 / 운영 API URL | [~] | local, host 내부 production, public HTTPS 도메인, Web production origin은 확정. Android 실제 기기 확인 필요 |
 | 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me`, refresh, logout 있음. TTL, rotation/reuse detection, 401/403 계약은 `docs/api/AUTH_CONTRACT.md` 기준 |
 | 게스트 계정 bootstrap과 정식 계정 연동 | [x] | `POST /api/v1/auth/guest`, 게스트 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약은 `docs/api/GUEST_ACCOUNT_HANDOFF.md` 기준 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
@@ -215,17 +217,13 @@ Last audited: 2026-09-01
 운영 연결 확인:
 
 - [x] host 내부 production API smoke: `./scripts/smoke-production-api.sh`
-- [x] Tailscale HTTPS host smoke 스크립트: `DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh`
-- [x] Tailscale HTTPS URL `.env` 반영: `DOOIT_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh`
-- [x] Tailscale HTTPS recovery check: `DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-production-recovery.sh`
 - [x] public HTTPS smoke 스크립트: `DOOIT_PUBLIC_API_URL=https://api.example.com ./scripts/check-public-production.sh`
-- [ ] Android 실제 기기 production smoke: public HTTPS 또는 Tailscale HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
+- [ ] Android 실제 기기 production smoke: 실제 도메인 HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
 - [x] Web production origin: `https://dooit.hsng.pe.kr`; 공개 API CORS preflight 통과
 
 ## 9. 다음 확인 순서
 
-1. Android production build에 public HTTPS 또는 Tailscale HTTPS API URL을 반영한다.
+1. Android production build에 실제 도메인 HTTPS API URL을 반영한다.
 2. 실제 Android 기기에서 login/me, Today 조회·생성·완료, guest 발급과 병합 흐름을 확인한다.
-3. 허가되지 않은 Tailscale 사용자 또는 연결이 끊긴 기기가 API에 접근하지 못하는지 확인한다.
-4. host 전원 정책 strict check와 재부팅/재로그인 후 recovery check를 통과시킨다.
-5. offsite backup 경로를 확정하고 sync, routine check, 임시 DB restore를 검증한다.
+3. host 전원 정책 strict check와 재부팅/재로그인 후 recovery check를 통과시킨다.
+4. offsite backup 경로를 확정하고 sync, routine check, 임시 DB restore를 검증한다.

@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -20,11 +20,11 @@ Last updated: 2026-09-03
 | 미적용 | `docs/db/migrations/20260901_add_task_checklist_item.sql` | local production Docker MySQL | Task checklist release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260831_add_daily_plan.sql` | local production Docker MySQL | 일일 계획 release 전 적용 필요 |
 | 미적용 | `docs/db/migrations/20260830_add_task_estimated_duration.sql` | local production Docker MySQL | Task 예상 소요 시간 release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | 2026-08-29 문서 점검 기준 미적용. 개인/workspace iCalendar feed token release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | 2026-08-29 문서 점검 기준 미적용. Task 알림 preference release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 2026-08-29 문서 점검 기준 미적용. 등록 계정 refresh/logout release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | 2026-08-29 문서 점검 기준 미적용. Idempotency-Key release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260823_add_password_reset_token.sql` | local production Docker MySQL | 2026-08-29 문서 점검 기준 미적용. 비밀번호 재설정 release 전 적용 필요 |
+| 미적용 | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. 개인/workspace iCalendar feed token release 전 적용 필요 |
+| 미적용 | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. Task 알림 preference release 전 적용 필요 |
+| 미적용 | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. 등록 계정 refresh/logout release 전 적용 필요 |
+| 미적용 | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. Idempotency-Key release 전 적용 필요 |
+| 미적용 | `docs/db/migrations/20260823_add_password_reset_token.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. 비밀번호 재설정 release 전 적용 필요 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260814_add_workspace_audit_columns.sql` | local production Docker MySQL | 성공. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES` audit 컬럼 생성 확인 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260813_add_workspace_scope_columns.sql` | local production Docker MySQL | 성공. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES` scope/workspace 컬럼 생성 확인 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260813_add_shared_workspace.sql` | local production Docker MySQL | 성공. `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 테이블 생성 확인 |

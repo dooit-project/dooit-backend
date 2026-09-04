@@ -1,6 +1,6 @@
 # Dooit v1 Frontend API
 
-Last updated: 2026-08-29
+Last updated: 2026-09-04
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 

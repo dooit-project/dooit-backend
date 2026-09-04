@@ -1,6 +1,6 @@
 # Daily Planning Contract
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 이 문서는 Dooit 모바일의 `오늘 계획 -> 실행 -> 하루 마감` 흐름을 지원하기 위한 백엔드 계약이다.
 
@@ -52,7 +52,7 @@ GET /api/v1/daily-plans/{date}/summary
 }
 ```
 
-초안 타입:
+타입:
 
 ```ts
 type DailyPlanStatus = 'DRAFT' | 'CONFIRMED' | 'CLOSED';
@@ -150,7 +150,7 @@ POST /api/v1/daily-plans/{date}/apply
 - `Idempotency-Key`를 지원한다.
 - 응답에는 갱신된 Task와 plan을 포함해 추가 refetch 없이 cache를 맞출 수 있게 한다.
 
-초안 action:
+후보 action:
 
 - `MOVE_TO_DATE`
 - `MOVE_TO_INBOX`
@@ -215,10 +215,7 @@ GET /api/v1/daily-plans/{date}/summary
 
 ## 구현 요청 순서
 
-1. 일일 계획 resource와 예상 소요 시간 OpenAPI 초안을 합의한다.
-2. migration, integration test, backend source를 구현한다.
-3. `API_V1_FRONTEND.md`와 OpenAPI JSON 기준으로 mock/real response fixture와 frontend type을 연결한다.
-4. production 배포 metadata를 확인한다.
-5. Android, iOS, Web의 같은 계정에서 계획과 예상 시간 동기화 smoke를 진행한다.
-6. 부분 실패 근거가 확인되면 batch mutation을 추가한다.
-7. checklist, summary, category 순으로 확장한다.
+1. production DB에 미적용 migration을 적용한다.
+2. `API_V1_FRONTEND.md`와 OpenAPI JSON 기준으로 frontend type을 갱신한다.
+3. Android, iOS, Web의 같은 계정에서 계획, 예상 시간, summary 동기화 smoke를 진행한다.
+4. 부분 실패 근거가 확인되면 batch mutation을 추가한다.

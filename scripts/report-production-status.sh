@@ -3,6 +3,7 @@ set -euo pipefail
 
 backup_dir=${DOOIT_BACKUP_DIR:-/Users/hyunseung/dooit-backups}
 base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
+public_api_url=${DOOIT_PUBLIC_API_URL:-}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -68,12 +69,12 @@ if ./scripts/check-production-recovery.sh >/dev/null; then
   recovery=passed
 fi
 
-tailscale=skipped
-if [ -n "${DOOIT_TAILSCALE_API_URL:-}" ]; then
-  if ./scripts/check-tailscale-production.sh >/dev/null; then
-    tailscale=passed
+public_production=skipped
+if [ -n "$public_api_url" ]; then
+  if DOOIT_PUBLIC_API_URL="$public_api_url" ./scripts/check-public-production.sh >/dev/null; then
+    public_production=passed
   else
-    tailscale=failed
+    public_production=failed
   fi
 fi
 
@@ -88,7 +89,7 @@ latestBackup=$backup_file
 readiness=$readiness
 routineCheck=$routine
 recoveryCheck=$recovery
-tailscaleCheck=$tailscale
+publicProductionCheck=$public_production
 guestRefreshApi=supported
 mergeResultCounts=supported
 EOF

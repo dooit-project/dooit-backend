@@ -1,6 +1,6 @@
 # Guest Account Production Apply Runbook
 
-Last updated: 2026-08-29
+Last updated: 2026-09-04
 
 이 문서는 모바일 게스트 계정 계약을 production에 반영하거나 점검할 때 확인할 항목만 남긴다. 상세 API 계약은 [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md)와 [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md), 일반 배포/백업/복구 절차는 [`LOCAL_PRODUCTION_RUNBOOK.md`](./LOCAL_PRODUCTION_RUNBOOK.md)를 원본으로 본다. 실제 secret, access token, DB 비밀번호, 백업 파일 내용은 문서와 공유 로그에 남기지 않는다.
 
@@ -57,7 +57,7 @@ SHOW INDEX FROM APP_USER WHERE Key_name = 'IDX_APP_USER_ACCOUNT_TYPE_EXPIRES';
 
 ```bash
 ./scripts/smoke-production-api.sh
-DOOIT_SMOKE_BASE_URL=https://<device>.<tailnet>.ts.net ./scripts/smoke-production-api.sh
+DOOIT_SMOKE_BASE_URL=https://<api-origin> ./scripts/smoke-production-api.sh
 ```
 
 ### 게스트 발급

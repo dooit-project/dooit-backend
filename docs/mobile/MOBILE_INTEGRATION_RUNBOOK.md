@@ -1,6 +1,6 @@
 # Dooit Mobile Integration Runbook
 
-Last updated: 2026-08-29
+Last updated: 2026-09-04
 
 이 문서는 모바일 real mode smoke test를 반복 가능한 절차로 남기기 위한 백엔드 기준 runbook이다.
 
@@ -60,7 +60,7 @@ curl -i -X OPTIONS 'http://localhost:8080/api/v1/tasks/today' \
 production Expo Web origin을 사용할 때만 운영 origin을 `DOOIT_ALLOWED_ORIGINS`에 추가하고 아래처럼 확인한다.
 
 ```bash
-DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net DOOIT_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
+DOOIT_PUBLIC_API_URL=https://<api-origin> DOOIT_WEB_ORIGIN=https://<web-origin> ./scripts/check-public-production.sh
 ```
 
 ## 4. 인증 Smoke Test
@@ -208,23 +208,23 @@ DELETE /api/v1/dday-goals/{id}
 - HTTP 200
 - v1 문서 기준 삭제 성공 envelope의 `data`는 `null`
 
-## 6. Production Tailscale Smoke Test
+## 6. Production Public HTTPS Smoke Test
 
-Mac과 Android가 같은 tailnet에 있고 Tailscale Serve가 local app `8080`으로 연결된 뒤 실행한다.
+실제 API 도메인이 production app `127.0.0.1:8080`으로 연결되고 TLS가 준비된 뒤 실행한다.
 
 ```bash
-DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
+DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh
+DOOIT_PUBLIC_API_URL=https://<api-origin> DOOIT_WEB_ORIGIN=https://<web-origin> ./scripts/check-public-production.sh
 ```
 
 성공 기준:
 
-- Tailscale CLI connected
-- Tailscale Serve target이 local app `8080`
 - HTTPS `/actuator/health/readiness`가 `UP`
 - HTTPS `POST /api/v1/auth/guest`가 HTTP `201`
 - HTTPS `GET /api/v1/auth/me`가 같은 guest user id로 HTTP `200`
+- Expo Web origin을 지정한 경우 CORS preflight가 성공
 
-이 host smoke가 통과한 뒤 Android production build에서 같은 HTTPS URL을 사용해 로그인, Today 조회·생성·완료를 확인한다. 이 단계는 실제 기기 네트워크와 앱 빌드를 검증하므로 host smoke로 대체하지 않는다.
+이 host smoke가 통과한 뒤 Android production build에서 같은 API origin을 사용해 로그인, Today 조회·생성·완료를 확인한다. 이 단계는 실제 기기 네트워크와 앱 빌드를 검증하므로 host smoke로 대체하지 않는다.
 
 ## 7. 결과 기록 템플릿
 
@@ -244,7 +244,7 @@ production 결과는 실제 secret, access token, 비밀번호를 기록하지 �
 ```text
 - [x] YYYY-MM-DD production real device: login/me, Today 조회·생성·완료 확인
   - API URL: https://<api-origin>/api/v1
-  - Host smoke: check-tailscale-production 또는 check-public-production 통과
+  - Host smoke: check-public-production 통과
   - Android: auth/me 200 확인
   - CORS: Expo Web 사용 시 preflight 성공, native-only면 해당 없음
   - 비고: <특이사항>

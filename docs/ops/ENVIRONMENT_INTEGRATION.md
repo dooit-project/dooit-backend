@@ -1,6 +1,6 @@
 # Dooit Environment Integration
 
-Last updated: 2026-08-29
+Last updated: 2026-09-04
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
@@ -8,7 +8,7 @@ Last updated: 2026-08-29
 
 ## 현재 운영 입력 상태
 
-2026-08-29 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, Tailscale host smoke와 Cloudflare Tunnel 기반 public smoke가 확인됐다. 공개 Web은 `https://dooit.hsng.pe.kr`, 공개 API는 `https://dooitapi.hsng.pe.kr`을 사용한다. `.env`의 `DOOIT_PUBLIC_API_URL`과 `DOOIT_JWT_ISSUER`는 공개 API origin으로, `DOOIT_ALLOWED_ORIGINS`는 공개 Web origin으로 설정한다. `./scripts/check-production-recovery.sh`는 readiness와 Tailscale HTTPS 경로까지 통과했고, public readiness와 Web CORS preflight도 통과했다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과와 offsite backup 경로다.
+2026-09-04 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, 실제 도메인 기반 public smoke가 확인됐다. 공개 Web은 `https://dooit.hsng.pe.kr`, 공개 API는 `https://dooitapi.hsng.pe.kr`을 사용한다. `.env`의 `DOOIT_PUBLIC_API_URL`과 `DOOIT_JWT_ISSUER`는 공개 API origin으로, `DOOIT_ALLOWED_ORIGINS`는 공개 Web origin으로 설정한다. `./scripts/check-production-recovery.sh`는 host 내부 readiness 복구를 확인하고, public readiness와 Web CORS preflight는 `./scripts/check-public-production.sh`로 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과와 offsite backup 경로다.
 
 전원 정책은 아직 strict production 기준이 아니다. `DOOIT_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`는 macOS 관리자 비밀번호 입력이 필요하므로 운영자 터미널에서 실행한다.
 
@@ -23,7 +23,7 @@ Last updated: 2026-08-29
 | local, 실제 기기 | `http://<dev-machine-lan-ip>:8080` | 확인 필요 | 같은 네트워크에서 개발 머신 IP로 접근 |
 | staging | 사용하지 않음 | 해당 없음 | 이 PC 단일 production 운영에서는 별도 staging을 두지 않는다. |
 | production, host 내부 | `http://127.0.0.1:8080` | 확정 | Docker Compose app port는 loopback에만 공개한다. |
-| production, Android | `.env`의 `DOOIT_PUBLIC_API_URL` 또는 `DOOIT_TAILSCALE_API_URL` | host smoke 확인됨, 실제 기기 확인 필요 | 실제 URL은 문서에 기록하지 않는다. |
+| production, Android | `.env`의 `DOOIT_PUBLIC_API_URL` | host public smoke 확인됨, 실제 기기 확인 필요 | 실제 API 도메인을 사용한다. |
 | production, 실제 도메인 | `https://dooitapi.hsng.pe.kr` | 확인됨 | Cloudflare Tunnel, TLS, readiness public smoke 통과 |
 
 모바일 기본 base path는 모든 환경에서 `/api/v1`이다.
@@ -90,7 +90,7 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 
 | 항목 | staging | production | 검증 기준 |
 | --- | --- | --- | --- |
-| API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, 외부 공개용 HTTPS URL은 `.env`의 `DOOIT_PUBLIC_API_URL` 또는 `DOOIT_TAILSCALE_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
+| API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, 외부 공개용 HTTPS URL은 `.env`의 `DOOIT_PUBLIC_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
 | Web origin | 사용하지 않음 | `https://dooit.hsng.pe.kr` | Web에서 API CORS preflight와 인증 요청 확인 |
 | Native 앱 API 접근 | 사용하지 않음 | `https://dooitapi.hsng.pe.kr` | Android 실제 기기에서 HTTPS API 접근 가능 |
 | 문서 UI 공개 여부 | 사용하지 않음 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 비공개 정책 확인 |
@@ -109,21 +109,11 @@ production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 
 
 ```bash
 ./scripts/check-production-env.sh
-DOOIT_REQUIRE_TAILSCALE_URL=true ./scripts/check-production-env.sh
 DOOIT_REQUIRE_PUBLIC_API_URL=true ./scripts/check-production-env.sh
 DOOIT_REQUIRE_OFFSITE_BACKUP=true ./scripts/check-production-env.sh
 ```
 
-Tailscale URL 확정 직후 host에서는 아래 점검을 실행한다. 이 점검은 Android 실기기 smoke를 대체하지 않고, Serve와 HTTPS API 계약이 host에서 재현되는지만 확인한다.
-
-```bash
-DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net ./scripts/check-tailscale-production.sh
-DOOIT_TAILSCALE_API_URL=https://<device>.<tailnet>.ts.net DOOIT_EXPO_WEB_ORIGIN=https://<expo-web-origin> ./scripts/check-tailscale-production.sh
-```
-
-`DOOIT_TAILSCALE_API_URL`을 아직 확정값으로 저장하지 않았더라도 `tailscale serve status`에 HTTPS URL이 있으면 `./scripts/check-tailscale-production.sh`는 해당 URL을 자동 감지해 host smoke를 실행한다. 자동 감지 결과는 점검 출력으로만 사용하고 문서에는 실제 URL을 기록하지 않는다.
-
-실제 도메인의 DNS, TLS, reverse proxy가 준비되면 Tailscale CLI 없이 아래 점검을 실행한다.
+실제 도메인의 DNS, TLS, reverse proxy가 준비되면 아래 점검을 실행한다.
 
 ```bash
 DOOIT_PUBLIC_API_URL=https://api.example.com ./scripts/check-public-production.sh
@@ -164,7 +154,7 @@ Redis health indicator는 기본 비활성이다. 게스트 생성 rate limit �
 반환하지 않는 값:
 
 - secret, access token, DB URL/password
-- private Tailscale URL
+- private 관리 URL
 - CORS origin 원문
 
 운영 확인 예:

@@ -1,12 +1,12 @@
 # Dooit Backend Docs
 
-Last updated: 2026-08-30
+Last updated: 2026-09-04
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
 
 ## 현재 기준 요약
 
-2026-08-30 현재 문서 원본은 아래 순서로 판단한다.
+2026-09-04 현재 문서 원본은 아래 순서로 판단한다.
 
 | 우선순위 | 문서/원본 | 기준 |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ Last updated: 2026-08-30
 | 4 | `docs/ops/**` | local production 운영, 환경변수, 배포·백업·복구 절차 |
 | 5 | `docs/project/ROADMAP.md` | 아직 닫히지 않은 제품/운영 작업 |
 
-Cloudflare Tunnel 기반 실제 도메인 연결과 public production smoke는 완료됐다. Web은 `https://dooit.hsng.pe.kr`, API는 `https://dooitapi.hsng.pe.kr`을 사용하며 HTTP 요청은 HTTPS로 전환한다. 코드 식별자는 Dooit 기준으로 정리 중이며 Java base package는 `pj.dooit`, Gradle project name은 `Dooit`이다. 현재 로드맵에서 닫아야 할 최우선 작업은 Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정, 일일 계획 B0 계약이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
+실제 도메인 기반 production 연결과 public smoke는 완료됐다. Web은 `https://dooit.hsng.pe.kr`, API는 `https://dooitapi.hsng.pe.kr`을 사용하며 HTTP 요청은 HTTPS로 전환한다. Java base package는 `pj.dooit`, Gradle project name은 `Dooit`이다. PRD 배포 구조는 Docker Compose, release/rollback, readiness, public HTTPS smoke까지 준비됐지만 기존 production DB volume에는 미적용 migration이 남아 있다. 최신 코드 배포 전 최우선 작업은 production DB migration 적용, Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 일일 계획, 체크리스트, category summary, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
 
 ## 프론트/모바일 전달 문서
 
@@ -25,7 +25,7 @@ Cloudflare Tunnel 기반 실제 도메인 연결과 public production smoke는 �
 | 문서 | 용도 |
 | --- | --- |
 | [`api/API_V1_FRONTEND.md`](./api/API_V1_FRONTEND.md) | v1 API endpoint, request/response, 검색, Today 재정렬, D-Day 계약 |
-| [`api/DAILY_PLANNING_CONTRACT.md`](./api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 후속 계약 초안 |
+| [`api/DAILY_PLANNING_CONTRACT.md`](./api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 summary 계약 |
 | [`api/GUEST_ACCOUNT_HANDOFF.md`](./api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 계정 생성, 승격, 병합, 만료, rate limit 모바일 전달 계약 |
 | [`ops/ENVIRONMENT_INTEGRATION.md`](./ops/ENVIRONMENT_INTEGRATION.md) | 환경별 URL, CORS origin, Expo/iOS/Android/실기기 차이 |
 | [`api/AUTH_CONTRACT.md`](./api/AUTH_CONTRACT.md) | JWT claim, access token TTL, refresh token rotation, 로그아웃, 401/403 |
@@ -51,7 +51,7 @@ Cloudflare Tunnel 기반 실제 도메인 연결과 public production smoke는 �
 | 문서 | 용도 |
 | --- | --- |
 | [`api/API_COMPATIBILITY_POLICY.md`](./api/API_COMPATIBILITY_POLICY.md) | v1 호환성, breaking change, deprecation 기준 |
-| [`ops/LOCAL_PRODUCTION_RUNBOOK.md`](./ops/LOCAL_PRODUCTION_RUNBOOK.md) | 로컬 PC production 기동, Tailscale HTTPS, DB 백업·복구 절차 |
+| [`ops/LOCAL_PRODUCTION_RUNBOOK.md`](./ops/LOCAL_PRODUCTION_RUNBOOK.md) | 로컬 PC production 기동, 실제 도메인 공개, DB 백업·복구 절차 |
 | [`ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md`](./ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md) | 게스트 계정 production DB migration, 배포, smoke test 체크리스트 |
 | [`db/MIGRATION_HISTORY.md`](./db/MIGRATION_HISTORY.md) | Flyway 도입 전 수동 production DB migration 적용 이력 |
 | [`project/ROADMAP.md`](./project/ROADMAP.md) | 앞으로 닫아야 할 백엔드/운영 작업 |

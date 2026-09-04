@@ -1,13 +1,13 @@
 # Mobile Incident Runbook
 
-Last updated: 2026-07-25
+Last updated: 2026-09-04
 
 이 문서는 모바일 real mode 연동 중 장애가 발생했을 때 백엔드에서 확인할 순서를 정리한다.
 
 ## 1. 접수 정보
 
 - 발생 시각과 timezone
-- 환경: local, staging, production
+- 환경: local, production
 - 앱 실행 형태: Expo Web, iOS Simulator, Android Emulator, 실제 기기
 - API method/path/query
 - 백엔드 `X-Request-Id`
@@ -34,6 +34,7 @@ Last updated: 2026-07-25
 4. 인증 문제면 [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md)의 TTL, claim, 401/403 기준을 확인한다.
 5. CORS 문제면 [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)의 origin 설정과 preflight 기준을 확인한다.
 6. 반복 occurrence 문제면 [`../api/RECURRENCE_MODEL.md`](../api/RECURRENCE_MODEL.md)와 [`../api/NOTIFICATION_CONTRACT.md`](../api/NOTIFICATION_CONTRACT.md)를 확인한다.
+7. production 장애면 [`../ops/LOCAL_PRODUCTION_RUNBOOK.md`](../ops/LOCAL_PRODUCTION_RUNBOOK.md)의 readiness, public HTTPS, backup/restore, release/rollback 절차를 확인한다.
 
 ## 4. 기록 형식
 

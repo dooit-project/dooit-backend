@@ -16,14 +16,14 @@ Dooit Backend는 할 일, 일정, D-Day, 반복 계획과 Workspace 협업을 �
 - **계정 흐름** - JWT 인증, refresh token rotation, logout, 비밀번호 재설정
 - **게스트 경험** - 게스트 발급, 만료 전 갱신, 회원가입 승격, 기존 계정 병합
 - **일정과 할 일** - Today, Inbox, Calendar, 여러 날 일정, 완료와 미룸 상태
-- **일일 계획** - focus task, 예상 소요 시간, 하루 마감 흐름은 계약 초안 정리 중
-- **빠른 등록** - `내일 3시 회의`, `이번 주 금요일 병원`, `8월 15일 행사`, `매주 월요일 운동` 같은 규칙 기반 입력
+- **일일 계획** - focus task, 예상 소요 시간, 하루 마감 summary
+- **빠른 등록** - `내일 3시 회의`, `낼모레 오후 3시 반 치과`, `다다음주 화요일 14:30 발표 준비`, `매주 월요일 운동` 같은 규칙 기반 입력
 - **반복 계획** - RRULE 기반 반복 series, occurrence 생성, 개별/이후/전체 수정과 삭제
 - **D-Day 목표** - 목표 관리, 연결 Task 생성, Today 흐름과의 연결
 - **검색과 회고** - 제목, 설명, category, D-Day 제목, 반복 여부 검색과 highlight
 - **Workspace 협업** - workspace 생성, 초대, 수락/거절, 멤버 권한, 공유 Task와 D-Day
 - **알림** - 로컬 알림 후보, push token, 발송 이력, Expo push client와 scheduler
-- **운영 안정성** - Docker Compose production, readiness health, release/rollback, backup/restore, Tailscale smoke
+- **운영 안정성** - Docker Compose production, 실제 도메인 HTTPS, readiness health, release/rollback, backup/restore
 
 ## 모바일 경험을 지탱하는 API
 
@@ -108,6 +108,8 @@ src/main/java/pj/dooit/
 
 production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로 공개합니다. Web은 별도 정적 서버의 `127.0.0.1:4173`을 `https://dooit.hsng.pe.kr`에 연결하며, 두 공개 주소 모두 Cloudflare edge에서 HTTPS를 강제합니다. MySQL port는 host에 공개하지 않습니다.
 
+최신 코드를 기존 production DB volume에 배포하기 전에는 [docs/db/MIGRATION_HISTORY.md](./docs/db/MIGRATION_HISTORY.md)의 미적용 migration을 백업 후 수동 적용해야 합니다. `prod` profile은 `ddl-auto: validate`를 사용하므로 schema가 맞지 않으면 app readiness가 실패합니다.
+
 대표 점검 명령:
 
 ```bash
@@ -134,9 +136,9 @@ production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Clo
 | 문서 | 무엇을 볼 수 있나요? |
 | --- | --- |
 | [v1 API 계약](./docs/api/API_V1_FRONTEND.md) | 모바일/프론트엔드가 호출하는 endpoint, request/response, 오류 기준 |
-| [일일 계획 계약 초안](./docs/api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 후속 계약 |
+| [일일 계획 계약](./docs/api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 summary |
 | [게스트 계정 인수인계](./docs/api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 시작, 승격, 기존 계정 병합, 만료와 rate limit |
-| [환경 연동 기준](./docs/ops/ENVIRONMENT_INTEGRATION.md) | local, production, Tailscale, CORS, 문서 UI 공개 기준 |
+| [환경 연동 기준](./docs/ops/ENVIRONMENT_INTEGRATION.md) | local, production 실제 도메인, CORS, 문서 UI 공개 기준 |
 | [인증 계약](./docs/api/AUTH_CONTRACT.md) | JWT claim, token TTL, refresh rotation, logout, 비밀번호 재설정 |
 | [오류 코드](./docs/api/API_ERROR_CODES.md) | 오류 코드, 사용자 노출 message, 모바일 처리 기준 |
 | [데이터 모델 사전](./docs/api/DATA_MODEL_GLOSSARY.md) | Task, D-Day, User 주요 필드와 상태 전이 |
