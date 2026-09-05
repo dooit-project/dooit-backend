@@ -1,12 +1,12 @@
 # Dooit Backend Docs
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 디렉터리는 백엔드 API 계약, 모바일 연동, 운영 기준, 내부 관리 문서를 관리한다.
 
 ## 현재 기준 요약
 
-2026-09-04 현재 문서 원본은 아래 순서로 판단한다.
+2026-09-05 현재 문서 원본은 아래 순서로 판단한다.
 
 | 우선순위 | 문서/원본 | 기준 |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ Last updated: 2026-09-04
 | 4 | `docs/ops/**` | local production 운영, 환경변수, 배포·백업·복구 절차 |
 | 5 | `docs/project/ROADMAP.md` | 아직 닫히지 않은 제품/운영 작업 |
 
-실제 도메인 기반 production 연결과 public smoke는 완료됐다. Web은 `https://dooit.hsng.pe.kr`, API는 `https://dooitapi.hsng.pe.kr`을 사용하며 HTTP 요청은 HTTPS로 전환한다. Java base package는 `pj.dooit`, Gradle project name은 `Dooit`이다. PRD 배포 구조는 Docker Compose, release/rollback, readiness, public HTTPS smoke까지 준비됐지만 기존 production DB volume에는 미적용 migration이 남아 있다. 최신 코드 배포 전 최우선 작업은 production DB migration 적용, Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 일일 계획, 체크리스트, category summary, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
+실제 도메인 기반 production 연결과 public smoke는 완료됐다. Web은 `https://dooit.hsng.pe.kr`, API는 `https://dooitapi.hsng.pe.kr`을 사용하며 HTTP 요청은 HTTPS로 전환한다. Java base package는 `pj.dooit`, Gradle project name은 `Dooit`이다. PRD 배포 구조는 Docker Compose, release/rollback, readiness, public HTTPS smoke까지 준비됐고 production DB migration도 적용됐다. 최신 backend image `63a54d5`는 readiness와 public smoke를 통과했다. 남은 최우선 작업은 Android production 실기기 smoke, host 상시 가용성 검증, offsite backup 확정이다. 제품 기능 쪽은 빠른 등록/템플릿/공유 1차 구현, 일일 계획, 체크리스트, category summary, 검색·추천 고도화, 개인 및 workspace 서버 push 자동 발송이 닫혔다.
 
 ## 프론트/모바일 전달 문서
 

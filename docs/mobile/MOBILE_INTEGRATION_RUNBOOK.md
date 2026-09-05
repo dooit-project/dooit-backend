@@ -1,6 +1,6 @@
 # Dooit Mobile Integration Runbook
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 문서는 모바일 real mode smoke test를 반복 가능한 절차로 남기기 위한 백엔드 기준 runbook이다.
 

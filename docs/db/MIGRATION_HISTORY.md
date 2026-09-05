@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -16,15 +16,15 @@ Last updated: 2026-09-04
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
-| 미적용 | `docs/db/migrations/20260903_add_daily_plan_initial_focus_task.sql` | local production Docker MySQL | Daily Plan summary release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260901_add_task_checklist_item.sql` | local production Docker MySQL | Task checklist release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260831_add_daily_plan.sql` | local production Docker MySQL | 일일 계획 release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260830_add_task_estimated_duration.sql` | local production Docker MySQL | Task 예상 소요 시간 release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. 개인/workspace iCalendar feed token release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. Task 알림 preference release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. 등록 계정 refresh/logout release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. Idempotency-Key release 전 적용 필요 |
-| 미적용 | `docs/db/migrations/20260823_add_password_reset_token.sql` | local production Docker MySQL | 2026-09-04 문서 점검 기준 미적용. 비밀번호 재설정 release 전 적용 필요 |
+| 2026-09-05 15:24 KST | `docs/db/migrations/20260903_add_daily_plan_initial_focus_task.sql` | local production Docker MySQL | 성공. `DAILY_PLAN_INITIAL_FOCUS_TASK` 테이블과 index 생성 확인 |
+| 2026-09-05 15:24 KST | `docs/db/migrations/20260901_add_task_checklist_item.sql` | local production Docker MySQL | 성공. `TASK_CHECKLIST_ITEM` 테이블과 index 생성 확인 |
+| 2026-09-05 15:24 KST | `docs/db/migrations/20260831_add_daily_plan.sql` | local production Docker MySQL | 성공. `DAILY_PLAN`, `DAILY_PLAN_FOCUS_TASK` 테이블과 index 생성 확인 |
+| 2026-09-05 15:23 KST | `docs/db/migrations/20260830_add_task_estimated_duration.sql` | local production Docker MySQL | 성공. `TASK.ESTIMATED_DURATION_MINUTES` 컬럼 생성 확인 |
+| 2026-09-05 15:22 KST | `docs/db/migrations/20260827_add_calendar_feed_token.sql` | local production Docker MySQL | 기존 적용 확인. `CALENDAR_FEED_TOKEN` 테이블과 index 존재 확인 |
+| 2026-09-05 15:28 KST | `docs/db/migrations/20260825_add_task_notification_preferences.sql` | local production Docker MySQL | 기존 컬럼 적용 확인 후 누락 index 2개 보강. `TASK.NOTIFICATION_ENABLED`, `TASK.NOTIFY_AT`, notification index 존재 확인 |
+| 2026-09-05 15:22 KST | `docs/db/migrations/20260823_add_refresh_token_session.sql` | local production Docker MySQL | 기존 적용 확인. `REFRESH_TOKEN_SESSION` 테이블과 index 존재 확인 |
+| 2026-09-05 15:22 KST | `docs/db/migrations/20260823_add_idempotency_record.sql` | local production Docker MySQL | 기존 적용 확인. `IDEMPOTENCY_RECORD` 테이블과 index 존재 확인 |
+| 2026-09-05 15:22 KST | `docs/db/migrations/20260823_add_password_reset_token.sql` | local production Docker MySQL | 기존 적용 확인. `PASSWORD_RESET_TOKEN` 테이블과 index 존재 확인 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260814_add_workspace_audit_columns.sql` | local production Docker MySQL | 성공. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES` audit 컬럼 생성 확인 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260813_add_workspace_scope_columns.sql` | local production Docker MySQL | 성공. `TASK`, `DDAY_GOAL`, `RECURRENCE_SERIES` scope/workspace 컬럼 생성 확인 |
 | 2026-08-17 01:40 KST | `docs/db/migrations/20260813_add_shared_workspace.sql` | local production Docker MySQL | 성공. `SHARED_WORKSPACE`, `WORKSPACE_MEMBER` 테이블 생성 확인 |

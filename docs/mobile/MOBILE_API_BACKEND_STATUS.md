@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-09-04
+Last audited: 2026-09-05
 
 이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -12,7 +12,7 @@ Last audited: 2026-09-04
 
 ## 0. 현재 요약
 
-2026-09-04 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 제공한다. 실제 도메인과 production Web 연결은 완료됐으며, 남은 최우선 확인은 production DB migration 적용 후 Android 실제 기기 검증이다. Java package는 `pj.dooit`을 사용한다.
+2026-09-05 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 제공한다. production DB migration 적용과 최신 backend image `63a54d5` 배포, 실제 도메인 public smoke, production Web CORS 확인은 완료됐다. 남은 최우선 확인은 Android 실제 기기 검증이다. Java package는 `pj.dooit`을 사용한다.
 
 | 영역 | 상태 | 현재 기준 |
 | --- | --- | --- |

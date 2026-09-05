@@ -108,7 +108,7 @@ src/main/java/pj/dooit/
 
 production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로 공개합니다. Web은 별도 정적 서버의 `127.0.0.1:4173`을 `https://dooit.hsng.pe.kr`에 연결하며, 두 공개 주소 모두 Cloudflare edge에서 HTTPS를 강제합니다. MySQL port는 host에 공개하지 않습니다.
 
-최신 코드를 기존 production DB volume에 배포하기 전에는 [docs/db/MIGRATION_HISTORY.md](./docs/db/MIGRATION_HISTORY.md)의 미적용 migration을 백업 후 수동 적용해야 합니다. `prod` profile은 `ddl-auto: validate`를 사용하므로 schema가 맞지 않으면 app readiness가 실패합니다.
+최신 코드 기준 production DB migration은 [docs/db/MIGRATION_HISTORY.md](./docs/db/MIGRATION_HISTORY.md)에 적용 이력을 남깁니다. `prod` profile은 `ddl-auto: validate`를 사용하므로 schema 변경 release 전에는 백업, migration 적용, readiness 확인을 먼저 끝내야 합니다.
 
 대표 점검 명령:
 

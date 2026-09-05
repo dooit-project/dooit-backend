@@ -1,6 +1,6 @@
 # Mobile Incident Runbook
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 문서는 모바일 real mode 연동 중 장애가 발생했을 때 백엔드에서 확인할 순서를 정리한다.
 

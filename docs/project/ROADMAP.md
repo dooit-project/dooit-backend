@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -15,9 +15,9 @@ Last updated: 2026-09-04
 - staging은 현재 운영하지 않는다. 환경은 local 개발 환경과 이 PC의 production 환경으로만 구분한다.
 - 실제 secret, access token, DB dump 내용, private production URL은 문서에 기록하지 않는다.
 
-### 2026-09-04 정리
+### 2026-09-05 정리
 
-현재 남은 P0는 PRD 배포 차단 항목에 집중한다. 공개 HTTPS 도메인과 Docker Compose production 구조는 준비됐지만, 기존 production DB volume에는 `docs/db/MIGRATION_HISTORY.md`의 미적용 migration이 남아 있다. `application-prod.yml`은 `ddl-auto: validate`를 사용하므로 migration을 먼저 맞추지 않으면 최신 코드가 production에서 안정적으로 뜬다고 볼 수 없다.
+현재 남은 P0는 Android 실기기 production smoke와 운영 복구성 검증이다. 공개 HTTPS 도메인, Docker Compose production 구조, production DB migration 적용, 최신 backend image 배포, readiness/public HTTPS smoke는 완료됐다.
 
 | 구분 | 현재 상태 | 다음에 닫을 일 |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ Last updated: 2026-09-04
 | 카테고리 탐색 | 개인 Task category 목록/count API 구현 완료 | 모바일 연동 후 수동 category order 필요 여부 결정 |
 | 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
 | 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner와 shared workspace scheduler 자동 발송 완료 | 운영 credential 적용 후 실수신 smoke |
-| PRD DB schema | `schema.sql`과 migration 파일은 최신 코드 기준. production 적용 이력에는 미적용 항목 존재 | backup 후 미적용 migration 적용 |
+| PRD DB schema | production DB migration 적용 완료. 최신 image `63a54d5` readiness/public smoke 통과 | Android 실제 기기 smoke |
 | production 접근 | 실제 Web/API 도메인 HTTPS 연결, HTTPS 강제, readiness·CORS public smoke 완료 | Android 실제 기기 smoke |
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
@@ -42,7 +42,7 @@ Last updated: 2026-09-04
 
 목표: real API 연결과 PRD 출시 검증을 막는 backend gap을 먼저 닫는다.
 
-- [ ] production DB에 미적용 migration을 적용한 뒤 최신 backend image를 배포한다.
+- [x] production DB에 미적용 migration을 적용한 뒤 최신 backend image를 배포한다.
 - [ ] Android production build에서 `https://dooitapi.hsng.pe.kr` 기준 login/me, Today 조회·생성·완료, guest 발급·병합을 확인한다.
 - [ ] smoke 결과에 backend commit SHA 또는 image tag, API URL, 적용 migration 범위, 호환성, 실행 테스트를 함께 남긴다.
 
@@ -77,12 +77,12 @@ Last updated: 2026-09-04
 
 목표: 현재 `main`의 API 계약이 production DB schema와 맞도록 미적용 migration을 백업 후 수동 적용한다.
 
-- [ ] production DB backup을 생성하고 gzip 무결성을 확인한다.
-- [ ] `docs/db/MIGRATION_HISTORY.md`의 미적용 migration을 날짜 순서대로 확인한다.
-- [ ] 적용 대상 DB에서 table/column/index/constraint 존재 여부를 먼저 확인한다.
-- [ ] 미적용 migration을 production app 중지 후 수동 적용한다.
-- [ ] app 재기동 후 `/actuator/health/readiness`와 `/api/v1/system/metadata`를 확인한다.
-- [ ] 적용 결과를 `docs/db/MIGRATION_HISTORY.md`에 날짜와 범위만 기록한다.
+- [x] production DB backup을 생성하고 gzip 무결성을 확인한다.
+- [x] `docs/db/MIGRATION_HISTORY.md`의 미적용 migration을 날짜 순서대로 확인한다.
+- [x] 적용 대상 DB에서 table/column/index/constraint 존재 여부를 먼저 확인한다.
+- [x] 미적용 migration을 production app 중지 후 수동 적용한다.
+- [x] app 재기동 후 `/actuator/health/readiness`와 `/api/v1/system/metadata`를 확인한다.
+- [x] 적용 결과를 `docs/db/MIGRATION_HISTORY.md`에 날짜와 범위만 기록한다.
 
 증적:
 

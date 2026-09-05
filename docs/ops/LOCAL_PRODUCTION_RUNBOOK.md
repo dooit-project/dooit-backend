@@ -1,6 +1,6 @@
 # Local PC Production Runbook
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 문서는 이 Mac의 Docker Compose를 Dooit의 단일 production 서버로 사용하고 실제 HTTPS 도메인으로 Android/Web이 접근하는 절차다.
 

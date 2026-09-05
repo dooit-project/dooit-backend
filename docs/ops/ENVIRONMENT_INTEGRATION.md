@@ -1,6 +1,6 @@
 # Dooit Environment Integration
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
@@ -8,7 +8,7 @@ Last updated: 2026-09-04
 
 ## 현재 운영 입력 상태
 
-2026-09-04 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, 실제 도메인 기반 public smoke가 확인됐다. 공개 Web은 `https://dooit.hsng.pe.kr`, 공개 API는 `https://dooitapi.hsng.pe.kr`을 사용한다. `.env`의 `DOOIT_PUBLIC_API_URL`과 `DOOIT_JWT_ISSUER`는 공개 API origin으로, `DOOIT_ALLOWED_ORIGINS`는 공개 Web origin으로 설정한다. `./scripts/check-production-recovery.sh`는 host 내부 readiness 복구를 확인하고, public readiness와 Web CORS preflight는 `./scripts/check-public-production.sh`로 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과와 offsite backup 경로다.
+2026-09-05 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, 실제 도메인 기반 public smoke가 확인됐다. 공개 Web은 `https://dooit.hsng.pe.kr`, 공개 API는 `https://dooitapi.hsng.pe.kr`을 사용한다. `.env`의 `DOOIT_PUBLIC_API_URL`과 `DOOIT_JWT_ISSUER`는 공개 API origin으로, `DOOIT_ALLOWED_ORIGINS`는 공개 Web origin으로 설정한다. production DB migration 적용 후 backend image `63a54d5`가 배포됐고 readiness/public smoke가 통과했다. `./scripts/check-production-recovery.sh`는 host 내부 readiness 복구를 확인하고, public readiness와 Web CORS preflight는 `./scripts/check-public-production.sh`로 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과와 offsite backup 경로다.
 
 전원 정책은 아직 strict production 기준이 아니다. `DOOIT_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`는 macOS 관리자 비밀번호 입력이 필요하므로 운영자 터미널에서 실행한다.
 

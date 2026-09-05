@@ -1,6 +1,6 @@
 # API Error Codes
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 이 문서는 모바일과 운영자가 함께 보는 Dooit v1 API 오류 코드 카탈로그다. 모든 API 오류 응답은 공통 envelope를 사용한다.
 
