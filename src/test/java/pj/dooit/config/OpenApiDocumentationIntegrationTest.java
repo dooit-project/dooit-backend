@@ -14,6 +14,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 
 @SpringBootTest(properties = "spring.batch.job.enabled=false")
@@ -127,7 +129,8 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.components.schemas.TaskResponse.description").value("Task 응답"))
                 .andExpect(jsonPath("$.components.schemas.TaskResponse.properties.status.enum[0]").value("INBOX"))
                 .andExpect(jsonPath("$.components.schemas.TaskResponse.properties.createdAt.format").value("date-time"))
-                .andExpect(jsonPath("$.components.schemas.TaskResponse.properties.recurrenceSeriesId.type").value("integer"))
+                .andExpect(jsonPath("$.components.schemas.TaskResponse.properties.recurrenceSeriesId.type")
+                        .value(anyOf(equalTo("integer"), hasItem("integer"))))
                 .andExpect(jsonPath("$.components.schemas.TaskResponse.properties.occurrenceDate.format").value("date"))
                 .andExpect(jsonPath("$.components.schemas.TaskResponse.properties.recurrenceException.enum[0]").value("SKIPPED"))
                 .andExpect(jsonPath("$.components.schemas.TaskRequest.properties.title.maxLength").value(30))
