@@ -100,9 +100,30 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("### P0. Android production smoke");
         assertThat(roadmap).contains("### P0. host 상시 가용성 검증");
         assertThat(roadmap).contains("### P1. offsite backup 확정");
+        assertThat(roadmap).contains("### P1. production 모니터링 구축");
+        assertThat(roadmap).contains("Prometheus, Grafana, Loki, Grafana Alloy");
         assertThat(roadmap).contains("### P2. 제품 정책 후속 결정");
         assertThat(roadmap).contains("DOOIT_REQUIRE_PUBLIC_API_URL=true");
         assertThat(roadmap).contains("완료 이력은 로드맵에 길게 누적하지 않고");
+    }
+
+    @Test
+    @DisplayName("모니터링 runbook은 private Grafana 기반 운영 구성을 안내한다")
+    void monitoringRunbookDocumentsPrivateObservabilityStack() throws Exception {
+        String docsIndex = Files.readString(Path.of("docs/README.md"));
+        String monitoring = Files.readString(Path.of("docs/ops/MONITORING_RUNBOOK.md"));
+        String environment = Files.readString(Path.of("docs/ops/ENVIRONMENT_INTEGRATION.md"));
+
+        assertThat(docsIndex).contains("ops/MONITORING_RUNBOOK.md");
+        assertThat(monitoring).contains("Prometheus, Grafana, Loki, Grafana Alloy");
+        assertThat(monitoring).contains("Micrometer Prometheus registry");
+        assertThat(monitoring).contains("/actuator/prometheus");
+        assertThat(monitoring).contains("public internet에 직접 노출하지 않는다");
+        assertThat(monitoring).contains("Grafana Alloy");
+        assertThat(monitoring).contains("Promtail 대신");
+        assertThat(monitoring).contains("Grafana anonymous access는 production 기본 비활성");
+        assertThat(environment).contains("MONITORING_RUNBOOK.md");
+        assertThat(environment).contains("/actuator/prometheus");
     }
 
     @Test

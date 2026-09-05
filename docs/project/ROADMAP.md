@@ -33,6 +33,7 @@ Last updated: 2026-09-05
 | production 접근 | 실제 Web/API 도메인 HTTPS 연결, HTTPS 강제, readiness·CORS public smoke 완료 | Android 실제 기기 smoke |
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
+| monitoring | Prometheus, Grafana, Loki, Alloy 구성 계획 수립 | metric endpoint, Compose stack, dashboard, log pipeline 구현 |
 
 ## 2. 제품 기능 로드맵
 
@@ -159,6 +160,26 @@ Last updated: 2026-09-05
 - SHA-256 checksum 일치
 - 임시 DB restore 결과
 
+### P1. production 모니터링 구축
+
+목표: local production의 health, metric, log를 private Grafana에서 한 번에 확인한다.
+
+- [x] Prometheus, Grafana, Loki, Grafana Alloy 기반 1차 구성안을 문서화한다.
+- [ ] `micrometer-registry-prometheus`를 추가하고 `/actuator/prometheus`를 노출한다.
+- [ ] `/actuator/prometheus`가 public API 도메인에 노출되지 않도록 보안 정책을 health와 분리한다.
+- [ ] `docker-compose.yml`에 Prometheus, Loki, Alloy, Grafana service와 volume을 추가한다.
+- [ ] Prometheus scrape config, Alloy log pipeline, Grafana datasource provisioning 파일을 추가한다.
+- [ ] Grafana dashboard에 API latency/error, JVM, HikariCP, app 로그 패널을 구성한다.
+- [ ] monitoring stack 점검 스크립트와 production runbook을 갱신한다.
+- [ ] alerting은 dashboard와 log 수집 안정화 이후 별도 작업으로 진행한다.
+
+증적:
+
+- [`../ops/MONITORING_RUNBOOK.md`](../ops/MONITORING_RUNBOOK.md)
+- `curl --fail http://127.0.0.1:8080/actuator/prometheus`
+- `up{job="dooit-backend"}`
+- Grafana Prometheus/Loki datasource health
+
 ### P1. Expo Web production origin 운영
 
 목표: 공개 Web origin만 production API CORS에 허용하고, origin 변경 시 preflight를 다시 검증한다.
@@ -192,6 +213,7 @@ Last updated: 2026-09-05
 - production DB migration 적용 이력과 수동 migration 관리 방식
 - local production Docker Compose, readiness, rollback, backup/restore, routine/recovery/status report 스크립트
 - API logging masking, UTF-8 response logging, 운영 문서 UI 비공개 기준
+- Prometheus, Grafana, Loki, Alloy 기반 monitoring 구성 계획
 
 관련 문서:
 
@@ -200,6 +222,7 @@ Last updated: 2026-09-05
 - [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md)
 - [`../ops/LOCAL_PRODUCTION_RUNBOOK.md`](../ops/LOCAL_PRODUCTION_RUNBOOK.md)
 - [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)
+- [`../ops/MONITORING_RUNBOOK.md`](../ops/MONITORING_RUNBOOK.md)
 - [`../mobile/MOBILE_API_BACKEND_STATUS.md`](../mobile/MOBILE_API_BACKEND_STATUS.md)
 - [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)
 

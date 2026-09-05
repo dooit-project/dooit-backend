@@ -5,6 +5,7 @@ Last updated: 2026-09-05
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
 이 PC를 단일 production으로 운영하는 실제 명령과 백업·복구 절차는 [`LOCAL_PRODUCTION_RUNBOOK.md`](./LOCAL_PRODUCTION_RUNBOOK.md)를 따른다.
+Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링 구성 계획은 [`MONITORING_RUNBOOK.md`](./MONITORING_RUNBOOK.md)를 따른다.
 
 ## 현재 운영 입력 상태
 
@@ -140,6 +141,8 @@ Redis health indicator는 기본 비활성이다. 게스트 생성 rate limit �
 - `/actuator/health/readiness`: API readiness, DB 연결, schema 상태
 - `/actuator/health/db`: datasource 연결 상태
 - `/actuator/health/schema`: 핵심 table 존재 여부
+
+Prometheus metric endpoint는 아직 production에 적용하지 않았다. 도입 시 `/actuator/prometheus`는 public API 도메인에 직접 노출하지 않고 Docker Compose 내부 scrape 또는 별도 인증 정책으로 제한한다.
 
 ## 6. Production Metadata
 

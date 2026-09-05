@@ -23,7 +23,7 @@ Dooit Backend는 할 일, 일정, D-Day, 반복 계획과 Workspace 협업을 �
 - **검색과 회고** - 제목, 설명, category, D-Day 제목, 반복 여부 검색과 highlight
 - **Workspace 협업** - workspace 생성, 초대, 수락/거절, 멤버 권한, 공유 Task와 D-Day
 - **알림** - 로컬 알림 후보, push token, 발송 이력, Expo push client와 scheduler
-- **운영 안정성** - Docker Compose production, 실제 도메인 HTTPS, readiness health, release/rollback, backup/restore
+- **운영 안정성** - Docker Compose production, 실제 도메인 HTTPS, readiness health, release/rollback, backup/restore, monitoring
 
 ## 모바일 경험을 지탱하는 API
 
@@ -148,6 +148,7 @@ production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Clo
 | [공유 계약](./docs/api/SHARING_CONTRACT.md) | Workspace 권한, scope, 공유 Task/D-Day 정책 |
 | [게스트 운영 적용](./docs/ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md) | 게스트 계약 production 점검 항목 |
 | [로컬 production Runbook](./docs/ops/LOCAL_PRODUCTION_RUNBOOK.md) | Docker Compose production, 백업, 복구, release, rollback |
+| [모니터링 Runbook](./docs/ops/MONITORING_RUNBOOK.md) | Prometheus, Grafana, Loki, Alloy 구성 계획과 구현 작업 |
 | [로드맵](./docs/project/ROADMAP.md) | 아직 닫히지 않은 제품/운영 작업 |
 | [Migration 이력](./docs/db/MIGRATION_HISTORY.md) | Flyway 도입 전 수동 DB migration 적용 이력 |
 
