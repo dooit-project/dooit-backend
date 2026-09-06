@@ -1,6 +1,6 @@
 # Local PC Production Runbook
 
-Last updated: 2026-09-05
+Last updated: 2026-09-06
 
 이 문서는 이 Mac의 Docker Compose를 Dooit의 단일 production 서버로 사용하고 실제 HTTPS 도메인으로 Android/Web이 접근하는 절차다.
 
@@ -206,6 +206,8 @@ docker compose --profile monitoring up -d app prometheus loki alloy grafana
 docker compose --profile monitoring ps
 ./scripts/check-monitoring-stack.sh
 ```
+
+2026-09-06 기준 위 monitoring stack 기동과 점검은 local production에서 통과했다.
 
 local UI:
 

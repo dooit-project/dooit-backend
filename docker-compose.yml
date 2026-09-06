@@ -65,7 +65,7 @@ services:
       DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED: ${DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED:-false}
       DOOIT_MONITORING_ENABLED: ${DOOIT_MONITORING_ENABLED:-false}
       DOOIT_MONITORING_USERNAME: ${DOOIT_MONITORING_USERNAME:-dooit-prometheus}
-      DOOIT_MONITORING_PASSWORD_FILE: ${DOOIT_MONITORING_PASSWORD_FILE:-}
+      DOOIT_MONITORING_PASSWORD_FILE: /run/secrets/dooit-monitoring-password
       DOOIT_APP_VERSION: ${DOOIT_APP_VERSION:-1.0-SNAPSHOT}
       DOOIT_APP_COMMIT_SHA: ${DOOIT_APP_COMMIT_SHA:-local}
       DOOIT_APP_IMAGE_TAG: ${DOOIT_APP_IMAGE_TAG:-local}
@@ -133,12 +133,6 @@ services:
     volumes:
       - ./config/monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
       - dooit-loki-data:/loki
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3100/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
     logging:
       driver: json-file
       options:
@@ -152,7 +146,7 @@ services:
     profiles: ["monitoring"]
     depends_on:
       loki:
-        condition: service_healthy
+        condition: service_started
     command:
       - run
       - --server.http.listen-addr=0.0.0.0:12345
@@ -164,12 +158,6 @@ services:
       - ./config/monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - dooit-alloy-data:/var/lib/alloy/data
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:12345/-/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
     logging:
       driver: json-file
       options:
@@ -185,7 +173,7 @@ services:
       prometheus:
         condition: service_healthy
       loki:
-        condition: service_healthy
+        condition: service_started
     environment:
       GF_SECURITY_ADMIN_USER: ${DOOIT_GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${DOOIT_GRAFANA_ADMIN_PASSWORD:-admin}

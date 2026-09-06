@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-09-05
+Last updated: 2026-09-06
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -33,7 +33,7 @@ Last updated: 2026-09-05
 | production 접근 | 실제 Web/API 도메인 HTTPS 연결, HTTPS 강제, readiness·CORS public smoke 완료 | Android 실제 기기 smoke |
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
-| monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 구현 | monitoring stack 실기동 후 Grafana datasource와 dashboard 확인 |
+| monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
 
 ## 2. 제품 기능 로드맵
 
@@ -171,9 +171,9 @@ Last updated: 2026-09-05
 - [x] Prometheus scrape config, Alloy log pipeline, Grafana datasource provisioning 파일을 추가한다.
 - [x] Grafana dashboard에 API latency/error, JVM, HikariCP, app 로그 패널을 구성한다.
 - [x] monitoring stack 점검 스크립트와 production runbook을 갱신한다.
-- [ ] `DOOIT_MONITORING_PASSWORD_FILE`과 Grafana admin password를 production `.env`에 적용한다.
-- [ ] `docker compose --profile monitoring up -d app prometheus loki alloy grafana`로 실기동한다.
-- [ ] `./scripts/check-monitoring-stack.sh`를 통과시킨다.
+- [x] `DOOIT_MONITORING_PASSWORD_FILE`과 Grafana admin password를 production `.env`에 적용한다.
+- [x] `docker compose --profile monitoring up -d app prometheus loki alloy grafana`로 실기동한다.
+- [x] `./scripts/check-monitoring-stack.sh`를 통과시킨다.
 - [ ] alerting은 dashboard와 log 수집 안정화 이후 별도 작업으로 진행한다.
 
 증적:

@@ -88,6 +88,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(compose).contains("\"127.0.0.1:3100:3100\"");
         assertThat(compose).contains("\"127.0.0.1:3000:3000\"");
         assertThat(compose).contains("DOOIT_MONITORING_PASSWORD_FILE");
+        assertThat(compose).contains("DOOIT_MONITORING_PASSWORD_FILE: /run/secrets/dooit-monitoring-password");
         assertThat(prometheus).contains("job_name: dooit-backend");
         assertThat(prometheus).contains("metrics_path: /actuator/prometheus");
         assertThat(prometheus).contains("password_file: /etc/prometheus/secrets/dooit-monitoring-password");

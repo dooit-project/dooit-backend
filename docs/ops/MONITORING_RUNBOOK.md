@@ -1,6 +1,6 @@
 # Monitoring Runbook
 
-Last updated: 2026-09-05
+Last updated: 2026-09-06
 
 이 문서는 Dooit local production에 Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링을 붙이는 구성과 운영 절차를 정리한다. 실제 secret, 관리자 비밀번호, public/private 관리 URL은 문서에 기록하지 않는다.
 
@@ -25,13 +25,17 @@ Last updated: 2026-09-05
 
 1차 운영에서는 Grafana, Prometheus, Loki, Alloy를 외부 공개하지 않는다. Cloudflare Tunnel에 management UI를 연결해야 할 때는 Cloudflare Access 또는 동등한 인증을 먼저 붙인 뒤 별도 작업으로 진행한다.
 
+## 현재 상태
+
+2026-09-06 기준 monitoring password file과 Grafana admin password를 local production `.env`에 적용했고, `docker compose --profile monitoring up -d app prometheus loki alloy grafana`와 `./scripts/check-monitoring-stack.sh`가 통과했다. Grafana, Prometheus, Loki, Alloy는 host loopback에만 bind되어 있다.
+
 ## 3. 네트워크와 보안 원칙
 
 - app API public endpoint는 기존처럼 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로만 공개한다.
 - Grafana, Prometheus, Loki, Alloy UI는 host loopback bind만 허용한다.
 - Prometheus scrape 대상은 Docker Compose 내부 DNS `app:8080`을 사용한다.
 - `/actuator/prometheus`는 HTTP Basic 인증을 요구한다.
-- Prometheus password는 저장소 밖 password file을 app과 Prometheus container에 함께 mount한다.
+- Prometheus password는 저장소 밖 password file을 app과 Prometheus container에 함께 mount한다. `.env` 값은 host 파일 경로이고, app 내부 환경변수는 `/run/secrets/dooit-monitoring-password`로 고정한다.
 - Spring Security는 health만 public permit을 유지하고, prometheus endpoint는 monitoring credential로 분리한다.
 - Grafana admin password는 `.env` 또는 Docker secret에 두고 저장소에 커밋하지 않는다.
 - app payload logging은 production 기본값 `DOOIT_API_LOGGING_PAYLOAD_ENABLED=false`를 유지한다.

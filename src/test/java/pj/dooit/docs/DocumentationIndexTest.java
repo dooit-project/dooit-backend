@@ -116,6 +116,7 @@ class DocumentationIndexTest {
 
         assertThat(docsIndex).contains("ops/MONITORING_RUNBOOK.md");
         assertThat(monitoring).contains("Prometheus, Grafana, Loki, Grafana Alloy");
+        assertThat(monitoring).contains("2026-09-06 기준");
         assertThat(monitoring).contains("Micrometer Prometheus registry");
         assertThat(monitoring).contains("/actuator/prometheus");
         assertThat(monitoring).contains("HTTP Basic 인증을 요구한다");
