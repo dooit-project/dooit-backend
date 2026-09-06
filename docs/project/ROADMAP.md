@@ -33,7 +33,7 @@ Last updated: 2026-09-05
 | production 접근 | 실제 Web/API 도메인 HTTPS 연결, HTTPS 강제, readiness·CORS public smoke 완료 | Android 실제 기기 smoke |
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
-| monitoring | Prometheus, Grafana, Loki, Alloy 구성 계획 수립 | metric endpoint, Compose stack, dashboard, log pipeline 구현 |
+| monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 구현 | monitoring stack 실기동 후 Grafana datasource와 dashboard 확인 |
 
 ## 2. 제품 기능 로드맵
 
@@ -165,18 +165,21 @@ Last updated: 2026-09-05
 목표: local production의 health, metric, log를 private Grafana에서 한 번에 확인한다.
 
 - [x] Prometheus, Grafana, Loki, Grafana Alloy 기반 1차 구성안을 문서화한다.
-- [ ] `micrometer-registry-prometheus`를 추가하고 `/actuator/prometheus`를 노출한다.
-- [ ] `/actuator/prometheus`가 public API 도메인에 노출되지 않도록 보안 정책을 health와 분리한다.
-- [ ] `docker-compose.yml`에 Prometheus, Loki, Alloy, Grafana service와 volume을 추가한다.
-- [ ] Prometheus scrape config, Alloy log pipeline, Grafana datasource provisioning 파일을 추가한다.
-- [ ] Grafana dashboard에 API latency/error, JVM, HikariCP, app 로그 패널을 구성한다.
-- [ ] monitoring stack 점검 스크립트와 production runbook을 갱신한다.
+- [x] `micrometer-registry-prometheus`를 추가하고 `/actuator/prometheus`를 노출한다.
+- [x] `/actuator/prometheus`가 public API 도메인에 노출되지 않도록 보안 정책을 health와 분리한다.
+- [x] `docker-compose.yml`에 Prometheus, Loki, Alloy, Grafana service와 volume을 추가한다.
+- [x] Prometheus scrape config, Alloy log pipeline, Grafana datasource provisioning 파일을 추가한다.
+- [x] Grafana dashboard에 API latency/error, JVM, HikariCP, app 로그 패널을 구성한다.
+- [x] monitoring stack 점검 스크립트와 production runbook을 갱신한다.
+- [ ] `DOOIT_MONITORING_PASSWORD_FILE`과 Grafana admin password를 production `.env`에 적용한다.
+- [ ] `docker compose --profile monitoring up -d app prometheus loki alloy grafana`로 실기동한다.
+- [ ] `./scripts/check-monitoring-stack.sh`를 통과시킨다.
 - [ ] alerting은 dashboard와 log 수집 안정화 이후 별도 작업으로 진행한다.
 
 증적:
 
 - [`../ops/MONITORING_RUNBOOK.md`](../ops/MONITORING_RUNBOOK.md)
-- `curl --fail http://127.0.0.1:8080/actuator/prometheus`
+- `curl --fail --user "$DOOIT_MONITORING_USERNAME:$(cat "$DOOIT_MONITORING_PASSWORD_FILE")" http://127.0.0.1:8080/actuator/prometheus`
 - `up{job="dooit-backend"}`
 - Grafana Prometheus/Loki datasource health
 

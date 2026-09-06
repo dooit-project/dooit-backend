@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: Dooit
+    orgId: 1
+    folder: Dooit
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

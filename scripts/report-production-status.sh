@@ -4,6 +4,7 @@ set -euo pipefail
 backup_dir=${DOOIT_BACKUP_DIR:-/Users/hyunseung/dooit-backups}
 base_url=${DOOIT_SMOKE_BASE_URL:-http://127.0.0.1:8080}
 public_api_url=${DOOIT_PUBLIC_API_URL:-}
+prometheus_url=${DOOIT_PROMETHEUS_URL:-http://127.0.0.1:9090}
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -78,6 +79,17 @@ if [ -n "$public_api_url" ]; then
   fi
 fi
 
+monitoring=skipped
+if docker compose --profile monitoring ps --status running --services 2>/dev/null | grep -qx prometheus; then
+  monitoring=failed
+  monitoring_query=$(curl --silent --show-error \
+    --data-urlencode 'query=up{job="dooit-backend"}' \
+    "$prometheus_url/api/v1/query" 2>/dev/null || true)
+  if [ -n "$monitoring_query" ] && [ "$(printf '%s' "$monitoring_query" | jq -r '.data.result[0].value[1] // "missing"' 2>/dev/null)" = "1" ]; then
+    monitoring=passed
+  fi
+fi
+
 cat <<EOF
 Production status report.
 backendCommit=$commit_sha
@@ -90,6 +102,7 @@ readiness=$readiness
 routineCheck=$routine
 recoveryCheck=$recovery
 publicProductionCheck=$public_production
+monitoringCheck=$monitoring
 guestRefreshApi=supported
 mergeResultCounts=supported
 EOF

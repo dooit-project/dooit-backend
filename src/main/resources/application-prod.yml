@@ -96,6 +96,12 @@ app:
     daily-summary:
       to: ${DOOIT_DAILY_SUMMARY_TO}
 
+  monitoring:
+    enabled: ${DOOIT_MONITORING_ENABLED:false}
+    username: ${DOOIT_MONITORING_USERNAME:dooit-prometheus}
+    password: ${DOOIT_MONITORING_PASSWORD:}
+    password-file: ${DOOIT_MONITORING_PASSWORD_FILE:}
+
 logging:
   file:
     path: ${DOOIT_LOG_PATH:./logs}

@@ -118,7 +118,8 @@ class DocumentationIndexTest {
         assertThat(monitoring).contains("Prometheus, Grafana, Loki, Grafana Alloy");
         assertThat(monitoring).contains("Micrometer Prometheus registry");
         assertThat(monitoring).contains("/actuator/prometheus");
-        assertThat(monitoring).contains("public internet에 직접 노출하지 않는다");
+        assertThat(monitoring).contains("HTTP Basic 인증을 요구한다");
+        assertThat(monitoring).contains("DOOIT_MONITORING_ENABLED");
         assertThat(monitoring).contains("Grafana Alloy");
         assertThat(monitoring).contains("Promtail 대신");
         assertThat(monitoring).contains("Grafana anonymous access는 production 기본 비활성");

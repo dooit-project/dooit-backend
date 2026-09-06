@@ -63,6 +63,9 @@ services:
       DOOIT_DOCS_PUBLIC_ENABLED: ${DOOIT_DOCS_PUBLIC_ENABLED:-false}
       DOOIT_SPRINGDOC_API_DOCS_ENABLED: ${DOOIT_SPRINGDOC_API_DOCS_ENABLED:-false}
       DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED: ${DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED:-false}
+      DOOIT_MONITORING_ENABLED: ${DOOIT_MONITORING_ENABLED:-false}
+      DOOIT_MONITORING_USERNAME: ${DOOIT_MONITORING_USERNAME:-dooit-prometheus}
+      DOOIT_MONITORING_PASSWORD_FILE: ${DOOIT_MONITORING_PASSWORD_FILE:-}
       DOOIT_APP_VERSION: ${DOOIT_APP_VERSION:-1.0-SNAPSHOT}
       DOOIT_APP_COMMIT_SHA: ${DOOIT_APP_COMMIT_SHA:-local}
       DOOIT_APP_IMAGE_TAG: ${DOOIT_APP_IMAGE_TAG:-local}
@@ -74,6 +77,7 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - dooit-app-logs:/app/logs
+      - ${DOOIT_MONITORING_PASSWORD_FILE:-/dev/null}:/run/secrets/dooit-monitoring-password:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health/readiness >/dev/null"]
       interval: 10s
@@ -86,9 +90,137 @@ services:
         max-size: "10m"
         max-file: "5"
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dooit-prometheus
+    restart: unless-stopped
+    profiles: ["monitoring"]
+    depends_on:
+      app:
+        condition: service_healthy
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${DOOIT_PROMETHEUS_RETENTION:-15d}
+      - --web.enable-lifecycle
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./config/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${DOOIT_MONITORING_PASSWORD_FILE:-/dev/null}:/etc/prometheus/secrets/dooit-monitoring-password:ro
+      - dooit-prometheus-data:/prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: dooit-loki
+    restart: unless-stopped
+    profiles: ["monitoring"]
+    command:
+      - -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ./config/monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - dooit-loki-data:/loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: dooit-alloy
+    restart: unless-stopped
+    profiles: ["monitoring"]
+    depends_on:
+      loki:
+        condition: service_healthy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports:
+      - "127.0.0.1:12345:12345"
+    volumes:
+      - ./config/monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dooit-alloy-data:/var/lib/alloy/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:12345/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dooit-grafana
+    restart: unless-stopped
+    profiles: ["monitoring"]
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${DOOIT_GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${DOOIT_GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: ${DOOIT_GRAFANA_ROOT_URL:-http://127.0.0.1:3000}
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./config/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - dooit-grafana-data:/var/lib/grafana
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
 volumes:
   dooit-mysql-data:
     external: true
     name: dooit-mysql-data
   dooit-app-logs:
     name: dooit-app-logs
+  dooit-prometheus-data:
+    name: dooit-prometheus-data
+  dooit-loki-data:
+    name: dooit-loki-data
+  dooit-alloy-data:
+    name: dooit-alloy-data
+  dooit-grafana-data:
+    name: dooit-grafana-data

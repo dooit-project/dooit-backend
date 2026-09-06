@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
         AuthJwtProperties.class,
         DocumentationProperties.class,
         GuestAccountRateLimitProperties.class,
+        MonitoringProperties.class,
         PasswordResetProperties.class,
         RefreshTokenProperties.class
 })
@@ -49,11 +50,16 @@ public class SecurityConfig {
             "/actuator/health/**"
     };
 
+    static final String[] ACTUATOR_PROMETHEUS_MATCHERS = {
+            "/actuator/prometheus"
+    };
+
     static final String[] NON_API_PUBLIC_MATCHERS = ACTUATOR_HEALTH_MATCHERS;
 
     private final ApiAuthenticationEntryPoint apiAuthenticationEntryPoint;
     private final ApiAccessDeniedHandler apiAccessDeniedHandler;
     private final DocumentationProperties documentationProperties;
+    private final MonitoringProperties monitoringProperties;
 
     @Bean
     @Order(1)
@@ -87,6 +93,25 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
+    public SecurityFilterChain monitoringSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher(ACTUATOR_PROMETHEUS_MATCHERS)
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationManager(new MonitoringAuthenticationManager(monitoringProperties))
+                .httpBasic(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> {
+                    if (monitoringProperties.enabled()) {
+                        auth.anyRequest().hasRole("MONITORING");
+                    } else {
+                        auth.anyRequest().denyAll();
+                    }
+                })
+                .build();
+    }
+
+    @Bean
+    @Order(3)
     public SecurityFilterChain nonApiSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())

@@ -8,7 +8,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SecurityConfigTest {
 
-    SecurityConfig securityConfig = new SecurityConfig(null, null, new DocumentationProperties(true));
+    SecurityConfig securityConfig = new SecurityConfig(
+            null,
+            null,
+            new DocumentationProperties(true),
+            new MonitoringProperties(false, "dooit-prometheus", null, null)
+    );
 
     @Test
     @DisplayName("BCrypt PasswordEncoder를 제공한다")
@@ -37,5 +42,9 @@ class SecurityConfigTest {
                 .contains("/actuator/health", "/actuator/health/**");
         assertThat(SecurityConfig.NON_API_PUBLIC_MATCHERS)
                 .contains(SecurityConfig.ACTUATOR_HEALTH_MATCHERS);
+        assertThat(SecurityConfig.NON_API_PUBLIC_MATCHERS)
+                .doesNotContain(SecurityConfig.ACTUATOR_PROMETHEUS_MATCHERS);
+        assertThat(SecurityConfig.ACTUATOR_PROMETHEUS_MATCHERS)
+                .contains("/actuator/prometheus");
     }
 }

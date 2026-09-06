@@ -59,7 +59,7 @@ class ProductionHealthCheckConfigurationTest {
     void actuatorReadinessIncludesDatabaseAndSchema() throws Exception {
         String application = Files.readString(Path.of("src/main/resources/application.yml"));
 
-        assertThat(application).contains("include: health");
+        assertThat(application).contains("include: health,prometheus");
         assertThat(application).contains("show-components: always");
         assertThat(application).contains("validate-group-membership: false");
         assertThat(application).contains("readiness:");
@@ -68,6 +68,35 @@ class ProductionHealthCheckConfigurationTest {
                 .contains("CALENDAR_FEED_TOKEN")
                 .contains("PASSWORD_RESET_TOKEN")
                 .contains("IDEMPOTENCY_RECORD");
+    }
+
+    @Test
+    @DisplayName("Compose monitoring profile은 Prometheus, Loki, Alloy, Grafana를 private loopback으로 구성한다")
+    void composeMonitoringProfileConfiguresPrivateObservabilityStack() throws Exception {
+        String compose = Files.readString(Path.of("docker-compose.yml"));
+        String prometheus = Files.readString(Path.of("config/monitoring/prometheus/prometheus.yml"));
+        String alloy = Files.readString(Path.of("config/monitoring/alloy/config.alloy"));
+        String datasource = Files.readString(Path.of("config/monitoring/grafana/provisioning/datasources/datasources.yml"));
+        String script = Files.readString(Path.of("scripts/check-monitoring-stack.sh"));
+
+        assertThat(compose).contains("profiles: [\"monitoring\"]");
+        assertThat(compose).contains("prom/prometheus:latest");
+        assertThat(compose).contains("grafana/loki:latest");
+        assertThat(compose).contains("grafana/alloy:latest");
+        assertThat(compose).contains("grafana/grafana:latest");
+        assertThat(compose).contains("\"127.0.0.1:9090:9090\"");
+        assertThat(compose).contains("\"127.0.0.1:3100:3100\"");
+        assertThat(compose).contains("\"127.0.0.1:3000:3000\"");
+        assertThat(compose).contains("DOOIT_MONITORING_PASSWORD_FILE");
+        assertThat(prometheus).contains("job_name: dooit-backend");
+        assertThat(prometheus).contains("metrics_path: /actuator/prometheus");
+        assertThat(prometheus).contains("password_file: /etc/prometheus/secrets/dooit-monitoring-password");
+        assertThat(alloy).contains("loki.source.docker");
+        assertThat(alloy).contains("compose_service");
+        assertThat(datasource).contains("url: http://prometheus:9090");
+        assertThat(datasource).contains("url: http://loki:3100");
+        assertThat(script).contains("up{job=\"dooit-backend\"}");
+        assertThat(script).contains("jq -r");
     }
 
     @Test
@@ -107,6 +136,7 @@ class ProductionHealthCheckConfigurationTest {
         assertThat(routine).contains("./scripts/check-production-env.sh");
         assertThat(report).contains("backendCommit=");
         assertThat(report).contains("publicProductionCheck=");
+        assertThat(report).contains("monitoringCheck=");
         assertThat(report).contains("guestRefreshApi=supported");
         assertThat(report).contains("mergeResultCounts=supported");
         assertThat(report).doesNotContain("check-tailscale-production.sh");

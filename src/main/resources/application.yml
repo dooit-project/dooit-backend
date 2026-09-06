@@ -65,6 +65,12 @@ app:
     scheduler:
       enabled: false
 
+  monitoring:
+    enabled: false
+    username: dooit-prometheus
+    password:
+    password-file:
+
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -80,7 +86,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus
   endpoint:
     health:
       validate-group-membership: false

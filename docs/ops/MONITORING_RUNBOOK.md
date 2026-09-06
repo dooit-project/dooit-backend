@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-05
 
-이 문서는 Dooit local production에 Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링을 붙이기 위한 목표 구성과 구현 작업을 정리한다. 실제 secret, 관리자 비밀번호, public/private 관리 URL은 문서에 기록하지 않는다.
+이 문서는 Dooit local production에 Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링을 붙이는 구성과 운영 절차를 정리한다. 실제 secret, 관리자 비밀번호, public/private 관리 URL은 문서에 기록하지 않는다.
 
 ## 1. 목표
 
@@ -19,7 +19,7 @@ Last updated: 2026-09-05
 | Spring Boot Actuator | health와 metric endpoint 제공 | app container |
 | Micrometer Prometheus registry | `/actuator/prometheus` scrape 형식 제공 | app dependency |
 | Prometheus | app metric scrape와 단기 보관 | Compose service, `127.0.0.1:9090` |
-| Loki | 로그 저장과 LogQL 조회 | Compose service, 내부 network 중심 |
+| Loki | 로그 저장과 LogQL 조회 | Compose service, `127.0.0.1:3100` |
 | Grafana Alloy | Docker log 또는 app log file 수집 후 Loki 전송 | Compose service |
 | Grafana | Prometheus/Loki datasource와 dashboard UI | Compose service, `127.0.0.1:3000` |
 
@@ -30,8 +30,9 @@ Last updated: 2026-09-05
 - app API public endpoint는 기존처럼 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로만 공개한다.
 - Grafana, Prometheus, Loki, Alloy UI는 host loopback bind만 허용한다.
 - Prometheus scrape 대상은 Docker Compose 내부 DNS `app:8080`을 사용한다.
-- `/actuator/prometheus`는 public internet에 직접 노출하지 않는다.
-- Spring Security는 health만 public permit을 유지하고, prometheus endpoint는 내부 scrape만 허용하는 정책을 둔다.
+- `/actuator/prometheus`는 HTTP Basic 인증을 요구한다.
+- Prometheus password는 저장소 밖 password file을 app과 Prometheus container에 함께 mount한다.
+- Spring Security는 health만 public permit을 유지하고, prometheus endpoint는 monitoring credential로 분리한다.
 - Grafana admin password는 `.env` 또는 Docker secret에 두고 저장소에 커밋하지 않는다.
 - app payload logging은 production 기본값 `DOOIT_API_LOGGING_PAYLOAD_ENABLED=false`를 유지한다.
 
@@ -39,42 +40,43 @@ Last updated: 2026-09-05
 
 ### B0. Spring metric endpoint
 
-- [ ] `build.gradle`에 `io.micrometer:micrometer-registry-prometheus`를 추가한다.
-- [ ] `application.yml`의 Actuator exposure에 `prometheus`를 추가하되 production 보안 정책을 함께 반영한다.
-- [ ] `application-prod.yml`에서 Prometheus 노출 여부를 `DOOIT_ACTUATOR_PROMETHEUS_ENABLED` 같은 환경변수로 제어할지 결정한다.
-- [ ] `SecurityConfig`에서 `/actuator/prometheus` 접근 정책을 health와 분리한다.
-- [ ] OpenAPI 문서 공개 정책과 달리 metric endpoint는 API 계약 문서에 포함하지 않는다.
+- [x] `build.gradle`에 `io.micrometer:micrometer-registry-prometheus`를 추가한다.
+- [x] `application.yml`의 Actuator exposure에 `prometheus`를 추가하고 production 보안 정책을 함께 반영한다.
+- [x] `application-prod.yml`에서 Prometheus 인증 여부를 `DOOIT_MONITORING_ENABLED`로 제어한다.
+- [x] `SecurityConfig`에서 `/actuator/prometheus` 접근 정책을 health와 분리한다.
+- [x] OpenAPI 문서 공개 정책과 달리 metric endpoint는 API 계약 문서에 포함하지 않는다.
 
 검증:
 
 ```bash
 ./gradlew test
-curl --fail http://127.0.0.1:8080/actuator/prometheus
+curl --fail --user "$DOOIT_MONITORING_USERNAME:$(cat "$DOOIT_MONITORING_PASSWORD_FILE")" \
+  http://127.0.0.1:8080/actuator/prometheus
 ```
 
 ### B1. Compose monitoring stack
 
-- [ ] `docker-compose.yml`에 `prometheus`, `loki`, `alloy`, `grafana` service를 추가한다.
-- [ ] Prometheus data volume을 추가하고 retention 기간을 15일 또는 30일로 제한한다.
-- [ ] Loki data volume을 추가하고 local filesystem 저장소를 사용한다.
-- [ ] Grafana data volume을 추가한다.
-- [ ] Grafana, Prometheus, Alloy UI port는 `127.0.0.1`에만 bind한다.
-- [ ] Loki port는 Grafana/Alloy 내부 통신만 필요하면 host에 bind하지 않는다.
+- [x] `docker-compose.yml`에 `prometheus`, `loki`, `alloy`, `grafana` service를 추가한다.
+- [x] Prometheus data volume을 추가하고 retention 기간을 기본 15일로 제한한다.
+- [x] Loki data volume을 추가하고 local filesystem 저장소를 사용한다.
+- [x] Grafana data volume을 추가한다.
+- [x] Grafana, Prometheus, Loki, Alloy UI port는 `127.0.0.1`에만 bind한다.
+- [x] monitoring service는 `monitoring` Compose profile로 분리한다.
 
 검증:
 
 ```bash
 docker compose config
-docker compose up -d prometheus loki alloy grafana
+docker compose --profile monitoring up -d app prometheus loki alloy grafana
 docker compose ps
 ```
 
 ### B2. Prometheus scrape config
 
-- [ ] `config/monitoring/prometheus/prometheus.yml`을 추가한다.
-- [ ] scrape target은 `app:8080`, metrics path는 `/actuator/prometheus`로 둔다.
-- [ ] scrape interval은 15초 또는 30초로 시작한다.
-- [ ] Prometheus 자체 metric도 함께 scrape한다.
+- [x] `config/monitoring/prometheus/prometheus.yml`을 추가한다.
+- [x] scrape target은 `app:8080`, metrics path는 `/actuator/prometheus`로 둔다.
+- [x] scrape interval은 15초로 시작한다.
+- [x] Prometheus 자체 metric도 함께 scrape한다.
 
 핵심 확인 metric:
 
@@ -86,10 +88,10 @@ docker compose ps
 
 ### B3. Loki와 Alloy log pipeline
 
-- [ ] 새 구성에서는 Promtail 대신 Grafana Alloy를 사용한다.
-- [ ] 1차는 Docker socket 기반 container log 수집으로 시작한다.
-- [ ] label은 `compose_project`, `compose_service`, `container`, `env` 정도만 둔다.
-- [ ] app log의 `requestId`는 line parsing으로 추출할 수 있으면 label이 아니라 parsed field로 유지한다.
+- [x] 새 구성에서는 Promtail 대신 Grafana Alloy를 사용한다.
+- [x] 1차는 Docker socket 기반 container log 수집으로 시작한다.
+- [x] label은 `compose_project`, `compose_service`, `container`, `env` 정도만 둔다.
+- [x] app log의 `requestId`는 line parsing으로 추출할 수 있으면 label이 아니라 parsed field로 유지한다.
 - [ ] noisy health check 로그가 과도하면 Alloy process stage에서 drop 여부를 결정한다.
 
 기본 조회:
@@ -103,11 +105,11 @@ docker compose ps
 
 ### B4. Grafana provisioning
 
-- [ ] `config/monitoring/grafana/provisioning/datasources`에 Prometheus와 Loki datasource를 추가한다.
-- [ ] Prometheus URL은 `http://prometheus:9090`, Loki URL은 `http://loki:3100`을 사용한다.
-- [ ] dashboard provisioning 디렉터리를 추가한다.
-- [ ] 1차 dashboard는 JVM/HTTP/DB/Container health 중심으로 만든다.
-- [ ] Grafana anonymous access는 production 기본 비활성으로 둔다.
+- [x] `config/monitoring/grafana/provisioning/datasources`에 Prometheus와 Loki datasource를 추가한다.
+- [x] Prometheus URL은 `http://prometheus:9090`, Loki URL은 `http://loki:3100`을 사용한다.
+- [x] dashboard provisioning 디렉터리를 추가한다.
+- [x] 1차 dashboard는 JVM/HTTP/DB/Container health 중심으로 만든다.
+- [x] Grafana anonymous access는 production 기본 비활성으로 둔다.
 
 1차 dashboard panel:
 
@@ -120,8 +122,8 @@ docker compose ps
 
 ### B5. 운영 스크립트와 문서
 
-- [ ] `scripts/check-monitoring-stack.sh`를 추가해 Prometheus, Loki, Grafana datasource health를 점검한다.
-- [ ] `scripts/report-production-status.sh`에 monitoring endpoint 요약을 포함할지 결정한다.
+- [x] `scripts/check-monitoring-stack.sh`를 추가해 Prometheus, Loki, Grafana datasource health를 점검한다.
+- [x] `scripts/report-production-status.sh`에 monitoring endpoint 요약을 포함한다.
 - [ ] `docs/ops/LOCAL_PRODUCTION_RUNBOOK.md`에 monitoring 기동과 장애 확인 순서를 추가한다.
 - [ ] `docs/project/ROADMAP.md`에서 monitoring 구축 작업을 완료 상태로 갱신한다.
 
@@ -131,7 +133,9 @@ docker compose ps
 docker compose ps
 curl --fail http://127.0.0.1:8080/actuator/health/readiness
 curl --fail http://127.0.0.1:9090/-/ready
+curl --fail http://127.0.0.1:3100/ready
 curl --fail http://127.0.0.1:3000/api/health
+./scripts/check-monitoring-stack.sh
 ```
 
 Grafana에서 확인한다.

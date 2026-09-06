@@ -178,6 +178,44 @@ DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh
 - 실제 도메인 host smoke는 통과하지만 Android 실패: Android 네트워크, production API URL, 앱 빌드 설정을 확인한다.
 - PC 절전·종료 중에는 앱을 사용할 수 없다. 상시 사용하려면 전원 연결 시 절전 정책을 별도로 정한다.
 
+## 8. 모니터링
+
+Prometheus, Grafana, Loki, Grafana Alloy 기반 monitoring stack은 `monitoring` Compose profile로 실행한다. 실제 password는 저장소 밖 파일에 저장하고, `.env`의 `DOOIT_MONITORING_PASSWORD_FILE`에 절대 경로만 둔다.
+
+최초 준비:
+
+```bash
+mkdir -p /Users/hyunseung/dooit-secrets
+openssl rand -base64 48 > /Users/hyunseung/dooit-secrets/monitoring-password
+chmod 600 /Users/hyunseung/dooit-secrets/monitoring-password
+```
+
+`.env`에서 아래 값을 설정한다.
+
+```bash
+DOOIT_MONITORING_ENABLED=true
+DOOIT_MONITORING_USERNAME=dooit-prometheus
+DOOIT_MONITORING_PASSWORD_FILE=/Users/hyunseung/dooit-secrets/monitoring-password
+DOOIT_GRAFANA_ADMIN_PASSWORD=<저장소 밖에서 관리하는 값>
+```
+
+기동과 점검:
+
+```bash
+docker compose --profile monitoring up -d app prometheus loki alloy grafana
+docker compose --profile monitoring ps
+./scripts/check-monitoring-stack.sh
+```
+
+local UI:
+
+- Grafana: `http://127.0.0.1:3000`
+- Prometheus: `http://127.0.0.1:9090`
+- Loki: `http://127.0.0.1:3100`
+- Alloy: `http://127.0.0.1:12345`
+
+Grafana, Prometheus, Loki, Alloy는 외부 public domain에 연결하지 않는다. 원격에서 봐야 하면 Cloudflare Access 또는 동등한 인증 앞단을 별도 작업으로 구성한다.
+
 ### 로그 인코딩 깨짐
 
 `responseBody` 로그에서 `서버 오류가 발생했습니다.`가 `ìë² ì¤ë¥...`처럼 보이면 UTF-8 바이트를 Latin-1 계열 문자셋으로 잘못 읽은 상태다. `db52d6c` 이후 app은 API response logging 전에 response character encoding을 UTF-8로 고정한다.
@@ -189,7 +227,7 @@ DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh
 3. 새 로그도 깨지면 Docker log viewer, terminal locale, 로그 수집기의 문자셋이 UTF-8인지 확인한다.
 4. 같은 request id로 app exception과 response envelope를 함께 확인하되 access token, 비밀번호, DB 비밀번호는 공유하지 않는다.
 
-## 8. 월간 운영 점검
+## 9. 월간 운영 점검
 
 월 1회 또는 release 후 아래 점검을 실행한다.
 
@@ -200,6 +238,7 @@ DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh
 ./scripts/check-production-recovery.sh
 ./scripts/check-production-routine.sh
 ./scripts/report-production-status.sh
+./scripts/check-monitoring-stack.sh
 DOOIT_OFFSITE_BACKUP_DIR=/absolute/offsite/path ./scripts/check-production-routine.sh
 DOOIT_MIN_FREE_GB=20 DOOIT_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-routine.sh
 ```
@@ -218,11 +257,12 @@ DOOIT_MIN_FREE_GB=20 DOOIT_MAX_BACKUP_AGE_HOURS=30 ./scripts/check-production-ro
 - AC 전원 sleep/disksleep/powernap 설정
 - app/mysql container running 상태
 - `/actuator/health/readiness` `UP`
+- monitoring stack running 상태와 Prometheus target `UP`
 - 완료 보고용 backend commit, image tag, backup, readiness, routine/recovery 상태
 
 임시 DB restore 연습은 schema 변경 release나 월간 점검 때 별도 임시 MySQL container/volume에서 수행한다. 현재 production DB를 직접 덮어쓰는 restore는 장애 복구 상황에서만 `DOOIT_CONFIRM_RESTORE=RESTORE`와 함께 실행한다.
 
-## 9. 장애 리허설
+## 10. 장애 리허설
 
 비파괴 리허설은 아래 명령으로 실행한다.
 

@@ -10,12 +10,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
         "spring.batch.job.enabled=false",
-        "app.docs.public-enabled=false"
+        "app.docs.public-enabled=false",
+        "app.monitoring.enabled=true",
+        "app.monitoring.username=dooit-prometheus",
+        "app.monitoring.password=test-monitoring-password"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -47,6 +51,21 @@ class DocumentationSecurityIntegrationTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/actuator/health/readiness"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Prometheus actuator endpoint는 모니터링 인증을 요구한다")
+    void prometheusEndpointRequiresMonitoringCredentials() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/actuator/prometheus")
+                        .with(httpBasic("dooit-prometheus", "wrong-password")))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/actuator/prometheus")
+                        .with(httpBasic("dooit-prometheus", "test-monitoring-password")))
                 .andExpect(status().isOk());
     }
 
