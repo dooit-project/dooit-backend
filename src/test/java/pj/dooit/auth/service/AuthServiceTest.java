@@ -1,6 +1,7 @@
 package pj.dooit.auth.service;
 
 import pj.dooit.auth.config.RefreshTokenProperties;
+import pj.dooit.Constant;
 import pj.dooit.auth.dto.LoginRequest;
 import pj.dooit.auth.dto.RegisterRequest;
 import pj.dooit.auth.dto.TokenResponse;
@@ -72,6 +73,10 @@ class AuthServiceTest {
     );
 
     AuthService authService;
+
+    private static LocalDateTime validGuestExpiresAt() {
+        return LocalDateTime.now(Constant.ZONE).plusDays(31);
+    }
 
     @BeforeEach
     void setUp() {
@@ -150,7 +155,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("게스트 token 갱신은 같은 사용자 id의 새 게스트 token을 반환하고 만료 시각을 연장한다")
     void refreshGuest_success() {
-        User guest = User.guest(LocalDateTime.of(2026, 9, 9, 0, 0));
+        User guest = User.guest(validGuestExpiresAt());
         org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 10L);
         JwtTokenService.AccessToken accessToken = new JwtTokenService.AccessToken(
                 "refreshed-guest-token",
@@ -199,7 +204,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("게스트 회원가입 승격은 같은 사용자 id를 유지하고 정식 token을 반환한다")
     void promoteGuest_success() {
-        User guest = User.guest(LocalDateTime.of(2026, 9, 9, 0, 0));
+        User guest = User.guest(validGuestExpiresAt());
         org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 10L);
         RegisterRequest request = new RegisterRequest(" TEST@Example.COM ", "password123", "테스터");
         JwtTokenService.AccessToken accessToken = new JwtTokenService.AccessToken(

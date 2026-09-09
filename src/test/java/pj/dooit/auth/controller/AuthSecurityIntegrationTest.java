@@ -1,6 +1,7 @@
 package pj.dooit.auth.controller;
 
 import pj.dooit.auth.security.ApiAccessDeniedHandler;
+import pj.dooit.Constant;
 import pj.dooit.auth.dto.LoginRequest;
 import pj.dooit.auth.dto.RegisterRequest;
 import pj.dooit.auth.dto.RefreshRequest;
@@ -95,6 +96,10 @@ class AuthSecurityIntegrationTest {
     @MockitoBean
     MailService mailService;
 
+    private static java.time.LocalDateTime validGuestExpiresAt() {
+        return java.time.LocalDateTime.now(Constant.ZONE).plusDays(31);
+    }
+
     @BeforeEach
     void setUp() {
         calendarFeedTokenRepository.deleteAll();
@@ -128,7 +133,7 @@ class AuthSecurityIntegrationTest {
     @Test
     @DisplayName("내 인증 정보 조회 성공 - 게스트 Bearer 토큰이면 GUEST 계정 정보를 반환한다")
     void me_guestSuccess() throws Exception {
-        User user = userRepository.save(User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0)));
+        User user = userRepository.save(User.guest(validGuestExpiresAt()));
         String accessToken = jwtTokenService.createGuestAccessToken(user).tokenValue();
 
         mockMvc.perform(get("/api/v1/auth/me")
@@ -270,7 +275,7 @@ class AuthSecurityIntegrationTest {
                 passwordEncoder.encode("password123"),
                 "정식 사용자"
         ));
-        User guest = userRepository.save(User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0)));
+        User guest = userRepository.save(User.guest(validGuestExpiresAt()));
         DdayGoal ddayGoal = ddayGoalRepository.save(new DdayGoal(
                 "게스트 목표",
                 java.time.LocalDate.of(2026, 12, 31),
@@ -357,7 +362,7 @@ class AuthSecurityIntegrationTest {
                 passwordEncoder.encode("password123"),
                 "정식 사용자"
         ));
-        User guest = userRepository.save(User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0)));
+        User guest = userRepository.save(User.guest(validGuestExpiresAt()));
         Task task = taskRepository.save(Task.builder()
                 .title("재시도 게스트 할 일")
                 .type(TaskType.TODO)
@@ -399,7 +404,7 @@ class AuthSecurityIntegrationTest {
                 passwordEncoder.encode("password123"),
                 "정식 사용자"
         ));
-        User guest = userRepository.save(User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0)));
+        User guest = userRepository.save(User.guest(validGuestExpiresAt()));
         Task task = taskRepository.save(Task.builder()
                 .title("게스트 할 일")
                 .type(TaskType.TODO)

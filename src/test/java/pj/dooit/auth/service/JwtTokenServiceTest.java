@@ -57,7 +57,7 @@ class JwtTokenServiceTest {
         JwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(secretKey).build();
         AuthJwtProperties properties = new AuthJwtProperties("https://dooit.test", secret, Duration.ofHours(1), Duration.ofDays(31));
         JwtTokenService jwtTokenService = new JwtTokenService(jwtEncoder, properties);
-        User user = User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0));
+        User user = User.guest(java.time.LocalDateTime.now(pj.dooit.Constant.ZONE).plusDays(31));
         ReflectionTestUtils.setField(user, "id", 8L);
 
         JwtTokenService.AccessToken accessToken = jwtTokenService.createGuestAccessToken(user);

@@ -56,7 +56,7 @@ class CurrentUserServiceTest {
     @DisplayName("병합 완료된 게스트 사용자는 기존 token으로 인증할 수 없다")
     void requireUser_fail_mergedGuest() {
         CurrentUserService service = new CurrentUserService(userRepository);
-        User guest = User.guest(java.time.LocalDateTime.of(2026, 9, 9, 0, 0));
+        User guest = User.guest(java.time.LocalDateTime.now(pj.dooit.Constant.ZONE).plusDays(31));
         org.springframework.test.util.ReflectionTestUtils.setField(guest, "id", 1L);
         User target = new User("target@example.com", "encoded-password", "Target");
         org.springframework.test.util.ReflectionTestUtils.setField(target, "id", 2L);
