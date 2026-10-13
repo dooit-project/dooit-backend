@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-09-06
+Last updated: 2026-10-12
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -34,6 +34,7 @@ Last updated: 2026-09-06
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 | monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
+| 시스템·실천 증거 | 신규 개발 요청 접수. 계약/로드맵 초안 문서화 완료 | 프론트와 미결정 정책 합의 후 DTO/OpenAPI/migration 구현 |
 
 ## 2. 제품 기능 로드맵
 
@@ -63,6 +64,22 @@ Last updated: 2026-09-06
 - [ ] production Expo push credential을 `.env`에 적용한다.
 - [ ] 개인 Task와 workspace Task 알림이 중복 없이 수신되는지 실기기에서 확인한다.
 - [ ] provider 실패 응답이 invalid token 비활성화와 history 기록으로 남는지 운영 로그에서 확인한다.
+
+### P1. 시스템·실천 증거 1차
+
+목표: "원하는 방향 -> 시스템 하나 -> 오늘 실천 -> 일주일의 증거 -> 시스템 조정" 흐름을 개인 사용자 범위로 제공한다. 계약은 [`../api/PERSONAL_SYSTEM_CONTRACT.md`](../api/PERSONAL_SYSTEM_CONTRACT.md)를 원본으로 둔다.
+
+- [x] 기존 반복 Task, Daily Plan, 알림 계약과 충돌 지점을 확인하고 신규 원본 모델 초안을 정리한다.
+- [ ] 프론트와 active 시스템 개수, 필드 길이, result 취소 방식, Task 직접 완료 시 `UNKNOWN` 처리, 기본 주간 범위를 합의한다.
+- [x] DTO, enum, validation, 오류 코드, OpenAPI 예시를 1차 확정한다.
+- [x] `PERSONAL_SYSTEM`, `PERSONAL_SYSTEM_VERSION`, `PERSONAL_SYSTEM_OCCURRENCE`, `PERSONAL_SYSTEM_PRACTICE_RESULT` migration을 추가한다.
+- [x] 시스템 생성, 목록/상세, 수정, 일시정지, 재개, 종료 API를 구현한다.
+- [x] 기간별 회차 materialize와 중복 방지, version snapshot 보존을 구현한다.
+- [x] 실천, 휴식, 취소를 구현한다. 연결 Task 완료/재개 transaction은 Task hook 구현 시 추가한다.
+- [x] AI 없이 동작하는 증거 조회와 주간 집계를 구현한다.
+- [x] 회차별 로컬 알림 key와 예정 시각 후보를 제공한다.
+- [ ] 연결 Task 자동 생성과 Task 직접 완료/재개 hook을 구현한다.
+- [ ] AI 시스템 초안, 회고, 조정 초안을 CRUD와 장애 격리해 순차 구현한다.
 
 ### P2. 제품 정책 후속 결정
 
@@ -223,6 +240,7 @@ Last updated: 2026-09-06
 - [`../api/API_V1_FRONTEND.md`](../api/API_V1_FRONTEND.md)
 - [`../api/AUTH_CONTRACT.md`](../api/AUTH_CONTRACT.md)
 - [`../api/GUEST_ACCOUNT_HANDOFF.md`](../api/GUEST_ACCOUNT_HANDOFF.md)
+- [`../api/PERSONAL_SYSTEM_CONTRACT.md`](../api/PERSONAL_SYSTEM_CONTRACT.md)
 - [`../ops/LOCAL_PRODUCTION_RUNBOOK.md`](../ops/LOCAL_PRODUCTION_RUNBOOK.md)
 - [`../ops/ENVIRONMENT_INTEGRATION.md`](../ops/ENVIRONMENT_INTEGRATION.md)
 - [`../ops/MONITORING_RUNBOOK.md`](../ops/MONITORING_RUNBOOK.md)

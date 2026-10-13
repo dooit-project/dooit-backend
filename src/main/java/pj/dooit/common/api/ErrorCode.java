@@ -42,6 +42,11 @@ public enum ErrorCode {
     WORKSPACE_NOT_FOUND(HttpStatus.NOT_FOUND, 50001, "공유 workspace를 찾을 수 없습니다."),
     WORKSPACE_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 50002, "공유 workspace 멤버를 찾을 수 없습니다."),
 
+    // Personal System
+    PERSONAL_SYSTEM_NOT_FOUND(HttpStatus.NOT_FOUND, 60001, "개인 시스템을 찾을 수 없습니다."),
+    PERSONAL_SYSTEM_OCCURRENCE_NOT_FOUND(HttpStatus.NOT_FOUND, 60002, "개인 시스템 회차를 찾을 수 없습니다."),
+    PERSONAL_SYSTEM_CONFLICT(HttpStatus.CONFLICT, 60003, "개인 시스템 회차가 변경되었습니다. 새로고침 후 다시 시도해주세요."),
+
     // 서버 내부 오류
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 99999, "서버 오류가 발생했습니다.");
 

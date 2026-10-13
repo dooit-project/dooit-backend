@@ -14,6 +14,7 @@ class DocumentationIndexTest {
     private static final List<DocumentLink> FRONTEND_DOCS = List.of(
             new DocumentLink("docs/api/API_V1_FRONTEND.md", "api/API_V1_FRONTEND.md"),
             new DocumentLink("docs/api/DAILY_PLANNING_CONTRACT.md", "api/DAILY_PLANNING_CONTRACT.md"),
+            new DocumentLink("docs/api/PERSONAL_SYSTEM_CONTRACT.md", "api/PERSONAL_SYSTEM_CONTRACT.md"),
             new DocumentLink("docs/api/GUEST_ACCOUNT_HANDOFF.md", "api/GUEST_ACCOUNT_HANDOFF.md"),
             new DocumentLink("docs/ops/ENVIRONMENT_INTEGRATION.md", "ops/ENVIRONMENT_INTEGRATION.md"),
             new DocumentLink("docs/api/AUTH_CONTRACT.md", "api/AUTH_CONTRACT.md"),

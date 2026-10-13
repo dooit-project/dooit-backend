@@ -1,6 +1,6 @@
 # Dooit v1 Frontend API
 
-Last updated: 2026-09-05
+Last updated: 2026-10-13
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -66,6 +66,7 @@ POST /api/v1/workspaces
 POST /api/v1/workspaces/{workspaceId}/members
 POST /api/v1/workspaces/{workspaceId}/tasks
 POST /api/v1/workspaces/{workspaceId}/dday-goals
+POST /api/v1/personal-systems
 ```
 
 공통 성공 응답:
@@ -728,6 +729,97 @@ Task 응답 nullable/default 규칙:
 - `description`, `category`, `estimatedDurationMinutes`, `deferReason`, `deferReasonLabel`, D-Day 연결 필드, 반복 occurrence 필드는 값이 없으면 null이다.
 - `updatedAt`은 생성 직후 null이고 수정 후 값이 생긴다.
 - 반복 occurrence Task를 완료하면 해당 occurrence row만 `DONE`으로 바뀌며 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`는 유지된다.
+
+## 3-2. 개인 시스템·실천 증거
+
+사용자의 "원하는 방향 -> 시스템 하나 -> 오늘 실천 -> 일주일의 증거" 흐름을 지원한다. 상세 정책은 [`PERSONAL_SYSTEM_CONTRACT.md`](./PERSONAL_SYSTEM_CONTRACT.md)를 원본으로 본다.
+
+제공 API:
+
+- `POST /api/v1/personal-systems`
+- `GET /api/v1/personal-systems`
+- `GET /api/v1/personal-systems/{systemId}`
+- `PUT` 또는 `PATCH /api/v1/personal-systems/{systemId}`
+- `PATCH /api/v1/personal-systems/{systemId}/status`
+- `GET /api/v1/personal-system-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD`
+- `PUT /api/v1/personal-system-occurrences/{occurrenceId}/result`
+- `DELETE /api/v1/personal-system-occurrences/{occurrenceId}/result`
+- `PUT /api/v1/personal-system-occurrences/{occurrenceId}/rest`
+- `DELETE /api/v1/personal-system-occurrences/{occurrenceId}/rest`
+- `GET /api/v1/personal-systems/{systemId}/evidence?from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+구현 상태:
+
+- 구현됨: 시스템 CRUD, 상태 변경, 회차 materialize 조회, 실천/휴식 기록과 취소, AI 없는 증거 조회
+- 아직 미구현: AI 초안/회고/조정, 연결 Task 자동 생성, Task 직접 완료/재개 hook
+
+핵심 타입:
+
+```ts
+type PersonalSystemStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+type PersonalSystemOccurrenceStatus = 'PENDING' | 'PRACTICED' | 'RESTED';
+type ActionVariant = 'STANDARD' | 'MINIMUM' | 'UNKNOWN';
+type NextActionPatchKind = 'KEEP' | 'CLEAR' | 'REPLACE';
+type ScheduleDay = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
+type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FORGOT' | 'OTHER';
+```
+
+규칙:
+
+- 첫 버전은 사용자당 `ACTIVE` 시스템 1개만 허용한다.
+- 회차 조회와 evidence 조회 기간은 양끝 포함 최대 31일이다.
+- `PENDING`은 기록 없음이며 실패나 휴식으로 자동 변환되지 않는다.
+- `MINIMUM`도 정상 실천 완료다.
+- 행동 종류를 알 수 없는 외부 완료 연동은 향후 `UNKNOWN`으로 저장한다.
+- `notificationKey`는 `personal-system:{systemId}:{serviceDate}` 형식이다.
+- `scheduledNotificationAt`은 회차 날짜와 시스템의 `notifyAtTime`을 합친 `LocalDateTime`이며 없으면 null이다.
+- `DELETE /result`는 결과를 지우고 회차를 `PENDING`으로 되돌린다.
+- `PUT /rest`는 회차를 `RESTED`로 기록하고 기존 실천 결과가 있으면 제거한다.
+
+생성 요청 예시:
+
+```json
+{
+  "directionText": "건강한 저녁 루틴 만들기",
+  "motivationText": "수면의 질을 높이기 위해",
+  "triggerText": "저녁 식사 후",
+  "schedule": {
+    "startDate": "2026-10-12",
+    "days": ["MO", "WE", "FR"],
+    "timeZone": "Asia/Seoul",
+    "notifyAtTime": "20:00:00"
+  },
+  "standardAction": {
+    "text": "30분 걷기",
+    "targetAmount": "30분",
+    "estimatedMinutes": 30
+  },
+  "minimumAction": {
+    "text": "운동화 신고 밖에 나가기",
+    "targetAmount": "1분",
+    "estimatedMinutes": 1
+  },
+  "nextAction": "운동화 꺼내기",
+  "linkedDdayGoalId": null
+}
+```
+
+실천 결과 요청 예시:
+
+```json
+{
+  "actionVariant": "MINIMUM",
+  "practicedAt": "2026-10-12T21:00:00",
+  "practicedTimeZone": "Asia/Seoul",
+  "accomplishedNote": "최소 행동 완료",
+  "difficulties": ["NO_TIME"],
+  "nextActionPatchKind": "KEEP",
+  "nextAction": null,
+  "occurrenceVersion": 0
+}
+```
+
+Evidence 응답은 실천 회차 수, 실천 날짜 수, 행동 종류별 실천 수, 휴식 수, 기록 없음 수와 원본 회차 목록을 함께 반환한다.
 
 ## 4. Task API
 

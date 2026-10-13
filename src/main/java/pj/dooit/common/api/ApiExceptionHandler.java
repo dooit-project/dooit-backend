@@ -10,6 +10,10 @@ import pj.dooit.auth.exception.RefreshTokenInvalidException;
 import pj.dooit.auth.exception.RefreshTokenReusedException;
 import pj.dooit.common.idempotency.IdempotencyKeyReusedException;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
+import pj.dooit.personalsystem.exception.PersonalSystemConflictException;
+import pj.dooit.personalsystem.exception.PersonalSystemNotFoundException;
+import pj.dooit.personalsystem.exception.PersonalSystemOccurrenceNotFoundException;
+import pj.dooit.personalsystem.exception.PersonalSystemValidationException;
 import pj.dooit.task.exception.TaskChecklistItemNotFoundException;
 import pj.dooit.task.exception.TaskOrderConflictException;
 import pj.dooit.task.exception.TaskTemplateNotFoundException;
@@ -241,6 +245,35 @@ public class ApiExceptionHandler {
         log.warn("Workspace Member Not Found : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND.getStatus())
                 .body(ApiResponse.failure(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND));
+    }
+
+    @ExceptionHandler(PersonalSystemValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handlePersonalSystemValidationException(PersonalSystemValidationException e) {
+        log.warn("Personal System Validation Failed : {}", e.getDetail());
+        return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
+    }
+
+    @ExceptionHandler(PersonalSystemNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handlePersonalSystemNotFoundException(PersonalSystemNotFoundException e) {
+        log.warn("Personal System Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.PERSONAL_SYSTEM_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.PERSONAL_SYSTEM_NOT_FOUND));
+    }
+
+    @ExceptionHandler(PersonalSystemOccurrenceNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handlePersonalSystemOccurrenceNotFoundException(
+            PersonalSystemOccurrenceNotFoundException e
+    ) {
+        log.warn("Personal System Occurrence Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.PERSONAL_SYSTEM_OCCURRENCE_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.PERSONAL_SYSTEM_OCCURRENCE_NOT_FOUND));
+    }
+
+    @ExceptionHandler(PersonalSystemConflictException.class)
+    public ResponseEntity<ApiResponse<?>> handlePersonalSystemConflictException(PersonalSystemConflictException e) {
+        log.warn("Personal System Conflict : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.PERSONAL_SYSTEM_CONFLICT.getStatus())
+                .body(ApiResponse.failure(ErrorCode.PERSONAL_SYSTEM_CONFLICT));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

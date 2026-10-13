@@ -320,7 +320,7 @@ class WorkspaceV1IntegrationTest {
     @Test
     @DisplayName("v1 Workspace는 게스트 계정 사용을 거부한다")
     void createWorkspace_forbiddenForGuest() throws Exception {
-        User guest = userRepository.save(User.guest(LocalDateTime.of(2026, 9, 13, 0, 0)));
+        User guest = userRepository.save(User.guest(LocalDateTime.now().plusDays(31)));
         String guestToken = jwtTokenService.createGuestAccessToken(guest).tokenValue();
 
         mockMvc.perform(post("/api/v1/workspaces")

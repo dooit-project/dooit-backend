@@ -137,6 +137,7 @@ production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Clo
 | --- | --- |
 | [v1 API 계약](./docs/api/API_V1_FRONTEND.md) | 모바일/프론트엔드가 호출하는 endpoint, request/response, 오류 기준 |
 | [일일 계획 계약](./docs/api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 summary |
+| [개인 시스템 계약](./docs/api/PERSONAL_SYSTEM_CONTRACT.md) | 시스템, 회차, 실천/휴식, 주간 증거, AI 초안/회고 계약 |
 | [게스트 계정 인수인계](./docs/api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 시작, 승격, 기존 계정 병합, 만료와 rate limit |
 | [환경 연동 기준](./docs/ops/ENVIRONMENT_INTEGRATION.md) | local, production 실제 도메인, CORS, 문서 UI 공개 기준 |
 | [인증 계약](./docs/api/AUTH_CONTRACT.md) | JWT claim, token TTL, refresh rotation, logout, 비밀번호 재설정 |
