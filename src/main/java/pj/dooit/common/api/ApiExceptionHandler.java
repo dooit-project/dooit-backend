@@ -10,6 +10,8 @@ import pj.dooit.auth.exception.RefreshTokenInvalidException;
 import pj.dooit.auth.exception.RefreshTokenReusedException;
 import pj.dooit.common.idempotency.IdempotencyKeyReusedException;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
+import pj.dooit.goal.exception.GoalNotFoundException;
+import pj.dooit.goal.exception.GoalValidationException;
 import pj.dooit.personalsystem.exception.PersonalSystemConflictException;
 import pj.dooit.personalsystem.exception.PersonalSystemNotFoundException;
 import pj.dooit.personalsystem.exception.PersonalSystemOccurrenceNotFoundException;
@@ -274,6 +276,19 @@ public class ApiExceptionHandler {
         log.warn("Personal System Conflict : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.PERSONAL_SYSTEM_CONFLICT.getStatus())
                 .body(ApiResponse.failure(ErrorCode.PERSONAL_SYSTEM_CONFLICT));
+    }
+
+    @ExceptionHandler(GoalValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalValidationException(GoalValidationException e) {
+        log.warn("Goal Validation Failed : {}", e.getDetail());
+        return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
+    }
+
+    @ExceptionHandler(GoalNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalNotFoundException(GoalNotFoundException e) {
+        log.warn("Goal Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_NOT_FOUND));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

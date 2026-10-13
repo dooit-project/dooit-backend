@@ -1,81 +1,126 @@
-# Personal System Contract
+# Goal Journey Contract
 
-Last updated: 2026-10-12
+Last updated: 2026-10-14
 
-이 문서는 "원하는 방향 -> 시스템 하나 -> 오늘 실천 -> 일주일의 증거 -> 시스템 조정" 흐름의 백엔드 구현 계약이다. 2026-10-13 기준 AI 초안/회고/조정은 아직 구현하지 않았고, 시스템 CRUD, 회차 조회, 연결 Task, 실천/휴식, 원본 증거 조회를 먼저 제공한다.
+이 문서는 "목표 -> 여러 반복 계획과 일회성 행동 -> 실제 실천 기록 -> 목표별 지나온 길" 흐름의 백엔드 구현 계약이다. 2026-10-12의 개인 시스템 하나 중심 계약은 이 문서로 대체한다. 기존 구현의 `personal-systems` 모델은 폐기하지 않고 목표의 반복 실행 계획 모델로 확장 또는 마이그레이션한다.
 
-첫 버전은 개인 사용자별 시스템 하나 중심이다. 복수 시스템 운영, Workspace, 점수, 연속 달성, 타이머, 자동 일정 재배치, 신규 서버 push, 문구 CMS는 범위에서 제외한다.
+첫 전환 목표는 아래 예시를 중복 없이 표현하는 것이다.
 
-## 백엔드 1차 판단
+- 목표: 토익 900점, 선택 목표일 2026-11-30
+- 반복 계획: 매일 단어 30개, 선택한 주말 요일 문제 5개
+- 일회성 행동: 오늘 문제 30개 풀기
+- 여정 조회: 목표 아래 반복 회차 실천, 일회성 Task 완료, 직접 기록을 원본별로 한 번씩 조회
 
-- 기존 반복 Task occurrence를 직접 확장하기보다 `PERSONAL_SYSTEM`, `PERSONAL_SYSTEM_VERSION`, `PERSONAL_SYSTEM_OCCURRENCE`, `PERSONAL_SYSTEM_PRACTICE_RESULT`를 새 원본 모델로 두고, 필요 시 occurrence마다 개인 Task를 연결한다.
-- Task는 Today/Calendar/알림 후보와 기존 완료 UI 재사용을 위한 연결 리소스다. 시스템 회차의 상태와 증거 원본은 새 테이블에 저장한다.
-- 반복 Task의 `recurrenceScope`, `SKIPPED`, materialize 정책과 섞지 않는다. 시스템 수정은 `effectiveDate` 이후 회차에 새 version을 적용하고 과거 회차 snapshot은 보존한다.
-- 과거 PENDING 회차는 "기록 없음"으로 조회만 하며 실패나 휴식으로 자동 변경하지 않는다.
-- 최소 행동은 정상 실천 완료로 인정한다. 예상 시간이나 사용자가 선택한 시작 시간은 실제 소요 시간으로 추정하지 않는다.
-- AI 초안/회고/조정은 CRUD, 실천, 원본 증거 조회와 장애 격리한다.
+## 1. 백엔드 1차 판단
 
-## 상태와 enum
+- 기존 D-Day는 `targetDate`가 필수이고 목표일 중심 모델이므로 그대로 확장하면 "목표일 미정", "진행/일시정지/달성/보관", "여러 반복 계획"을 무리하게 얹게 된다. 새 `GOAL`을 원본 모델로 추가하고 기존 D-Day는 선택적으로 `GOAL.linkedDdayGoalId` 또는 D-Day의 goal mapping으로 연결한다.
+- 기존 D-Day ID, Task 연결, targetDate, 알림/deep link, 완료 기록은 보존한다. 기존 D-Day를 삭제하거나 하나로 병합하지 않는다.
+- 기존 `PERSONAL_SYSTEM`은 `GOAL_PLAN` 후보로 본다. 구현은 새 테이블로 분리하는 것을 우선 제안하고, migration에서 기존 personal system을 목표 없는 독립 반복 계획 또는 연결 D-Day가 있는 목표의 계획으로 옮긴다.
+- Goal 1:N plan, plan 1:N occurrence를 지원한다. 목표 없는 독립 반복 행동도 기존 personal system 사용 범위와 충돌하지 않게 유지한다.
+- 반복 회차의 유효 결과는 하나만 유지한다. 단, 목표에는 여러 일회성 Task와 직접 실천 기록을 추가할 수 있다.
+- 계획 변경과 목표 연결 변경은 미래 회차에 적용하고 과거 회차의 goal/plan/action snapshot은 보존한다. 기존 완료 기록의 귀속 수정은 별도 명시적 action으로만 처리한다.
+- 주말 중 임의 1회와 토·일 각각은 다른 요구다. 첫 전환은 날짜 기반 선택 요일별 회차를 지원한다. "기간 내 N회" 엔진은 기존 recurrence에 없으므로 이번 범위의 필수 구현에서 제외한다.
+- 목표 달성/실패는 기한 도래나 완료 수로 자동 처리하지 않는다. 달성은 사용자 확인으로만 기록한다.
+- AI는 목표 구체화, 행동 초안, 조정안, 기록 요약을 보조한다. AI 장애가 있어도 목표/계획 CRUD, 실천 기록, 여정 조회는 동작해야 한다.
+
+## 2. 상태와 enum
 
 ```ts
-type PersonalSystemStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
-type PersonalSystemOccurrenceStatus = 'PENDING' | 'PRACTICED' | 'RESTED';
+type GoalStatus = 'ACTIVE' | 'PAUSED' | 'ACHIEVED' | 'ARCHIVED';
+type GoalPlanStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+type GoalOccurrenceStatus = 'PENDING' | 'PRACTICED' | 'RESTED';
+type GoalJourneySourceType = 'PLAN_OCCURRENCE' | 'TASK_COMPLETION' | 'DIRECT_LOG';
 type ActionVariant = 'STANDARD' | 'MINIMUM' | 'UNKNOWN';
+type NextActionPatchKind = 'KEEP' | 'CLEAR' | 'REPLACE';
+type ScheduleDay = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
+type GoalFuturePlanPolicy = 'PAUSE_FUTURE' | 'KEEP_FUTURE';
 type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FORGOT' | 'OTHER';
 ```
 
-`UNKNOWN`은 기존 Task 목록에서 직접 완료해 기본/최소 행동 여부를 알 수 없을 때만 사용한다. 백엔드는 기본 행동을 했다고 추정하지 않는다.
+`UNKNOWN`은 기존 Task 완료나 외부 hook처럼 기본/최소 행동 여부를 알 수 없을 때만 사용한다. 백엔드는 기본 행동을 했다고 추정하지 않는다.
 
-## 제안 데이터 모델
+## 3. 제안 데이터 모델
 
-### `PERSONAL_SYSTEM`
+### `GOAL`
 
 | 필드 | 의미 |
 | --- | --- |
-| `ID` | 시스템 ID |
+| `ID` | 목표 ID |
 | `OWNER_USER_ID` | 소유 사용자 |
-| `CURRENT_VERSION` | 현재 version 번호 |
-| `STATUS` | `ACTIVE`, `PAUSED`, `ARCHIVED` |
+| `TITLE` | 목표 이름 |
+| `DESIRED_OUTCOME`, `MOTIVATION_TEXT` | 선택 원하는 결과와 이유 |
+| `TARGET_DATE` | 선택 목표일. 미정이면 null |
+| `STATUS` | `ACTIVE`, `PAUSED`, `ACHIEVED`, `ARCHIVED` |
+| `CURRENT_VERSION` | 목표 설명/날짜 변경 version |
 | `LINKED_DDAY_GOAL_ID` | 선택 D-Day 연결 |
-| `CREATED_AT`, `UPDATED_AT`, `ARCHIVED_AT` | 생성, 수정, 종료 시각 |
+| `ACHIEVED_AT`, `ARCHIVED_AT` | 사용자 확인에 의한 달성/보관 시각 |
+| `CREATED_AT`, `UPDATED_AT` | 생성/수정 시각 |
 
-### `PERSONAL_SYSTEM_VERSION`
+목표 이름은 필수다. `targetDate=null`을 허용한다. 기존 D-Day의 `targetDate` 필수 제약은 유지하고, D-Day를 Goal로 직접 대체하지 않는다.
+
+### `GOAL_VERSION`
 
 | 필드 | 의미 |
 | --- | --- |
-| `SYSTEM_ID`, `VERSION` | 시스템 version 식별자 |
-| `DIRECTION_TEXT`, `MOTIVATION_TEXT` | 기한 없는 바람과 선택 이유 |
-| `TRIGGER_TEXT` | "저녁 식사 후" 같은 텍스트 시작 조건 |
-| `SCHEDULE_RULE` | 반복 요일, 기준 시작일, IANA timezone, 선택 알림 시각 |
-| `STANDARD_ACTION`, `MINIMUM_ACTION` | 행동 설명, 선택 목표 분량, 선택 예상 시간 |
-| `NEXT_ACTION` | 다음 실행의 첫 행동 |
+| `GOAL_ID`, `VERSION` | 목표 version 식별자 |
+| `TITLE`, `DESIRED_OUTCOME`, `MOTIVATION_TEXT`, `TARGET_DATE` | 당시 목표 snapshot |
 | `EFFECTIVE_FROM_DATE` | 이 version이 적용되는 서비스 날짜 |
 | `CREATED_AT` | version 생성 시각 |
 
-필드 길이와 단위는 Task 제목 30자, 설명 300자, 예상 시간 5~1440분 제약을 그대로 쓰지 않는다. 1분 행동과 시간 없는 행동을 모두 표현할 수 있게 별도 validation을 확정한다.
+목표 제목/설명/날짜 수정은 새 version으로 남긴다. 과거 여정 항목의 당시 목표 snapshot은 변경하지 않는다.
 
-### `PERSONAL_SYSTEM_OCCURRENCE`
+### `GOAL_PLAN`
+
+| 필드 | 의미 |
+| --- | --- |
+| `ID` | 실행 계획 ID |
+| `OWNER_USER_ID` | 소유 사용자 |
+| `GOAL_ID` | 선택 목표 연결. 목표 없는 독립 반복 행동이면 null |
+| `CURRENT_VERSION` | 계획 version |
+| `STATUS` | `ACTIVE`, `PAUSED`, `ARCHIVED` |
+| `CREATED_AT`, `UPDATED_AT`, `ARCHIVED_AT` | 생성/수정/보관 시각 |
+
+단어와 문제풀이처럼 같은 목표 아래 여러 계획을 독립적으로 정지/재개/수정할 수 있어야 한다.
+
+### `GOAL_PLAN_VERSION`
+
+| 필드 | 의미 |
+| --- | --- |
+| `PLAN_ID`, `VERSION` | 계획 version 식별자 |
+| `GOAL_ID` | 이 version의 목표 연결 snapshot |
+| `NAME` | 계획 이름 |
+| `TRIGGER_TEXT` | 선택 시작 상황 |
+| `SCHEDULE_RULE` | 반복 요일, 기준 시작일, IANA timezone, 선택 알림 시각 |
+| `STANDARD_ACTION`, `MINIMUM_ACTION` | 기본/최소 행동 설명, 선택 목표 분량, 선택 예상 시간 |
+| `NEXT_ACTION` | 선택 다음 행동 |
+| `EFFECTIVE_FROM_DATE` | 이 version이 적용되는 서비스 날짜 |
+| `CREATED_AT` | version 생성 시각 |
+
+시작 시각 없는 매일/선택 요일 반복을 지원한다. 일반 일정 `startAt`을 강제하지 않는다. 알림은 `notifyAtTime`이 있을 때만 후보로 제공한다.
+
+### `GOAL_PLAN_OCCURRENCE`
 
 | 필드 | 의미 |
 | --- | --- |
 | `ID` | 회차 ID |
-| `SYSTEM_ID`, `SYSTEM_VERSION` | 적용된 시스템 version |
 | `OWNER_USER_ID` | 소유 사용자 |
+| `GOAL_ID`, `GOAL_VERSION` | 회차 당시 목표 snapshot. 독립 반복이면 null |
+| `PLAN_ID`, `PLAN_VERSION` | 적용된 계획 version |
 | `SERVICE_DATE` | 사용자 timezone 기준 예정 서비스 날짜 |
 | `TIME_ZONE` | 회차 산출 기준 IANA timezone |
-| `SNAPSHOT_JSON` | 회차 당시 행동, 최소 행동, trigger, 알림 시각 snapshot |
+| `SNAPSHOT_JSON` | 회차 당시 목표/계획/행동/알림 snapshot |
 | `LINKED_TASK_ID` | 선택 연결 Task |
 | `STATUS` | `PENDING`, `PRACTICED`, `RESTED` |
 | `VERSION` | 낙관적 잠금 version |
-| `CREATED_AT`, `UPDATED_AT` | 생성, 수정 시각 |
+| `CREATED_AT`, `UPDATED_AT` | 생성/수정 시각 |
 
-중복 방지는 `OWNER_USER_ID + SYSTEM_ID + SERVICE_DATE` 또는 rule 변경 정책을 반영한 동등 unique key로 처리한다.
+중복 방지는 `OWNER_USER_ID + PLAN_ID + SERVICE_DATE` unique key를 기본으로 한다. 주말 중 임의 1회 같은 기간 N회 계획은 이 key만으로 충분하지 않으므로 별도 엔진 도입 전에는 지원 범위 밖이다.
 
-### `PERSONAL_SYSTEM_PRACTICE_RESULT`
+### `GOAL_PRACTICE_RESULT`
 
 | 필드 | 의미 |
 | --- | --- |
-| `OCCURRENCE_ID` | 회차 ID. 첫 버전은 회차당 유효 결과 하나 |
+| `OCCURRENCE_ID` | 회차 ID. 회차당 유효 결과 하나 |
 | `ACTION_VARIANT` | `STANDARD`, `MINIMUM`, `UNKNOWN` |
 | `PRACTICED_AT` | 사용자가 확인한 실천 시각 |
 | `PRACTICED_TIME_ZONE` | 실천 시각 해석 timezone |
@@ -83,142 +128,244 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 | `DIFFICULTIES` | 선택 어려움 목록 |
 | `NEXT_ACTION_PATCH_KIND` | 유지, 비우기, 새 값 저장 구분 |
 | `NEXT_ACTION_VALUE` | 새 다음 행동 값 |
-| `CREATED_AT`, `UPDATED_AT` | 결과 저장, 수정 시각 |
+| `CREATED_AT`, `UPDATED_AT` | 결과 저장/수정 시각 |
 
-`nextAction`을 입력하지 않음, 명시적 비우기, 새 값 저장은 서로 다른 요청 값으로 표현한다. 과거 기록 수정은 더 최신 회차나 시스템 수정으로 저장된 `nextAction`을 덮어쓰지 않는다.
+### `GOAL_DIRECT_LOG`
 
-## API
+| 필드 | 의미 |
+| --- | --- |
+| `ID` | 직접 실천 기록 ID |
+| `OWNER_USER_ID` | 소유 사용자 |
+| `GOAL_ID`, `GOAL_VERSION` | 목표 snapshot |
+| `PRACTICED_DATE` | 실제 실천 날짜 |
+| `PRACTICED_TIME_ZONE` | 날짜 해석 timezone |
+| `TITLE` | 행동 제목 |
+| `NOTE` | 선택 메모 |
+| `IDEMPOTENCY_KEY` | 재시도 중복 방지 key |
+| `CREATED_AT`, `UPDATED_AT`, `CANCELED_AT` | 생성/수정/취소 시각 |
+
+계획하지 않았지만 이미 한 일을 빠르게 남기는 원본이다. 추가 실천을 기존 반복 회차의 기본/최소 결과로 억지 변환하지 않고, 일회성 기록이 주말 회차를 자동 완료하지 않는다.
+
+### Task 확장
+
+기존 `TASK.linkedDdayGoalId`와 D-Day Task 연결 API는 유지한다. 새 목표 연결을 위해 `TASK.linkedGoalId`를 nullable로 추가한다. 목표 상세에서 일회성 Task를 만들면 `linkedGoalId`가 자동 설정되고, 일반 Task 생성/수정에서도 목표를 선택할 수 있다.
+
+Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이미 목표에 연결된 기존 Task를 연결할 때는 새 직접 기록을 복제하지 않는다.
+
+## 4. API 초안
+
+경로명은 아직 최종 확정 전이다. 기존 `/api/v1/personal-systems/**`는 호환 기간 동안 유지하고 새 goal API로 단계적 전환한다.
 
 | 작업 | 경로 |
 | --- | --- |
-| 시스템 생성, 목록 | `POST /api/v1/personal-systems`, `GET /api/v1/personal-systems` |
-| 시스템 상세, 수정, 상태 변경 | `GET /api/v1/personal-systems/{systemId}`, `PATCH /api/v1/personal-systems/{systemId}` |
-| 기간별 예정 회차 | `GET /api/v1/personal-system-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD` |
-| 회차 결과 저장, 수정, 취소 | `PUT /api/v1/personal-system-occurrences/{occurrenceId}/result`, `DELETE /api/v1/personal-system-occurrences/{occurrenceId}/result` |
-| 회차 휴식 선택, 취소 | `PUT /api/v1/personal-system-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/personal-system-occurrences/{occurrenceId}/rest` |
-| 시스템 증거 | `GET /api/v1/personal-systems/{systemId}/evidence?from=YYYY-MM-DD&to=YYYY-MM-DD&timeZone=Asia/Seoul` |
-| AI 시스템 초안 | `POST /api/v1/personal-systems/draft` |
-| AI 조정 초안 | `POST /api/v1/personal-systems/{systemId}/adjustment-draft` |
-| AI 회고 | `POST /api/v1/personal-systems/{systemId}/reflection` |
+| 목표 생성, 목록 | `POST /api/v1/goals`, `GET /api/v1/goals` |
+| 목표 상세, 수정 | `GET /api/v1/goals/{goalId}`, `PATCH /api/v1/goals/{goalId}` |
+| 목표 상태 변경 | `PATCH /api/v1/goals/{goalId}/status` |
+| 목표 달성 확인 | `POST /api/v1/goals/{goalId}/achievement` |
+| 목표 달성 취소 | `DELETE /api/v1/goals/{goalId}/achievement` |
+| 계획 생성, 목록 | `POST /api/v1/goals/{goalId}/plans`, `GET /api/v1/goals/{goalId}/plans` |
+| 독립 반복 계획 생성, 목록 | `POST /api/v1/goal-plans`, `GET /api/v1/goal-plans?goalId=...` |
+| 계획 상세, 수정, 상태 변경 | `GET/PATCH /api/v1/goal-plans/{planId}`, `PATCH /api/v1/goal-plans/{planId}/status` |
+| 기간별 회차 | `GET /api/v1/goal-plan-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD&goalId=...` |
+| 회차 결과 저장, 수정, 취소 | `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/result`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/result` |
+| 회차 휴식 선택, 취소 | `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/rest` |
+| 목표 일회성 Task 생성 | `POST /api/v1/goals/{goalId}/tasks` |
+| 기존 Task 목표 연결 | `PUT /api/v1/tasks/{taskId}/goal-link`, `DELETE /api/v1/tasks/{taskId}/goal-link` |
+| 이미 한 일 직접 기록 | `POST /api/v1/goals/{goalId}/direct-logs` |
+| 직접 기록 수정, 취소 | `PATCH /api/v1/goal-direct-logs/{logId}`, `DELETE /api/v1/goal-direct-logs/{logId}` |
+| 목표 여정 조회 | `GET /api/v1/goals/{goalId}/journey?from=YYYY-MM-DD&to=YYYY-MM-DD&timeZone=Asia/Seoul&cursor=...` |
+| AI 목표/계획 초안 | `POST /api/v1/goals/draft`, `POST /api/v1/goals/{goalId}/plan-draft` |
+| AI 조정/요약 | `POST /api/v1/goals/{goalId}/adjustment-draft`, `POST /api/v1/goals/{goalId}/journey-summary` |
 
-`GET evidence`는 AI 호출 없이 원본 기록과 집계만 반환한다. AI 회고는 별도 endpoint에서 생성하고 입력 version으로 캐시 무효화를 판단한다.
+목표 여정 조회는 AI 호출 없이 원본과 집계를 반환한다. AI 요약은 별도 endpoint에서 생성하고 입력 원본 version으로 캐시 무효화를 판단한다.
 
-구현 상태:
+## 5. DTO 예시
 
-- 구현: 시스템 생성/목록/상세/수정/상태 변경, 기간별 회차 조회, 연결 Task 자동 생성, Task 직접 완료/재개 hook, 실천 결과 저장/취소, 휴식/취소, 증거 조회
-- 미구현: AI 시스템 초안, AI 조정 초안, AI 회고
+목표 생성:
 
-백엔드 기본 정책:
+```json
+{
+  "title": "토익 900점",
+  "desiredOutcome": "LC/RC 합산 900점 이상",
+  "motivationText": "이직 지원 자격을 맞추기 위해",
+  "targetDate": "2026-11-30",
+  "linkedDdayGoalId": 12
+}
+```
 
-- 첫 버전은 사용자당 `ACTIVE` 시스템 1개만 허용한다.
-- result 취소는 `DELETE /api/v1/personal-system-occurrences/{occurrenceId}/result`를 사용한다.
-- 다음 행동 patch 값은 `KEEP`, `CLEAR`, `REPLACE`로 표현한다.
-- 증거 조회 기간은 양끝 포함 최대 31일이다.
-- 최소 행동의 예상 시간은 1분부터 허용하고, 시간 없는 행동은 `estimatedMinutes=null`로 표현한다.
+계획 생성:
 
-## 회차와 Task 연결 정책
+```json
+{
+  "name": "매일 단어 30개",
+  "triggerText": "출근 전",
+  "schedule": {
+    "startDate": "2026-10-14",
+    "days": ["MO", "TU", "WE", "TH", "FR", "SA", "SU"],
+    "timeZone": "Asia/Seoul",
+    "notifyAtTime": null
+  },
+  "standardAction": {
+    "text": "단어 30개 외우기",
+    "targetAmount": "30개",
+    "estimatedMinutes": null
+  },
+  "minimumAction": {
+    "text": "단어 5개 보기",
+    "targetAmount": "5개",
+    "estimatedMinutes": null
+  },
+  "nextAction": "Day 1 단어장 열기"
+}
+```
 
-- 회차 생성은 사용자 timezone과 schedule rule 기준으로 산출한다.
-- 조회 범위의 회차가 없으면 중복 없이 materialize한다. 단순 조회가 과거 PENDING 상태를 바꾸지는 않는다.
-- 지난 미실행 회차는 Today나 오래 미룬 일에 자동 누적하지 않는다.
-- 이번 회차 휴식과 시스템 전체 일시정지는 별도 상태다. 재개 시 누락 회차를 몰아서 만들지 않는다.
-- 연결 Task는 오늘/미래 회차에만 자동 생성한다. 과거 회차 조회는 Today나 오래 미룬 일에 누적되지 않도록 연결 Task를 만들지 않는다.
-- 연결 Task 제목/설명은 회차 snapshot 기반으로 만들고, `linkedTaskId`를 회차에 저장한다.
-- Task 직접 완료 hook은 행동 종류를 알 수 없으므로 결과가 없을 때 `ActionVariant.UNKNOWN`으로 저장한다.
-- Task 완료 취소 hook은 연결 회차 결과를 삭제하고 `PENDING`으로 되돌린다.
-- 연결 Task 완료/재개와 회차 결과 저장/취소는 하나의 transaction으로 맞춘다.
-- 연결 Task 삭제는 회차 증거를 삭제하지 않는다. 회차는 `linkedTaskId` 단절 상태와 원본 snapshot으로 조회 가능해야 한다.
+이미 한 일 기록:
 
-## 멱등성과 충돌
+```json
+{
+  "practicedDate": "2026-10-14",
+  "practicedTimeZone": "Asia/Seoul",
+  "title": "문제 30개 풀기",
+  "note": "Part 5 오답이 많았음"
+}
+```
 
-- `POST /api/v1/personal-systems`는 기존 `Idempotency-Key` replay 정책을 사용한다.
-- 결과 저장 `PUT`은 같은 `occurrenceId`와 같은 payload에 대해 멱등으로 수렴한다.
-- 다른 payload가 이미 저장된 PRACTICED/RESTED 결과를 바꾸려면 요청에 회차 `version` 또는 동등한 충돌 검출 값을 포함한다.
-- stale version은 409로 거부하고 프론트는 회차 상세 또는 기간 조회를 새로고침한 뒤 재시도한다.
-- 동시에 PRACTICED와 RESTED가 들어오면 먼저 commit된 상태가 우선이고 나중 요청은 version 충돌로 처리한다.
+목표 여정 응답 골격:
 
-## 주간 증거 조회
+```json
+{
+  "goalId": 100,
+  "range": {
+    "from": "2026-10-14",
+    "to": "2026-11-30",
+    "timeZone": "Asia/Seoul"
+  },
+  "summary": {
+    "practiceOccurrenceCount": 12,
+    "oneOffCompletionCount": 3,
+    "directLogCount": 2,
+    "practiceDateCount": 14,
+    "standardCount": 8,
+    "minimumCount": 4,
+    "unknownCount": 3,
+    "restCount": 1,
+    "noRecordOccurrenceCount": 5
+  },
+  "items": [
+    {
+      "sourceType": "PLAN_OCCURRENCE",
+      "sourceId": 501,
+      "practicedDate": "2026-10-14",
+      "goalId": 100,
+      "planId": 201,
+      "title": "매일 단어 30개",
+      "actionText": "단어 30개 외우기",
+      "actionVariant": "STANDARD",
+      "note": "아침에 완료",
+      "taskId": 9001
+    },
+    {
+      "sourceType": "TASK_COMPLETION",
+      "sourceId": 9100,
+      "practicedDate": "2026-10-14",
+      "goalId": 100,
+      "planId": null,
+      "title": "문제 30개 풀기",
+      "actionVariant": "UNKNOWN",
+      "note": null,
+      "taskId": 9100
+    },
+    {
+      "sourceType": "DIRECT_LOG",
+      "sourceId": 77,
+      "practicedDate": "2026-10-14",
+      "goalId": 100,
+      "planId": null,
+      "title": "오답노트 정리",
+      "actionVariant": "UNKNOWN",
+      "note": "Part 5"
+    }
+  ],
+  "nextCursor": null,
+  "journeyVersion": "goal:100:2026-10-14:2026-11-30:42"
+}
+```
 
-`GET evidence`는 명시적 `from`, `to`, `timeZone`을 받는다. 날짜 범위는 양끝 포함이며 1차 상한은 31일로 제안한다.
+## 6. 정책
 
-응답에는 아래 값을 포함한다.
+### 날짜와 조회
 
-- 조회 범위와 집계 기준 timezone
-- 일자별 원본 회차와 실행 기록
-- 실천 회차 수, 실천 날짜 수
-- 기본, 최소, 종류 미확인 실천 수
-- 사용자 선택 휴식 수
-- 기록 없음 회차와 조회 실패 구분
-- 메모, 시스템 version/snapshot, 원본 occurrence/result ID
-- 집계 입력 version 또는 `evidenceVersion`
+- 목표일, 회차일, 직접 기록일은 사용자 timezone 기준 `LocalDate`로 저장한다.
+- 목표 여정 조회는 `goalId`, 명시 기간, `timeZone`, cursor를 받는다. 주간뿐 아니라 목표 시작 이후 전체 범위도 조회할 수 있어야 한다.
+- cursor pagination을 사용해도 summary는 페이지 일부가 아니라 전체 조회 범위 기준으로 계산한다.
+- 정렬 기본값은 `practicedDate desc, sourceType, sourceId desc`다. 같은 날짜 안의 세부 순서는 안정적이어야 한다.
 
-완료 비율, 점수, 연속 달성은 첫 버전에서 제공하지 않는다.
+### 상태 변경
 
-## AI 기능 정책
+- 목표 `ACHIEVED`와 `ARCHIVED` 전환은 사용자 확인 action이다.
+- 상태 변경 요청에는 `futurePlanPolicy`를 받을 수 있다. 기본 제안은 `PAUSE_FUTURE`이며 과거 실천은 보존한다.
+- `KEEP_FUTURE`를 선택하면 목표가 달성/보관되어도 미래 계획 생성과 알림 후보를 유지한다. 프론트가 명시 선택 없이 암묵 처리하지 않는다.
+- 계획 보관/정지는 해당 계획의 미래 회차와 알림 후보만 멈춘다. 목표의 다른 계획은 영향을 받지 않는다.
 
-- AI 시스템 초안은 사용자 입력 바람과 일상 조건을 구조화할 뿐 저장하거나 회차를 만들지 않는다.
-- AI 회고는 서버 계산 집계와 사용자가 남긴 메모만 근거로 삼는다. 기록에 없는 성과, 감정, 실제 시간을 만들지 않는다.
-- AI 조정 초안은 현재 시스템과 사용자가 고른 어려움을 입력으로 삼고, 사용자 확인 전 시스템을 자동 변경하지 않는다.
-- AI provider key는 서버 환경변수로만 관리한다.
-- 구조화 응답 검증, timeout, 사용자별 요청 제한, 안정적인 오류 코드와 재시도 정책을 구현한다.
-- AI 장애가 있어도 시스템 CRUD, 실천, 휴식, 원본 증거 조회는 동작해야 한다.
-- 바람, 이유, 메모, 어려움, 다음 행동은 개인정보가 포함될 수 있으므로 운영 로그에 원문을 남기지 않는다.
+### 중복 방지
+
+- 반복 회차와 연결 Task가 같은 원본이면 여정에 한 번만 나온다. `PLAN_OCCURRENCE`가 우선이고 연결 Task 완료는 그 회차 결과로 수렴한다.
+- 목표 연결 Task 중 회차에 연결되지 않은 일회성 Task 완료만 `TASK_COMPLETION`으로 집계한다.
+- `GOAL_DIRECT_LOG`는 idempotency key로 생성 재시도 중복을 막는다.
+- 완료 취소, Task 목표 연결 해제, 직접 기록 취소 후 여정 원본과 summary, AI 요약 입력 version은 일치해야 한다.
+
+### 계정, 권한, 삭제
+
+- 모든 목표, 계획, 회차, 직접 기록, Task 연결은 owner scope를 가진다. 타 사용자 리소스는 조회/수정할 수 없다.
+- 게스트 계정도 목표/계획/여정 CRUD를 사용할 수 있다. 계정 병합 시 기존 Task/D-Day 병합 정책과 같은 owner 이전 원칙을 따른다.
+- 삭제 기본값은 기록 보존을 위해 archive/cancel이다. 실제 hard delete가 필요하면 여정과 집계에서 어떤 원본이 사라지는지 별도 migration 계획을 둔다.
+
+### 알림
+
+- 첫 버전은 기존 로컬 알림 후보 모델을 재사용한다. 신규 서버 push 구현은 이 계약 범위가 아니다.
+- 회차별 `notificationKey`는 `goal-plan:{planId}:{serviceDate}` 형식을 제안한다.
+- 후보 응답에는 예정 시각, timezone, 취소/변경 판별용 version 또는 hash를 포함한다.
+- 목표 달성/보관, 계획 일시정지/보관, 주기 변경 시 모바일이 기존 예약을 정리할 수 있도록 후보에서 제외하거나 cancel marker를 제공한다.
+
+### AI
+
+- AI 초안은 저장하거나 회차를 만들지 않는다. 사용자가 확인한 요청만 CRUD에 반영한다.
+- AI 요약은 서버 계산 집계와 사용자가 남긴 메모만 근거로 삼는다. 기록에 없는 성과, 점수 상승, 실제 학습량/시간을 만들지 않는다.
+- 개인 메모, 목표 이유, 어려움, 다음 행동은 운영 로그에 원문을 남기지 않는다.
 - provider, 보관, 삭제 정책은 구현 전 별도 확정한다.
 
-## 알림
+## 7. 기존 구현과 호환성
 
-첫 버전은 기존 로컬 알림 후보 모델을 재사용한다. 서버 push 신규 구현은 범위 밖이다.
+- 현재 구현된 `/api/v1/personal-systems/**`는 목표 없는 독립 반복 행동 API로 당분간 유지할 수 있다.
+- 새 구현에서는 사용자당 active system 1개 제한을 제거한다. 목표에는 여러 plan이 붙을 수 있고, 독립 반복 계획도 여러 개 존재할 수 있다.
+- 기존 `linkedDdayGoalId`는 새 `GOAL.linkedDdayGoalId`로 옮기는 것을 우선한다. Task의 기존 D-Day 연결 필드는 유지한다.
+- API 계약 변경은 외부 클라이언트에 영향을 준다. 새 `/goals/**` API를 먼저 추가하고 기존 `/personal-systems/**`는 호환 경로로 유지한 뒤 deprecation 계획을 별도 공지한다.
 
-- 회차별 `notificationKey`는 `personal-system:{systemId}:{serviceDate}` 형식을 제안한다.
-- 후보 응답에는 예정 시각, timezone, 취소/변경 판별용 version 또는 hash를 포함한다.
-- 휴식, 일시정지, 주기 변경, 종료 시 모바일이 기존 예약을 정리할 수 있도록 회차 후보에서 제외하거나 cancel marker를 제공한다.
+## 8. 구현 순서
 
-## 프론트 전달 기준
+1. 계약 확정: DTO, enum, validation, 오류 코드, OpenAPI 예시, D-Day/Task 연결 정책을 확정한다.
+2. DB migration: `GOAL`, `GOAL_VERSION`, `GOAL_PLAN`, `GOAL_PLAN_VERSION`, `GOAL_PLAN_OCCURRENCE`, `GOAL_PRACTICE_RESULT`, `GOAL_DIRECT_LOG`, `TASK.linked_goal_id`를 추가한다.
+3. Goal CRUD: 목표 생성, 목록/상세, 수정, 일시정지, 달성, 보관과 future plan policy를 구현한다.
+4. Plan CRUD: 목표 하위/독립 반복 계획 생성, 수정, 정지, 재개, 보관을 구현한다.
+5. 회차 materialize: 선택 요일 기반 기간 조회, 중복 방지, snapshot, pause/archive 제외, 알림 후보 정보를 구현한다.
+6. 실천/휴식: 회차 결과 저장/수정/취소와 연결 Task 완료/재개 transaction을 구현한다.
+7. 일회성 Task/직접 기록: 목표 연결 Task 생성/연결/해제, 직접 기록 생성/수정/취소와 idempotency를 구현한다.
+8. 여정 조회: 회차, Task 완료, 직접 기록을 중복 없이 통합하고 전체 범위 summary를 반환한다.
+9. 기존 personal system migration/호환: 기존 데이터를 새 goal plan으로 이동하거나 호환 adapter를 붙인다.
+10. AI 초안/요약/조정: CRUD와 장애 격리해 순차 구현한다.
 
-프론트 mock/API client는 아래 전제로 먼저 진행할 수 있다.
+## 9. 테스트 수용 기준
 
-- `GET evidence`와 AI 회고는 분리한다. 증거 조회는 AI 없이 원본과 집계를 반환한다.
-- 회차 상태는 `PENDING`, `PRACTICED`, `RESTED`이며, 지난 PENDING은 실패가 아니라 기록 없음이다.
-- 실천 `actionVariant`는 `STANDARD`, `MINIMUM`, `UNKNOWN`을 허용한다.
-- Task 직접 완료에서 행동 종류를 모르면 `UNKNOWN`으로 저장하며 기본 행동으로 추정하지 않는다.
-- 최소 행동도 정상 완료다.
-- 시스템 수정은 과거 회차 snapshot을 바꾸지 않고 적용일 이후 새 version으로 반영한다.
-- 일시정지/재개는 누락 회차를 몰아서 생성하지 않는다.
-- 로컬 알림은 서버 push가 아니라 회차별 안정 key와 예정 시각 후보를 내려주는 방식으로 맞춘다.
-
-프론트 대기 없이 백엔드 기본값으로 확정한 항목은 아래다.
-
-- 첫 화면 기본 기간은 프론트가 정하되 API는 명시적 `from/to`만 받는다.
-- active 시스템은 첫 버전에서 사용자당 1개만 허용한다.
-- 텍스트 필드는 direction/motivation/action 500자, trigger 200자, nextAction 300자, note 1000자로 시작한다.
-- 예상 시간은 nullable이며 1~1440분을 허용한다.
-- 다음 행동 patch 표현은 `KEEP`, `CLEAR`, `REPLACE`다.
-- Task 직접 완료 hook을 구현할 때 행동 종류를 모르면 `UNKNOWN`으로 저장한다.
-- result 취소는 `DELETE /result`다.
-
-후속 구현 전 확정이 필요한 항목은 아래다.
-
-- AI provider, 전송 항목, 보관/삭제 정책, 사용자 고지 문구
-
-## 구현 순서
-
-1. 계약 확정: DTO, enum, validation, 오류 코드, OpenAPI 예시, Task 연결 정책을 확정한다.
-2. DB migration: 시스템, version, occurrence, result 테이블과 unique key, owner index를 추가한다.
-3. CRUD: 시스템 생성, 목록/상세, 수정, 일시정지, 재개, 종료를 구현한다.
-4. 회차 materialize: 기간 조회, 중복 방지, version snapshot, pause/archive 제외를 구현한다.
-5. 실천/휴식: 결과 저장, 수정, 취소와 연결 Task 완료/재개 transaction을 구현한다.
-6. 증거 조회: 원본 회차와 집계를 반환하고 수정/취소 후 집계 일치를 테스트한다.
-7. 알림 후보: 회차별 로컬 알림 key와 변경 감지 정보를 제공한다.
-8. AI 초안: 시스템 초안부터 분리 구현한다.
-9. AI 회고/조정: 입력 version 검증, 근거 ID 연결, timeout/rate limit을 붙인다.
-
-## 테스트 수용 기준
-
-- 같은 생성/실천 요청을 재시도하거나 병렬 처리해도 시스템, 회차, 실천 결과가 중복되지 않는다.
-- 최소 행동 실천은 PRACTICED로 집계되며 실제 시간과 성과를 추정하지 않는다.
-- Task 직접 완료/취소와 회차 상태, 주간 집계가 transaction 기준으로 일치한다.
-- 휴식, 일시정지, 재개, 주기 변경 후 과거 누락이 Today에 누적되지 않는다.
-- 시스템 수정 후 과거 회차 snapshot이 보존되고 stale version 변경은 409로 거부된다.
-- 주간 회고 입력은 원본 occurrence/result ID로 검증 가능하다.
-- AI 장애 시에도 직접 작성, 실천, 휴식, 원본 증거 조회가 가능하다.
-- 타 사용자 시스템, 회차, 연결 Task, 증거는 조회하거나 변경할 수 없다.
+- 목표 하나 아래 독립 반복 계획 둘을 생성할 수 있다.
+- 각 계획 회차에 기본/최소 실천을 각각 기록할 수 있다.
+- 목표 연결 일회성 Task 완료가 목표 여정에 한 번만 등장한다.
+- 계획하지 않았지만 이미 한 일을 직접 기록하면 목표 여정에 별도 원본으로 등장한다.
+- 연결 Task와 반복 회차는 같은 원본으로 중복 집계되지 않는다.
+- 완료 취소, Task 변경, 목표 연결 수정 후 여정 원본과 summary가 일치한다.
+- 계획/목표일 변경 후 과거 회차 snapshot과 과거 기록 귀속이 보존된다.
+- 목표 달성 확인 시 `futurePlanPolicy`에 따라 미래 반복과 알림 후보가 멈추거나 유지된다.
+- 기간 일부 page만 받아도 summary는 전체 조회 범위 기준으로 계산된다.
+- 최소 행동, 휴식, 기록 없음, 종류 미확인은 서로 구분된다.
+- 기한 도래, 행동 완료 수, 예상 분량으로 목표 달성률이나 실패를 자동 추정하지 않는다.
+- AI 장애 시에도 목표/계획 CRUD, 실천, 휴식, 직접 기록, 여정 조회가 가능하다.
+- 타 사용자 목표, 계획, 회차, 연결 Task, 직접 기록, 여정은 조회하거나 변경할 수 없다.

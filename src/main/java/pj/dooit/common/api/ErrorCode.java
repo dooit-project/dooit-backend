@@ -47,6 +47,9 @@ public enum ErrorCode {
     PERSONAL_SYSTEM_OCCURRENCE_NOT_FOUND(HttpStatus.NOT_FOUND, 60002, "개인 시스템 회차를 찾을 수 없습니다."),
     PERSONAL_SYSTEM_CONFLICT(HttpStatus.CONFLICT, 60003, "개인 시스템 회차가 변경되었습니다. 새로고침 후 다시 시도해주세요."),
 
+    // Goal Journey
+    GOAL_NOT_FOUND(HttpStatus.NOT_FOUND, 70001, "목표를 찾을 수 없습니다."),
+
     // 서버 내부 오류
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 99999, "서버 오류가 발생했습니다.");
 

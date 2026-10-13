@@ -1,6 +1,6 @@
 # Dooit v1 Frontend API
 
-Last updated: 2026-10-13
+Last updated: 2026-10-14
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -730,99 +730,64 @@ Task 응답 nullable/default 규칙:
 - `updatedAt`은 생성 직후 null이고 수정 후 값이 생긴다.
 - 반복 occurrence Task를 완료하면 해당 occurrence row만 `DONE`으로 바뀌며 `recurrenceSeriesId`, `occurrenceDate`, `originalOccurrenceDate`는 유지된다.
 
-## 3-2. 개인 시스템·실천 증거
+## 3-2. 목표 중심 계획·실천 여정
 
-사용자의 "원하는 방향 -> 시스템 하나 -> 오늘 실천 -> 일주일의 증거" 흐름을 지원한다. 상세 정책은 [`PERSONAL_SYSTEM_CONTRACT.md`](./PERSONAL_SYSTEM_CONTRACT.md)를 원본으로 본다.
+사용자의 "목표 -> 여러 반복 계획과 일회성 행동 -> 실제 실천 기록 -> 목표별 지나온 길" 흐름을 지원한다. 상세 정책은 [`PERSONAL_SYSTEM_CONTRACT.md`](./PERSONAL_SYSTEM_CONTRACT.md)를 원본으로 본다.
 
-제공 API:
-
-- `POST /api/v1/personal-systems`
-- `GET /api/v1/personal-systems`
-- `GET /api/v1/personal-systems/{systemId}`
-- `PUT` 또는 `PATCH /api/v1/personal-systems/{systemId}`
-- `PATCH /api/v1/personal-systems/{systemId}/status`
-- `GET /api/v1/personal-system-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD`
-- `PUT /api/v1/personal-system-occurrences/{occurrenceId}/result`
-- `DELETE /api/v1/personal-system-occurrences/{occurrenceId}/result`
-- `PUT /api/v1/personal-system-occurrences/{occurrenceId}/rest`
-- `DELETE /api/v1/personal-system-occurrences/{occurrenceId}/rest`
-- `GET /api/v1/personal-systems/{systemId}/evidence?from=YYYY-MM-DD&to=YYYY-MM-DD`
+현재 구현된 `/api/v1/personal-systems/**`는 2026-10-12의 개인 시스템 1개 모델이다. 2026-10-14 기준 새 계약은 이 모델을 목표 중심 API로 전환하는 요구사항이며, 신규 `/api/v1/goals/**` 경로명은 아직 최종 확정 전이다.
 
 구현 상태:
 
-- 구현됨: 시스템 CRUD, 상태 변경, 회차 materialize 조회, 오늘/미래 회차의 연결 Task 자동 생성, Task 직접 완료/재개 hook, 실천/휴식 기록과 취소, AI 없는 증거 조회
-- 아직 미구현: AI 초안/회고/조정
+- 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소, Goal/GoalVersion DB schema, D-Day 소유권 검증
+- 아직 미구현: 목표 하위 반복 계획, 회차 materialize, 목표 연결 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
+
+제안 API:
+
+- `POST /api/v1/goals`, `GET /api/v1/goals` 구현됨
+- `GET /api/v1/goals/{goalId}`, `PATCH /api/v1/goals/{goalId}` 구현됨
+- `PATCH /api/v1/goals/{goalId}/status` 구현됨
+- `POST /api/v1/goals/{goalId}/achievement`, `DELETE /api/v1/goals/{goalId}/achievement` 구현됨
+- `POST /api/v1/goals/{goalId}/plans`, `GET /api/v1/goals/{goalId}/plans`
+- `POST /api/v1/goal-plans`, `GET /api/v1/goal-plans?goalId=...`
+- `GET`/`PATCH /api/v1/goal-plans/{planId}`, `PATCH /api/v1/goal-plans/{planId}/status`
+- `GET /api/v1/goal-plan-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD&goalId=...`
+- `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/result`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/result`
+- `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/rest`
+- `POST /api/v1/goals/{goalId}/tasks`
+- `PUT /api/v1/tasks/{taskId}/goal-link`, `DELETE /api/v1/tasks/{taskId}/goal-link`
+- `POST /api/v1/goals/{goalId}/direct-logs`
+- `PATCH /api/v1/goal-direct-logs/{logId}`, `DELETE /api/v1/goal-direct-logs/{logId}`
+- `GET /api/v1/goals/{goalId}/journey?from=YYYY-MM-DD&to=YYYY-MM-DD&timeZone=Asia/Seoul&cursor=...`
 
 핵심 타입:
 
 ```ts
-type PersonalSystemStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
-type PersonalSystemOccurrenceStatus = 'PENDING' | 'PRACTICED' | 'RESTED';
+type GoalStatus = 'ACTIVE' | 'PAUSED' | 'ACHIEVED' | 'ARCHIVED';
+type GoalPlanStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+type GoalOccurrenceStatus = 'PENDING' | 'PRACTICED' | 'RESTED';
+type GoalJourneySourceType = 'PLAN_OCCURRENCE' | 'TASK_COMPLETION' | 'DIRECT_LOG';
 type ActionVariant = 'STANDARD' | 'MINIMUM' | 'UNKNOWN';
 type NextActionPatchKind = 'KEEP' | 'CLEAR' | 'REPLACE';
 type ScheduleDay = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
+type GoalFuturePlanPolicy = 'PAUSE_FUTURE' | 'KEEP_FUTURE';
 type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FORGOT' | 'OTHER';
 ```
 
 규칙:
 
-- 첫 버전은 사용자당 `ACTIVE` 시스템 1개만 허용한다.
-- 회차 조회와 evidence 조회 기간은 양끝 포함 최대 31일이다.
-- `PENDING`은 기록 없음이며 실패나 휴식으로 자동 변환되지 않는다.
-- `MINIMUM`도 정상 실천 완료다.
-- 행동 종류를 알 수 없는 외부 완료 연동은 향후 `UNKNOWN`으로 저장한다.
-- `notificationKey`는 `personal-system:{systemId}:{serviceDate}` 형식이다.
-- `scheduledNotificationAt`은 회차 날짜와 시스템의 `notifyAtTime`을 합친 `LocalDateTime`이며 없으면 null이다.
-- `DELETE /result`는 결과를 지우고 회차를 `PENDING`으로 되돌린다.
-- `PUT /rest`는 회차를 `RESTED`로 기록하고 기존 실천 결과가 있으면 제거한다.
-- 연결 Task는 오늘/미래 회차에만 자동 생성된다. 과거 회차 조회는 연결 Task를 만들지 않는다.
-- 연결 Task를 직접 완료하면 회차가 `PRACTICED`가 되고, 행동 종류는 `UNKNOWN`으로 기록된다.
-- 연결 Task 완료를 취소하면 회차 결과가 삭제되고 `PENDING`으로 돌아간다.
+- D-Day는 `targetDate` 필수 모델로 유지하고, 새 Goal이 선택적으로 D-Day에 연결된다.
+- 목표일은 nullable이다. 기한 도래, 행동 완료 수, 예상 분량으로 달성/실패를 자동 처리하지 않는다.
+- 사용자당 active 목표/계획 1개 제한을 두지 않는다.
+- Goal 1:N plan, plan 1:N occurrence를 지원하고 목표 없는 독립 반복 계획도 허용한다.
+- 계획 변경과 목표 연결 변경은 미래 회차에 적용하며 과거 snapshot은 보존한다.
+- 연결 Task와 반복 회차가 같은 원본이면 여정과 집계에 한 번만 등장한다.
+- 일회성 Task 완료와 직접 기록은 반복 회차를 자동 완료하지 않는다.
+- 여정 summary는 cursor page 일부가 아니라 전체 조회 범위 기준이다.
+- `MINIMUM`, `RESTED`, 기록 없음, `UNKNOWN`은 서로 구분한다.
+- 목표 달성/보관 시 미래 계획은 `futurePlanPolicy`로 멈춤/유지를 명시한다.
+- AI 초안/요약/조정 장애가 있어도 목표/계획 CRUD, 실천, 직접 기록, 여정 조회는 동작해야 한다.
 
-생성 요청 예시:
-
-```json
-{
-  "directionText": "건강한 저녁 루틴 만들기",
-  "motivationText": "수면의 질을 높이기 위해",
-  "triggerText": "저녁 식사 후",
-  "schedule": {
-    "startDate": "2026-10-12",
-    "days": ["MO", "WE", "FR"],
-    "timeZone": "Asia/Seoul",
-    "notifyAtTime": "20:00:00"
-  },
-  "standardAction": {
-    "text": "30분 걷기",
-    "targetAmount": "30분",
-    "estimatedMinutes": 30
-  },
-  "minimumAction": {
-    "text": "운동화 신고 밖에 나가기",
-    "targetAmount": "1분",
-    "estimatedMinutes": 1
-  },
-  "nextAction": "운동화 꺼내기",
-  "linkedDdayGoalId": null
-}
-```
-
-실천 결과 요청 예시:
-
-```json
-{
-  "actionVariant": "MINIMUM",
-  "practicedAt": "2026-10-12T21:00:00",
-  "practicedTimeZone": "Asia/Seoul",
-  "accomplishedNote": "최소 행동 완료",
-  "difficulties": ["NO_TIME"],
-  "nextActionPatchKind": "KEEP",
-  "nextAction": null,
-  "occurrenceVersion": 0
-}
-```
-
-Evidence 응답은 실천 회차 수, 실천 날짜 수, 행동 종류별 실천 수, 휴식 수, 기록 없음 수와 원본 회차 목록을 함께 반환한다.
+기존 personal system API는 새 goal API가 구현될 때까지 호환 경로로 유지한다. 외부 클라이언트에는 `/personal-systems/**` deprecation과 `/goals/**` 전환 일정을 별도 고지한다.
 
 ## 4. Task API
 
