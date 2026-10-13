@@ -750,8 +750,8 @@ Task 응답 nullable/default 규칙:
 
 구현 상태:
 
-- 구현됨: 시스템 CRUD, 상태 변경, 회차 materialize 조회, 실천/휴식 기록과 취소, AI 없는 증거 조회
-- 아직 미구현: AI 초안/회고/조정, 연결 Task 자동 생성, Task 직접 완료/재개 hook
+- 구현됨: 시스템 CRUD, 상태 변경, 회차 materialize 조회, 오늘/미래 회차의 연결 Task 자동 생성, Task 직접 완료/재개 hook, 실천/휴식 기록과 취소, AI 없는 증거 조회
+- 아직 미구현: AI 초안/회고/조정
 
 핵심 타입:
 
@@ -775,6 +775,9 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 - `scheduledNotificationAt`은 회차 날짜와 시스템의 `notifyAtTime`을 합친 `LocalDateTime`이며 없으면 null이다.
 - `DELETE /result`는 결과를 지우고 회차를 `PENDING`으로 되돌린다.
 - `PUT /rest`는 회차를 `RESTED`로 기록하고 기존 실천 결과가 있으면 제거한다.
+- 연결 Task는 오늘/미래 회차에만 자동 생성된다. 과거 회차 조회는 연결 Task를 만들지 않는다.
+- 연결 Task를 직접 완료하면 회차가 `PRACTICED`가 되고, 행동 종류는 `UNKNOWN`으로 기록된다.
+- 연결 Task 완료를 취소하면 회차 결과가 삭제되고 `PENDING`으로 돌아간다.
 
 생성 요청 예시:
 

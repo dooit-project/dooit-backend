@@ -29,4 +29,7 @@ public interface PersonalSystemOccurrenceRepository extends JpaRepository<Person
 
     @EntityGraph(attributePaths = {"system", "linkedTask"})
     Optional<PersonalSystemOccurrence> findByIdAndOwnerId(Long id, Long ownerId);
+
+    @EntityGraph(attributePaths = {"system", "linkedTask"})
+    Optional<PersonalSystemOccurrence> findByLinkedTaskIdAndOwnerId(Long linkedTaskId, Long ownerId);
 }

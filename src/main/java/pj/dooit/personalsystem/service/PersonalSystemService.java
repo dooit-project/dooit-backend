@@ -28,6 +28,10 @@ import pj.dooit.personalsystem.repository.PersonalSystemOccurrenceRepository;
 import pj.dooit.personalsystem.repository.PersonalSystemPracticeResultRepository;
 import pj.dooit.personalsystem.repository.PersonalSystemRepository;
 import pj.dooit.personalsystem.repository.PersonalSystemVersionRepository;
+import pj.dooit.task.domain.Task;
+import pj.dooit.task.domain.TaskStatus;
+import pj.dooit.task.domain.TaskType;
+import pj.dooit.task.repository.TaskRepository;
 import pj.dooit.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -57,6 +61,7 @@ public class PersonalSystemService {
     private final PersonalSystemOccurrenceRepository personalSystemOccurrenceRepository;
     private final PersonalSystemPracticeResultRepository personalSystemPracticeResultRepository;
     private final DdayGoalRepository ddayGoalRepository;
+    private final TaskRepository taskRepository;
 
     @Transactional
     public PersonalSystemResponse create(PersonalSystemCreateRequest request, User owner) {
@@ -252,9 +257,61 @@ public class PersonalSystemService {
                 continue;
             }
             LocalDate serviceDate = date;
-            personalSystemOccurrenceRepository.findBySystemIdAndOwnerIdAndServiceDate(system.getId(), owner.getId(), serviceDate)
+            PersonalSystemOccurrence occurrence = personalSystemOccurrenceRepository
+                    .findBySystemIdAndOwnerIdAndServiceDate(system.getId(), owner.getId(), serviceDate)
                     .orElseGet(() -> personalSystemOccurrenceRepository.save(new PersonalSystemOccurrence(version, owner, serviceDate)));
+            linkTaskIfNeeded(occurrence, version);
         }
+    }
+
+    private void linkTaskIfNeeded(PersonalSystemOccurrence occurrence, PersonalSystemVersion version) {
+        if (occurrence.getLinkedTask() != null) {
+            return;
+        }
+        LocalDate today = LocalDate.now(ZoneId.of(occurrence.getTimeZone()));
+        if (occurrence.getServiceDate().isBefore(today)) {
+            return;
+        }
+        LocalDateTime startAt = occurrence.getServiceDate().atStartOfDay();
+        LocalDateTime endAt = occurrence.getServiceDate().plusDays(1).atStartOfDay();
+        LocalDateTime notifyAt = version.getNotifyAtTime() == null
+                ? null
+                : LocalDateTime.of(occurrence.getServiceDate(), version.getNotifyAtTime());
+        Task task = Task.builder()
+                .title(truncate(firstNonBlank(occurrence.getSnapshotNextAction(), occurrence.getSnapshotMinimumActionText()), 255))
+                .description(truncate(taskDescription(occurrence), 255))
+                .type(TaskType.TODO)
+                .startAt(startAt)
+                .endAt(endAt)
+                .allDay(true)
+                .category("시스템")
+                .estimatedDurationMinutes(null)
+                .notificationEnabled(true)
+                .notifyAt(notifyAt)
+                .status(TaskStatus.TODAY)
+                .targetDate(occurrence.getServiceDate())
+                .owner(occurrence.getOwner())
+                .build();
+        occurrence.linkTask(taskRepository.save(task));
+    }
+
+    private String taskDescription(PersonalSystemOccurrence occurrence) {
+        return "기본: %s\n최소: %s".formatted(
+                occurrence.getSnapshotStandardActionText(),
+                occurrence.getSnapshotMinimumActionText()
+        );
+    }
+
+    private String firstNonBlank(String first, String fallback) {
+        String normalized = normalizeNullable(first);
+        return normalized == null ? fallback : normalized;
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
     }
 
     private Optional<PersonalSystemVersion> versionForDate(List<PersonalSystemVersion> versions, LocalDate date) {

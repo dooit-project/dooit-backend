@@ -26,11 +26,14 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -140,6 +143,56 @@ class PersonalSystemV1IntegrationTest {
     }
 
     @Test
+    @DisplayName("오늘 이후 회차는 Task를 연결하고 Task 완료/재개가 회차 결과와 동기화된다")
+    void linkedTaskCompleteAndReopen_syncsOccurrence() throws Exception {
+        String accessToken = accessToken("personal-system-linked-task@example.com");
+        LocalDate nextMonday = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
+        Long systemId = createSystem(accessToken, nextMonday, List.of(ScheduleDay.MO));
+
+        String response = mockMvc.perform(get("/api/v1/personal-system-occurrences")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("from", nextMonday.toString())
+                        .param("to", nextMonday.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].linkedTaskId").value(notNullValue()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Number occurrenceId = JsonPath.read(response, "$.data[0].id");
+        Number taskId = JsonPath.read(response, "$.data[0].linkedTaskId");
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done", taskId.longValue())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("completedAt", nextMonday.atTime(21, 0).toString()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/personal-systems/{systemId}/evidence", systemId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("from", nextMonday.toString())
+                        .param("to", nextMonday.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.practicedOccurrenceCount").value(1))
+                .andExpect(jsonPath("$.data.practicedCountsByVariant.UNKNOWN").value(1))
+                .andExpect(jsonPath("$.data.occurrences[0].id").value(occurrenceId.longValue()))
+                .andExpect(jsonPath("$.data.occurrences[0].status").value("PRACTICED"));
+
+        mockMvc.perform(patch("/api/v1/tasks/{id}/done/cancel", taskId.longValue())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("date", nextMonday.toString()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/personal-systems/{systemId}/evidence", systemId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("from", nextMonday.toString())
+                        .param("to", nextMonday.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.practicedOccurrenceCount").value(0))
+                .andExpect(jsonPath("$.data.noRecordCount").value(1))
+                .andExpect(jsonPath("$.data.occurrences[0].status").value("PENDING"));
+    }
+
+    @Test
     @DisplayName("다른 사용자의 개인 시스템은 조회할 수 없다")
     void ownerIsolation_notFound() throws Exception {
         String ownerToken = accessToken("personal-system-owner@example.com");
@@ -158,13 +211,17 @@ class PersonalSystemV1IntegrationTest {
     }
 
     private Long createSystem(String accessToken) throws Exception {
+        return createSystem(accessToken, LocalDate.of(2026, 10, 12), List.of(ScheduleDay.MO));
+    }
+
+    private Long createSystem(String accessToken, LocalDate startDate, List<ScheduleDay> days) throws Exception {
         PersonalSystemCreateRequest request = new PersonalSystemCreateRequest(
                 "건강한 저녁 루틴 만들기",
                 "수면의 질을 높이기 위해",
                 "저녁 식사 후",
                 new PersonalSystemScheduleRequest(
-                        LocalDate.of(2026, 10, 12),
-                        List.of(ScheduleDay.MO),
+                        startDate,
+                        days,
                         "Asia/Seoul",
                         LocalTime.of(20, 0)
                 ),

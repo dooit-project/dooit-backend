@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-12
 
-이 문서는 "원하는 방향 -> 시스템 하나 -> 오늘 실천 -> 일주일의 증거 -> 시스템 조정" 흐름의 백엔드 구현 계약이다. 2026-10-12 기준 AI 초안/회고/조정과 연결 Task 자동 생성은 아직 구현하지 않았고, 시스템 CRUD, 회차 조회, 실천/휴식, 원본 증거 조회를 먼저 제공한다.
+이 문서는 "원하는 방향 -> 시스템 하나 -> 오늘 실천 -> 일주일의 증거 -> 시스템 조정" 흐름의 백엔드 구현 계약이다. 2026-10-13 기준 AI 초안/회고/조정은 아직 구현하지 않았고, 시스템 CRUD, 회차 조회, 연결 Task, 실천/휴식, 원본 증거 조회를 먼저 제공한다.
 
 첫 버전은 개인 사용자별 시스템 하나 중심이다. 복수 시스템 운영, Workspace, 점수, 연속 달성, 타이머, 자동 일정 재배치, 신규 서버 push, 문구 CMS는 범위에서 제외한다.
 
@@ -105,8 +105,8 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 
 구현 상태:
 
-- 구현: 시스템 생성/목록/상세/수정/상태 변경, 기간별 회차 조회, 실천 결과 저장/취소, 휴식/취소, 증거 조회
-- 미구현: AI 시스템 초안, AI 조정 초안, AI 회고, 연결 Task 자동 생성과 Task 직접 완료 hook
+- 구현: 시스템 생성/목록/상세/수정/상태 변경, 기간별 회차 조회, 연결 Task 자동 생성, Task 직접 완료/재개 hook, 실천 결과 저장/취소, 휴식/취소, 증거 조회
+- 미구현: AI 시스템 초안, AI 조정 초안, AI 회고
 
 백엔드 기본 정책:
 
@@ -122,8 +122,10 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 - 조회 범위의 회차가 없으면 중복 없이 materialize한다. 단순 조회가 과거 PENDING 상태를 바꾸지는 않는다.
 - 지난 미실행 회차는 Today나 오래 미룬 일에 자동 누적하지 않는다.
 - 이번 회차 휴식과 시스템 전체 일시정지는 별도 상태다. 재개 시 누락 회차를 몰아서 만들지 않는다.
-- 연결 Task 자동 생성은 아직 구현하지 않았다. 구현 시 Task 제목/설명은 회차 snapshot 기반으로 만들고, `linkedTaskId`를 회차에 저장한다.
-- Task 직접 완료 hook은 아직 구현하지 않았다. 구현 시 행동 종류를 알 수 없으면 회차 결과는 `ActionVariant.UNKNOWN`으로 저장한다.
+- 연결 Task는 오늘/미래 회차에만 자동 생성한다. 과거 회차 조회는 Today나 오래 미룬 일에 누적되지 않도록 연결 Task를 만들지 않는다.
+- 연결 Task 제목/설명은 회차 snapshot 기반으로 만들고, `linkedTaskId`를 회차에 저장한다.
+- Task 직접 완료 hook은 행동 종류를 알 수 없으므로 결과가 없을 때 `ActionVariant.UNKNOWN`으로 저장한다.
+- Task 완료 취소 hook은 연결 회차 결과를 삭제하고 `PENDING`으로 되돌린다.
 - 연결 Task 완료/재개와 회차 결과 저장/취소는 하나의 transaction으로 맞춘다.
 - 연결 Task 삭제는 회차 증거를 삭제하지 않는다. 회차는 `linkedTaskId` 단절 상태와 원본 snapshot으로 조회 가능해야 한다.
 
@@ -196,7 +198,6 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 
 후속 구현 전 확정이 필요한 항목은 아래다.
 
-- 연결 Task 자동 생성 시 Task 제목/설명 문구와 Today 노출 정책
 - AI provider, 전송 항목, 보관/삭제 정책, 사용자 고지 문구
 
 ## 구현 순서

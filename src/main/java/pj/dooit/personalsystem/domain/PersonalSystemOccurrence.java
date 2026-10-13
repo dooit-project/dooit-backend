@@ -125,4 +125,11 @@ public class PersonalSystemOccurrence {
     public void markPending() {
         this.status = PersonalSystemOccurrenceStatus.PENDING;
     }
+
+    public void linkTask(Task task) {
+        if (task == null) {
+            throw new IllegalArgumentException("task는 필수입니다.");
+        }
+        this.linkedTask = task;
+    }
 }

@@ -6,6 +6,10 @@ import pj.dooit.calendar.repository.CalendarFeedTokenRepository;
 import pj.dooit.dday.repository.DdayGoalRepository;
 import pj.dooit.dday.dto.DdayGoalRequest;
 import pj.dooit.mail.MailService;
+import pj.dooit.personalsystem.repository.PersonalSystemOccurrenceRepository;
+import pj.dooit.personalsystem.repository.PersonalSystemPracticeResultRepository;
+import pj.dooit.personalsystem.repository.PersonalSystemRepository;
+import pj.dooit.personalsystem.repository.PersonalSystemVersionRepository;
 import pj.dooit.task.domain.RecurrenceFrequency;
 import pj.dooit.task.domain.TaskType;
 import pj.dooit.task.dto.TaskRecurrenceRequest;
@@ -81,12 +85,28 @@ class WorkspaceV1IntegrationTest {
     @Autowired
     CalendarFeedTokenRepository calendarFeedTokenRepository;
 
+    @Autowired
+    PersonalSystemPracticeResultRepository personalSystemPracticeResultRepository;
+
+    @Autowired
+    PersonalSystemOccurrenceRepository personalSystemOccurrenceRepository;
+
+    @Autowired
+    PersonalSystemVersionRepository personalSystemVersionRepository;
+
+    @Autowired
+    PersonalSystemRepository personalSystemRepository;
+
     @MockitoBean
     MailService mailService;
 
     @BeforeEach
     void setUp() {
         workspaceMemberRepository.deleteAll();
+        personalSystemPracticeResultRepository.deleteAll();
+        personalSystemOccurrenceRepository.deleteAll();
+        personalSystemVersionRepository.deleteAll();
+        personalSystemRepository.deleteAll();
         taskRepository.deleteAll();
         ddayGoalRepository.deleteAll();
         recurrenceSeriesRepository.deleteAll();

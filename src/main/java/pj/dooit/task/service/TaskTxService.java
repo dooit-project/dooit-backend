@@ -5,6 +5,7 @@ import pj.dooit.dailyplan.service.DailyPlanService;
 import pj.dooit.dday.domain.DdayGoal;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.dday.repository.DdayGoalRepository;
+import pj.dooit.personalsystem.service.PersonalSystemTaskLinkService;
 import pj.dooit.task.domain.DeferReason;
 import pj.dooit.task.domain.RecurrenceEditScope;
 import pj.dooit.task.domain.RecurrenceExceptionType;
@@ -40,6 +41,7 @@ public class TaskTxService {
     private final DdayGoalRepository ddayGoalRepository;
     private final DailyPlanService dailyPlanService;
     private final TaskChecklistItemService checklistItemService;
+    private final PersonalSystemTaskLinkService personalSystemTaskLinkService;
 
     @Transactional
     public Task updateTx(Long id, TaskRequest req) {
@@ -176,6 +178,7 @@ public class TaskTxService {
         task.complete(completedAt);
         removeFocus(task);
         checklistItemService.completeAllForTask(task.getId(), completedAt);
+        personalSystemTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
         return taskRepository.save(task);
     }
 
@@ -185,6 +188,7 @@ public class TaskTxService {
         task.complete(completedAt);
         removeFocus(task);
         checklistItemService.completeAllForTask(task.getId(), completedAt);
+        personalSystemTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
         return taskRepository.save(task);
     }
 
@@ -193,6 +197,7 @@ public class TaskTxService {
         Task task = findTask(id);
         task.reopenToday(targetDate);
         assignLastTodayOrder(task, targetDate);
+        personalSystemTaskLinkService.recordLinkedTaskReopened(task);
         return taskRepository.save(task);
     }
 
@@ -201,6 +206,7 @@ public class TaskTxService {
         Task task = findTaskForOwner(id, owner);
         task.reopenToday(targetDate);
         assignLastTodayOrder(task, targetDate, ownerId(owner));
+        personalSystemTaskLinkService.recordLinkedTaskReopened(task);
         return taskRepository.save(task);
     }
 
