@@ -14,6 +14,7 @@ import pj.dooit.goal.dto.GoalUpdateRequest;
 import pj.dooit.goal.exception.GoalNotFoundException;
 import pj.dooit.goal.exception.GoalValidationException;
 import pj.dooit.goal.repository.GoalRepository;
+import pj.dooit.goal.repository.GoalPlanRepository;
 import pj.dooit.goal.repository.GoalVersionRepository;
 import pj.dooit.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.List;
 public class GoalService {
 
     private final GoalRepository goalRepository;
+    private final GoalPlanRepository goalPlanRepository;
     private final GoalVersionRepository goalVersionRepository;
     private final DdayGoalRepository ddayGoalRepository;
 
@@ -84,16 +86,16 @@ public class GoalService {
     @Transactional
     public GoalResponse changeStatus(Long goalId, GoalStatusRequest request, User owner) {
         Goal goal = findGoal(goalId, ownerId(owner));
-        normalizePolicy(request.futurePlanPolicy());
         applyStatus(goal, request.status());
+        applyFuturePlanPolicy(goal, request.futurePlanPolicy());
         return GoalResponse.from(goal);
     }
 
     @Transactional
     public GoalResponse achieve(Long goalId, GoalFuturePlanPolicyRequest request, User owner) {
         Goal goal = findGoal(goalId, ownerId(owner));
-        normalizePolicy(request == null ? null : request.futurePlanPolicy());
         goal.achieve();
+        applyFuturePlanPolicy(goal, request == null ? null : request.futurePlanPolicy());
         return GoalResponse.from(goal);
     }
 
@@ -115,6 +117,14 @@ public class GoalService {
             goal.archive();
         } else {
             throw new GoalValidationException("지원하지 않는 목표 상태입니다.");
+        }
+    }
+
+    private void applyFuturePlanPolicy(Goal goal, GoalFuturePlanPolicy policy) {
+        if (goal.getStatus() != GoalStatus.ACTIVE && normalizePolicy(policy) == GoalFuturePlanPolicy.PAUSE_FUTURE) {
+            goalPlanRepository.findAllForMaterialization(goal.getOwner().getId()).stream()
+                    .filter(plan -> plan.getGoal() != null && plan.getGoal().getId().equals(goal.getId()))
+                    .forEach(pj.dooit.goal.domain.GoalPlan::pause);
         }
     }
 

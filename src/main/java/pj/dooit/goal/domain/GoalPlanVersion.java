@@ -141,6 +141,10 @@ public class GoalPlanVersion {
                 .toList();
     }
 
+    public boolean isScheduledOn(LocalDate date) {
+        return !date.isBefore(scheduleStartDate) && scheduleDays().contains(ScheduleDay.from(date.getDayOfWeek()));
+    }
+
     private String serializeDays(List<ScheduleDay> days) {
         if (days == null || days.isEmpty()) {
             throw new IllegalArgumentException("scheduleDays는 필수입니다.");

@@ -30,6 +30,20 @@ class OpenApiDocumentationIntegrationTest {
     MailService mailService;
 
     @Test
+    @DisplayName("목표 계획 회차 조회의 인증, 기간 파라미터와 응답 스냅샷을 OpenAPI에 노출한다")
+    void apiDocs_goalPlanOccurrences() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences'].get.security[0].bearerAuth").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences'].get.parameters[*].name").value(hasItem("from")))
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences'].get.parameters[*].name").value(hasItem("to")))
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences'].get.parameters[*].name").value(hasItem("goalId")))
+                .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.serviceDate.format").value("date"))
+                .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.snapshotGoalTitle").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.notificationKey").exists());
+    }
+
+    @Test
     @DisplayName("OpenAPI JSON에 v1 Task 문서 tag, summary, security, 오류 응답 schema가 노출된다")
     void apiDocs_v1TaskDocumentation() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
@@ -174,7 +188,8 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.tags[6].name").value("v1 Task Template"))
                 .andExpect(jsonPath("$.tags[7].name").value("v1 System"))
                 .andExpect(jsonPath("$.tags[8].name").value("v1 Workspace"))
-                .andExpect(jsonPath("$.tags[9].name").value("v1 Auth"))
+                .andExpect(jsonPath("$.tags[9].name").value("v1 Goal Plan Occurrence"))
+                .andExpect(jsonPath("$.tags[10].name").value("v1 Auth"))
                 .andExpect(jsonPath("$.paths['/api/v1/daily-plans/{date}'].get.summary").value("일일 계획 조회"))
                 .andExpect(jsonPath("$.paths['/api/v1/daily-plans/{date}'].put.summary").value("일일 계획 저장"))
                 .andExpect(jsonPath("$.paths['/api/v1/tasks/{taskId}/checklist-items'].post.summary").value("Task checklist item 생성"))

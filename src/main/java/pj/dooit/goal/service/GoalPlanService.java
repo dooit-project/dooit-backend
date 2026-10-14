@@ -79,7 +79,7 @@ public class GoalPlanService {
     @Transactional
     public GoalPlanResponse update(Long planId, GoalPlanUpdateRequest request, User owner) {
         Long ownerId = ownerId(owner);
-        GoalPlan plan = findPlan(planId, ownerId);
+        GoalPlan plan = findPlanForUpdate(planId, ownerId);
         if (plan.getStatus() == GoalPlanStatus.ARCHIVED) {
             throw new GoalValidationException("보관된 목표 계획은 수정할 수 없습니다.");
         }
@@ -94,7 +94,7 @@ public class GoalPlanService {
 
     @Transactional
     public GoalPlanResponse changeStatus(Long planId, GoalPlanStatusRequest request, User owner) {
-        GoalPlan plan = findPlan(planId, ownerId(owner));
+        GoalPlan plan = findPlanForUpdate(planId, ownerId(owner));
         if (request.status() == GoalPlanStatus.ACTIVE) {
             plan.activate();
         } else if (request.status() == GoalPlanStatus.PAUSED) {
@@ -171,6 +171,11 @@ public class GoalPlanService {
     private Goal requireGoal(Long goalId, Long ownerId) {
         return goalRepository.findByIdAndOwnerId(goalId, ownerId)
                 .orElseThrow(() -> new GoalNotFoundException("goalId=" + goalId));
+    }
+
+    private GoalPlan findPlanForUpdate(Long planId, Long ownerId) {
+        return goalPlanRepository.findForUpdate(planId, ownerId)
+                .orElseThrow(() -> new GoalPlanNotFoundException("planId=" + planId));
     }
 
     private GoalPlan findPlan(Long planId, Long ownerId) {

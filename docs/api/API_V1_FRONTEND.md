@@ -1,6 +1,6 @@
 # Dooit v1 Frontend API
 
-Last updated: 2026-10-14
+Last updated: 2026-10-15
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -738,8 +738,8 @@ Task 응답 nullable/default 규칙:
 
 구현 상태:
 
-- 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소, 목표 하위/독립 반복 계획 CRUD, Goal/Plan DB schema, D-Day 소유권 검증
-- 아직 미구현: 회차 materialize, 목표 연결 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
+- 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, Goal/Plan DB schema, D-Day 소유권 검증
+- 아직 미구현: 회차 실천/휴식 결과, 목표 연결 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
 
 제안 API:
 
@@ -750,7 +750,7 @@ Task 응답 nullable/default 규칙:
 - `POST /api/v1/goals/{goalId}/plans`, `GET /api/v1/goals/{goalId}/plans` 구현됨
 - `POST /api/v1/goal-plans`, `GET /api/v1/goal-plans?goalId=...` 구현됨
 - `GET`/`PATCH /api/v1/goal-plans/{planId}`, `PATCH /api/v1/goal-plans/{planId}/status` 구현됨
-- `GET /api/v1/goal-plan-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD&goalId=...`
+- `GET /api/v1/goal-plan-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD&goalId=...` 구현됨
 - `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/result`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/result`
 - `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/rest`
 - `POST /api/v1/goals/{goalId}/tasks`
@@ -758,6 +758,19 @@ Task 응답 nullable/default 규칙:
 - `POST /api/v1/goals/{goalId}/direct-logs`
 - `PATCH /api/v1/goal-direct-logs/{logId}`, `DELETE /api/v1/goal-direct-logs/{logId}`
 - `GET /api/v1/goals/{goalId}/journey?from=YYYY-MM-DD&to=YYYY-MM-DD&timeZone=Asia/Seoul&cursor=...`
+
+회차 조회 계약:
+
+- `from`, `to`는 필수이며 양끝 포함 1~31일이다. 선택 `goalId`는 현재 계획 연결 대신 회차 스냅샷의 목표 ID로 필터링한다. 전체 조회는 독립 반복 계획도 포함한다.
+- 조회 시 소유자의 계획 회차를 저장한다. 날짜별 적용 계획 version과 시작일/선택 요일을 사용하며 같은 계획/날짜 재조회 및 동시 조회에서 ID가 유지된다.
+- 응답은 `serviceDate`, `id` 오름차순이다. `id`, `goalId`, `goalVersion`, `planId`, `planVersion`, `serviceDate`, `timeZone`, `status`, `linkedTaskId`, `occurrenceVersion`과 목표 제목/계획 이름/trigger/기본·최소 행동/다음 행동 스냅샷을 반환한다.
+- 과거 스냅샷은 유지한다. 계획 timezone의 오늘 이후 `PENDING` 회차 중 결과와 연결 Task가 없는 회차는 적용 version으로 갱신한다. 요일에서 제외되거나 계획이 정지/보관되면 해당 미래 회차를 응답에서 제외하되 DB 원본은 유지한다.
+- `notificationKey`는 `goal-plan:{planId}:{serviceDate}`다. `scheduledNotificationAt`은 활성 계획의 `PENDING` 회차에 알림 시각이 있을 때만 반환하며 `timeZone` 기준 local datetime이다. 알림이 없거나 정지/보관이면 null이다. 클라이언트는 새 조회 결과에서 빠진 미래 후보의 기존 로컬 알림을 취소한다.
+- 목표 달성/정지/보관 요청의 `PAUSE_FUTURE`(기본값)는 연결 계획을 일시정지하고 `KEEP_FUTURE`는 계획 상태를 유지한다. 달성 취소/목표 재개는 계획을 자동 재개하지 않으며 계획 상태 API에서 명시적으로 재개한다.
+- 회차 조회는 아직 Task를 자동 생성하지 않는다. 실천/휴식 결과와 Task 연결은 후속 구현이다.
+- 잘못된 기간은 400/`10001`, 타 사용자 또는 없는 `goalId`는 404/`70001`이다.
+
+호환성: 신규 GET API와 응답 DTO 추가이며 기존 Task/D-Day/개인 시스템 API는 유지한다. 기존 목표 API의 `futurePlanPolicy`가 연결 계획에 실제 적용된다. 별도 새 DB migration은 없으며 신규 환경에는 `20261014_add_goal_journey.sql` 적용이 필요하다. 기존 `PERSONAL_SYSTEM*` 데이터 이관은 후속 작업이다.
 
 핵심 타입:
 

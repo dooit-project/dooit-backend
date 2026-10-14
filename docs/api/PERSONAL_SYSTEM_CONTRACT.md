@@ -1,6 +1,6 @@
 # Goal Journey Contract
 
-Last updated: 2026-10-14
+Last updated: 2026-10-15
 
 이 문서는 "목표 -> 여러 반복 계획과 일회성 행동 -> 실제 실천 기록 -> 목표별 지나온 길" 흐름의 백엔드 구현 계약이다. 2026-10-12의 개인 시스템 하나 중심 계약은 이 문서로 대체한다. 기존 구현의 `personal-systems` 모델은 폐기하지 않고 목표의 반복 실행 계획 모델로 확장 또는 마이그레이션한다.
 
@@ -108,13 +108,18 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 | `PLAN_ID`, `PLAN_VERSION` | 적용된 계획 version |
 | `SERVICE_DATE` | 사용자 timezone 기준 예정 서비스 날짜 |
 | `TIME_ZONE` | 회차 산출 기준 IANA timezone |
-| `SNAPSHOT_JSON` | 회차 당시 목표/계획/행동/알림 snapshot |
+| `SNAPSHOT_GOAL_TITLE`, `SNAPSHOT_PLAN_NAME`, `SNAPSHOT_TRIGGER_TEXT` | 회차 당시 목표 제목, 계획 이름과 trigger |
+| `SNAPSHOT_STANDARD_ACTION_TEXT`, `SNAPSHOT_MINIMUM_ACTION_TEXT`, `SNAPSHOT_NEXT_ACTION`, `SNAPSHOT_NOTIFY_AT_TIME` | 회차 당시 행동/다음 행동/알림 snapshot |
 | `LINKED_TASK_ID` | 선택 연결 Task |
 | `STATUS` | `PENDING`, `PRACTICED`, `RESTED` |
-| `VERSION` | 낙관적 잠금 version |
+| `ENTITY_VERSION` | 낙관적 잠금 version |
 | `CREATED_AT`, `UPDATED_AT` | 생성/수정 시각 |
 
-중복 방지는 `OWNER_USER_ID + PLAN_ID + SERVICE_DATE` unique key를 기본으로 한다. 주말 중 임의 1회 같은 기간 N회 계획은 이 key만으로 충분하지 않으므로 별도 엔진 도입 전에는 지원 범위 밖이다.
+중복 방지는 소유 계획의 `PLAN_ID + SERVICE_DATE` unique key로 보장한다. 조회는 소유자별 계획을 ID 순서로 잠가 동시 materialize를 직렬화한다. 주말 중 임의 1회 같은 기간 N회 계획은 이 key만으로 충분하지 않으므로 별도 엔진 도입 전에는 지원 범위 밖이다.
+
+2026-10-15 구현: 기간별 회차 GET은 양끝 포함 1~31일을 지원한다. 과거 회차 스냅샷은 보존하며 오늘 이후의 미실천·Task 미연결 회차는 날짜별 적용 version으로 갱신한다. 정지/보관 또는 변경된 선택 요일에 해당하지 않는 미래 미실천 회차는 응답에서 제외하고 DB 원본은 유지한다. 목표 필터는 회차의 당시 목표 ID를 사용한다. `notificationKey`, local `scheduledNotificationAt`, `timeZone`을 함께 반환하며 알림 시각이 없거나 계획이 정지/보관된 경우 후보 시각은 null이다.
+
+목표 상태 요청의 `PAUSE_FUTURE`는 현재 연결된 계획을 일시정지한다. `KEEP_FUTURE`는 계획 상태를 유지한다. 목표 재개/달성 취소 시 계획은 상태 API로 명시적으로 재개한다. 실천/휴식 결과와 회차 Task 자동 연결은 아직 미구현이다.
 
 ### `GOAL_PRACTICE_RESULT`
 
