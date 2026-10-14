@@ -738,8 +738,8 @@ Task 응답 nullable/default 규칙:
 
 구현 상태:
 
-- 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소, Goal/GoalVersion DB schema, D-Day 소유권 검증
-- 아직 미구현: 목표 하위 반복 계획, 회차 materialize, 목표 연결 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
+- 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소, 목표 하위/독립 반복 계획 CRUD, Goal/Plan DB schema, D-Day 소유권 검증
+- 아직 미구현: 회차 materialize, 목표 연결 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
 
 제안 API:
 
@@ -747,9 +747,9 @@ Task 응답 nullable/default 규칙:
 - `GET /api/v1/goals/{goalId}`, `PATCH /api/v1/goals/{goalId}` 구현됨
 - `PATCH /api/v1/goals/{goalId}/status` 구현됨
 - `POST /api/v1/goals/{goalId}/achievement`, `DELETE /api/v1/goals/{goalId}/achievement` 구현됨
-- `POST /api/v1/goals/{goalId}/plans`, `GET /api/v1/goals/{goalId}/plans`
-- `POST /api/v1/goal-plans`, `GET /api/v1/goal-plans?goalId=...`
-- `GET`/`PATCH /api/v1/goal-plans/{planId}`, `PATCH /api/v1/goal-plans/{planId}/status`
+- `POST /api/v1/goals/{goalId}/plans`, `GET /api/v1/goals/{goalId}/plans` 구현됨
+- `POST /api/v1/goal-plans`, `GET /api/v1/goal-plans?goalId=...` 구현됨
+- `GET`/`PATCH /api/v1/goal-plans/{planId}`, `PATCH /api/v1/goal-plans/{planId}/status` 구현됨
 - `GET /api/v1/goal-plan-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD&goalId=...`
 - `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/result`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/result`
 - `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/rest`

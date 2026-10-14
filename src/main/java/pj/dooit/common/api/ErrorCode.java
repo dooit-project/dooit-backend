@@ -49,6 +49,7 @@ public enum ErrorCode {
 
     // Goal Journey
     GOAL_NOT_FOUND(HttpStatus.NOT_FOUND, 70001, "목표를 찾을 수 없습니다."),
+    GOAL_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 70002, "목표 계획을 찾을 수 없습니다."),
 
     // 서버 내부 오류
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 99999, "서버 오류가 발생했습니다.");

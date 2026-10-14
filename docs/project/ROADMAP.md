@@ -75,7 +75,7 @@ Last updated: 2026-10-14
 - [x] Goal/GoalVersion, GoalPlan/GoalPlanVersion, GoalPlanOccurrence, GoalPracticeResult, GoalDirectLog, `TASK.linked_goal_id` migration을 추가한다.
 - [ ] 기존 `PERSONAL_SYSTEM*` 데이터를 새 GoalPlan 계열로 이관하거나 호환 adapter를 둔다.
 - [x] 목표 CRUD, 목표일 수정, 사용자 확인 달성/달성 취소, 보관과 `futurePlanPolicy`를 구현한다.
-- [ ] 목표 하위 여러 반복 계획과 목표 없는 독립 반복 계획 CRUD를 구현한다.
+- [x] 목표 하위 여러 반복 계획과 목표 없는 독립 반복 계획 CRUD를 구현한다.
 - [ ] 계획별 날짜 기반 회차 materialize, 중복 방지, snapshot, 알림 후보 key를 구현한다.
 - [ ] 회차 기본/최소 실천, 휴식, 취소와 연결 Task 완료/재개 transaction을 구현한다.
 - [ ] 목표 연결 일회성 Task 생성, 기존 Task 목표 연결/해제, 직접 기록 생성/수정/취소와 idempotency를 구현한다.

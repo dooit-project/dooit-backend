@@ -11,6 +11,7 @@ import pj.dooit.auth.exception.RefreshTokenReusedException;
 import pj.dooit.common.idempotency.IdempotencyKeyReusedException;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.goal.exception.GoalNotFoundException;
+import pj.dooit.goal.exception.GoalPlanNotFoundException;
 import pj.dooit.goal.exception.GoalValidationException;
 import pj.dooit.personalsystem.exception.PersonalSystemConflictException;
 import pj.dooit.personalsystem.exception.PersonalSystemNotFoundException;
@@ -289,6 +290,13 @@ public class ApiExceptionHandler {
         log.warn("Goal Not Found : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.GOAL_NOT_FOUND.getStatus())
                 .body(ApiResponse.failure(ErrorCode.GOAL_NOT_FOUND));
+    }
+
+    @ExceptionHandler(GoalPlanNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalPlanNotFoundException(GoalPlanNotFoundException e) {
+        log.warn("Goal Plan Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_PLAN_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_PLAN_NOT_FOUND));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
