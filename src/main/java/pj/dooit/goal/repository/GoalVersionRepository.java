@@ -9,6 +9,8 @@ import java.time.LocalDate;
 
 public interface GoalVersionRepository extends JpaRepository<GoalVersion, Long> {
 
+    List<GoalVersion> findByGoalIdOrderByVersionAsc(Long goalId);
+
     Optional<GoalVersion> findByGoalIdAndVersion(Long goalId, int version);
     List<GoalVersion> findByGoalIdAndEffectiveFromDateLessThanEqualOrderByVersionAsc(Long id, LocalDate date);
 }

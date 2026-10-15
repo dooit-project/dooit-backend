@@ -58,6 +58,8 @@ public enum ErrorCode {
     GOAL_DIRECT_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, 70006, "목표 직접 실천 기록을 찾을 수 없습니다."),
     GOAL_DIRECT_LOG_CONFLICT(HttpStatus.CONFLICT, 70007, "취소한 직접 실천 기록은 수정할 수 없습니다."),
 
+    GOAL_JOURNEY_CONFLICT(HttpStatus.CONFLICT, 70008, "목표 여정이 변경되었습니다. 처음부터 다시 조회해주세요."),
+
     // 서버 내부 오류
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 99999, "서버 오류가 발생했습니다.");
 

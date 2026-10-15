@@ -16,6 +16,7 @@ import pj.dooit.goal.exception.GoalTaskConflictException;
 import pj.dooit.goal.exception.GoalDirectLogNotFoundException;
 import pj.dooit.goal.exception.GoalDirectLogConflictException;
 import pj.dooit.goal.exception.GoalValidationException;
+import pj.dooit.goal.exception.GoalJourneyConflictException;
 import pj.dooit.goal.exception.GoalOccurrenceNotFoundException;
 import pj.dooit.goal.exception.GoalOccurrenceConflictException;
 import pj.dooit.personalsystem.exception.PersonalSystemConflictException;
@@ -331,6 +332,13 @@ public class ApiExceptionHandler {
         log.warn("Goal request failed : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.GOAL_DIRECT_LOG_CONFLICT.getStatus())
                 .body(ApiResponse.failure(ErrorCode.GOAL_DIRECT_LOG_CONFLICT));
+    }
+
+    @ExceptionHandler(GoalJourneyConflictException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalJourneyConflict(GoalJourneyConflictException e) {
+        log.warn("Goal journey changed : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_JOURNEY_CONFLICT.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_JOURNEY_CONFLICT));
     }
 
     @ExceptionHandler(GoalPlanNotFoundException.class)

@@ -30,6 +30,24 @@ class OpenApiDocumentationIntegrationTest {
     MailService mailService;
 
     @Test
+    @DisplayName("목표 여정 API의 인증, 기간·timezone·cursor 파라미터와 전체 기간 집계 schema를 노출한다")
+    void apiDocs_goalJourney() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey'].get.security[0].bearerAuth").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey'].get.parameters[*].name").value(hasItem("from")))
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey'].get.parameters[*].name").value(hasItem("to")))
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey'].get.parameters[*].name").value(hasItem("timeZone")))
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey'].get.parameters[*].name").value(hasItem("cursor")))
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey'].get.parameters[*].name").value(hasItem("limit")))
+                .andExpect(jsonPath("$.components.schemas.GoalJourneyResponse.properties.journeyVersion").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalJourneyResponse.properties.nextCursor").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalJourneySummary.properties.practiceOccurrenceCount").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalJourneySummary.properties.noRecordOccurrenceCount").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalJourneyItem.properties.practicedDate.format").value("date"));
+    }
+
+    @Test
     @DisplayName("목표 일회성 Task와 직접 기록 API 및 선택 목표 연결 필드를 OpenAPI에 노출한다")
     void apiDocs_goalContributions() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))

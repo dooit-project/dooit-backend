@@ -7,8 +7,12 @@ import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface GoalPlanOccurrenceRepository extends JpaRepository<GoalPlanOccurrence, Long> {
+    @EntityGraph(attributePaths = "plan")
+    List<GoalPlanOccurrence> findByOwnerIdAndGoalIdAndServiceDateBetween(Long ownerId, Long goalId, LocalDate from, LocalDate to);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<GoalPlanOccurrence> findByPlanIdAndServiceDateBetweenOrderByServiceDateAscIdAsc(
             Long planId, LocalDate from, LocalDate to);

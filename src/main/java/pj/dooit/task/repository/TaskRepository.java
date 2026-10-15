@@ -15,6 +15,17 @@ import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositoryCustom {
 
+    @Query("""
+            select t from Task t
+            where t.owner.id = :ownerId and t.linkedGoalId = :goalId
+              and t.scope = pj.dooit.common.domain.ResourceScope.PERSONAL
+              and t.status = pj.dooit.task.domain.TaskStatus.DONE and t.recurrenceSeries is null
+              and t.completedAt >= :from and t.completedAt < :toExclusive
+              and not exists (select o.id from GoalPlanOccurrence o where o.linkedTaskId = t.id)
+              and not exists (select o.id from PersonalSystemOccurrence o where o.linkedTask.id = t.id)
+            """)
+    List<Task> findGoalJourneyCompletions(Long ownerId, Long goalId, LocalDateTime from, LocalDateTime toExclusive);
+
     @EntityGraph(attributePaths = "ddayGoal")
     default List<Task> findByOwnerId(Long ownerId) {
         return findByOwnerIdAndScope(ownerId, ResourceScope.PERSONAL);

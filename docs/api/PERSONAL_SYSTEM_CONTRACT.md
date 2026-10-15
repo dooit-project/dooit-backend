@@ -265,7 +265,7 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
     "practiceDateCount": 14,
     "standardCount": 8,
     "minimumCount": 4,
-    "unknownCount": 3,
+    "unknownCount": 5,
     "restCount": 1,
     "noRecordOccurrenceCount": 5
   },
@@ -305,11 +305,20 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
     }
   ],
   "nextCursor": null,
-  "journeyVersion": "goal:100:2026-10-14:2026-11-30:42"
+  "journeyVersion": "goal:100:<sha256>"
 }
 ```
 
 ## 6. 정책
+
+### 2026-10-16 여정 구현 계약
+
+- 여정 GET은 저장된 `PRACTICED` 회차 결과, 현재 목표에 연결된 개인 일회성 Task 완료, 취소되지 않은 직접 기록을 owner scope로 통합한다. 목표 계획/기존 개인 시스템 회차의 연결 Task는 일회성 완료 원본에서 제외한다.
+- 필수 `from`/`to`는 양끝 포함이며 31일 제한이 없다. `timeZone` 기본값은 `Asia/Seoul`, `limit` 기본값은 50이며 1~100을 지원한다. 항목은 실제 실천 날짜 내림차순, 타입 이름 오름차순, 원본 ID 내림차순이다.
+- 시각 있는 회차 결과/Task 완료는 요청 timezone으로 날짜를 산출한다. 직접 기록은 저장된 날짜/zone을 보존한다. 회차의 `serviceDate`와 실제 `practicedDate`가 다르면 실제 실천 날짜로 항목을 조회한다.
+- summary는 페이지 일부가 아니라 전체 범위 실천 원본, 행동 종류, 날짜 합집합을 집계한다. 일회성 Task와 직접 기록은 `UNKNOWN`에 포함한다. 휴식/미기록 수는 서비스 날짜 범위의 저장된 회차를 기준으로 하며 미생성 날짜를 추정하지 않는다. 오늘 이후 숨겨진 정지/보관/요일·목표 변경 회차는 미기록에서 제외한다. 조회는 회차/Task를 생성하지 않는다.
+- 현재 원본을 한 read-only repeatable-read transaction에서 조회한다. `journeyVersion`은 전체 범위 입력/집계 지문이며 cursor는 소유자/목표/기간/timezone과 이 지문에 연결된다. 원본 변경 후 기존 cursor는 409/`70008`로 거절한다. 클라이언트는 cursor 없이 다시 시작한다.
+- 완료/실천 취소, Task 목표 연결 해제/변경, 직접 기록 수정/취소 후 항목·집계·지문이 함께 갱신된다. 과거 회차와 직접 기록의 목표 version snapshot은 보존한다. 상세 필드/오류는 [`API_V1_FRONTEND.md`](./API_V1_FRONTEND.md)의 목표 여정 조회 계약을 따른다.
 
 ### 날짜와 조회
 

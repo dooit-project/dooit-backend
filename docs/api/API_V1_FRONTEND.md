@@ -739,8 +739,8 @@ Task 응답 nullable/default 규칙:
 구현 상태:
 
 - 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, 회차 실천/휴식 결과와 연결 Task 완료/재개, Goal/Plan DB schema, D-Day 소유권 검증
-- 추가 구현됨: 목표 연결 일회성 Task 생성/연결/해제, 직접 실천 기록 생성/수정/취소와 생성 idempotency
-- 아직 미구현: 목표 여정 조회, AI 초안/요약/조정, 기존 개인 시스템 데이터 이관/adapter
+- 추가 구현됨: 목표 연결 일회성 Task 생성/연결/해제, 직접 실천 기록 생성/수정/취소와 생성 idempotency, 목표 여정 통합 조회·전체 기간 summary·cursor
+- 아직 미구현: AI 초안/요약/조정, 기존 개인 시스템 데이터 이관/adapter
 
 제안 API:
 
@@ -758,7 +758,7 @@ Task 응답 nullable/default 규칙:
 - `PUT /api/v1/tasks/{taskId}/goal-link`, `DELETE /api/v1/tasks/{taskId}/goal-link` 구현됨
 - `POST /api/v1/goals/{goalId}/direct-logs` 구현됨
 - `PATCH /api/v1/goal-direct-logs/{logId}`, `DELETE /api/v1/goal-direct-logs/{logId}` 구현됨
-- `GET /api/v1/goals/{goalId}/journey?from=YYYY-MM-DD&to=YYYY-MM-DD&timeZone=Asia/Seoul&cursor=...`
+- `GET /api/v1/goals/{goalId}/journey?from=YYYY-MM-DD&to=YYYY-MM-DD&timeZone=Asia/Seoul&cursor=...` 구현됨
 
 회차 조회 계약:
 
@@ -818,6 +818,22 @@ Task 응답 nullable/default 규칙:
 - 타 사용자 또는 없는 기록은 404/`70006`, 타 사용자 또는 없는 목표는 404/`70001`이다. 잘못된 필드/zone/key 또는 필수 헤더 누락은 400/`10001`이다. 직접 기록은 Task나 반복 회차를 자동 완료하지 않는다.
 
 배포·클라이언트 영향: endpoint 및 nullable Task 필드 추가이므로 기존 요청 형식은 호환된다. 직접 기록 배포 전 `20261015_add_goal_direct_log_request_hash.sql`을 선행 목표 migration 이후 적용해야 한다. 운영 적용 여부는 [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)에 기록한다. 지문 없는 기존 행의 동일 key 재시도는 최초 본문을 확인할 수 없어 409/`10004`로 거절한다. 프론트는 직접 기록 생성 key를 성공 후 재시도에도 유지하고, 목표 해제에는 별도 DELETE를 사용한다.
+
+목표 여정 조회 계약:
+
+- `from`, `to`는 필수 LocalDate이며 양끝 포함이다. `from <= to`여야 하고 회차 생성 API의 31일 제한을 적용하지 않아 목표 시작 이후 장기간도 조회할 수 있다. `timeZone`은 기본 `Asia/Seoul`, `limit`은 기본 50, 허용 범위 1~100이다.
+- 응답은 `goalId`, `range: { from, to, timeZone }`, 전체 기간 `summary`, 이번 페이지 `items`, `nextCursor`, `journeyVersion`이다. 빈 결과와 마지막 페이지의 `nextCursor`는 null이다.
+- `items`는 유효 실천만 포함한다. `PLAN_OCCURRENCE`는 실제 결과가 있는 `PRACTICED` 회차, `TASK_COMPLETION`은 현재 해당 목표에 연결된 완료 개인 일회성 Task, `DIRECT_LOG`는 취소하지 않은 직접 기록이다. 휴식과 미기록은 summary에만 포함한다.
+- 목표 계획/기존 개인 시스템 회차에 연결된 Task는 `TASK_COMPLETION`에서 제외한다. 회차의 현재 계획 목표 연결이 달라져도 저장된 과거 목표 ID/계획/행동 snapshot을 사용한다. 일회성 Task는 현재 `linkedGoalId`를 기준으로 하므로 연결 해제/변경 시 해당 목표 여정에서도 이동한다.
+- 시각이 있는 실천 결과는 `practicedAt`+`practicedTimeZone`, Task 완료는 저장 기준 `Asia/Seoul`을 요청 timezone으로 변환해 `practicedDate`와 기간 포함 여부를 판단한다. 직접 기록은 시각 없는 날짜 원본이므로 저장된 `practicedDate`와 zone을 보존한다. 휴식/미기록 집계도 서비스 날짜 원본을 사용한다.
+- 정렬은 `practicedDate desc`, `sourceType asc`, `sourceId desc`다. 같은 날짜의 타입 순서는 `DIRECT_LOG`, `PLAN_OCCURRENCE`, `TASK_COMPLETION`이다. ID는 원본별 ID이므로 클라이언트 항목 key는 `sourceType + sourceId`로 만든다.
+- 회차 항목은 당시 `goalVersion`, `planId`, `planVersion`, 계획 이름 `title`, 선택한 기본/최소 `actionText`, 메모, 연결 `taskId`, `serviceDate`, 원래 실천 시각/zone, `snapshotGoalTitle`, 다음 행동, 어려움 목록을 반환한다. 미분류 실천의 `actionText`는 null이다. 직접 기록의 목표 제목은 저장된 goal version으로 조회한다. 일회성 Task에는 goal version snapshot이 없어 `goalVersion`/`snapshotGoalTitle`이 null이며 `note`에는 Task 설명을 반환한다.
+- summary는 cursor/limit과 무관하게 전체 조회 기간을 집계한다. `practiceOccurrenceCount`, `oneOffCompletionCount`, `directLogCount`는 원본별 실천 수이며 `practiceDateCount`는 이 세 원본의 날짜 합집합 크기다. `standardCount`, `minimumCount`, `unknownCount`는 모든 실천 항목의 행동 종류별 수이며 일회성 Task와 직접 기록은 `UNKNOWN`이다.
+- `restCount`는 저장된 `RESTED` 회차 수, `noRecordOccurrenceCount`는 저장된 유효 `PENDING` 회차 수다. 오늘 이후 정지/보관 또는 선택 요일·목표 연결 변경으로 숨겨진 미실천 회차는 제외하고 과거 미기록은 보존한다. **미생성 회차를 추정해 집계하지 않으며 회차/Task를 새로 생성하지 않는다.** 미기록을 실패나 목표 달성률로 해석하지 않는다.
+- `journeyVersion`은 목표 메타데이터, 조회 범위, 전체 항목/집계와 원본 변경 정보를 반영하는 불투명 지문이다. 클라이언트는 동등성 비교/캐시 무효화에 사용하고 숫자 순서로 해석하지 않는다. 다음 페이지는 같은 목표/기간/timezone에 서버가 준 `nextCursor`를 그대로 보낸다. 페이지 사이 기록 변경은 409/`70008`이며 이전 페이지를 버리고 cursor 없이 재조회한다.
+- 범위/zone/limit 오류와 손상되거나 다른 조회에 쓰인 cursor는 400/`10001`, 타 사용자 또는 없는 목표는 404/`70001`이다. 모든 원본은 owner scope로 조회하며 AI 호출 없이 동작한다.
+
+호환성·배포: 신규 GET과 응답 DTO/오류 코드 추가이며 기존 API 계약은 유지한다. 여정 조회 자체의 추가 DB migration은 없고, 선행 목표 schema 및 직접 기록 지문 migration은 필요하다. 기존 개인 시스템 데이터 이관/adapter와 AI 요약은 후속 범위다.
 
 핵심 타입:
 
