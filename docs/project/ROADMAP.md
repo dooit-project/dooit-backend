@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-10-15
+Last updated: 2026-10-16
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -34,7 +34,7 @@ Last updated: 2026-10-15
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 | monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
-| 목표 중심 계획·실천 여정 | 2026-10-14 변경 요청 반영. 기존 개인 시스템 1개 모델을 목표/여러 계획/일회성 기록 모델로 전환 필요 | 목표 연결 일회성 Task와 직접 기록부터 순차 구현 |
+| 목표 중심 계획·실천 여정 | 2026-10-14 변경 요청 반영. 기존 개인 시스템 1개 모델을 목표/여러 계획/일회성 기록 모델로 전환 필요 | 목표 여정 통합 조회와 전체 범위 summary부터 순차 구현 |
 
 ## 2. 제품 기능 로드맵
 
@@ -78,7 +78,7 @@ Last updated: 2026-10-15
 - [x] 목표 하위 여러 반복 계획과 목표 없는 독립 반복 계획 CRUD를 구현한다.
 - [x] 계획별 날짜 기반 회차 materialize, 중복 방지, snapshot, 알림 후보 key를 구현한다.
 - [x] 회차 기본/최소 실천, 휴식, 취소와 연결 Task 완료/재개 transaction을 구현한다.
-- [ ] 목표 연결 일회성 Task 생성, 기존 Task 목표 연결/해제, 직접 기록 생성/수정/취소와 idempotency를 구현한다.
+- [x] 목표 연결 일회성 Task 생성, 기존 Task 목표 연결/해제, 직접 기록 생성/수정/취소와 idempotency를 구현한다.
 - [ ] 목표 여정 조회에서 회차, Task 완료, 직접 기록을 중복 없이 통합하고 전체 범위 summary를 반환한다.
 - [ ] 필수 수용 기준 integration test를 추가한다.
 - [ ] AI 목표 초안, 계획 초안, 조정안, 여정 요약을 CRUD와 장애 격리해 순차 구현한다.

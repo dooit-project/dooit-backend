@@ -1,6 +1,7 @@
 package pj.dooit.task.service;
 
 import pj.dooit.Constant;
+import pj.dooit.goal.service.GoalTaskLinkService;
 import pj.dooit.notification.config.PushNotificationProperties;
 import pj.dooit.common.domain.ResourceScope;
 import pj.dooit.task.domain.DeferReason;
@@ -61,6 +62,7 @@ public class TaskService {
     private final PushNotificationProperties pushNotificationProperties;
     private final RecurrenceRuleUpdateService recurrenceRuleUpdateService;
     private final TaskQuickCaptureParser taskQuickCaptureParser;
+    private final GoalTaskLinkService goalTaskLinkService;
 
     @Transactional
     public TaskResponse create(TaskRequest req) {
@@ -128,6 +130,10 @@ public class TaskService {
                 .build();
         if (workspace != null) {
             task.assignWorkspace(workspace);
+        }
+
+        if (req.linkedGoalId() != null) {
+            goalTaskLinkService.applyRequest(task, req);
         }
 
         if (req.recurrence() != null) {

@@ -1,6 +1,7 @@
 package pj.dooit.task.domain;
 
 import pj.dooit.Constant;
+import org.hibernate.annotations.DynamicUpdate;
 import pj.dooit.common.domain.ResourceScope;
 import pj.dooit.dday.domain.DdayGoal;
 import pj.dooit.user.domain.User;
@@ -17,6 +18,7 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 
 @Entity
+@DynamicUpdate
 @Table(name = "`TASK`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -88,6 +90,9 @@ public class Task {
     @Enumerated(EnumType.STRING)
     @Column(name = "`DEFER_REASON`")
     private DeferReason deferReason;
+
+    @Column(name = "`LINKED_GOAL_ID`")
+    private Long linkedGoalId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`DDAY_GOAL_ID`")
@@ -227,6 +232,10 @@ public class Task {
         this.status = TaskStatus.TODAY;
         this.targetDate = targetDate;
         this.completedAt = null;
+    }
+
+    public void connectGoal(Long goalId) {
+        this.linkedGoalId = goalId;
     }
 
     public void complete(LocalDateTime completedAt) {

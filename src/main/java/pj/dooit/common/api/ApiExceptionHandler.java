@@ -12,6 +12,9 @@ import pj.dooit.common.idempotency.IdempotencyKeyReusedException;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.goal.exception.GoalNotFoundException;
 import pj.dooit.goal.exception.GoalPlanNotFoundException;
+import pj.dooit.goal.exception.GoalTaskConflictException;
+import pj.dooit.goal.exception.GoalDirectLogNotFoundException;
+import pj.dooit.goal.exception.GoalDirectLogConflictException;
 import pj.dooit.goal.exception.GoalValidationException;
 import pj.dooit.goal.exception.GoalOccurrenceNotFoundException;
 import pj.dooit.goal.exception.GoalOccurrenceConflictException;
@@ -37,6 +40,7 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -80,7 +84,7 @@ public class ApiExceptionHandler {
     /**
      * 필수 요청값 누락 (@RequestParam, @PathVariable)
      */
-    @ExceptionHandler({MissingServletRequestParameterException.class, MissingPathVariableException.class})
+    @ExceptionHandler({MissingServletRequestParameterException.class, MissingPathVariableException.class, MissingRequestHeaderException.class})
     public ResponseEntity<ApiResponse<?>> handleMissingRequestValueException(Exception e) {
         log.warn("Missing Request Value : {}", e.getMessage());
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
@@ -306,6 +310,27 @@ public class ApiExceptionHandler {
         log.warn("Goal Occurrence Conflict : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.GOAL_OCCURRENCE_CONFLICT.getStatus())
                 .body(ApiResponse.failure(ErrorCode.GOAL_OCCURRENCE_CONFLICT));
+    }
+
+    @ExceptionHandler(GoalTaskConflictException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalTaskConflictException(GoalTaskConflictException e) {
+        log.warn("Goal request failed : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_TASK_CONFLICT.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_TASK_CONFLICT));
+    }
+
+    @ExceptionHandler(GoalDirectLogNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalDirectLogNotFoundException(GoalDirectLogNotFoundException e) {
+        log.warn("Goal request failed : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_DIRECT_LOG_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_DIRECT_LOG_NOT_FOUND));
+    }
+
+    @ExceptionHandler(GoalDirectLogConflictException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalDirectLogConflictException(GoalDirectLogConflictException e) {
+        log.warn("Goal request failed : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_DIRECT_LOG_CONFLICT.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_DIRECT_LOG_CONFLICT));
     }
 
     @ExceptionHandler(GoalPlanNotFoundException.class)

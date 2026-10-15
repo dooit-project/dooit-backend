@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-09-05
+Last updated: 2026-10-16
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -11,6 +11,12 @@ Last updated: 2026-09-05
 - migration 적용 전에는 대상 column, index, constraint 존재 여부를 확인해 중복 적용을 피한다.
 - migration 적용 후에는 schema 검증 쿼리와 app readiness를 확인한다.
 - schema 변경 빈도가 늘어나거나 다중 환경 migration 순서 관리가 필요해지면 Flyway 도입을 별도 작업으로 전환한다.
+
+## 신규 migration 적용 확인 필요
+
+- `docs/db/migrations/20261015_add_goal_direct_log_request_hash.sql`: 직접 기록의 최초 생성 요청 SHA-256 지문을 `CREATE_REQUEST_HASH`에 보존하고 idempotency key의 대소문자 구분을 `utf8mb4_bin`으로 명시한다. 이 작업에서는 운영 DB에 적용하지 않았다.
+- 선행 조건은 `20261014_add_goal_journey.sql`이다. 적용 전 `GOAL_DIRECT_LOG`와 `CREATE_REQUEST_HASH`, key collation 존재 여부 및 기존 적용 이력을 확인한다. 백업 후 신규 migration을 적용하고 schema/readiness를 확인한다.
+- 새 지문 컬럼은 nullable이므로 기존 행을 보존한다. 지문이 없는 기존 행은 최초 본문을 확인할 수 없어 같은 key 재시도를 409/`10004`로 거절한다. 수정·취소는 계속 지원하며, 최초 요청 지문을 현재 수정된 값으로 임의 backfill하지 않는다.
 
 ## 적용 이력
 

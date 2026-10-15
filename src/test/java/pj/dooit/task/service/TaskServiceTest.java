@@ -49,6 +49,9 @@ import static org.mockito.Mockito.times;
 class TaskServiceTest {
 
     @Mock
+    pj.dooit.goal.service.GoalTaskLinkService goalTaskLinkService;
+
+    @Mock
     TaskRepository taskRepository;
 
     @Mock
@@ -78,7 +81,8 @@ class TaskServiceTest {
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(false, PushNotificationProvider.EXPO, null, null, null, null),
                 recurrenceRuleUpdateService,
-                new TaskQuickCaptureParser()
+                new TaskQuickCaptureParser(),
+                goalTaskLinkService
         );
     }
 
@@ -1484,7 +1488,8 @@ class TaskServiceTest {
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(true, PushNotificationProvider.EXPO, null, null, null, null),
                 recurrenceRuleUpdateService,
-                new TaskQuickCaptureParser()
+                new TaskQuickCaptureParser(),
+                goalTaskLinkService
         );
         User owner = persistedOwner(1L);
         LocalDate date = LocalDate.of(2026, 7, 13);
@@ -1518,7 +1523,8 @@ class TaskServiceTest {
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(true, PushNotificationProvider.EXPO, null, null, null, null),
                 recurrenceRuleUpdateService,
-                new TaskQuickCaptureParser()
+                new TaskQuickCaptureParser(),
+                goalTaskLinkService
         );
         User actor = persistedOwner(1L);
         SharedWorkspace workspace = new SharedWorkspace("workspace", null, actor);

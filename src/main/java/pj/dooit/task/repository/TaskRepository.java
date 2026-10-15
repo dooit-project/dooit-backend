@@ -3,6 +3,8 @@ package pj.dooit.task.repository;
 import pj.dooit.common.domain.ResourceScope;
 import pj.dooit.task.domain.Task;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -49,6 +51,10 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
     default Optional<Task> findByIdAndOwnerId(Long id, Long ownerId) {
         return findByIdAndOwnerIdAndScope(id, ownerId, ResourceScope.PERSONAL);
     }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Task t where t.id = :id and t.owner.id = :ownerId and t.scope = pj.dooit.common.domain.ResourceScope.PERSONAL")
+    Optional<Task> findForGoalLinkUpdate(Long id, Long ownerId);
 
     Optional<Task> findByIdAndOwnerIdAndScope(Long id, Long ownerId, ResourceScope scope);
 

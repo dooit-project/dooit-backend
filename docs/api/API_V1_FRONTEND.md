@@ -1,6 +1,6 @@
 # Dooit v1 Frontend API
 
-Last updated: 2026-10-15
+Last updated: 2026-10-16
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -739,7 +739,8 @@ Task 응답 nullable/default 규칙:
 구현 상태:
 
 - 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, 회차 실천/휴식 결과와 연결 Task 완료/재개, Goal/Plan DB schema, D-Day 소유권 검증
-- 아직 미구현: 목표 연결 일회성 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
+- 추가 구현됨: 목표 연결 일회성 Task 생성/연결/해제, 직접 실천 기록 생성/수정/취소와 생성 idempotency
+- 아직 미구현: 목표 여정 조회, AI 초안/요약/조정, 기존 개인 시스템 데이터 이관/adapter
 
 제안 API:
 
@@ -753,10 +754,10 @@ Task 응답 nullable/default 규칙:
 - `GET /api/v1/goal-plan-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD&goalId=...` 구현됨
 - `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/result`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/result` 구현됨
 - `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/rest` 구현됨
-- `POST /api/v1/goals/{goalId}/tasks`
-- `PUT /api/v1/tasks/{taskId}/goal-link`, `DELETE /api/v1/tasks/{taskId}/goal-link`
-- `POST /api/v1/goals/{goalId}/direct-logs`
-- `PATCH /api/v1/goal-direct-logs/{logId}`, `DELETE /api/v1/goal-direct-logs/{logId}`
+- `POST /api/v1/goals/{goalId}/tasks` 구현됨
+- `PUT /api/v1/tasks/{taskId}/goal-link`, `DELETE /api/v1/tasks/{taskId}/goal-link` 구현됨
+- `POST /api/v1/goals/{goalId}/direct-logs` 구현됨
+- `PATCH /api/v1/goal-direct-logs/{logId}`, `DELETE /api/v1/goal-direct-logs/{logId}` 구현됨
 - `GET /api/v1/goals/{goalId}/journey?from=YYYY-MM-DD&to=YYYY-MM-DD&timeZone=Asia/Seoul&cursor=...`
 
 회차 조회 계약:
@@ -770,7 +771,7 @@ Task 응답 nullable/default 규칙:
 - 회차 조회는 활성 계획의 오늘 이후 미실천 회차에 날짜만 있는 Today Task를 생성·연결한다. 과거 회차에는 Task를 생성하지 않는다. 연결 Task는 알림을 비활성화하고 회차 후보만 사용해 중복 알림을 피한다.
 - 잘못된 기간은 400/`10001`, 타 사용자 또는 없는 `goalId`는 404/`70001`이다.
 
-호환성: 신규 회차 결과/휴식 API와 응답의 nullable `result` 필드 추가이며 기존 Task/D-Day/개인 시스템 API 경로는 유지한다. 회차 GET은 오늘 이후 Today Task를 생성한다. 회차 연결 Task 삭제는 409/`70004`로 거절하므로 해당 Task에는 삭제 대신 회차 휴식/계획 보관 UI를 사용한다. 기존 목표 API의 `futurePlanPolicy`가 연결 계획에 실제 적용된다. 별도 새 DB migration은 없으며 신규 환경에는 `20261014_add_goal_journey.sql` 적용이 필요하다. 기존 `PERSONAL_SYSTEM*` 데이터 이관은 후속 작업이다.
+호환성: 신규 회차 결과/휴식 API와 응답의 nullable `result` 필드 추가이며 기존 Task/D-Day/개인 시스템 API 경로는 유지한다. 회차 GET은 오늘 이후 Today Task를 생성한다. 회차 연결 Task 삭제는 409/`70004`로 거절하므로 해당 Task에는 삭제 대신 회차 휴식/계획 보관 UI를 사용한다. 기존 목표 API의 `futurePlanPolicy`가 연결 계획에 실제 적용된다. 목표 schema의 선행 migration은 `20261014_add_goal_journey.sql`이며, 직접 기록 기능 배포 전에는 아래 추가 migration도 필요하다. 기존 `PERSONAL_SYSTEM*` 데이터 이관은 후속 작업이다.
 
 회차 실천·휴식 계약:
 
@@ -798,6 +799,25 @@ Task 응답 nullable/default 규칙:
   "occurrenceVersion": 1
 }
 ```
+
+목표 일회성 Task 계약:
+
+- `POST /goals/{goalId}/tasks` body는 `{ "title": "문제 풀기", "date": "2026-10-15" }`다. 제목은 1~30자이고 날짜는 필수다. 지정 날짜 Today Task를 생성하고 `linkedGoalId`를 설정하며 201/`TaskResponse`를 반환한다. 선택 `Idempotency-Key`는 기존 Task 생성과 같은 공통 응답 replay 정책을 따른다.
+- `PUT /tasks/{taskId}/goal-link` body는 `{ "goalId": 100 }`이며 200/`TaskResponse`를 반환한다. 이미 완료된 Task도 연결할 수 있고 완료 상태/시각과 D-Day 연결은 유지한다. `DELETE`는 이 목표 연결만 해제하며 같은 응답 타입을 반환한다. 같은 연결/해제 요청은 다시 실행해도 같은 연결 상태를 유지한다.
+- 일반 `POST /tasks`, `PUT /tasks/{id}`에도 선택 양수 `linkedGoalId`를 추가한다. 수정 시 생략/null은 기존 연결을 유지하고 해제는 별도 DELETE를 사용한다. 모든 `TaskResponse`에 nullable `linkedGoalId`가 추가된다.
+- 개인 일회성 Task만 지원한다. workspace Task는 개인 목표 연결 입력을 400/`10001`로 거절한다. 일반 반복/목표 계획/기존 개인 시스템의 회차 Task 개별 연결·해제는 409/`70005`다. 새 반복 생성 요청에 목표 연결을 함께 보내면 400/`10001`이다.
+- 본인 소유 Task/목표만 사용할 수 있다. 범위 밖 Task는 404/`20001`, 목표는 404/`70001`이다. 연결 시 직접 실천 기록을 복제하지 않으며 여정 집계는 후속 여정 API에서 구현한다.
+
+목표 직접 실천 기록 계약:
+
+- `POST /goals/{goalId}/direct-logs`는 `Idempotency-Key` 헤더(앞뒤 공백 제거 후 1~160자, 대소문자 구분)가 필수다. body는 `practicedDate`(필수 LocalDate), `practicedTimeZone`(기본 `Asia/Seoul`), `title`(필수 1~120자), `note`(선택 최대 1000자)다. IANA timezone을 검증하며 제목/메모/zone 앞뒤 공백과 빈 선택 값을 정규화한다.
+- 응답은 201이며 `id`, `goalId`, `goalVersion`, 날짜/zone/제목/메모, `createdAt`, `updatedAt`, `canceledAt`을 반환한다. 목표 version은 실천 날짜에 적용되는 version이며 생성 전 날짜는 최초 목표 version을 사용한다.
+- key는 사용자+목표 범위다. 같은 key와 정규화한 생성 본문은 같은 ID의 **현재 기록 상태**를 반환하고 `Idempotency-Replayed: true`를 붙인다. 다른 생성 본문은 409/`10004`다. 원본 최초 요청 지문을 별도로 보관하므로 수정·취소나 공통 응답 캐시 만료 후에도 중복 생성과 취소 기록 부활을 막는다. 기록이 존재하는 동안 key를 유지하며 새 기록에는 새 key를 사용한다.
+- `PATCH /goal-direct-logs/{logId}`는 같은 body 네 필드를 전체 교체한다. 날짜/제목은 필수이며 note 생략/null은 비운다. 원래 목표 ID/version과 최초 요청 지문은 유지한다. 200/기록 응답을 반환한다.
+- `DELETE /goal-direct-logs/{logId}`는 `canceledAt`을 남기고 200/`data: null`을 반환한다. 재시도는 최초 취소 시각을 유지한다. 취소 후 수정은 409/`70007`이며 같은 생성 요청 재시도는 취소된 현재 기록을 반환한다.
+- 타 사용자 또는 없는 기록은 404/`70006`, 타 사용자 또는 없는 목표는 404/`70001`이다. 잘못된 필드/zone/key 또는 필수 헤더 누락은 400/`10001`이다. 직접 기록은 Task나 반복 회차를 자동 완료하지 않는다.
+
+배포·클라이언트 영향: endpoint 및 nullable Task 필드 추가이므로 기존 요청 형식은 호환된다. 직접 기록 배포 전 `20261015_add_goal_direct_log_request_hash.sql`을 선행 목표 migration 이후 적용해야 한다. 운영 적용 여부는 [`../db/MIGRATION_HISTORY.md`](../db/MIGRATION_HISTORY.md)에 기록한다. 지문 없는 기존 행의 동일 key 재시도는 최초 본문을 확인할 수 없어 409/`10004`로 거절한다. 프론트는 직접 기록 생성 key를 성공 후 재시도에도 유지하고, 목표 해제에는 별도 DELETE를 사용한다.
 
 핵심 타입:
 

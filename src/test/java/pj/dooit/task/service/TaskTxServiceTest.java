@@ -55,6 +55,9 @@ class TaskTxServiceTest {
     @Mock
     GoalOccurrenceTaskLinkService goalOccurrenceTaskLinkService;
 
+    @Mock
+    pj.dooit.goal.service.GoalTaskLinkService goalTaskLinkService;
+
     private TaskTxService service() {
         return new TaskTxService(
                 taskRepository,
@@ -62,7 +65,8 @@ class TaskTxServiceTest {
                 dailyPlanService,
                 checklistItemService,
                 personalSystemTaskLinkService,
-                goalOccurrenceTaskLinkService
+                goalOccurrenceTaskLinkService,
+                goalTaskLinkService
         );
     }
 

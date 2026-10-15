@@ -25,6 +25,7 @@ public class OpenApiConfig {
     private static final Set<String> IDEMPOTENT_POST_PATHS = Set.of(
             "/api/v1/auth/guest",
             "/api/v1/tasks",
+            "/api/v1/goals/{goalId}/tasks",
             "/api/v1/tasks/{taskId}/checklist-items",
             "/api/v1/tasks/quick-capture",
             "/api/v1/task-templates",

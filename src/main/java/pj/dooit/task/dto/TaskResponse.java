@@ -79,7 +79,9 @@ public record TaskResponse(
         @Schema(description = "생성 시각", example = "2026-07-22T09:30:00", nullable = true)
         LocalDateTime createdAt,
         @Schema(description = "수정 시각. 생성 직후에는 null입니다.", example = "2026-07-22T10:30:00", nullable = true)
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        @Schema(description = "연결된 개인 목표 ID. 일회성 Task 목표 연결이며 D-Day와 독립입니다.", nullable = true)
+        Long linkedGoalId
 ) {
     public TaskResponse(
             Long id,
@@ -92,7 +94,7 @@ public record TaskResponse(
             String category,
             LocalDateTime createdAt
     ) {
-        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, true, null, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, null, createdAt, null);
+        this(id, TaskType.defaultType(), title, description, startAt, endAt, allDay, unscheduled, category, null, true, null, null, null, null, null, null, 0, false, null, null, null, null, null, null, null, null, null, null, null, createdAt, null, null);
     }
 
     public static TaskResponse from(Task t) {
@@ -131,6 +133,7 @@ public record TaskResponse(
                 .recurrence(TaskRecurrenceResponse.from(recurrenceSeries))
                 .createdAt(t.getCreatedAt())
                 .updatedAt(t.getUpdatedAt())
+                .linkedGoalId(t.getLinkedGoalId())
                 .build();
     }
 }

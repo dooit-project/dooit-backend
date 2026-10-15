@@ -7,6 +7,7 @@ import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.dday.repository.DdayGoalRepository;
 import pj.dooit.personalsystem.service.PersonalSystemTaskLinkService;
 import pj.dooit.goal.service.GoalOccurrenceTaskLinkService;
+import pj.dooit.goal.service.GoalTaskLinkService;
 import pj.dooit.task.domain.DeferReason;
 import pj.dooit.task.domain.RecurrenceEditScope;
 import pj.dooit.task.domain.RecurrenceExceptionType;
@@ -44,6 +45,7 @@ public class TaskTxService {
     private final TaskChecklistItemService checklistItemService;
     private final PersonalSystemTaskLinkService personalSystemTaskLinkService;
     private final GoalOccurrenceTaskLinkService goalOccurrenceTaskLinkService;
+    private final GoalTaskLinkService goalTaskLinkService;
 
     @Transactional
     public Task updateTx(Long id, TaskRequest req) {
@@ -51,6 +53,7 @@ public class TaskTxService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
+        applyGoalRequest(task, req);
         LocalDate previousPlannedDate = task.getPlannedDate();
         task.update(
                 req.title(),
@@ -77,6 +80,7 @@ public class TaskTxService {
     public Task updateTxForOwner(Long id, TaskRequest req, User owner, RecurrenceEditScope recurrenceScope) {
         validateNoRecurrenceRuleUpdate(req);
         Task task = findTaskForOwner(id, owner);
+        applyGoalRequest(task, req);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
             LocalDate previousPlannedDate = task.getPlannedDate();
@@ -115,6 +119,7 @@ public class TaskTxService {
     ) {
         validateNoRecurrenceRuleUpdate(req);
         Task task = findTaskForWorkspace(id, workspace);
+        applyGoalRequest(task, req);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task) || effectiveScope == RecurrenceEditScope.THIS) {
             LocalDate previousPlannedDate = task.getPlannedDate();
@@ -548,6 +553,12 @@ public class TaskTxService {
 
     private boolean isRecurringOccurrence(Task task) {
         return task.getRecurrenceSeries() != null && task.getOccurrenceDate() != null;
+    }
+
+    private void applyGoalRequest(Task task, TaskRequest request) {
+        if (request.linkedGoalId() != null) {
+            goalTaskLinkService.applyRequest(task, request);
+        }
     }
 
     private void applySingleUpdate(Task task, TaskRequest req) {

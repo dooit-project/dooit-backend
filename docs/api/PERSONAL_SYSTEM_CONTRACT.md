@@ -1,6 +1,6 @@
 # Goal Journey Contract
 
-Last updated: 2026-10-15
+Last updated: 2026-10-16
 
 이 문서는 "목표 -> 여러 반복 계획과 일회성 행동 -> 실제 실천 기록 -> 목표별 지나온 길" 흐름의 백엔드 구현 계약이다. 2026-10-12의 개인 시스템 하나 중심 계약은 이 문서로 대체한다. 기존 구현의 `personal-systems` 모델은 폐기하지 않고 목표의 반복 실행 계획 모델로 확장 또는 마이그레이션한다.
 
@@ -153,15 +153,22 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 | `TITLE` | 행동 제목 |
 | `NOTE` | 선택 메모 |
 | `IDEMPOTENCY_KEY` | 재시도 중복 방지 key |
+| `CREATE_REQUEST_HASH` | 최초 정규화 생성 본문의 SHA-256. 기록 수정/취소 후에도 유지 |
 | `CREATED_AT`, `UPDATED_AT`, `CANCELED_AT` | 생성/수정/취소 시각 |
 
 계획하지 않았지만 이미 한 일을 빠르게 남기는 원본이다. 추가 실천을 기존 반복 회차의 기본/최소 결과로 억지 변환하지 않고, 일회성 기록이 주말 회차를 자동 완료하지 않는다.
+
+2026-10-15 구현: 생성은 1~160자 `Idempotency-Key` 헤더가 필수다. key는 앞뒤 공백을 제거하고 대소문자를 구분하며 사용자+목표 범위로 관리한다. 목표 row 잠금과 unique key로 동시 생성을 직렬화한다. 같은 key/정규화 생성 본문은 기존 ID의 현재 상태를 반환하고 다른 본문은 409/`10004`다. 최초 생성 지문을 별도로 유지하므로 기록 수정이나 취소 후에도 생성 재시도가 기록을 복제하거나 되살리지 않는다.
+
+PATCH는 날짜/zone/제목/메모를 교체하고 원래 목표 snapshot과 key/지문을 유지한다. DELETE는 최초 `canceledAt`을 유지하는 soft cancel이다. 취소된 기록 수정은 409/`70007`, owner scope 밖 기록은 404/`70006`이다. 직접 기록은 기존 반복 회차 결과와 독립이다. 배포 전 `20261015_add_goal_direct_log_request_hash.sql` 적용이 필요하다.
 
 ### Task 확장
 
 기존 `TASK.linkedDdayGoalId`와 D-Day Task 연결 API는 유지한다. 새 목표 연결을 위해 `TASK.linkedGoalId`를 nullable로 추가한다. 목표 상세에서 일회성 Task를 만들면 `linkedGoalId`가 자동 설정되고, 일반 Task 생성/수정에서도 목표를 선택할 수 있다.
 
 Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이미 목표에 연결된 기존 Task를 연결할 때는 새 직접 기록을 복제하지 않는다.
+
+2026-10-15 구현: 목표별 Task 생성은 `title`(1~30자), `date` 필수 body로 Today Task를 만든다. 별도 목표 연결 PUT/DELETE와 일반 Task 생성/수정의 선택 `linkedGoalId`를 지원한다. 수정 시 목표 ID 생략/null은 기존 연결을 유지하고 별도 DELETE로 해제한다. 응답 `linkedGoalId`는 nullable이다. 완료 상태/시각과 D-Day 연결은 보존한다. 일반 반복/목표 계획/기존 개인 시스템 회차 Task의 목표는 개별 Task에서 변경할 수 없다. workspace Task는 개인 목표 연결 대상이 아니다. 여정 통합/중복 제거는 후속 단계에서 구현한다.
 
 ## 4. API 초안
 

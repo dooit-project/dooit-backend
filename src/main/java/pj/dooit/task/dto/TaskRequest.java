@@ -5,6 +5,7 @@ import pj.dooit.task.domain.TaskType;
 import pj.dooit.task.exception.TaskValidationException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
@@ -50,8 +51,21 @@ public record TaskRequest(
         LocalDateTime notifyAt,
 
         @Schema(description = "반복 생성 옵션. 없으면 단일 Task로 생성합니다.", nullable = true)
-        TaskRecurrenceRequest recurrence
+        TaskRecurrenceRequest recurrence,
+
+        @Schema(description = "연결할 개인 목표 ID. 일회성 개인 Task에만 사용합니다. 수정 시 생략/null은 기존 연결을 유지하며 해제는 goal-link DELETE를 사용합니다.", nullable = true)
+        @Positive
+        Long linkedGoalId
 ) {
+
+    public TaskRequest(
+            String title, String description, TaskType type, LocalDateTime startAt, LocalDateTime endAt,
+            String category, Integer estimatedDurationMinutes, boolean allDay, Boolean notificationEnabled,
+            LocalDateTime notifyAt, TaskRecurrenceRequest recurrence
+    ) {
+        this(title, description, type, startAt, endAt, category, estimatedDurationMinutes, allDay,
+                notificationEnabled, notifyAt, recurrence, null);
+    }
 
     public TaskRequest(
             String title,
