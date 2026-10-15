@@ -1,0 +1,36 @@
+package pj.dooit.goal.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import pj.dooit.auth.service.CurrentUserService;
+import pj.dooit.common.api.ApiResponse;
+import pj.dooit.goal.dto.GoalDraftRequest;
+import pj.dooit.goal.dto.GoalDraftResponse;
+import pj.dooit.goal.service.GoalDraftService;
+
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "v1 Goal Journey", description = "목표 중심 계획·실천 여정 API")
+@SecurityRequirement(name = "bearerAuth")
+public class GoalDraftV1Controller {
+    private final CurrentUserService currentUserService;
+    private final GoalDraftService draftService;
+
+    @PostMapping("/api/v1/goals/draft")
+    @Operation(summary = "저장하지 않는 목표 초안 생성", description = "기본 비활성 상태이며 제공자 미설정/실패 시 503/70009를 반환합니다. targetDate는 요청값을 유지하고 저장은 사용자 확인 후 별도 목표 생성 API로 요청합니다.")
+    public ResponseEntity<ApiResponse<GoalDraftResponse>> draft(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody GoalDraftRequest request) {
+        currentUserService.requireUser(jwt);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(draftService.draft(request)));
+    }
+}

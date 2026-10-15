@@ -11,6 +11,7 @@ import pj.dooit.auth.exception.RefreshTokenReusedException;
 import pj.dooit.common.idempotency.IdempotencyKeyReusedException;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.goal.exception.GoalNotFoundException;
+import pj.dooit.goal.exception.GoalAiUnavailableException;
 import pj.dooit.goal.exception.GoalPlanNotFoundException;
 import pj.dooit.goal.exception.GoalTaskConflictException;
 import pj.dooit.goal.exception.GoalDirectLogNotFoundException;
@@ -35,6 +36,7 @@ import pj.dooit.workspace.exception.WorkspaceNotFoundException;
 import pj.dooit.workspace.exception.WorkspaceValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -97,7 +99,8 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<?>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        log.warn("Unreadable Request Body : {}", e.getMessage());
+        // Parser messages can quote private request values, even when payload logging is excluded.
+        log.warn("Unreadable Request Body");
         return ResponseEntity.badRequest().body(ApiResponse.failure(ErrorCode.INVALID_INPUT));
     }
 
@@ -361,6 +364,13 @@ public class ApiExceptionHandler {
         log.warn("Access Denied");
         return ResponseEntity.status(ErrorCode.FORBIDDEN.getStatus())
                 .body(ApiResponse.failure(ErrorCode.FORBIDDEN));
+    }
+
+    @ExceptionHandler(GoalAiUnavailableException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalAiUnavailableException() {
+        return ResponseEntity.status(ErrorCode.GOAL_AI_UNAVAILABLE.getStatus())
+                .cacheControl(CacheControl.noStore())
+                .body(ApiResponse.failure(ErrorCode.GOAL_AI_UNAVAILABLE));
     }
 
     @ExceptionHandler(Exception.class)

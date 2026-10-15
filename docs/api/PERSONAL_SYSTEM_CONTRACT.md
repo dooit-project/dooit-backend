@@ -361,7 +361,11 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
 - 개인 메모, 목표 이유, 어려움, 다음 행동은 운영 로그에 원문을 남기지 않는다.
 - 2026-10-16 로그 보호 기반: `/api/v1/goals`, `/goal-plans`, `/goal-plan-occurrences`, `/goal-direct-logs`, `/personal-systems`, `/personal-system-occurrences`의 전체 하위 경로는 API 전문 로깅을 켜도 요청/응답 본문과 query 전체를 기록하지 않는다(각 경로는 `/api/v1` 기준). 필드명 추가나 로깅 제외 설정 교체로 해제되지 않으며 context path 배포에도 적용한다. 본문 캐싱 wrapper도 만들지 않는다. HTTP 상태, 경로, 처리 시간, request ID와 기존 마스킹 규칙을 적용한 헤더는 유지한다. 향후 위 경로에 추가될 AI 초안/요약도 같은 보호를 받는다.
 - provider, 보관, 삭제 정책은 구현 전 별도 확정한다.
-- 현재 AI endpoint와 외부 provider 호출은 구현하지 않았다. 로그 보호는 외부 전송/보관 정책 확정을 대신하지 않으며, 기존 Goal/Plan/실천 데이터의 DB 저장·조회·삭제 계약은 바꾸지 않는다. API DTO/오류 코드 변경과 DB migration도 없다.
+- 로그 보호는 외부 전송/보관 정책 확정을 대신하지 않으며, 기존 Goal/Plan/실천 데이터의 DB 저장·조회·삭제 계약은 바꾸지 않는다.
+- 2026-10-16 목표 초안 기반: 인증된 `POST /api/v1/goals/draft`에 `description`(공백 불가, 최대 2000자)과 선택 `targetDate`를 보낸다. 성공 응답은 `title`(1~120자), 선택 `desiredOutcome`/`motivationText`(각 최대 500자), 요청 그대로의 `targetDate`이며 ID는 없다. 목표/계획/회차/Task를 저장하지 않는다. 사용자 확인 후 별도 `POST /api/v1/goals`로 저장하며 D-Day는 그때 사용자가 선택한다.
+- 기본 `app.goal-ai.enabled=false`(`DOOIT_GOAL_AI_ENABLED`)이며 현재 외부 제공자 adapter가 없다. 비활성, 제공자 없음, 잘못된 제공자 출력, 제공자 예외는 503/`70009`로 통일하고 CRUD에는 영향을 주지 않는다. 입력 검증 실패는 400/`10001`, 미인증은 401이다. 활성 설정만으로 외부 전송은 발생하지 않는다. 외부 adapter는 provider·보관·삭제 정책 및 timeout/사용량 제한을 확정한 후 별도 구현한다.
+- 초안과 제공자 응답은 DB/서버 캐시에 보관하지 않는다. 요청 처리 동안 메모리에서 사용하고 응답에는 `Cache-Control: no-store`를 적용한다. 이는 JVM 메모리의 즉시 삭제/덮어쓰기나 외부 provider의 보관 정책을 보장하지 않는다. 제공자 예외의 원문/원인은 로그에 남기지 않으며 JSON 파싱 오류도 입력을 인용할 수 있는 예외 메시지를 기록하지 않는다. 날짜/ID를 제공자가 추론하지 않도록 인터페이스 입력은 정규화한 설명만 전달한다.
+- 이 단계는 새 endpoint/DTO/오류 코드 추가이며 기존 API와 호환된다. DB migration과 기존 클라이언트 수정은 필요 없다. 계획 초안/조정안/여정 요약은 아직 미구현이다.
 
 ## 7. 기존 구현과 호환성
 

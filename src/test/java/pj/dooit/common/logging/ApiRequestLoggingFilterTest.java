@@ -154,8 +154,12 @@ class ApiRequestLoggingFilterTest {
         properties.setPayloadExcludedPaths(Set.of());
         properties.setSensitivePayloadFields(Set.of());
         properties.setSensitiveQueryParameters(Set.of());
+        properties.setSensitiveHeaders(Set.of());
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/backend" + path);
         request.setContextPath("/backend");
+        request.addHeader("Authorization", "private-bearer-token");
+        request.addHeader("Cookie", "private-cookie");
+        request.addHeader("X-API-Key", "private-api-key");
         request.setQueryString("motivation=private-query&unknown=private-unknown-query");
         request.setContentType(MediaType.APPLICATION_JSON_VALUE);
         String input = "{\"motivation\":\"private-motivation\",\"difficulties\":[\"private-difficulty\"],\"unknown\":\"private-input\"}";
@@ -169,6 +173,7 @@ class ApiRequestLoggingFilterTest {
             assertThat(new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8)).isEqualTo(input);
             res.setContentType(MediaType.APPLICATION_JSON_VALUE);
             ((jakarta.servlet.http.HttpServletResponse) res).setStatus(400);
+            ((jakarta.servlet.http.HttpServletResponse) res).addHeader("Set-Cookie", "session=private-response-cookie");
             res.getWriter().write(result);
         });
 

@@ -32,6 +32,8 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
 
     static final String REQUEST_ID_HEADER = "X-Request-Id";
     private static final String REQUEST_ID_MDC_KEY = "requestId";
+    private static final Set<String> PRIVATE_PLANNING_HEADERS = Set.of(
+            "authorization", "cookie", "set-cookie", "proxy-authorization", "x-api-key");
     // These resources contain private planning and practice text, including future AI drafts.
     // This minimum protection must survive replacement of configurable exclusions.
     private static final Set<String> PRIVATE_PLANNING_PATHS = Set.of(
@@ -98,7 +100,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                         : sanitizeQuery(request.getQueryString()),
                 clientIp(request),
                 headerValue(request, "User-Agent"),
-                requestHeaders(request)
+                requestHeaders(request, privatePlanning)
         ));
 
         try {
@@ -113,7 +115,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                     elapsedMs,
                     requestBody(requestWrapper, applicationPath),
                     responseBody(responseWrapper, applicationPath),
-                    responseHeaders(responseToUse)
+                    responseHeaders(responseToUse, privatePlanning)
             ));
             try {
                 if (responseWrapper != null) {
@@ -234,14 +236,14 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         return sanitized.toString();
     }
 
-    private Map<String, String> requestHeaders(HttpServletRequest request) {
+    private Map<String, String> requestHeaders(HttpServletRequest request, boolean privatePlanning) {
         Map<String, String> headers = new LinkedHashMap<>();
         Collections.list(request.getHeaderNames()).forEach(name ->
                 headers.put(
                         name,
                         sanitizer.sanitizeExactValue(
                                 name,
-                                request.getHeader(name),
+                                protectPlanningHeader(name, request.getHeader(name), privatePlanning),
                                 properties.getSensitiveHeaders(),
                                 properties.getMaxPayloadLength()
                         )
@@ -250,14 +252,14 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         return headers;
     }
 
-    private Map<String, String> responseHeaders(HttpServletResponse response) {
+    private Map<String, String> responseHeaders(HttpServletResponse response, boolean privatePlanning) {
         Map<String, String> headers = new LinkedHashMap<>();
         response.getHeaderNames().forEach(name ->
                 headers.put(
                         name,
                         sanitizer.sanitizeExactValue(
                                 name,
-                                response.getHeader(name),
+                                protectPlanningHeader(name, response.getHeader(name), privatePlanning),
                                 properties.getSensitiveHeaders(),
                                 properties.getMaxPayloadLength()
                         )
@@ -356,6 +358,11 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
     private boolean isPayloadPathExcluded(String path) {
         return isPrivatePlanningPath(path)
                 || properties.getPayloadExcludedPaths().stream().anyMatch(path::startsWith);
+    }
+
+    private String protectPlanningHeader(String name, String value, boolean privatePlanning) {
+        return privatePlanning ? sanitizer.sanitizeExactValue(name, value, PRIVATE_PLANNING_HEADERS,
+                properties.getMaxPayloadLength()) : value;
     }
 
     private boolean isPrivatePlanningPath(String path) {

@@ -23,6 +23,15 @@ import static org.hamcrest.Matchers.hasItem;
 @ActiveProfiles("test")
 class OpenApiDocumentationIntegrationTest {
 
+    @Test
+    void apiDocs_goalDraft() throws Exception {
+        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/draft'].post.security[0].bearerAuth").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalDraftRequest.properties.description.maxLength").value(2000))
+                .andExpect(jsonPath("$.components.schemas.GoalDraftResponse.properties.title").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalDraftResponse.properties.targetDate").exists());
+    }
+
     @Autowired
     MockMvc mockMvc;
 

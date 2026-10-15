@@ -1939,3 +1939,21 @@ type AppMetadataResponse = {
 - legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다.
 - 모바일 호환을 위해 legacy `/api/ddays/{id}`, `/api/ddays/{id}/tasks` alias를 새로 추가하지 않는다.
 - D-Day 단건 조회는 `GET /api/v1/dday-goals/{id}`, D-Day 기반 Today Task 생성은 `POST /api/v1/dday-goals/{id}/tasks`를 사용한다.
+
+## 목표 초안 API 기반 (2026-10-16)
+
+`POST /api/v1/goals/draft`는 Bearer 인증이 필요하다. 현재 외부 AI 제공자는 연결하지 않았으며 기본 비활성 상태다. 활성 설정만 바꿔도 제공자가 없으면 503/`70009`를 반환한다.
+
+요청:
+
+```json
+{"description":"이직 준비를 위한 영어 점수를 정하고 싶어요", "targetDate":"2026-11-30"}
+```
+
+- `description`: 공백 불가, 최대 2000자. 앞뒤 공백을 제거해 제공자에 전달한다.
+- `targetDate`: 선택 ISO 날짜이며 제공자에 보내지 않고 응답에서 요청값을 유지한다. 생략/null은 null이다.
+- 제공자 연결 후 성공 시 공통 envelope의 `data`는 `title`, `desiredOutcome`, `motivationText`, `targetDate`다. title은 1~120자이고 나머지 텍스트는 최대 500자, 빈 선택 텍스트는 null이다. ID는 없다.
+- 초안은 목표/계획/회차/Task를 만들지 않는다. 확인한 필드만 별도 `POST /api/v1/goals`로 보내 저장한다. D-Day 연결은 저장 요청에서 별도 선택한다.
+- 성공/AI 사용 불가 응답은 `Cache-Control: no-store`를 포함한다. 서버는 초안을 DB나 캐시에 보관하지 않는다.
+- 입력 오류는 400/`10001`, 인증 오류는 기존 인증 계약, 비활성/제공자 미설정/실패/잘못된 출력은 503/`70009`다. 입력을 보존하고 직접 작성 흐름을 제공한다. 자동 재시도를 반복하지 않는다. 기존 CRUD는 AI와 독립적으로 동작한다.
+- 기존 DTO/URL/오류 코드는 유지하는 추가 API이며 DB migration은 없다. 계획 초안·조정안·여정 요약과 외부 provider·보관·삭제 정책은 후속 작업이다.

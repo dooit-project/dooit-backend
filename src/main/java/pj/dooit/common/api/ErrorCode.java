@@ -61,6 +61,7 @@ public enum ErrorCode {
     GOAL_DIRECT_LOG_CONFLICT(HttpStatus.CONFLICT, 70007, "취소한 직접 실천 기록은 수정할 수 없습니다."),
 
     GOAL_JOURNEY_CONFLICT(HttpStatus.CONFLICT, 70008, "목표 여정이 변경되었습니다. 처음부터 다시 조회해주세요."),
+    GOAL_AI_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, 70009, "목표 AI 초안을 사용할 수 없습니다. 잠시 후 다시 시도하거나 직접 작성해주세요."),
 
     // 서버 내부 오류
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 99999, "서버 오류가 발생했습니다.");
