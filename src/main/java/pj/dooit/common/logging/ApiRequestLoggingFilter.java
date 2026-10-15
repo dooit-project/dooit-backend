@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -31,6 +32,11 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
 
     static final String REQUEST_ID_HEADER = "X-Request-Id";
     private static final String REQUEST_ID_MDC_KEY = "requestId";
+    // These resources contain private planning and practice text, including future AI drafts.
+    // This minimum protection must survive replacement of configurable exclusions.
+    private static final Set<String> PRIVATE_PLANNING_PATHS = Set.of(
+            "/api/v1/goals", "/api/v1/goal-plans", "/api/v1/goal-plan-occurrences",
+            "/api/v1/goal-direct-logs", "/api/v1/personal-systems", "/api/v1/personal-system-occurrences");
 
     private final ApiLoggingProperties properties;
     private final ApiPayloadSanitizer sanitizer;
@@ -53,7 +59,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = request.getRequestURI().substring(request.getContextPath().length());
         return !properties.isEnabled()
                 || !path.startsWith("/api/")
                 || properties.getExcludedPaths().stream().anyMatch(path::startsWith);
@@ -70,12 +76,14 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         MDC.put(REQUEST_ID_MDC_KEY, requestId);
         response.setHeader(REQUEST_ID_HEADER, requestId);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        String applicationPath = request.getRequestURI().substring(request.getContextPath().length());
+        boolean privatePlanning = isPrivatePlanningPath(applicationPath);
 
         ContentCachingRequestWrapper requestWrapper = null;
         ContentCachingResponseWrapper responseWrapper = null;
         HttpServletRequest requestToUse = request;
         HttpServletResponse responseToUse = response;
-        if (properties.isPayloadEnabled()) {
+        if (properties.isPayloadEnabled() && !isPayloadPathExcluded(applicationPath)) {
             requestWrapper = new ContentCachingRequestWrapper(request, requestCacheLimit());
             responseWrapper = new ContentCachingResponseWrapper(response);
             requestToUse = requestWrapper;
@@ -86,7 +94,8 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                 requestId,
                 request.getMethod(),
                 request.getRequestURI(),
-                sanitizeQuery(request.getQueryString()),
+                privatePlanning && request.getQueryString() != null ? "[QUERY_PATH_EXCLUDED]"
+                        : sanitizeQuery(request.getQueryString()),
                 clientIp(request),
                 headerValue(request, "User-Agent"),
                 requestHeaders(request)
@@ -102,8 +111,8 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                     request.getRequestURI(),
                     responseToUse.getStatus(),
                     elapsedMs,
-                    requestBody(requestWrapper, request.getRequestURI()),
-                    responseBody(responseWrapper, request.getRequestURI()),
+                    requestBody(requestWrapper, applicationPath),
+                    responseBody(responseWrapper, applicationPath),
                     responseHeaders(responseToUse)
             ));
             try {
@@ -258,11 +267,11 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
     }
 
     private String requestBody(ContentCachingRequestWrapper request, String path) {
-        if (request == null) {
-            return payloadDisabledReason(null);
-        }
         if (isPayloadPathExcluded(path)) {
             return "[PAYLOAD_PATH_EXCLUDED]";
+        }
+        if (request == null) {
+            return payloadDisabledReason(null);
         }
         if (!canLogPayload(request.getContentType())) {
             return payloadDisabledReason(request.getContentType());
@@ -271,11 +280,11 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
     }
 
     private String responseBody(ContentCachingResponseWrapper response, String path) {
-        if (response == null) {
-            return payloadDisabledReason(null);
-        }
         if (isPayloadPathExcluded(path)) {
             return "[PAYLOAD_PATH_EXCLUDED]";
+        }
+        if (response == null) {
+            return payloadDisabledReason(null);
         }
         if (!canLogPayload(response.getContentType())) {
             return payloadDisabledReason(response.getContentType());
@@ -345,7 +354,12 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
     }
 
     private boolean isPayloadPathExcluded(String path) {
-        return properties.getPayloadExcludedPaths().stream().anyMatch(path::startsWith);
+        return isPrivatePlanningPath(path)
+                || properties.getPayloadExcludedPaths().stream().anyMatch(path::startsWith);
+    }
+
+    private boolean isPrivatePlanningPath(String path) {
+        return PRIVATE_PLANNING_PATHS.stream().anyMatch(root -> path.equals(root) || path.startsWith(root + "/"));
     }
 
     private int requestCacheLimit() {

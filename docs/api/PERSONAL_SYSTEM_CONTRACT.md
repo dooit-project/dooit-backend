@@ -359,7 +359,9 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
 - AI 초안은 저장하거나 회차를 만들지 않는다. 사용자가 확인한 요청만 CRUD에 반영한다.
 - AI 요약은 서버 계산 집계와 사용자가 남긴 메모만 근거로 삼는다. 기록에 없는 성과, 점수 상승, 실제 학습량/시간을 만들지 않는다.
 - 개인 메모, 목표 이유, 어려움, 다음 행동은 운영 로그에 원문을 남기지 않는다.
+- 2026-10-16 로그 보호 기반: `/api/v1/goals`, `/goal-plans`, `/goal-plan-occurrences`, `/goal-direct-logs`, `/personal-systems`, `/personal-system-occurrences`의 전체 하위 경로는 API 전문 로깅을 켜도 요청/응답 본문과 query 전체를 기록하지 않는다(각 경로는 `/api/v1` 기준). 필드명 추가나 로깅 제외 설정 교체로 해제되지 않으며 context path 배포에도 적용한다. 본문 캐싱 wrapper도 만들지 않는다. HTTP 상태, 경로, 처리 시간, request ID와 기존 마스킹 규칙을 적용한 헤더는 유지한다. 향후 위 경로에 추가될 AI 초안/요약도 같은 보호를 받는다.
 - provider, 보관, 삭제 정책은 구현 전 별도 확정한다.
+- 현재 AI endpoint와 외부 provider 호출은 구현하지 않았다. 로그 보호는 외부 전송/보관 정책 확정을 대신하지 않으며, 기존 Goal/Plan/실천 데이터의 DB 저장·조회·삭제 계약은 바꾸지 않는다. API DTO/오류 코드 변경과 DB migration도 없다.
 
 ## 7. 기존 구현과 호환성
 

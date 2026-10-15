@@ -5,6 +5,8 @@ import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
@@ -12,6 +14,9 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -133,5 +138,56 @@ class ApiRequestLoggingFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/tasks/today");
 
         assertThat(filter.shouldNotFilter(request)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/api/v1/goals", "/api/v1/goals/draft", "/api/v1/goals/1/plan-draft",
+            "/api/v1/goals/1/adjustment-draft", "/api/v1/goals/1/journey-summary",
+            "/api/v1/goals/1/journey", "/api/v1/goal-plans/1",
+            "/api/v1/goal-plan-occurrences/1/result", "/api/v1/goal-direct-logs/1",
+            "/api/v1/personal-systems/1/evidence", "/api/v1/personal-system-occurrences/1/result"
+    })
+    @DisplayName("계획 API는 설정 변경과 context path에도 개인 본문과 query를 기록하거나 캐시하지 않는다")
+    void excludesPrivatePlanningEvenWithCustomConfiguration(String path, CapturedOutput output) throws Exception {
+        properties.setPayloadEnabled(true);
+        properties.setPayloadExcludedPaths(Set.of());
+        properties.setSensitivePayloadFields(Set.of());
+        properties.setSensitiveQueryParameters(Set.of());
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/backend" + path);
+        request.setContextPath("/backend");
+        request.setQueryString("motivation=private-query&unknown=private-unknown-query");
+        request.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        String input = "{\"motivation\":\"private-motivation\",\"difficulties\":[\"private-difficulty\"],\"unknown\":\"private-input\"}";
+        request.setContent(input.getBytes(StandardCharsets.UTF_8));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        String result = "{\"nextAction\":\"private-next-action\",\"unknown\":\"private-output\"}";
+
+        filter.doFilter(request, response, (req, res) -> {
+            assertThat(req).isNotInstanceOf(ContentCachingRequestWrapper.class);
+            assertThat(res).isNotInstanceOf(ContentCachingResponseWrapper.class);
+            assertThat(new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8)).isEqualTo(input);
+            res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            ((jakarta.servlet.http.HttpServletResponse) res).setStatus(400);
+            res.getWriter().write(result);
+        });
+
+        assertThat(output).contains("API_REQUEST_IN", "API_RESPONSE_OUT", "[PAYLOAD_PATH_EXCLUDED]",
+                "[QUERY_PATH_EXCLUDED]", "status       : 400");
+        assertThat(output).doesNotContain("private-");
+        assertThat(response.getContentAsString()).isEqualTo(result);
+        assertThat(response.getHeader(ApiRequestLoggingFilter.REQUEST_ID_HEADER)).isNotBlank();
+    }
+
+    @Test
+    void similarPathStillUsesConfiguredPayloadLogging(CapturedOutput output) throws Exception {
+        properties.setPayloadEnabled(true);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/goals-report");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        filter.doFilter(request, response, (req, res) -> {
+            res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            res.getWriter().write("{\"success\":true}");
+        });
+        assertThat(output).contains("{\"success\":true}").doesNotContain("[PAYLOAD_PATH_EXCLUDED]");
     }
 }

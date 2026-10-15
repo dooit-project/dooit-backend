@@ -199,6 +199,7 @@ API 오류와 인증 실패는 HTML redirect 없이 JSON `ApiResponse` envelope�
 - response: status, elapsed time, response headers
 - payload: `app.api-logging.payload-enabled=true`일 때 요청/응답 body를 기록한다.
 - payload 제외: `/api/auth`, `/api/v1/auth`는 전문 로깅을 켜도 요청/응답 body를 남기지 않는다.
+- 목표/계획/실천 보호: `/api/v1/goals`, `/api/v1/goal-plans`, `/api/v1/goal-plan-occurrences`, `/api/v1/goal-direct-logs`, `/api/v1/personal-systems`, `/api/v1/personal-system-occurrences`와 각 하위 경로는 본문 및 query 전체를 로그에서 제외한다. `payload-excluded-paths`를 교체해도 이 보호는 유지되고 context path에도 적용된다. 제외 경로에는 본문 로깅용 캐싱 wrapper를 만들지 않는다. 경로/상태/처리 시간/request ID와 기존 마스킹을 적용한 헤더는 계속 기록한다. AI provider 호출 및 데이터 보관 정책은 별도 확정 대상이다.
 
 운영 환경변수:
 
