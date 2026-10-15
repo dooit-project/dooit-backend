@@ -21,7 +21,9 @@ public record PersonalSystemResponse(
         Long linkedDdayGoalId,
         LocalDate effectiveFromDate,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        Long migratedGoalId,
+        Long migratedPlanId
 ) {
     public static PersonalSystemResponse from(PersonalSystem system, PersonalSystemVersion version) {
         return new PersonalSystemResponse(
@@ -46,7 +48,9 @@ public record PersonalSystemResponse(
                 system.getLinkedDdayGoalId(),
                 version.getEffectiveFromDate(),
                 system.getCreatedAt(),
-                system.getUpdatedAt()
+                system.getUpdatedAt(),
+                system.getMigratedGoalId(),
+                system.getMigratedPlanId()
         );
     }
 }

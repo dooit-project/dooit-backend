@@ -234,6 +234,11 @@ public class Task {
         this.completedAt = null;
     }
 
+    public void disableNotification() {
+        this.notificationEnabled = false;
+        this.notifyAt = null;
+    }
+
     public void connectGoal(Long goalId) {
         this.linkedGoalId = goalId;
     }

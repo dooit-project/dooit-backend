@@ -117,6 +117,21 @@ public class GoalPlanOccurrence {
         this.snapshotNotifyAtTime = version.getNotifyAtTime();
     }
 
+    public void restoreImportedSnapshot(String timeZone, String goalTitle, String planName, String trigger,
+                                        String standard, String minimum, String nextAction, LocalTime notifyAt,
+                                        GoalOccurrenceStatus status, Long taskId) {
+        this.timeZone = timeZone;
+        this.snapshotGoalTitle = goalTitle;
+        this.snapshotPlanName = planName;
+        this.snapshotTriggerText = trigger;
+        this.snapshotStandardActionText = standard;
+        this.snapshotMinimumActionText = minimum;
+        this.snapshotNextAction = nextAction;
+        this.snapshotNotifyAtTime = notifyAt;
+        this.status = status;
+        this.linkedTaskId = taskId;
+    }
+
     public void markPracticed() {
         this.status = GoalOccurrenceStatus.PRACTICED;
         this.updatedAt = LocalDateTime.now(Constant.ZONE);

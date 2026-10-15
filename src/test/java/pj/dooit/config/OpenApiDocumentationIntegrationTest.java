@@ -30,6 +30,19 @@ class OpenApiDocumentationIntegrationTest {
     MailService mailService;
 
     @Test
+    @DisplayName("개인 시스템 명시적 이관 API와 새 ID mapping을 OpenAPI에 노출한다")
+    void apiDocs_personalSystemMigration() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/personal-systems/{systemId}/goal-migration'].post.security[0].bearerAuth").exists())
+                .andExpect(jsonPath("$.components.schemas.PersonalSystemMigrationResponse.properties.goalId").exists())
+                .andExpect(jsonPath("$.components.schemas.PersonalSystemMigrationResponse.properties.alreadyMigrated").exists())
+                .andExpect(jsonPath("$.components.schemas.PersonalSystemResponse.properties.migratedGoalId").exists())
+                .andExpect(jsonPath("$.components.schemas.PersonalSystemResponse.properties.migratedPlanId").exists())
+                .andExpect(jsonPath("$.components.schemas.PersonalSystemOccurrenceResponse.properties.migratedOccurrenceId").exists());
+    }
+
+    @Test
     @DisplayName("목표 여정 API의 인증, 기간·timezone·cursor 파라미터와 전체 기간 집계 schema를 노출한다")
     void apiDocs_goalJourney() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))

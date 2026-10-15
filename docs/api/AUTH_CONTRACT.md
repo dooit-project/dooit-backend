@@ -1,6 +1,6 @@
 # Auth Contract
 
-Last updated: 2026-08-28
+Last updated: 2026-10-16
 
 이 문서는 Dooit 백엔드의 모바일/웹 클라이언트 JWT 인증 책임을 정리한다.
 
@@ -95,6 +95,7 @@ JWT claim:
 - 반복 series, materialized occurrence, recurrence exception
 - D-Day 목표와 Task-D-Day 연결 관계
 - push device token, push notification history
+- 기존 개인 시스템/회차와 새 Goal/Plan/회차/직접 기록. version·결과는 부모 ID를 유지하고 이관 mapping 및 Task/D-Day 연결도 보존한다.
 - 게스트 user row
 
 정책:
@@ -155,6 +156,8 @@ JWT claim:
 - 병합 결과 count는 응답의 `mergeResult`와 내부 audit 로그로 기록하되 token, 비밀번호, 원본 식별 신호는 기록하지 않는다.
 - `POST /api/v1/auth/login`에 유효한 게스트 token을 함께 보내 병합이 수행되면 `mergeResult.tasks`, `mergeResult.schedules`, `mergeResult.ddayGoals`, `mergeResult.recurrenceSeries`를 반환한다.
 - 일반 로그인처럼 병합이 없으면 `mergeResult`는 `null`이다.
+- 계획 데이터의 owner도 같은 로그인 트랜잭션에서 이전한다. 기존 `mergeResult` 네 count 필드에 새 목표/계획 수를 합산하거나 별도 필드를 추가하지 않는다.
+- 만료 정리는 user row 잠금 후 병합/만료 상태를 다시 확인하고, 구/새 계획의 결과·회차·version·mapping과 Task→Goal FK를 자식부터 제거한다. 병합 완료 user와 정식 계정 데이터는 정리 대상이 아니다.
 
 ## Refresh Token
 

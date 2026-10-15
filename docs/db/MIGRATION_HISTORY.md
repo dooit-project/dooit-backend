@@ -14,6 +14,10 @@ Last updated: 2026-10-16
 
 ## 신규 migration 적용 확인 필요
 
+- `docs/db/migrations/20261016_add_personal_system_goal_mapping.sql`: 구 시스템의 새 Goal/Plan ID와 구 회차의 새 회차 ID를 nullable unique FK로 보존한다. 선행 조건은 `20261012_add_personal_system.sql`, `20261014_add_goal_journey.sql`이며 직접 기록 지문 migration도 별도로 적용해야 한다. 운영 DB에는 아직 적용하지 않았다.
+- mapping DDL은 계정 데이터를 이관하지 않는다. 백업·column/index/constraint 점검 후 DDL과 새 backend를 적용하고, 새 API 전환 준비가 된 클라이언트만 명시적 이관 API를 호출한다. 이관 실패는 한 트랜잭션 전체를 롤백하고 재시도는 mapping을 재사용한다.
+- 이관 후 canonical 기록이 변경된 계정은 구 backend로 단순 rollback하지 않는다. mapping 미지원 버전은 동결된 원본을 다시 수정할 수 있으므로 쓰기 중지와 새 기록 조정/복구 계획을 먼저 준비한다. 구 테이블/대응 ID를 임의로 삭제하거나 mapping을 null로 되돌리지 않는다.
+
 - `docs/db/migrations/20261015_add_goal_direct_log_request_hash.sql`: 직접 기록의 최초 생성 요청 SHA-256 지문을 `CREATE_REQUEST_HASH`에 보존하고 idempotency key의 대소문자 구분을 `utf8mb4_bin`으로 명시한다. 이 작업에서는 운영 DB에 적용하지 않았다.
 - 선행 조건은 `20261014_add_goal_journey.sql`이다. 적용 전 `GOAL_DIRECT_LOG`와 `CREATE_REQUEST_HASH`, key collation 존재 여부 및 기존 적용 이력을 확인한다. 백업 후 신규 migration을 적용하고 schema/readiness를 확인한다.
 - 새 지문 컬럼은 nullable이므로 기존 행을 보존한다. 지문이 없는 기존 행은 최초 본문을 확인할 수 없어 같은 key 재시도를 409/`10004`로 거절한다. 수정·취소는 계속 지원하며, 최초 요청 지문을 현재 수정된 값으로 임의 backfill하지 않는다.

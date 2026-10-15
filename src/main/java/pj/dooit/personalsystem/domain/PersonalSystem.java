@@ -46,6 +46,12 @@ public class PersonalSystem {
     @Column(name = "`LINKED_DDAY_GOAL_ID`")
     private Long linkedDdayGoalId;
 
+    @Column(name = "`MIGRATED_GOAL_ID`", unique = true)
+    private Long migratedGoalId;
+
+    @Column(name = "`MIGRATED_PLAN_ID`", unique = true)
+    private Long migratedPlanId;
+
     @Column(name = "`ARCHIVED_AT`")
     private LocalDateTime archivedAt;
 
@@ -71,6 +77,12 @@ public class PersonalSystem {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now(Constant.ZONE);
+    }
+
+    public void markMigrated(Long goalId, Long planId) {
+        this.migratedGoalId = goalId;
+        this.migratedPlanId = planId;
+        archive();
     }
 
     public void advanceVersion(Long linkedDdayGoalId) {

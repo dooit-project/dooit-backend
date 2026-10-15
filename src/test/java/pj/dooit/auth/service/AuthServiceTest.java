@@ -72,6 +72,9 @@ class AuthServiceTest {
             java.time.Duration.ofDays(90)
     );
 
+    @Mock
+    pj.dooit.goal.service.PlanningAccountDataService planningAccountDataService;
+
     AuthService authService;
 
     private static LocalDateTime validGuestExpiresAt() {
@@ -91,7 +94,8 @@ class AuthServiceTest {
                 pushDeviceTokenRepository,
                 pushNotificationHistoryRepository,
                 refreshTokenSessionRepository,
-                refreshTokenProperties
+                refreshTokenProperties,
+                planningAccountDataService
         );
     }
 

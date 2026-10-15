@@ -22,11 +22,17 @@ public class PersonalSystemTaskLinkService {
     private final PersonalSystemPracticeResultRepository resultRepository;
 
     @Transactional
+    public void lockLinkedOccurrence(Long taskId) {
+        occurrenceRepository.findByLinkedTaskId(taskId);
+    }
+
+    @Transactional
     public void recordLinkedTaskCompleted(Task task, LocalDateTime completedAt) {
         if (task == null || task.getId() == null || task.getOwner() == null || task.getOwner().getId() == null) {
             return;
         }
         occurrenceRepository.findByLinkedTaskIdAndOwnerId(task.getId(), task.getOwner().getId())
+                .filter(occurrence -> occurrence.getMigratedOccurrenceId() == null)
                 .ifPresent(occurrence -> recordCompleted(occurrence, completedAt));
     }
 
@@ -36,6 +42,7 @@ public class PersonalSystemTaskLinkService {
             return;
         }
         occurrenceRepository.findByLinkedTaskIdAndOwnerId(task.getId(), task.getOwner().getId())
+                .filter(occurrence -> occurrence.getMigratedOccurrenceId() == null)
                 .ifPresent(occurrence -> {
                     resultRepository.deleteById(occurrence.getId());
                     occurrence.markPending();

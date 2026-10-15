@@ -21,6 +21,7 @@ import pj.dooit.personalsystem.dto.PersonalSystemScheduleRequest;
 import pj.dooit.personalsystem.dto.PersonalSystemStatusRequest;
 import pj.dooit.personalsystem.dto.PersonalSystemUpdateRequest;
 import pj.dooit.personalsystem.exception.PersonalSystemConflictException;
+import pj.dooit.personalsystem.exception.PersonalSystemMigratedException;
 import pj.dooit.personalsystem.exception.PersonalSystemNotFoundException;
 import pj.dooit.personalsystem.exception.PersonalSystemOccurrenceNotFoundException;
 import pj.dooit.personalsystem.exception.PersonalSystemValidationException;
@@ -62,6 +63,7 @@ public class PersonalSystemService {
     private final PersonalSystemPracticeResultRepository personalSystemPracticeResultRepository;
     private final DdayGoalRepository ddayGoalRepository;
     private final TaskRepository taskRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
     @Transactional
     public PersonalSystemResponse create(PersonalSystemCreateRequest request, User owner) {
@@ -93,7 +95,7 @@ public class PersonalSystemService {
     @Transactional
     public PersonalSystemResponse update(Long systemId, PersonalSystemUpdateRequest request, User owner) {
         Long ownerId = ownerId(owner);
-        PersonalSystem system = findSystem(systemId, ownerId);
+        PersonalSystem system = findMutableSystem(systemId, ownerId);
         if (system.getStatus() == PersonalSystemStatus.ARCHIVED) {
             throw new PersonalSystemValidationException("종료된 시스템은 수정할 수 없습니다.");
         }
@@ -109,7 +111,7 @@ public class PersonalSystemService {
     @Transactional
     public PersonalSystemResponse changeStatus(Long systemId, PersonalSystemStatusRequest request, User owner) {
         Long ownerId = ownerId(owner);
-        PersonalSystem system = findSystem(systemId, ownerId);
+        PersonalSystem system = findMutableSystem(systemId, ownerId);
         if (request.status() == PersonalSystemStatus.ACTIVE) {
             if (system.getStatus() != PersonalSystemStatus.ACTIVE
                     && personalSystemRepository.countByOwnerIdAndStatus(ownerId, PersonalSystemStatus.ACTIVE) >= 1) {
@@ -248,7 +250,12 @@ public class PersonalSystemService {
         );
     }
 
-    private void materialize(PersonalSystem system, User owner, LocalDate from, LocalDate to) {
+    private void materialize(PersonalSystem source, User owner, LocalDate from, LocalDate to) {
+        PersonalSystem system = personalSystemRepository.findLockedByIdAndOwnerId(source.getId(), owner.getId()).orElseThrow();
+        entityManager.refresh(system, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (system.getMigratedPlanId() != null || system.getStatus() != PersonalSystemStatus.ACTIVE) {
+            return;
+        }
         List<PersonalSystemVersion> versions = personalSystemVersionRepository
                 .findBySystemIdAndEffectiveFromDateLessThanEqualOrderByVersionAsc(system.getId(), to);
         for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
@@ -342,14 +349,27 @@ public class PersonalSystemService {
                 .toList();
     }
 
+    private PersonalSystem findMutableSystem(Long systemId, Long ownerId) {
+        PersonalSystem system = personalSystemRepository.findLockedByIdAndOwnerId(systemId, ownerId)
+                .orElseThrow(() -> new PersonalSystemNotFoundException("personalSystemId=" + systemId));
+        if (system.getMigratedPlanId() != null) {
+            throw new PersonalSystemMigratedException("planId=" + system.getMigratedPlanId());
+        }
+        return system;
+    }
+
     private PersonalSystem findSystem(Long systemId, Long ownerId) {
         return personalSystemRepository.findByIdAndOwnerId(systemId, ownerId)
                 .orElseThrow(() -> new PersonalSystemNotFoundException("personalSystemId=" + systemId));
     }
 
     private PersonalSystemOccurrence findOccurrence(Long occurrenceId, Long ownerId) {
-        return personalSystemOccurrenceRepository.findByIdAndOwnerId(occurrenceId, ownerId)
+        PersonalSystemOccurrence occurrence = personalSystemOccurrenceRepository.findLockedByIdAndOwnerId(occurrenceId, ownerId)
                 .orElseThrow(() -> new PersonalSystemOccurrenceNotFoundException("occurrenceId=" + occurrenceId));
+        if (occurrence.getMigratedOccurrenceId() != null) {
+            throw new PersonalSystemMigratedException("occurrenceId=" + occurrence.getMigratedOccurrenceId());
+        }
+        return occurrence;
     }
 
     private PersonalSystemVersion currentVersion(PersonalSystem system) {

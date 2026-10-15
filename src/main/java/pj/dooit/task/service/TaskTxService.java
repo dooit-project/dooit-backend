@@ -181,6 +181,7 @@ public class TaskTxService {
 
     @Transactional
     public Task completeTx(Long id, LocalDateTime completedAt) {
+        personalSystemTaskLinkService.lockLinkedOccurrence(id);
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTask(id);
         task.complete(completedAt);
@@ -193,6 +194,7 @@ public class TaskTxService {
 
     @Transactional
     public Task completeTxForOwner(Long id, LocalDateTime completedAt, User owner) {
+        personalSystemTaskLinkService.lockLinkedOccurrence(id);
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTaskForOwner(id, owner);
         task.complete(completedAt);
@@ -205,6 +207,7 @@ public class TaskTxService {
 
     @Transactional
     public Task reopenTodayTx(Long id, LocalDate targetDate) {
+        personalSystemTaskLinkService.lockLinkedOccurrence(id);
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTask(id);
         task.reopenToday(targetDate);
@@ -216,6 +219,7 @@ public class TaskTxService {
 
     @Transactional
     public Task reopenTodayTxForOwner(Long id, LocalDate targetDate, User owner) {
+        personalSystemTaskLinkService.lockLinkedOccurrence(id);
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTaskForOwner(id, owner);
         task.reopenToday(targetDate);
@@ -409,12 +413,14 @@ public class TaskTxService {
 
     @Transactional
     public void validateDeletionTx(Long id) {
+        personalSystemTaskLinkService.lockLinkedOccurrence(id);
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         goalOccurrenceTaskLinkService.validateTaskDeletion(findTask(id));
     }
 
     @Transactional
     public void deleteTxForOwner(Long id, User owner, RecurrenceEditScope recurrenceScope) {
+        personalSystemTaskLinkService.lockLinkedOccurrence(id);
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTaskForOwner(id, owner);
         goalOccurrenceTaskLinkService.validateTaskDeletion(task);

@@ -14,6 +14,7 @@ import pj.dooit.auth.exception.RefreshTokenExpiredException;
 import pj.dooit.auth.exception.RefreshTokenInvalidException;
 import pj.dooit.auth.exception.RefreshTokenReusedException;
 import pj.dooit.Constant;
+import pj.dooit.goal.service.PlanningAccountDataService;
 import pj.dooit.auth.repository.RefreshTokenSessionRepository;
 import pj.dooit.dday.repository.DdayGoalRepository;
 import pj.dooit.notification.domain.PushDeviceToken;
@@ -60,6 +61,7 @@ public class AuthService {
     private final PushNotificationHistoryRepository pushNotificationHistoryRepository;
     private final RefreshTokenSessionRepository refreshTokenSessionRepository;
     private final RefreshTokenProperties refreshTokenProperties;
+    private final PlanningAccountDataService planningAccountDataService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -241,6 +243,7 @@ public class AuthService {
         reassignTaskTemplates(guest, target);
         MergePushTokenResult pushTokenResult = reassignPushDeviceTokens(guest, target);
         int pushHistoryCount = reassignPushNotificationHistories(guest, target);
+        planningAccountDataService.transferOwnership(guest.getId(), target.getId());
         guest.markMergedInto(target);
         refreshTokenSessionRepository.findByUserIdAndRevokedAtIsNull(guest.getId())
                 .forEach(session -> session.revoke(LocalDateTime.now(Constant.ZONE)));

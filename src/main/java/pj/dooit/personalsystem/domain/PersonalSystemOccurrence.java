@@ -80,6 +80,9 @@ public class PersonalSystemOccurrence {
     @Column(name = "`STATUS`", nullable = false, length = 30)
     private PersonalSystemOccurrenceStatus status = PersonalSystemOccurrenceStatus.PENDING;
 
+    @Column(name = "`MIGRATED_OCCURRENCE_ID`", unique = true)
+    private Long migratedOccurrenceId;
+
     @Version
     @Column(name = "`ENTITY_VERSION`", nullable = false)
     private long entityVersion;
@@ -113,6 +116,8 @@ public class PersonalSystemOccurrence {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now(Constant.ZONE);
     }
+
+    public void markMigrated(Long occurrenceId) { this.migratedOccurrenceId = occurrenceId; }
 
     public void markPracticed() {
         this.status = PersonalSystemOccurrenceStatus.PRACTICED;

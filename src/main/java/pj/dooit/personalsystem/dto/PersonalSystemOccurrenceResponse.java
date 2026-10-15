@@ -23,7 +23,8 @@ public record PersonalSystemOccurrenceResponse(
         String snapshotMinimumActionText,
         String snapshotNextAction,
         long occurrenceVersion,
-        PersonalSystemPracticeResultResponse result
+        PersonalSystemPracticeResultResponse result,
+        Long migratedOccurrenceId
 ) {
     public static PersonalSystemOccurrenceResponse from(
             PersonalSystemOccurrence occurrence,
@@ -38,14 +39,16 @@ public record PersonalSystemOccurrenceResponse(
                 occurrence.getStatus(),
                 occurrence.getLinkedTask() == null ? null : occurrence.getLinkedTask().getId(),
                 notificationKey(occurrence),
-                scheduledNotificationAt(occurrence.getServiceDate(), occurrence.getSnapshotNotifyAtTime()),
+                occurrence.getMigratedOccurrenceId() == null
+                        ? scheduledNotificationAt(occurrence.getServiceDate(), occurrence.getSnapshotNotifyAtTime()) : null,
                 occurrence.getSnapshotDirectionText(),
                 occurrence.getSnapshotTriggerText(),
                 occurrence.getSnapshotStandardActionText(),
                 occurrence.getSnapshotMinimumActionText(),
                 occurrence.getSnapshotNextAction(),
                 occurrence.getEntityVersion(),
-                result
+                result,
+                occurrence.getMigratedOccurrenceId()
         );
     }
 

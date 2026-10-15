@@ -34,7 +34,7 @@ Last updated: 2026-10-16
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 | monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
-| 목표 중심 계획·실천 여정 | 목표/여러 계획/회차 실천/일회성 기록과 목표 여정 조회 구현 완료. 기존 개인 시스템 데이터 전환 필요 | 기존 개인 시스템 migration/호환 adapter, 이후 AI 초안·요약 구현 |
+| 목표 중심 계획·실천 여정 | 목표/여러 계획/실천/일회성 기록/여정과 기존 시스템 명시적 이관 구현 완료 | 운영 schema 적용과 클라이언트 이관 연동, AI provider·보관·삭제 정책 확정 후 초안·요약 구현 |
 
 ## 2. 제품 기능 로드맵
 
@@ -73,7 +73,7 @@ Last updated: 2026-10-16
 - [x] D-Day는 필수 `targetDate` 모델로 유지하고 새 Goal과 선택 연결하는 방향을 문서화한다.
 - [x] 날짜 기반 선택 요일별 회차를 1차 범위로 두고 기간 내 N회 엔진은 후속 범위로 분리한다.
 - [x] Goal/GoalVersion, GoalPlan/GoalPlanVersion, GoalPlanOccurrence, GoalPracticeResult, GoalDirectLog, `TASK.linked_goal_id` migration을 추가한다.
-- [ ] 기존 `PERSONAL_SYSTEM*` 데이터를 새 GoalPlan 계열로 이관하거나 호환 adapter를 둔다.
+- [x] 기존 `PERSONAL_SYSTEM*` 데이터를 명시적 API로 새 GoalPlan 계열에 이관하고 원본 이력/새 ID mapping을 보존한다.
 - [x] 목표 CRUD, 목표일 수정, 사용자 확인 달성/달성 취소, 보관과 `futurePlanPolicy`를 구현한다.
 - [x] 목표 하위 여러 반복 계획과 목표 없는 독립 반복 계획 CRUD를 구현한다.
 - [x] 계획별 날짜 기반 회차 materialize, 중복 방지, snapshot, 알림 후보 key를 구현한다.

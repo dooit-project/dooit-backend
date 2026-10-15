@@ -11,6 +11,8 @@ import pj.dooit.personalsystem.dto.PersonalSystemResponse;
 import pj.dooit.personalsystem.dto.PersonalSystemStatusRequest;
 import pj.dooit.personalsystem.dto.PersonalSystemUpdateRequest;
 import pj.dooit.personalsystem.service.PersonalSystemService;
+import pj.dooit.personalsystem.service.PersonalSystemMigrationService;
+import pj.dooit.personalsystem.dto.PersonalSystemMigrationResponse;
 import pj.dooit.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -44,7 +46,16 @@ import java.util.List;
 public class PersonalSystemV1Controller {
 
     private final PersonalSystemService personalSystemService;
+    private final PersonalSystemMigrationService migrationService;
     private final CurrentUserService currentUserService;
+
+    @Operation(summary = "개인 시스템 목표 이관", description = "기존 이력과 Task를 보존해 새 Goal/Plan으로 한 번 이관합니다. 원본은 보관된 읽기 전용 이력으로 남고 이후 수정은 새 API를 사용합니다.")
+    @PostMapping("/personal-systems/{systemId}/goal-migration")
+    public ResponseEntity<ApiResponse<PersonalSystemMigrationResponse>> migrate(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable Long systemId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(migrationService.migrate(systemId, currentUserService.requireUser(jwt))));
+    }
 
     @Operation(summary = "개인 시스템 생성", description = "로그인 사용자의 ACTIVE 개인 시스템을 생성합니다. 첫 버전은 ACTIVE 시스템 1개를 권장합니다.")
     @PostMapping("/personal-systems")

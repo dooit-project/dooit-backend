@@ -20,6 +20,7 @@ import pj.dooit.goal.exception.GoalJourneyConflictException;
 import pj.dooit.goal.exception.GoalOccurrenceNotFoundException;
 import pj.dooit.goal.exception.GoalOccurrenceConflictException;
 import pj.dooit.personalsystem.exception.PersonalSystemConflictException;
+import pj.dooit.personalsystem.exception.PersonalSystemMigratedException;
 import pj.dooit.personalsystem.exception.PersonalSystemNotFoundException;
 import pj.dooit.personalsystem.exception.PersonalSystemOccurrenceNotFoundException;
 import pj.dooit.personalsystem.exception.PersonalSystemValidationException;
@@ -277,6 +278,13 @@ public class ApiExceptionHandler {
         log.warn("Personal System Occurrence Not Found : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.PERSONAL_SYSTEM_OCCURRENCE_NOT_FOUND.getStatus())
                 .body(ApiResponse.failure(ErrorCode.PERSONAL_SYSTEM_OCCURRENCE_NOT_FOUND));
+    }
+
+    @ExceptionHandler(PersonalSystemMigratedException.class)
+    public ResponseEntity<ApiResponse<?>> handlePersonalSystemMigrated(PersonalSystemMigratedException e) {
+        log.warn("Personal system migrated : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.PERSONAL_SYSTEM_MIGRATED.getStatus())
+                .body(ApiResponse.failure(ErrorCode.PERSONAL_SYSTEM_MIGRATED));
     }
 
     @ExceptionHandler(PersonalSystemConflictException.class)

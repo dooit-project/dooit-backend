@@ -740,7 +740,8 @@ Task 응답 nullable/default 규칙:
 
 - 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, 회차 실천/휴식 결과와 연결 Task 완료/재개, Goal/Plan DB schema, D-Day 소유권 검증
 - 추가 구현됨: 목표 연결 일회성 Task 생성/연결/해제, 직접 실천 기록 생성/수정/취소와 생성 idempotency, 목표 여정 통합 조회·전체 기간 summary·cursor
-- 아직 미구현: AI 초안/요약/조정, 기존 개인 시스템 데이터 이관/adapter
+- 추가 구현됨: 기존 개인 시스템의 명시적 이관, 원본 이력·새 ID mapping 보존, 게스트 계획 데이터 병합·정리
+- 아직 미구현: AI 초안/요약/조정
 
 제안 API:
 
@@ -771,7 +772,7 @@ Task 응답 nullable/default 규칙:
 - 회차 조회는 활성 계획의 오늘 이후 미실천 회차에 날짜만 있는 Today Task를 생성·연결한다. 과거 회차에는 Task를 생성하지 않는다. 연결 Task는 알림을 비활성화하고 회차 후보만 사용해 중복 알림을 피한다.
 - 잘못된 기간은 400/`10001`, 타 사용자 또는 없는 `goalId`는 404/`70001`이다.
 
-호환성: 신규 회차 결과/휴식 API와 응답의 nullable `result` 필드 추가이며 기존 Task/D-Day/개인 시스템 API 경로는 유지한다. 회차 GET은 오늘 이후 Today Task를 생성한다. 회차 연결 Task 삭제는 409/`70004`로 거절하므로 해당 Task에는 삭제 대신 회차 휴식/계획 보관 UI를 사용한다. 기존 목표 API의 `futurePlanPolicy`가 연결 계획에 실제 적용된다. 목표 schema의 선행 migration은 `20261014_add_goal_journey.sql`이며, 직접 기록 기능 배포 전에는 아래 추가 migration도 필요하다. 기존 `PERSONAL_SYSTEM*` 데이터 이관은 후속 작업이다.
+호환성: 신규 회차 결과/휴식 API와 응답의 nullable `result` 필드 추가이며 기존 Task/D-Day/개인 시스템 API 경로는 유지한다. 회차 GET은 오늘 이후 Today Task를 생성한다. 회차 연결 Task 삭제는 409/`70004`로 거절하므로 해당 Task에는 삭제 대신 회차 휴식/계획 보관 UI를 사용한다. 기존 목표 API의 `futurePlanPolicy`가 연결 계획에 실제 적용된다. 목표 schema의 선행 migration은 `20261014_add_goal_journey.sql`이며, 직접 기록 기능 배포 전에는 아래 추가 migration도 필요하다. 기존 `PERSONAL_SYSTEM*` 데이터는 아래 명시적 이관 계약을 따른다.
 
 회차 실천·휴식 계약:
 
@@ -833,7 +834,19 @@ Task 응답 nullable/default 규칙:
 - `journeyVersion`은 목표 메타데이터, 조회 범위, 전체 항목/집계와 원본 변경 정보를 반영하는 불투명 지문이다. 클라이언트는 동등성 비교/캐시 무효화에 사용하고 숫자 순서로 해석하지 않는다. 다음 페이지는 같은 목표/기간/timezone에 서버가 준 `nextCursor`를 그대로 보낸다. 페이지 사이 기록 변경은 409/`70008`이며 이전 페이지를 버리고 cursor 없이 재조회한다.
 - 범위/zone/limit 오류와 손상되거나 다른 조회에 쓰인 cursor는 400/`10001`, 타 사용자 또는 없는 목표는 404/`70001`이다. 모든 원본은 owner scope로 조회하며 AI 호출 없이 동작한다.
 
-호환성·배포: 신규 GET과 응답 DTO/오류 코드 추가이며 기존 API 계약은 유지한다. 여정 조회 자체의 추가 DB migration은 없고, 선행 목표 schema 및 직접 기록 지문 migration은 필요하다. 기존 개인 시스템 데이터 이관/adapter와 AI 요약은 후속 범위다.
+호환성·배포: 신규 GET과 응답 DTO/오류 코드 추가이며 기존 API 계약은 유지한다. 여정 조회 자체의 추가 DB migration은 없고, 선행 목표 schema 및 직접 기록 지문 migration은 필요하다. AI 요약은 후속 범위다.
+
+기존 개인 시스템 명시적 이관:
+
+- `POST /api/v1/personal-systems/{systemId}/goal-migration`은 본인 소유 시스템 하나를 새 Goal/Plan으로 이관한다. body와 Idempotency-Key는 필요하지 않다. 200 응답의 `systemId`, `goalId`, `planId`, `versionCount`, `occurrenceCount`, `resultCount`, `alreadyMigrated`를 반환한다. 최초 성공은 false, 재시도는 같은 ID와 원본 이관 건수 및 true를 반환한다.
+- 버전/적용일, 회차 snapshot, 실천 종류/메모/어려움/다음 행동/실천 시각과 zone, 휴식 상태를 옮긴다. 기존 연결 Task/D-Day ID는 유지한다. 방향 문구 앞 최대 120자를 새 목표 제목/계획 이름으로 쓰고 전체 방향은 목표 `desiredOutcome`과 보존된 원본에서 확인한다. 새 엔티티 감사 시각은 이관 시각이며 원래 감사 시각은 구 테이블에 남긴다.
+- 구 시스템은 보관되어 읽기 전용 원본 이력으로 남는다. `PersonalSystemResponse`에 nullable `migratedGoalId`, `migratedPlanId`, 구 회차 응답에 nullable `migratedOccurrenceId`가 추가된다. 이 ID는 이관 당시 대응 관계이며 나중에 새 계획의 목표를 변경해도 mapping 자체는 유지한다.
+- 이관된 구 시스템의 수정/상태 변경과 구 회차 실천/휴식 변경은 409/`60004`다. 이후 실천·Task 완료/재개·미래 회차는 새 API만 갱신한다. 구 이력은 이관 시점 snapshot이므로 새 상태를 보려면 새 ID/API를 조회한다. 이관하지 않은 시스템의 기존 API 동작은 유지된다.
+- 클라이언트는 성공 후 구 `personal-system:{systemId}:...` 로컬 예약을 취소하고 새 Goal/Plan/회차 API를 조회한다. 구 회차의 `scheduledNotificationAt`은 null이 되고 연결 Task 알림도 비활성화해 새 회차 후보만 사용한다. Task는 복제하지 않으며 실천/휴식 결과에 맞춰 기존 Task 완료/Inbox 상태를 정리한다.
+- 없는/다른 사용자 시스템은 404/`60001`이다. version 이력, 결과/상태 또는 owner/D-Day 연결이 일치하지 않으면 409/`60003`이며 새 Goal/Plan을 포함한 전체 이관을 롤백한다. 사용자/시스템/회차/결과 잠금과 unique mapping으로 동시 재시도를 보호한다.
+- 게스트 로그인 병합은 구 시스템, 새 Goal/Plan/회차/직접 기록의 owner도 같은 트랜잭션에서 이전한다. 기존 응답의 `mergeResult` 네 count 필드는 그대로이며 새 모델의 별도 count 필드는 추가하지 않는다. 만료 정리는 mapping과 자식 FK를 먼저 해제한 뒤 관련 데이터를 삭제한다.
+
+배포·호환성: `20261016_add_personal_system_goal_mapping.sql`을 개인 시스템·목표 선행 migration 이후 적용해야 한다. DDL은 데이터 이관을 실행하지 않는다. **명시적 이관을 선택한 리소스에만 구 변경 API의 409 전환이 적용된다.** 클라이언트의 새 API 전환이 준비된 뒤 이관을 호출한다. 이관 후 새 기록이 생긴 계정은 mapping을 이해하지 못하는 구 backend로 단순 rollback하지 않으며, 쓰기 중지와 새 기록 조정/복구 계획이 먼저 필요하다. 이번 작업에서는 운영 DB 적용이나 계정 데이터 이관을 실행하지 않았다.
 
 핵심 타입:
 

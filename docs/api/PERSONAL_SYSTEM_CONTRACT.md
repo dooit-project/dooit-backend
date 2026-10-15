@@ -363,6 +363,17 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
 
 ## 7. 기존 구현과 호환성
 
+### 2026-10-16 명시적 개인 시스템 이관 구현
+
+- 기존 API를 자동 전환하지 않는다. 본인 소유 `POST /api/v1/personal-systems/{systemId}/goal-migration` 요청으로 시스템 하나를 새 Goal/Plan으로 이관한다. DB mapping 컬럼으로 원본과 새 ID를 연결하고 재시도는 같은 ID를 반환한다.
+- 버전/적용일, 회차 snapshot, 기본·최소·미분류 실천, 휴식, 메모/어려움/다음 행동과 실제 실천 시각/zone을 보존한다. 기존 연결 Task/D-Day ID도 유지한다. 새 목표 제목/계획 이름은 방향 문구 앞 120자를 쓰고 전체 방향은 목표 `desiredOutcome`에 보존한다. 새 엔티티 생성 시각은 이관 시각이며 원본 감사 시각은 구 테이블에 남긴다.
+- 이관을 선택한 원본 시스템은 보관하고 원본 이력은 읽기 전용으로 유지한다. 구 DTO에 새 Goal/Plan/회차 ID를 제공한다. 이관된 원본의 수정·재개·실천/휴식 변경은 409/`60004`로 안내하고 새 ID/API를 사용한다. 이관하지 않은 시스템의 기존 계약은 유지한다. 이 동작 변경은 명시적 이관을 선택한 리소스에만 적용된다.
+- 이후 회차와 Task 완료/재개는 새 모델만 갱신한다. Task는 복제하지 않으며 구 Task 알림은 끄고 새 회차 후보를 사용한다. 클라이언트는 이관 성공 후 `personal-system:{systemId}:...` 예약을 취소하고 새 Goal/Plan API를 조회한다.
+- 게스트 병합은 원본/새 모델의 owner를 같은 트랜잭션에서 옮기고 ID와 mapping을 유지한다. 만료 정리는 연결 FK의 자식부터 제거한다. 운영 DB 적용은 별도 migration 후 진행하며 이 작업 중 production 데이터를 자동 이관하지 않는다.
+- 구현 migration은 `20261016_add_personal_system_goal_mapping.sql`이다. `PersonalSystemResponse.migratedGoalId/migratedPlanId`, 구 회차의 `migratedOccurrenceId`는 nullable 대응 ID다. 재시도는 같은 ID와 원본 이관 건수를 반환하며 원본 변경은 허용하지 않는다. 새 계획의 목표를 나중에 바꿔도 최초 mapping은 보존한다.
+- 구 회차 조회/증거 조회는 이관 시점 이력이며 canonical 변경을 다시 복제하지 않는다. 이후 live 상태는 새 API를 조회한다. source Task 완료/재개 callback은 이관된 구 회차를 건너뛰고 새 회차만 갱신한다. source 알림 시각은 null로 반환한다.
+- 이관 후 새 데이터가 생성된 경우 mapping 미지원 backend로의 단순 배포 rollback은 지원하지 않는다. 쓰기를 중지하고 canonical 변경을 조정/복구하는 별도 계획이 먼저 필요하다. 자세한 클라이언트 절차/오류/response는 `API_V1_FRONTEND.md`의 이관 계약을 따른다.
+
 - 현재 구현된 `/api/v1/personal-systems/**`는 목표 없는 독립 반복 행동 API로 당분간 유지할 수 있다.
 - 새 구현에서는 사용자당 active system 1개 제한을 제거한다. 목표에는 여러 plan이 붙을 수 있고, 독립 반복 계획도 여러 개 존재할 수 있다.
 - 기존 `linkedDdayGoalId`는 새 `GOAL.linkedDdayGoalId`로 옮기는 것을 우선한다. Task의 기존 D-Day 연결 필드는 유지한다.

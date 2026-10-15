@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface PersonalSystemVersionRepository extends JpaRepository<PersonalSystemVersion, Long> {
 
+    List<PersonalSystemVersion> findBySystemIdOrderByVersionAsc(Long systemId);
+
     Optional<PersonalSystemVersion> findBySystemIdAndVersion(Long systemId, int version);
 
     Optional<PersonalSystemVersion> findTopBySystemIdAndEffectiveFromDateLessThanEqualOrderByVersionDesc(

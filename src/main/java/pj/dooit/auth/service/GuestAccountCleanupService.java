@@ -1,6 +1,8 @@
 package pj.dooit.auth.service;
 
 import pj.dooit.dday.domain.DdayGoal;
+import pj.dooit.goal.service.PlanningAccountDataService;
+import java.util.ArrayList;
 import pj.dooit.auth.repository.RefreshTokenSessionRepository;
 import pj.dooit.dday.repository.DdayGoalRepository;
 import pj.dooit.notification.domain.PushDeviceToken;
@@ -30,6 +32,9 @@ import java.util.List;
 public class GuestAccountCleanupService {
 
     private final UserRepository userRepository;
+    private final PlanningAccountDataService planningAccountDataService;
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
     private final TaskRepository taskRepository;
     private final DdayGoalRepository ddayGoalRepository;
     private final RecurrenceSeriesRepository recurrenceSeriesRepository;
@@ -49,7 +54,18 @@ public class GuestAccountCleanupService {
         int deletedPushTokens = 0;
         int deletedPushHistories = 0;
 
-        for (User guest : expiredGuests) {
+        List<User> deletedGuests = new ArrayList<>();
+        for (User candidate : expiredGuests) {
+            User guest = userRepository.findWithLockById(candidate.getId()).orElse(null);
+            if (guest != null) {
+                entityManager.refresh(guest, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+            }
+            if (guest == null || guest.getAccountType() != AccountType.GUEST || guest.getMergedIntoUserId() != null
+                    || guest.getGuestExpiresAt() == null || !guest.getGuestExpiresAt().isBefore(now)) {
+                continue;
+            }
+            planningAccountDataService.deleteOwnedData(guest.getId());
+            deletedGuests.add(guest);
             List<PushNotificationHistory> pushHistories = pushNotificationHistoryRepository.findByOwnerId(guest.getId());
             pushNotificationHistoryRepository.deleteAll(pushHistories);
             deletedPushHistories += pushHistories.size();
@@ -78,9 +94,9 @@ public class GuestAccountCleanupService {
                     .forEach(refreshTokenSessionRepository::delete);
         }
 
-        userRepository.deleteAll(expiredGuests);
+        userRepository.deleteAll(deletedGuests);
         CleanupResult result = new CleanupResult(
-                expiredGuests.size(),
+                deletedGuests.size(),
                 deletedTasks,
                 deletedDdayGoals,
                 deletedRecurrenceSeries,
