@@ -738,8 +738,8 @@ Task 응답 nullable/default 규칙:
 
 구현 상태:
 
-- 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, Goal/Plan DB schema, D-Day 소유권 검증
-- 아직 미구현: 회차 실천/휴식 결과, 목표 연결 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
+- 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, 회차 실천/휴식 결과와 연결 Task 완료/재개, Goal/Plan DB schema, D-Day 소유권 검증
+- 아직 미구현: 목표 연결 일회성 Task, 직접 기록, 목표 여정 조회, AI 초안/요약/조정
 
 제안 API:
 
@@ -751,8 +751,8 @@ Task 응답 nullable/default 규칙:
 - `POST /api/v1/goal-plans`, `GET /api/v1/goal-plans?goalId=...` 구현됨
 - `GET`/`PATCH /api/v1/goal-plans/{planId}`, `PATCH /api/v1/goal-plans/{planId}/status` 구현됨
 - `GET /api/v1/goal-plan-occurrences?from=YYYY-MM-DD&to=YYYY-MM-DD&goalId=...` 구현됨
-- `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/result`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/result`
-- `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/rest`
+- `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/result`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/result` 구현됨
+- `PUT /api/v1/goal-plan-occurrences/{occurrenceId}/rest`, `DELETE /api/v1/goal-plan-occurrences/{occurrenceId}/rest` 구현됨
 - `POST /api/v1/goals/{goalId}/tasks`
 - `PUT /api/v1/tasks/{taskId}/goal-link`, `DELETE /api/v1/tasks/{taskId}/goal-link`
 - `POST /api/v1/goals/{goalId}/direct-logs`
@@ -764,13 +764,40 @@ Task 응답 nullable/default 규칙:
 - `from`, `to`는 필수이며 양끝 포함 1~31일이다. 선택 `goalId`는 현재 계획 연결 대신 회차 스냅샷의 목표 ID로 필터링한다. 전체 조회는 독립 반복 계획도 포함한다.
 - 조회 시 소유자의 계획 회차를 저장한다. 날짜별 적용 계획 version과 시작일/선택 요일을 사용하며 같은 계획/날짜 재조회 및 동시 조회에서 ID가 유지된다.
 - 응답은 `serviceDate`, `id` 오름차순이다. `id`, `goalId`, `goalVersion`, `planId`, `planVersion`, `serviceDate`, `timeZone`, `status`, `linkedTaskId`, `occurrenceVersion`과 목표 제목/계획 이름/trigger/기본·최소 행동/다음 행동 스냅샷을 반환한다.
-- 과거 스냅샷은 유지한다. 계획 timezone의 오늘 이후 `PENDING` 회차 중 결과와 연결 Task가 없는 회차는 적용 version으로 갱신한다. 요일에서 제외되거나 계획이 정지/보관되면 해당 미래 회차를 응답에서 제외하되 DB 원본은 유지한다.
+- 과거 스냅샷은 유지한다. 계획 timezone의 오늘 이후 `PENDING` 회차는 적용 version으로 스냅샷과 연결 Task를 갱신한다. 요일에서 제외되거나 계획이 정지/보관되면 해당 미래 회차를 응답에서 제외하되 DB 원본은 유지한다.
 - `notificationKey`는 `goal-plan:{planId}:{serviceDate}`다. `scheduledNotificationAt`은 활성 계획의 `PENDING` 회차에 알림 시각이 있을 때만 반환하며 `timeZone` 기준 local datetime이다. 알림이 없거나 정지/보관이면 null이다. 클라이언트는 새 조회 결과에서 빠진 미래 후보의 기존 로컬 알림을 취소한다.
 - 목표 달성/정지/보관 요청의 `PAUSE_FUTURE`(기본값)는 연결 계획을 일시정지하고 `KEEP_FUTURE`는 계획 상태를 유지한다. 달성 취소/목표 재개는 계획을 자동 재개하지 않으며 계획 상태 API에서 명시적으로 재개한다.
-- 회차 조회는 아직 Task를 자동 생성하지 않는다. 실천/휴식 결과와 Task 연결은 후속 구현이다.
+- 회차 조회는 활성 계획의 오늘 이후 미실천 회차에 날짜만 있는 Today Task를 생성·연결한다. 과거 회차에는 Task를 생성하지 않는다. 연결 Task는 알림을 비활성화하고 회차 후보만 사용해 중복 알림을 피한다.
 - 잘못된 기간은 400/`10001`, 타 사용자 또는 없는 `goalId`는 404/`70001`이다.
 
-호환성: 신규 GET API와 응답 DTO 추가이며 기존 Task/D-Day/개인 시스템 API는 유지한다. 기존 목표 API의 `futurePlanPolicy`가 연결 계획에 실제 적용된다. 별도 새 DB migration은 없으며 신규 환경에는 `20261014_add_goal_journey.sql` 적용이 필요하다. 기존 `PERSONAL_SYSTEM*` 데이터 이관은 후속 작업이다.
+호환성: 신규 회차 결과/휴식 API와 응답의 nullable `result` 필드 추가이며 기존 Task/D-Day/개인 시스템 API 경로는 유지한다. 회차 GET은 오늘 이후 Today Task를 생성한다. 회차 연결 Task 삭제는 409/`70004`로 거절하므로 해당 Task에는 삭제 대신 회차 휴식/계획 보관 UI를 사용한다. 기존 목표 API의 `futurePlanPolicy`가 연결 계획에 실제 적용된다. 별도 새 DB migration은 없으며 신규 환경에는 `20261014_add_goal_journey.sql` 적용이 필요하다. 기존 `PERSONAL_SYSTEM*` 데이터 이관은 후속 작업이다.
+
+회차 실천·휴식 계약:
+
+- 결과 PUT body의 필수 값은 `actionVariant`(`STANDARD`/`MINIMUM`/`UNKNOWN`), `practicedAt`(local datetime)이다. `practicedTimeZone` 생략 시 회차 timezone을 사용한다.
+- 선택 필드는 `accomplishedNote`(최대 1000자), `difficulties`(최대 5개, 중복 제거), `nextActionPatchKind`(기본 `KEEP`), `nextAction`, `occurrenceVersion`이다. `REPLACE`만 비어 있지 않은 `nextAction`이 필수이고 `KEEP`/`CLEAR`에는 값을 보내지 않는다. 다음 행동 조정은 결과에 저장하며 계획 자체와 과거 스냅샷은 변경하지 않는다.
+- 결과 PUT은 유효 결과 하나를 생성·수정하고 `PRACTICED`로 변경한다. 응답은 결과 필드와 `createdAt`, `updatedAt`, 현재 `occurrenceVersion`을 반환한다. 결과 DELETE는 `PRACTICED`를 `PENDING`으로 되돌리고 Task를 서비스 날짜로 재개한다. 이미 결과가 없으면 상태를 유지한다.
+- 휴식 PUT/DELETE는 선택 query `occurrenceVersion`을 받는다. PUT은 `RESTED` 회차 응답을 반환하고 Task를 Inbox로 옮긴다. DELETE는 휴식만 취소하며 Task를 재개한다. 실천 -> 휴식, 휴식 -> 실천 전환은 기존 기록을 먼저 명시적으로 취소해야 한다.
+- 결과/휴식 DELETE는 공통 envelope의 `data: null`을 반환한다. 재시도 시 같은 상태를 유지하며 최신 version을 보낸다. 오래된 version은 작업 종류와 관계없이 409/`70004`다.
+- 연결 Task 완료는 같은 트랜잭션에서 `UNKNOWN` 실천 결과를 만든다. 이미 `STANDARD`/`MINIMUM` 결과가 있으면 해당 결과와 실천 시각을 유지한다. Task 완료 취소는 실천 결과를 취소한다. 휴식 중 Task 완료/재개는 409로 거절하며 Task 변경도 롤백된다.
+- 실천 timezone의 `practicedAt`을 Task 저장 기준 `Asia/Seoul`로 변환한다. Task 완료 시각은 반대로 회차 timezone으로 변환해 결과에 저장한다. 연결 Task 알림은 사용하지 않는다.
+- 계획 정지/보관 및 목표 `PAUSE_FUTURE`는 미래 미실천 연결 Task를 Inbox로 옮긴다. 계획 재개 후 회차를 조회하면 Today로 복원한다. 정지 계획의 결과/휴식 취소는 미래 Task를 Inbox에 유지한다.
+- 없는 회차/다른 사용자 회차는 404/`70003`, 상태/버전 충돌과 연결 Task 삭제는 409/`70004`, 잘못된 timezone/필드/다음 행동 조정은 400/`10001`이다.
+
+결과 PUT 예시:
+
+```json
+{
+  "actionVariant": "MINIMUM",
+  "practicedAt": "2026-10-15T09:00:00",
+  "practicedTimeZone": "Asia/Seoul",
+  "accomplishedNote": "최소 5개를 확인했다",
+  "difficulties": ["NO_TIME"],
+  "nextActionPatchKind": "REPLACE",
+  "nextAction": "다음 단어장 열기",
+  "occurrenceVersion": 1
+}
+```
 
 핵심 타입:
 

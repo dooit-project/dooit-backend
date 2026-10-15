@@ -13,6 +13,8 @@ import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.goal.exception.GoalNotFoundException;
 import pj.dooit.goal.exception.GoalPlanNotFoundException;
 import pj.dooit.goal.exception.GoalValidationException;
+import pj.dooit.goal.exception.GoalOccurrenceNotFoundException;
+import pj.dooit.goal.exception.GoalOccurrenceConflictException;
 import pj.dooit.personalsystem.exception.PersonalSystemConflictException;
 import pj.dooit.personalsystem.exception.PersonalSystemNotFoundException;
 import pj.dooit.personalsystem.exception.PersonalSystemOccurrenceNotFoundException;
@@ -290,6 +292,20 @@ public class ApiExceptionHandler {
         log.warn("Goal Not Found : {}", e.getDetail());
         return ResponseEntity.status(ErrorCode.GOAL_NOT_FOUND.getStatus())
                 .body(ApiResponse.failure(ErrorCode.GOAL_NOT_FOUND));
+    }
+
+    @ExceptionHandler(GoalOccurrenceNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalOccurrenceNotFound(GoalOccurrenceNotFoundException e) {
+        log.warn("Goal Occurrence Not Found : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_OCCURRENCE_NOT_FOUND.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_OCCURRENCE_NOT_FOUND));
+    }
+
+    @ExceptionHandler(GoalOccurrenceConflictException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalOccurrenceConflict(GoalOccurrenceConflictException e) {
+        log.warn("Goal Occurrence Conflict : {}", e.getDetail());
+        return ResponseEntity.status(ErrorCode.GOAL_OCCURRENCE_CONFLICT.getStatus())
+                .body(ApiResponse.failure(ErrorCode.GOAL_OCCURRENCE_CONFLICT));
     }
 
     @ExceptionHandler(GoalPlanNotFoundException.class)

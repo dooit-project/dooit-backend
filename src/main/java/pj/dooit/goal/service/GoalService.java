@@ -30,6 +30,7 @@ public class GoalService {
 
     private final GoalRepository goalRepository;
     private final GoalPlanRepository goalPlanRepository;
+    private final GoalOccurrenceTaskLinkService taskLinkService;
     private final GoalVersionRepository goalVersionRepository;
     private final DdayGoalRepository ddayGoalRepository;
 
@@ -124,7 +125,10 @@ public class GoalService {
         if (goal.getStatus() != GoalStatus.ACTIVE && normalizePolicy(policy) == GoalFuturePlanPolicy.PAUSE_FUTURE) {
             goalPlanRepository.findAllForMaterialization(goal.getOwner().getId()).stream()
                     .filter(plan -> plan.getGoal() != null && plan.getGoal().getId().equals(goal.getId()))
-                    .forEach(pj.dooit.goal.domain.GoalPlan::pause);
+                    .forEach(plan -> {
+                        plan.pause();
+                        taskLinkService.suspendFutureTasks(plan);
+                    });
         }
     }
 

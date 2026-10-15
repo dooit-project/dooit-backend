@@ -697,12 +697,13 @@ class TaskServiceTest {
         taskService.delete(id);
 
         // then
-        InOrder inOrder = inOrder(taskRepository);
+        InOrder inOrder = inOrder(taskRepository, taskTxService);
         inOrder.verify(taskRepository).existsById(id);
+        inOrder.verify(taskTxService).validateDeletionTx(id);
         inOrder.verify(taskRepository).deleteById(id);
 
         then(taskRepository).shouldHaveNoMoreInteractions();
-        then(taskTxService).shouldHaveNoInteractions();
+        then(taskTxService).shouldHaveNoMoreInteractions();
     }
 
     @Test

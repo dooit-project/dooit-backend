@@ -40,7 +40,14 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences'].get.parameters[*].name").value(hasItem("goalId")))
                 .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.serviceDate.format").value("date"))
                 .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.snapshotGoalTitle").exists())
-                .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.notificationKey").exists());
+                .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.notificationKey").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalPlanOccurrenceResponse.properties.result").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences/{occurrenceId}/result'].put.security[0].bearerAuth").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences/{occurrenceId}/result'].delete").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences/{occurrenceId}/rest'].put").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goal-plan-occurrences/{occurrenceId}/rest'].delete").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalPracticeResultRequest.properties.actionVariant.enum[0]").value("STANDARD"))
+                .andExpect(jsonPath("$.components.schemas.GoalPracticeResultResponse.properties.occurrenceVersion").exists());
     }
 
     @Test

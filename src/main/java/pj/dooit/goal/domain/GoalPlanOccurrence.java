@@ -117,6 +117,28 @@ public class GoalPlanOccurrence {
         this.snapshotNotifyAtTime = version.getNotifyAtTime();
     }
 
+    public void markPracticed() {
+        this.status = GoalOccurrenceStatus.PRACTICED;
+        this.updatedAt = LocalDateTime.now(Constant.ZONE);
+    }
+
+    public void markRested() {
+        this.status = GoalOccurrenceStatus.RESTED;
+        this.updatedAt = LocalDateTime.now(Constant.ZONE);
+    }
+
+    public void markPending() {
+        this.status = GoalOccurrenceStatus.PENDING;
+        this.updatedAt = LocalDateTime.now(Constant.ZONE);
+    }
+
+    public void linkTask(Long taskId) {
+        if (taskId == null) {
+            throw new IllegalArgumentException("taskId는 필수입니다.");
+        }
+        this.linkedTaskId = taskId;
+    }
+
     @PrePersist
     protected void onCreate() { this.createdAt = LocalDateTime.now(Constant.ZONE); }
 

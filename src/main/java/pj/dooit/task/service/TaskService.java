@@ -670,10 +670,12 @@ public class TaskService {
         return TaskResponse.from(created);
     }
 
+    @Transactional
     public void delete(Long id) {
         if (!taskRepository.existsById(id)) {
             throw new TaskNotFoundException(id);
         }
+        taskTxService.validateDeletionTx(id);
         taskRepository.deleteById(id);
     }
 

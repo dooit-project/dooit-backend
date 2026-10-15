@@ -5,6 +5,7 @@ import pj.dooit.dday.domain.DdayGoal;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.dday.repository.DdayGoalRepository;
 import pj.dooit.personalsystem.service.PersonalSystemTaskLinkService;
+import pj.dooit.goal.service.GoalOccurrenceTaskLinkService;
 import pj.dooit.task.domain.DeferReason;
 import pj.dooit.task.domain.Task;
 import pj.dooit.task.domain.TaskStatus;
@@ -51,13 +52,17 @@ class TaskTxServiceTest {
     @Mock
     PersonalSystemTaskLinkService personalSystemTaskLinkService;
 
+    @Mock
+    GoalOccurrenceTaskLinkService goalOccurrenceTaskLinkService;
+
     private TaskTxService service() {
         return new TaskTxService(
                 taskRepository,
                 ddayGoalRepository,
                 dailyPlanService,
                 checklistItemService,
-                personalSystemTaskLinkService
+                personalSystemTaskLinkService,
+                goalOccurrenceTaskLinkService
         );
     }
 

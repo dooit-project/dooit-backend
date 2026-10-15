@@ -6,6 +6,7 @@ import pj.dooit.dday.domain.DdayGoal;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.dday.repository.DdayGoalRepository;
 import pj.dooit.personalsystem.service.PersonalSystemTaskLinkService;
+import pj.dooit.goal.service.GoalOccurrenceTaskLinkService;
 import pj.dooit.task.domain.DeferReason;
 import pj.dooit.task.domain.RecurrenceEditScope;
 import pj.dooit.task.domain.RecurrenceExceptionType;
@@ -42,6 +43,7 @@ public class TaskTxService {
     private final DailyPlanService dailyPlanService;
     private final TaskChecklistItemService checklistItemService;
     private final PersonalSystemTaskLinkService personalSystemTaskLinkService;
+    private final GoalOccurrenceTaskLinkService goalOccurrenceTaskLinkService;
 
     @Transactional
     public Task updateTx(Long id, TaskRequest req) {
@@ -174,39 +176,47 @@ public class TaskTxService {
 
     @Transactional
     public Task completeTx(Long id, LocalDateTime completedAt) {
+        goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTask(id);
         task.complete(completedAt);
+        goalOccurrenceTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
         removeFocus(task);
-        checklistItemService.completeAllForTask(task.getId(), completedAt);
+        checklistItemService.completeAllForTask(task.getId(), task.getCompletedAt());
         personalSystemTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
         return taskRepository.save(task);
     }
 
     @Transactional
     public Task completeTxForOwner(Long id, LocalDateTime completedAt, User owner) {
+        goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTaskForOwner(id, owner);
         task.complete(completedAt);
+        goalOccurrenceTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
         removeFocus(task);
-        checklistItemService.completeAllForTask(task.getId(), completedAt);
+        checklistItemService.completeAllForTask(task.getId(), task.getCompletedAt());
         personalSystemTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
         return taskRepository.save(task);
     }
 
     @Transactional
     public Task reopenTodayTx(Long id, LocalDate targetDate) {
+        goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTask(id);
         task.reopenToday(targetDate);
         assignLastTodayOrder(task, targetDate);
         personalSystemTaskLinkService.recordLinkedTaskReopened(task);
+        goalOccurrenceTaskLinkService.recordLinkedTaskReopened(task);
         return taskRepository.save(task);
     }
 
     @Transactional
     public Task reopenTodayTxForOwner(Long id, LocalDate targetDate, User owner) {
+        goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTaskForOwner(id, owner);
         task.reopenToday(targetDate);
         assignLastTodayOrder(task, targetDate, ownerId(owner));
         personalSystemTaskLinkService.recordLinkedTaskReopened(task);
+        goalOccurrenceTaskLinkService.recordLinkedTaskReopened(task);
         return taskRepository.save(task);
     }
 
@@ -393,8 +403,16 @@ public class TaskTxService {
     }
 
     @Transactional
+    public void validateDeletionTx(Long id) {
+        goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
+        goalOccurrenceTaskLinkService.validateTaskDeletion(findTask(id));
+    }
+
+    @Transactional
     public void deleteTxForOwner(Long id, User owner, RecurrenceEditScope recurrenceScope) {
+        goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTaskForOwner(id, owner);
+        goalOccurrenceTaskLinkService.validateTaskDeletion(task);
         RecurrenceEditScope effectiveScope = normalizeScope(recurrenceScope);
         if (!isRecurringOccurrence(task)) {
             removeFocus(task);

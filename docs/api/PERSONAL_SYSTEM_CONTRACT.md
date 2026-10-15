@@ -117,9 +117,9 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 
 중복 방지는 소유 계획의 `PLAN_ID + SERVICE_DATE` unique key로 보장한다. 조회는 소유자별 계획을 ID 순서로 잠가 동시 materialize를 직렬화한다. 주말 중 임의 1회 같은 기간 N회 계획은 이 key만으로 충분하지 않으므로 별도 엔진 도입 전에는 지원 범위 밖이다.
 
-2026-10-15 구현: 기간별 회차 GET은 양끝 포함 1~31일을 지원한다. 과거 회차 스냅샷은 보존하며 오늘 이후의 미실천·Task 미연결 회차는 날짜별 적용 version으로 갱신한다. 정지/보관 또는 변경된 선택 요일에 해당하지 않는 미래 미실천 회차는 응답에서 제외하고 DB 원본은 유지한다. 목표 필터는 회차의 당시 목표 ID를 사용한다. `notificationKey`, local `scheduledNotificationAt`, `timeZone`을 함께 반환하며 알림 시각이 없거나 계획이 정지/보관된 경우 후보 시각은 null이다.
+2026-10-15 구현: 기간별 회차 GET은 양끝 포함 1~31일을 지원한다. 과거 회차 스냅샷은 보존하며 오늘 이후의 미실천 회차와 연결 Task는 날짜별 적용 version으로 갱신한다. 정지/보관 또는 변경된 선택 요일에 해당하지 않는 미래 미실천 회차는 응답에서 제외하고 DB 원본은 유지한다. 목표 필터는 회차의 당시 목표 ID를 사용한다. `notificationKey`, local `scheduledNotificationAt`, `timeZone`을 함께 반환하며 알림 시각이 없거나 계획이 정지/보관된 경우 후보 시각은 null이다.
 
-목표 상태 요청의 `PAUSE_FUTURE`는 현재 연결된 계획을 일시정지한다. `KEEP_FUTURE`는 계획 상태를 유지한다. 목표 재개/달성 취소 시 계획은 상태 API로 명시적으로 재개한다. 실천/휴식 결과와 회차 Task 자동 연결은 아직 미구현이다.
+목표 상태 요청의 `PAUSE_FUTURE`는 현재 연결된 계획을 일시정지한다. `KEEP_FUTURE`는 계획 상태를 유지한다. 목표 재개/달성 취소 시 계획은 상태 API로 명시적으로 재개한다. 실천/휴식 결과와 회차 Task 자동 연결도 구현됐다. 활성 계획의 오늘 이후 미실천 회차에 날짜만 있는 Today Task를 생성하며 알림은 회차 후보만 제공한다. 정지/보관 시 미래 미실천 Task는 Inbox로 이동한다.
 
 ### `GOAL_PRACTICE_RESULT`
 
@@ -134,6 +134,12 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 | `NEXT_ACTION_PATCH_KIND` | 유지, 비우기, 새 값 저장 구분 |
 | `NEXT_ACTION_VALUE` | 새 다음 행동 값 |
 | `CREATED_AT`, `UPDATED_AT` | 결과 저장/수정 시각 |
+
+2026-10-15 구현: 결과 PUT은 기본/최소/미분류 실천과 timezone/메모/어려움/다음 행동 조정을 저장한다. 회차당 유효 결과 하나를 유지하며 수정도 `ENTITY_VERSION`을 올린다. 결과 응답과 회차 GET의 `result`에 최신 `occurrenceVersion`을 제공한다. `REPLACE`만 비어 있지 않은 다음 행동 값이 필수이며 `KEEP`/`CLEAR`에는 값을 보내지 않는다. 이 조정은 결과에만 저장하며 계획 자체를 수정하지 않는다.
+
+결과/휴식 전환은 기존 기록을 먼저 명시적으로 취소한다. 실천 결과 저장은 연결 Task 완료와, 결과 취소는 Task 재개와 같은 트랜잭션이다. 휴식은 Task를 Inbox로 옮기고 취소 시 재개한다. 정지된 계획의 미래 Task는 취소 후에도 Inbox에 유지한다. Task에서 직접 완료하면 `UNKNOWN` 결과를 만들며 기존 명시적 결과는 보존한다. Task 완료 취소는 결과를 취소한다. 휴식 중 Task 완료/재개 및 연결 Task hard delete는 상태 충돌로 거절한다.
+
+회차 변경은 비관적 잠금으로 직렬화하고 선택 `occurrenceVersion`으로 오래된 요청을 409/`70004`로 거절한다. 결과 없음에 대한 결과 취소와 휴식 없음에 대한 휴식 취소는 기존 상태를 보존한다. 자세한 body/응답/오류 계약은 [`API_V1_FRONTEND.md`](./API_V1_FRONTEND.md)의 회차 실천·휴식 계약을 따른다.
 
 ### `GOAL_DIRECT_LOG`
 

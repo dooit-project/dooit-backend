@@ -11,9 +11,9 @@ public record GoalPlanOccurrenceResponse(
         String notificationKey, LocalDateTime scheduledNotificationAt,
         String snapshotGoalTitle, String snapshotPlanName, String snapshotTriggerText,
         String snapshotStandardActionText, String snapshotMinimumActionText, String snapshotNextAction,
-        long occurrenceVersion
+        long occurrenceVersion, GoalPracticeResultResponse result
 ) {
-    public static GoalPlanOccurrenceResponse from(GoalPlanOccurrence o, boolean notificationEnabled) {
+    public static GoalPlanOccurrenceResponse from(GoalPlanOccurrence o, boolean notificationEnabled, GoalPracticeResultResponse result) {
         boolean notify = notificationEnabled && o.getStatus() == GoalOccurrenceStatus.PENDING
                 && o.getSnapshotNotifyAtTime() != null;
         return new GoalPlanOccurrenceResponse(o.getId(), o.getGoalId(), o.getGoalVersion(),
@@ -23,6 +23,6 @@ public record GoalPlanOccurrenceResponse(
                 notify ? o.getServiceDate().atTime(o.getSnapshotNotifyAtTime()) : null,
                 o.getSnapshotGoalTitle(), o.getSnapshotPlanName(), o.getSnapshotTriggerText(),
                 o.getSnapshotStandardActionText(), o.getSnapshotMinimumActionText(), o.getSnapshotNextAction(),
-                o.getEntityVersion());
+                o.getEntityVersion(), result);
     }
 }

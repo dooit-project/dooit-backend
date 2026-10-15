@@ -14,6 +14,8 @@ import pj.dooit.goal.repository.GoalPlanVersionRepository;
 import pj.dooit.goal.repository.GoalVersionRepository;
 import pj.dooit.goal.repository.GoalRepository;
 import pj.dooit.goal.repository.GoalPlanOccurrenceRepository;
+import pj.dooit.goal.repository.GoalPracticeResultRepository;
+import pj.dooit.goal.dto.GoalPracticeResultResponse;
 import pj.dooit.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ public class GoalPlanOccurrenceService {
     private final GoalVersionRepository goalVersionRepository;
     private final GoalRepository goalRepository;
     private final GoalPlanOccurrenceRepository occurrenceRepository;
+    private final GoalPracticeResultRepository resultRepository;
+    private final GoalOccurrenceTaskLinkService taskLinkService;
 
     @Transactional
     public List<GoalPlanOccurrenceResponse> getOccurrences(LocalDate from, LocalDate to, Long goalId, User owner) {
@@ -62,12 +66,15 @@ public class GoalPlanOccurrenceService {
                 boolean scheduled = version != null && version.isScheduledOn(date);
                 boolean future = occurrence != null && !date.isBefore(LocalDate.now(ZoneId.of(occurrence.getTimeZone())));
                 boolean mutable = occurrence != null && future
-                        && occurrence.getStatus() == GoalOccurrenceStatus.PENDING && occurrence.getLinkedTaskId() == null;
+                        && occurrence.getStatus() == GoalOccurrenceStatus.PENDING;
                 if (occurrence == null && active && scheduled) {
                     occurrence = occurrenceRepository.save(new GoalPlanOccurrence(
                             version, goalVersionForDate(version, date, to, goalVersions), owner, date));
                 } else if (mutable && active && scheduled) {
                     occurrence.refreshSnapshot(version, goalVersionForDate(version, date, to, goalVersions));
+                }
+                if (occurrence != null) {
+                    taskLinkService.syncPendingTask(occurrence, active && scheduled);
                 }
                 // Retain historical/result-bearing snapshots, but hide unscheduled pending future dates.
                 if (occurrence == null || (mutable && (!active || !scheduled))) {
@@ -79,10 +86,13 @@ public class GoalPlanOccurrenceService {
             }
         }
         occurrenceRepository.flush();
+        Map<Long, GoalPracticeResultResponse> results = new HashMap<>();
+        resultRepository.findByOccurrenceIdIn(selected.stream().map(GoalPlanOccurrence::getId).toList())
+                .forEach(result -> results.put(result.getOccurrenceId(), GoalPracticeResultResponse.from(result)));
         return selected.stream()
                 .sorted(Comparator.comparing(GoalPlanOccurrence::getServiceDate)
                         .thenComparing(GoalPlanOccurrence::getId))
-                .map(o -> GoalPlanOccurrenceResponse.from(o, o.getPlan().getStatus() == GoalPlanStatus.ACTIVE))
+                .map(o -> GoalPlanOccurrenceResponse.from(o, o.getPlan().getStatus() == GoalPlanStatus.ACTIVE, results.get(o.getId())))
                 .toList();
     }
 

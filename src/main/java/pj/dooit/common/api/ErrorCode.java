@@ -51,6 +51,9 @@ public enum ErrorCode {
     GOAL_NOT_FOUND(HttpStatus.NOT_FOUND, 70001, "목표를 찾을 수 없습니다."),
     GOAL_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, 70002, "목표 계획을 찾을 수 없습니다."),
 
+    GOAL_OCCURRENCE_NOT_FOUND(HttpStatus.NOT_FOUND, 70003, "목표 계획 회차를 찾을 수 없습니다."),
+    GOAL_OCCURRENCE_CONFLICT(HttpStatus.CONFLICT, 70004, "목표 계획 회차의 상태가 변경되었거나 요청 작업과 충돌합니다. 새로고침 후 다시 시도해주세요."),
+
     // 서버 내부 오류
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 99999, "서버 오류가 발생했습니다.");
 

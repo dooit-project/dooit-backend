@@ -33,6 +33,7 @@ public class GoalPlanService {
     private final GoalPlanRepository goalPlanRepository;
     private final GoalPlanVersionRepository goalPlanVersionRepository;
     private final GoalRepository goalRepository;
+    private final GoalOccurrenceTaskLinkService taskLinkService;
 
     @Transactional
     public GoalPlanResponse create(GoalPlanCreateRequest request, User owner) {
@@ -103,6 +104,9 @@ public class GoalPlanService {
             plan.archive();
         } else {
             throw new GoalValidationException("지원하지 않는 목표 계획 상태입니다.");
+        }
+        if (plan.getStatus() != GoalPlanStatus.ACTIVE) {
+            taskLinkService.suspendFutureTasks(plan);
         }
         return GoalPlanResponse.from(plan, currentVersion(plan));
     }
