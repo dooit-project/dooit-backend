@@ -32,6 +32,16 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.components.schemas.GoalDraftResponse.properties.targetDate").exists());
     }
 
+    @Test void apiDocs_goalPlanDraft() throws Exception {
+        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/plan-draft'].post.security[0].bearerAuth").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalPlanDraftRequest.properties.description.maxLength").value(2000))
+                .andExpect(jsonPath("$.components.schemas.GoalPlanDraftResponse.properties.goalVersion").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalPlanDraftResponse.properties.standardAction").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalPlanDraftResponse.properties.minimumAction").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalPlanDraftResponse.properties.schedule").exists());
+    }
+
     @Autowired
     MockMvc mockMvc;
 

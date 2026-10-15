@@ -365,7 +365,11 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
 - 2026-10-16 목표 초안 기반: 인증된 `POST /api/v1/goals/draft`에 `description`(공백 불가, 최대 2000자)과 선택 `targetDate`를 보낸다. 성공 응답은 `title`(1~120자), 선택 `desiredOutcome`/`motivationText`(각 최대 500자), 요청 그대로의 `targetDate`이며 ID는 없다. 목표/계획/회차/Task를 저장하지 않는다. 사용자 확인 후 별도 `POST /api/v1/goals`로 저장하며 D-Day는 그때 사용자가 선택한다.
 - 기본 `app.goal-ai.enabled=false`(`DOOIT_GOAL_AI_ENABLED`)이며 현재 외부 제공자 adapter가 없다. 비활성, 제공자 없음, 잘못된 제공자 출력, 제공자 예외는 503/`70009`로 통일하고 CRUD에는 영향을 주지 않는다. 입력 검증 실패는 400/`10001`, 미인증은 401이다. 활성 설정만으로 외부 전송은 발생하지 않는다. 외부 adapter는 provider·보관·삭제 정책 및 timeout/사용량 제한을 확정한 후 별도 구현한다.
 - 초안과 제공자 응답은 DB/서버 캐시에 보관하지 않는다. 요청 처리 동안 메모리에서 사용하고 응답에는 `Cache-Control: no-store`를 적용한다. 이는 JVM 메모리의 즉시 삭제/덮어쓰기나 외부 provider의 보관 정책을 보장하지 않는다. 제공자 예외의 원문/원인은 로그에 남기지 않으며 JSON 파싱 오류도 입력을 인용할 수 있는 예외 메시지를 기록하지 않는다. 날짜/ID를 제공자가 추론하지 않도록 인터페이스 입력은 정규화한 설명만 전달한다.
-- 이 단계는 새 endpoint/DTO/오류 코드 추가이며 기존 API와 호환된다. DB migration과 기존 클라이언트 수정은 필요 없다. 계획 초안/조정안/여정 요약은 아직 미구현이다.
+- 이 단계는 새 endpoint/DTO/오류 코드 추가이며 기존 API와 호환된다. DB migration과 기존 클라이언트 수정은 필요 없다. 조정안/여정 요약은 아직 미구현이다.
+- 2026-10-16 계획 초안 기반: `POST /api/v1/goals/{goalId}/plan-draft`는 본인 소유 목표와 `description`(공백 불가, 최대 2000자), 필수 `schedule`을 입력으로 받는다. 일정은 계획 생성 DTO와 같고 `startDate`/1~7개 요일(`MO/TU/WE/TH/FR/SA/SU`)이 필수다. 요일 null 원소는 400이며 중복은 최초 순서를 유지해 제거한다. timeZone은 공백 제거 후 ZoneId 검증, 누락/공백은 `Asia/Seoul`이다. 시작일/요일/zone/알림 시각은 제공자가 결정하지 않는다.
+- 제공자에는 해당 목표 snapshot의 title/desiredOutcome/motivationText와 정규화한 description만 전달한다. 사용자·목표 ID, 날짜, D-Day 연결, 무관한 실천 기록은 전달하지 않는다. 소유권 조회 트랜잭션이 종료된 뒤 호출한다. 이 조회는 비활성이어도 실행되어 타인/없는 목표는 404/`70001`이고, 제공자 없음·실패·유효하지 않은 출력은 503/`70009`다. 제공자 인터페이스는 목표 초안과 별도이며 같은 활성 설정을 공유한다. 외부 adapter는 아직 없다.
+- 응답은 `goalId`, 읽은 snapshot의 `goalVersion`, `name`(필수 1~120자), `triggerText`(선택 최대 200자), 사용자가 선택한 정규화 `schedule`, 필수 `standardAction`/`minimumAction`, `nextAction`(선택 최대 300자)다. 행동은 계획 생성과 동일하게 text(필수 최대 500자), 선택 targetAmount(최대 100자), 선택 estimatedMinutes(1~1440)를 검증한다. 텍스트 앞뒤 공백 제거 및 빈 선택 텍스트 null 처리를 적용한다. ID나 새 plan version은 만들지 않으며 목표·계획·회차·Task를 저장하지 않는다. 응답은 no-store다.
+- goalVersion은 초안에 사용한 목표 버전을 알리는 값이며 저장을 예약하거나 목표를 잠그는 값이 아니다. 사용자는 결과를 검토하고 `goalVersion`을 제외한 생성 필드로 `POST /api/v1/goals/{goalId}/plans`를 호출한다. 저장 시 최신 소유권/목표 존재 여부를 다시 검증하며 기존 계획 생성 정책을 따른다. 일시정지/달성/보관 목표도 읽기 전용 초안 생성은 허용한다. 추가 API로 기존 계약과 호환되며 DB migration은 없다.
 
 ## 7. 기존 구현과 호환성
 
