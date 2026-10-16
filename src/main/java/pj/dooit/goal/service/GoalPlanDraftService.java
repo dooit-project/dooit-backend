@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import pj.dooit.Constant;
 import pj.dooit.goal.ai.GoalDraftProperties;
 import pj.dooit.goal.ai.GoalPlanDraftProvider;
-import pj.dooit.goal.dto.GoalPlanActionRequest;
 import pj.dooit.goal.dto.GoalPlanDraftRequest;
 import pj.dooit.goal.dto.GoalPlanDraftResponse;
 import pj.dooit.goal.dto.GoalPlanScheduleRequest;
@@ -37,13 +36,10 @@ public class GoalPlanDraftService {
             if (provider == null) throw new GoalAiUnavailableException();
             var context = new GoalPlanDraftProvider.Context(goal.title(), goal.desiredOutcome(),
                     goal.motivationText(), request.description().strip());
-            var suggestion = provider.draft(context);
-            if (suggestion == null || !validator.validate(suggestion).isEmpty()) {
-                throw new GoalAiUnavailableException();
-            }
-            return new GoalPlanDraftResponse(goal.id(), goal.currentVersion(), suggestion.name().strip(),
-                    normalize(suggestion.triggerText()), schedule, normalize(suggestion.standardAction()),
-                    normalize(suggestion.minimumAction()), normalize(suggestion.nextAction()));
+            var suggestion = GoalPlanDraftContent.validated(provider.draft(context), validator);
+            return new GoalPlanDraftResponse(goal.id(), goal.currentVersion(), suggestion.name(),
+                    suggestion.triggerText(), schedule, suggestion.standardAction(),
+                    suggestion.minimumAction(), suggestion.nextAction());
         } catch (RuntimeException ignored) {
             // Provider errors may contain prompts and credentials; discard message and cause.
             throw new GoalAiUnavailableException();
@@ -63,10 +59,6 @@ public class GoalPlanDraftService {
         }
         return new GoalPlanScheduleRequest(schedule.startDate(), schedule.days().stream().distinct().toList(),
                 zone, schedule.notifyAtTime());
-    }
-
-    private GoalPlanActionRequest normalize(GoalPlanActionRequest action) {
-        return new GoalPlanActionRequest(action.text().strip(), normalize(action.targetAmount()), action.estimatedMinutes());
     }
 
     private String normalize(String value) {

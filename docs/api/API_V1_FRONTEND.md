@@ -741,7 +741,7 @@ Task 응답 nullable/default 규칙:
 - 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, 회차 실천/휴식 결과와 연결 Task 완료/재개, Goal/Plan DB schema, D-Day 소유권 검증
 - 추가 구현됨: 목표 연결 일회성 Task 생성/연결/해제, 직접 실천 기록 생성/수정/취소와 생성 idempotency, 목표 여정 통합 조회·전체 기간 summary·cursor
 - 추가 구현됨: 기존 개인 시스템의 명시적 이관, 원본 이력·새 ID mapping 보존, 게스트 계획 데이터 병합·정리
-- AI 목표/계획 초안 API 기반은 기본 비활성으로 제공한다. 실제 외부 제공자 연결과 요약/조정은 아직 미구현이다.
+- AI 목표/계획 초안·조정안 API 기반은 기본 비활성으로 제공한다. 실제 외부 제공자 연결과 여정 요약은 아직 미구현이다.
 
 제안 API:
 
@@ -1956,7 +1956,7 @@ type AppMetadataResponse = {
 - 초안은 목표/계획/회차/Task를 만들지 않는다. 확인한 필드만 별도 `POST /api/v1/goals`로 보내 저장한다. D-Day 연결은 저장 요청에서 별도 선택한다.
 - 성공/AI 사용 불가 응답은 `Cache-Control: no-store`를 포함한다. 서버는 초안을 DB나 캐시에 보관하지 않는다.
 - 입력 오류는 400/`10001`, 인증 오류는 기존 인증 계약, 비활성/제공자 미설정/실패/잘못된 출력은 503/`70009`다. 입력을 보존하고 직접 작성 흐름을 제공한다. 자동 재시도를 반복하지 않는다. 기존 CRUD는 AI와 독립적으로 동작한다.
-- 기존 DTO/URL/오류 코드는 유지하는 추가 API이며 DB migration은 없다. 조정안·여정 요약과 외부 provider·보관·삭제 정책은 후속 작업이다.
+- 기존 DTO/URL/오류 코드는 유지하는 추가 API이며 DB migration은 없다. 여정 요약과 외부 provider·보관·삭제 정책은 후속 작업이다.
 
 ## 목표별 계획 초안 API 기반 (2026-10-16)
 
@@ -1980,3 +1980,18 @@ type AppMetadataResponse = {
 - 초안은 계획/버전/회차/Task를 저장하지 않고 `Cache-Control: no-store`를 포함한다. 일시정지/달성/보관 목표도 읽기 전용 초안을 만들 수 있다.
 - 검증 오류는 400/10001, 타인/없는 목표는 404/70001, 비활성·제공자 미설정·실패·잘못된 출력은 503/70009다. 유효한 요청에서는 비활성이어도 소유권을 먼저 검사하며 AI 실패 시 기존 CRUD는 유지한다. 입력을 유지하고 직접 작성 흐름을 제공한다.
 - 추가 endpoint/DTO이며 기존 API 변경과 DB migration은 없다. 외부 provider·보관·삭제 정책 및 timeout/사용량 제한 확정 후 실제 adapter를 연결한다.
+
+## 목표 계획 조정안 API 기반 (2026-10-16)
+
+`POST /api/v1/goals/{goalId}/adjustment-draft`는 Bearer 인증이 필요하다. 기본 비활성 상태이며 외부 AI adapter는 아직 없다.
+
+```json
+{"planId": 12, "description": "퇴근이 늦어져서 기본 행동을 더 작게 조정하고 싶어요"}
+```
+
+- planId는 필수 양수, description은 공백 불가 최대 2000자다. 유효한 요청에서는 비활성이어도 소유권·연결을 먼저 검사한다. 타인/없는 목표는 404/70001, 타인/없는 계획·다른 목표에 연결된 계획·독립 계획은 404/70002다.
+- 목표와 계획의 현재 snapshot을 같은 읽기 트랜잭션에서 가져온 뒤 트랜잭션 밖에서 제공자를 호출한다. 현재 목표 설명과 계획의 텍스트/행동, 사용자 설명만 입력으로 사용하며 실천 이력이나 집계는 자동으로 첨부하지 않는다. 기록에 기반한 실패 판정이나 자동 진단은 제공하지 않는다.
+- 성공 data는 goalId, goalVersion, planId, planVersion, name, triggerText, schedule, standardAction, minimumAction, nextAction이다. 텍스트·행동 검증/정규화는 계획 초안과 동일하다. schedule은 현재 계획의 일정 그대로이며 제공자가 일정·연결 목표·상태·적용일을 변경하지 않는다.
+- 초안은 계획/버전/회차/Task를 저장하지 않고 no-store 응답을 반환한다. 비활성·제공자 미설정·실패·잘못된 출력은 503/70009, 입력 오류는 400/10001이다. 일시정지/달성/보관 상태도 읽기 전용 초안은 허용한다. 실제 수정은 기존 API 정책을 따른다.
+- goalVersion/planVersion은 읽은 snapshot 버전이며 조건부 쓰기 토큰이 아니다. 반영 전 목표·계획을 다시 조회해 버전을 비교하고 변경되었다면 초안을 재검토한다. 사용자 확인 후 goalVersion/planId/planVersion을 제외한 수정 필드로 `PATCH /api/v1/goal-plans/{planId}`를 호출한다. effectiveFromDate는 별도 선택한다. 기존 PATCH에 버전 비교 기능은 추가하지 않는다.
+- 추가 endpoint/DTO이며 기존 API와 오류 코드를 유지한다. DB migration은 없다. 외부 provider·보관·삭제 정책과 timeout/사용량 제한 확정, 실제 adapter 연결, 여정 요약 API는 후속 작업이다.
