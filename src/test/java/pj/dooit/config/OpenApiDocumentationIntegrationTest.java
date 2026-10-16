@@ -51,6 +51,14 @@ class OpenApiDocumentationIntegrationTest {
                 .andExpect(jsonPath("$.components.schemas.GoalAdjustmentDraftResponse.properties.goalVersion").exists());
     }
 
+    @Test void apiDocs_goalJourneySummary() throws Exception {
+        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey-summary'].post.security[0].bearerAuth").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalJourneySummaryRequest.properties.expectedJourneyVersion").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalJourneySummaryResponse.properties.evidenceTruncated").exists())
+                .andExpect(jsonPath("$.components.schemas.GoalJourneySummaryResponse.properties.highlights").exists());
+    }
+
     @Autowired
     MockMvc mockMvc;
 

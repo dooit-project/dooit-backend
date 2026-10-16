@@ -741,7 +741,7 @@ Task 응답 nullable/default 규칙:
 - 구현됨: 목표 생성/목록/상세/수정, 상태 변경, 사용자 확인 달성/달성 취소와 futurePlanPolicy 적용, 목표 하위/독립 반복 계획 CRUD, 날짜 기반 회차 생성/조회·스냅샷·알림 후보, 회차 실천/휴식 결과와 연결 Task 완료/재개, Goal/Plan DB schema, D-Day 소유권 검증
 - 추가 구현됨: 목표 연결 일회성 Task 생성/연결/해제, 직접 실천 기록 생성/수정/취소와 생성 idempotency, 목표 여정 통합 조회·전체 기간 summary·cursor
 - 추가 구현됨: 기존 개인 시스템의 명시적 이관, 원본 이력·새 ID mapping 보존, 게스트 계획 데이터 병합·정리
-- AI 목표/계획 초안·조정안 API 기반은 기본 비활성으로 제공한다. 실제 외부 제공자 연결과 여정 요약은 아직 미구현이다.
+- AI 목표/계획 초안·조정안·근거 선택형 여정 요약 API 기반은 기본 비활성으로 제공한다. 실제 외부 제공자 연결은 아직 미구현이다.
 
 제안 API:
 
@@ -1956,7 +1956,7 @@ type AppMetadataResponse = {
 - 초안은 목표/계획/회차/Task를 만들지 않는다. 확인한 필드만 별도 `POST /api/v1/goals`로 보내 저장한다. D-Day 연결은 저장 요청에서 별도 선택한다.
 - 성공/AI 사용 불가 응답은 `Cache-Control: no-store`를 포함한다. 서버는 초안을 DB나 캐시에 보관하지 않는다.
 - 입력 오류는 400/`10001`, 인증 오류는 기존 인증 계약, 비활성/제공자 미설정/실패/잘못된 출력은 503/`70009`다. 입력을 보존하고 직접 작성 흐름을 제공한다. 자동 재시도를 반복하지 않는다. 기존 CRUD는 AI와 독립적으로 동작한다.
-- 기존 DTO/URL/오류 코드는 유지하는 추가 API이며 DB migration은 없다. 여정 요약과 외부 provider·보관·삭제 정책은 후속 작업이다.
+- 기존 DTO/URL/오류 코드는 유지하는 추가 API이며 DB migration은 없다. 외부 provider·보관·삭제 정책은 후속 작업이다.
 
 ## 목표별 계획 초안 API 기반 (2026-10-16)
 
@@ -1994,4 +1994,20 @@ type AppMetadataResponse = {
 - 성공 data는 goalId, goalVersion, planId, planVersion, name, triggerText, schedule, standardAction, minimumAction, nextAction이다. 텍스트·행동 검증/정규화는 계획 초안과 동일하다. schedule은 현재 계획의 일정 그대로이며 제공자가 일정·연결 목표·상태·적용일을 변경하지 않는다.
 - 초안은 계획/버전/회차/Task를 저장하지 않고 no-store 응답을 반환한다. 비활성·제공자 미설정·실패·잘못된 출력은 503/70009, 입력 오류는 400/10001이다. 일시정지/달성/보관 상태도 읽기 전용 초안은 허용한다. 실제 수정은 기존 API 정책을 따른다.
 - goalVersion/planVersion은 읽은 snapshot 버전이며 조건부 쓰기 토큰이 아니다. 반영 전 목표·계획을 다시 조회해 버전을 비교하고 변경되었다면 초안을 재검토한다. 사용자 확인 후 goalVersion/planId/planVersion을 제외한 수정 필드로 `PATCH /api/v1/goal-plans/{planId}`를 호출한다. effectiveFromDate는 별도 선택한다. 기존 PATCH에 버전 비교 기능은 추가하지 않는다.
-- 추가 endpoint/DTO이며 기존 API와 오류 코드를 유지한다. DB migration은 없다. 외부 provider·보관·삭제 정책과 timeout/사용량 제한 확정, 실제 adapter 연결, 여정 요약 API는 후속 작업이다.
+- 추가 endpoint/DTO이며 기존 API와 오류 코드를 유지한다. DB migration은 없다. 외부 provider·보관·삭제 정책과 timeout/사용량 제한 확정, 실제 adapter 연결은 후속 작업이다.
+
+## 기록 근거 선택형 여정 요약 API 기반 (2026-10-16)
+
+`POST /api/v1/goals/{goalId}/journey-summary`는 Bearer 인증과 본인 소유 목표가 필요하다. 기본 비활성 상태이며 현재 외부 provider adapter는 없다.
+
+```json
+{"from":"2026-10-01", "to":"2026-10-16", "timeZone":"Asia/Seoul"}
+```
+
+- from/to는 필수이며 양끝 포함 1~366일이다. timeZone은 기존 여정 조회와 동일하게 누락/공백이면 Asia/Seoul이다. 선택 expectedJourneyVersion에는 같은 범위 여정 조회의 `goal:{id}:{sha256}` 값을 보낸다. 유효한 입력은 소유권과 원본 version을 먼저 검사하고, 불일치하면 제공자 호출 전 409/70008이다.
+- 성공 data는 goalId, range, journeyVersion, summary, overview, highlights, evidenceCount, evidenceTruncated다. summary는 전체 기간 서버 집계이며 overview는 그 숫자만 사용해 서버가 구성한다. 제공자는 자유문장이나 성과 수치를 생성하지 않고 최신 최대 100건 중 원본 1~5건만 선택한다. highlights는 선택 순서대로 기존 GoalJourneyItem 원문을 반환한다.
+- evidenceCount는 제공자에게 제공할 수 있는 원본 건수(최대 100), evidenceTruncated는 생략된 원본 존재 여부다. 100건이 넘더라도 summary와 journeyVersion은 전체 기간을 대상으로 한다. 이 제한은 제공자 입력에 적용하며 기존 여정 집계의 DB 조회/메모리를 100건으로 제한하지 않는다.
+- 사용자 기록은 인용 원본으로 표시하고 달성률/실패 판정/점수 상승/실제 소요 시간으로 해석하지 않는다. 휴식/기록 없는 회차 집계와 실천 항목은 기존 여정 규칙을 따른다. 전송할 Context에는 전체 집계, range, 원본의 유형/날짜/텍스트/어려움과 요청 내 index를 포함하며 DB/사용자 ID와 cursor/version은 제외한다.
+- 비활성은 503/70009다. 활성화된 빈 여정은 제공자를 호출하지 않고 빈 highlights와 서버 집계를 반환한다. 활성화된 비어 있지 않은 여정은 제공자 없음·실패·잘못된 선택 시 503/70009다. 타인/없는 목표는 404/70001, 검증 오류는 400/10001이다. 기존 CRUD와 여정 조회는 AI와 독립이다.
+- 요약/캐시는 DB나 서버에 저장하지 않고 no-store 응답을 반환한다. journeyVersion은 읽은 snapshot 버전이며 호출 중 변경이 발생할 수 있다. 클라이언트는 같은 사용자/목표/범위/zone/version에서만 기존 결과 재사용을 판단하고 원본 변경 시 폐기한다. 일부 근거만 전송한 경우에도 생략된 원본 변경은 version을 무효화한다.
+- 추가 endpoint/DTO이며 기존 API와 오류 코드, DB schema는 유지한다. 외부 provider·보관·삭제 정책 확정과 timeout/사용량 제한, 실제 adapter 연결이 남아 있다.

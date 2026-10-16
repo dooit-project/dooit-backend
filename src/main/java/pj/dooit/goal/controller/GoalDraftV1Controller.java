@@ -24,6 +24,9 @@ import pj.dooit.goal.dto.GoalPlanDraftResponse;
 import pj.dooit.goal.dto.GoalAdjustmentDraftRequest;
 import pj.dooit.goal.dto.GoalAdjustmentDraftResponse;
 import pj.dooit.goal.service.GoalAdjustmentDraftService;
+import pj.dooit.goal.dto.GoalJourneySummaryRequest;
+import pj.dooit.goal.dto.GoalJourneySummaryResponse;
+import pj.dooit.goal.service.GoalJourneySummaryService;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,6 +37,15 @@ public class GoalDraftV1Controller {
     private final GoalDraftService draftService;
     private final GoalPlanDraftService planDraftService;
     private final GoalAdjustmentDraftService adjustmentDraftService;
+    private final GoalJourneySummaryService journeySummaryService;
+
+    @PostMapping("/api/v1/goals/{goalId}/journey-summary")
+    @Operation(summary = "기록 근거 선택형 여정 요약", description = "1~366일의 전체 집계와 최신 최대 100건 중 제공자가 선택한 원본 최대 5건을 반환합니다. 숫자·개요는 서버가 구성합니다. 기본 비활성, 제공자 미설정/실패는 503/70009, 요청한 원본 버전 변경은 409/70008입니다.")
+    public ResponseEntity<ApiResponse<GoalJourneySummaryResponse>> journeySummary(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long goalId, @Valid @RequestBody GoalJourneySummaryRequest request) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(
+                journeySummaryService.summarize(goalId, request, currentUserService.requireUser(jwt))));
+    }
 
     @PostMapping("/api/v1/goals/{goalId}/adjustment-draft")
     @Operation(summary = "저장하지 않는 계획 조정안 생성", description = "해당 목표에 연결된 본인 소유 계획의 현재 버전과 사용자 설명으로 텍스트 조정안을 만듭니다. 일정과 상태는 유지하며 자동 저장하지 않습니다. 기본 비활성, 제공자 미설정/실패 시 503/70009입니다.")
