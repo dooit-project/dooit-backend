@@ -12,38 +12,36 @@ Last updated: 2026-10-17
 - migration 적용 후에는 schema 검증 쿼리와 app readiness를 확인한다.
 - schema 변경 빈도가 늘어나거나 다중 환경 migration 순서 관리가 필요해지면 Flyway 도입을 별도 작업으로 전환한다.
 
-## 신규 migration 적용 확인 필요
+## 2026-10-17 개인 시스템·목표 migration 적용 완료
 
-### 2026-10-17 읽기 전용 사전 점검
+명시적인 운영 유지보수 승인을 받은 뒤 자동 복구 launchd를 잠시 내리고 기존 app을 중지했다. 중지 상태에서 최종 백업을 생성하고 gzip 무결성/덤프 완료 표식을 확인한 뒤 10-12 → 10-14 → 10-15 → 10-16 DDL을 순서대로 적용했다. 각 단계 및 최종 사전 점검은 READY였다(선행 4/4, 16/16, 37/37, 2/2, 9/9). DDL 전후 기존 테이블의 행 수가 일치했다.
 
-추가 검증: 새 비공개 백업 `dooit-before-goal-20261017-230727-403e3471.sql.gz`의 gzip 무결성/덤프 완료 표식/0600 권한을 확인했다. 네트워크와 production volume을 공유하지 않는 MySQL 8.4.11 임시 컨테이너에 복구했고 source와 schema metadata가 일치했다. 이 복구 DB에서 10-12 → 10-14 → 10-15 → 10-16을 적용하고 각 단계 및 최종 사전 점검을 통과했다(4/4, 16/16, 37/37, 2/2, 9/9). 임시 컨테이너와 volume은 제거했다. 원본 백업과 SHA-256 검증 기록은 git에서 제외된 backups 디렉터리에 보존한다.
+기존 app 컨테이너를 재시작하고 launchd를 다시 로드했다. image digest는 전후 동일하며 image tag는 `3bda00c`다. 로컬 및 공개 HTTPS curl 검증에서 readiness 200/UP, metadata 200, 미인증 auth/me 401과 공개 Web origin CORS 200을 확인했다. 새 backend image 배포와 사용자 개인 시스템 이관 API 호출은 수행하지 않았다. 새 API의 인증 후 기능 smoke는 새 backend 배포 후 별도로 진행한다.
 
-리허설에서 기본 FK 삭제 규칙이 `NO ACTION`으로 보고되어 기존 도구가 `RESTRICT`와 다르다고 오판한 문제가 발견됐다. InnoDB engine을 확인하고 두 규칙을 동등 처리하도록 수정했으며 다른 engine에는 이를 적용하지 않는다. [MySQL 8.4 FOREIGN KEY 문서](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html)의 InnoDB 동작을 따른다. CASCADE/SET NULL이나 잘못된 참조는 계속 거절한다.
+최종 백업 `dooit-before-goal-stopped-20261017-232416-d6fa3577.sql.gz`와 검증 JSON `goal-migration-verification-20261017-232427.json`은 git에서 제외된 backups 디렉터리에 0600 권한으로 보존한다. 검증 기록에는 SHA-256과 결과만 남기고 token/credential/dump 내용은 남기지 않는다. 이전 차단은 운영 명령 실행 전의 승인 검토였으며, 이번 명시적 승인 후 실제 적용이 완료됐다.
 
-운영 앱 중지·최종 백업·네 DDL 적용·기존 이미지 재기동을 포함한 유지보수 명령은 구체적인 운영 변경 승인이 없다는 사유로 자동 승인 검토에서 실행 전에 거절됐다. 운영 DB/app/launchd는 변경되지 않았고 재점검 결과 대상 객체는 여전히 MISSING, 기존 이미지 readiness는 UP이었다. 이 기록은 적용 성공 이력이 아니다. 운영 적용 전 별도 승인이 필요하다.
+### 선행 백업·복구 리허설
 
-`python3 -B scripts/check-goal-schema.py`를 현재 Docker Compose MySQL의 애플리케이션 DB 사용자로 실행했다. 선행 조건 4/4는 통과했고 10-12(0/16), 10-14(0/37), 10-15(0/2), 10-16(0/9)은 모두 MISSING이었다. 종료 코드 1은 점검 실패를 올바르게 탐지한 결과다. 이 실행은 information_schema SELECT만 수행했으며 DDL·개인 데이터 이관·재배포를 하지 않았다. 적용 이력 표에도 migration 성공으로 추가하지 않는다.
+`dooit-before-goal-20261017-230727-403e3471.sql.gz`의 무결성을 확인하고, network none 및 production volume과 별개인 일회용 MySQL 8.4.11에 복구했다. source schema metadata와 일치한 뒤 네 DDL을 순서대로 적용하고 전체 사전 점검을 통과했다. 임시 컨테이너와 volume은 제거했다.
 
-도구는 테이블 존재, 핵심 추가 컬럼 type/length/nullability와 opaque key collation, 명시한 index의 열 순서/unique 여부, FK 연결 열/대상/삭제 규칙/동일 DB 참조를 점검한다. baseline 테이블의 모든 컬럼/type/default, FK update rule, 실제 데이터 일관성/중복/고아 행이나 migration 실행 이력은 보장하지 않는다. metadata 조회 권한으로 보이지 않는 객체도 누락으로 표시될 수 있으므로 MISSING만 보고 DDL을 중복 실행하지 않는다.
+리허설에서 점검 도구가 InnoDB의 NO ACTION/RESTRICT를 다르다고 오판한 문제를 발견해 engine이 InnoDB인 경우에만 동등 처리하도록 보정했다. [MySQL 8.4 FOREIGN KEY 문서](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html)의 동작을 따른다. CASCADE/SET NULL이나 잘못된 FK 대상은 계속 거절한다. Python unittest 8개와 전체 backend 테스트 618개가 통과했고 실행 JAR 빌드도 성공했다.
 
-`scripts/release-production.sh`는 빌드와 app 교체 전에 같은 점검을 실행하며 실패 시 중단한다. 운영 적용 전 백업/복구 확인, 실제 객체/권한 점검, 미적용 DDL의 순서별 수동 실행과 데이터 검증은 계속 필요하다. MySQL DDL은 migration 안의 START TRANSACTION/COMMIT만으로 전체 원자성이 보장되지 않으므로 부분 적용 상태에서 파일 전체를 다시 실행하지 않는다.
+### 검증 범위와 호환성
 
-- 2026-10-17 readiness 보강은 DDL을 적용하지 않는다. `20261012_add_personal_system.sql`과 `20261014_add_goal_journey.sql`은 아래 적용 이력에 기록되어 있지 않으므로 운영 DB의 실제 존재 여부를 먼저 확인하고, 미적용이면 이 순서로 적용한다. 이어 직접 기록 지문(10-15), 명시적 이관 mapping(10-16)을 점검한다. 기존의 2026-09-05 적용 완료를 이 신규 migration의 적용 증거로 사용하지 않는다.
-- schema health는 현재 연결 catalog/schema 안에서 기본 10개와 개인 시스템/목표 11개 테이블의 정확한 이름, `TASK.LINKED_GOAL_ID`, `GOAL_DIRECT_LOG.CREATE_REQUEST_HASH`, `PERSONAL_SYSTEM.MIGRATED_GOAL_ID/MIGRATED_PLAN_ID`, `PERSONAL_SYSTEM_OCCURRENCE.MIGRATED_OCCURRENCE_ID` 존재 여부를 검사한다. 빠진 항목은 내부 health detail의 missingTables/missingColumns에 표시하고 readiness를 DOWN으로 한다. 다른 schema의 동명 테이블이나 `_` wildcard와 비슷한 이름으로 통과하지 않는다.
-- 이 검사는 테이블/주요 추가 컬럼 존재 확인이며 모든 column type, nullability, collation, unique/FK/index와 실제 데이터 이관 완료 여부를 보장하지 않는다. 기존 migration 사전 점검과 Hibernate validate를 계속 수행한다. 운영 DB 변경, app 재배포와 사용자 데이터 이관은 이번 작업에서 실행하지 않았다.
-
-- `docs/db/migrations/20261016_add_personal_system_goal_mapping.sql`: 구 시스템의 새 Goal/Plan ID와 구 회차의 새 회차 ID를 nullable unique FK로 보존한다. 선행 조건은 `20261012_add_personal_system.sql`, `20261014_add_goal_journey.sql`이며 직접 기록 지문 migration도 별도로 적용해야 한다. 운영 DB에는 아직 적용하지 않았다.
-- mapping DDL은 계정 데이터를 이관하지 않는다. 백업·column/index/constraint 점검 후 DDL과 새 backend를 적용하고, 새 API 전환 준비가 된 클라이언트만 명시적 이관 API를 호출한다. 이관 실패는 한 트랜잭션 전체를 롤백하고 재시도는 mapping을 재사용한다.
-- 이관 후 canonical 기록이 변경된 계정은 구 backend로 단순 rollback하지 않는다. mapping 미지원 버전은 동결된 원본을 다시 수정할 수 있으므로 쓰기 중지와 새 기록 조정/복구 계획을 먼저 준비한다. 구 테이블/대응 ID를 임의로 삭제하거나 mapping을 null로 되돌리지 않는다.
-
-- `docs/db/migrations/20261015_add_goal_direct_log_request_hash.sql`: 직접 기록의 최초 생성 요청 SHA-256 지문을 `CREATE_REQUEST_HASH`에 보존하고 idempotency key의 대소문자 구분을 `utf8mb4_bin`으로 명시한다. 이 작업에서는 운영 DB에 적용하지 않았다.
-- 선행 조건은 `20261014_add_goal_journey.sql`이다. 적용 전 `GOAL_DIRECT_LOG`와 `CREATE_REQUEST_HASH`, key collation 존재 여부 및 기존 적용 이력을 확인한다. 백업 후 신규 migration을 적용하고 schema/readiness를 확인한다.
-- 새 지문 컬럼은 nullable이므로 기존 행을 보존한다. 지문이 없는 기존 행은 최초 본문을 확인할 수 없어 같은 key 재시도를 409/`10004`로 거절한다. 수정·취소는 계속 지원하며, 최초 요청 지문을 현재 수정된 값으로 임의 backfill하지 않는다.
+- 읽기 전용 `scripts/check-goal-schema.py`는 현재 DB의 테이블 존재, 핵심 추가 컬럼 type/length/nullability, opaque key collation, 명시한 index의 열 순서/unique, FK 열/대상/삭제 규칙/동일 DB 참조와 InnoDB engine을 확인한다. READY는 모든 baseline column/default/update rule 또는 실제 데이터 이관 완료를 보장하지 않는다. source 행 수 보존은 확인했지만 데이터 값 전체의 대조 검증을 의미하지 않는다.
+- schema health는 21개 테이블과 핵심 추가 컬럼 5개의 존재를 확인한다. 실제 readiness 응답은 여전히 기존 운영 image의 검사 결과이며 새 main의 readiness 구현을 배포한 결과로 해석하지 않는다. Hibernate validate와 기존 배포 점검을 계속 수행한다.
+- 새 테이블과 nullable TASK.LINKED_GOAL_ID를 추가해 기존 image의 API 계약을 유지한다. CREATE_REQUEST_HASH가 null인 기존 기록은 최초 생성 본문을 복구할 수 없어 동일 key 재시도를 409/10004로 거절하는 계약을 유지한다. 현재 수정값으로 임의 backfill하지 않는다.
+- mapping DDL만으로 개인 데이터가 이관되지는 않는다. 클라이언트 준비 후 명시적 API를 호출해야 하며, 이관된 canonical 기록이 변경된 계정은 mapping 미지원 backend로 단순 rollback하지 않는다. 쓰기 중지와 새 기록 조정/복구 계획이 먼저 필요하다. 원본 테이블이나 mapping을 임의로 비우지 않는다.
+- MySQL DDL은 파일의 START TRANSACTION/COMMIT만으로 전체 rollback을 보장하지 않는다. 이미 적용된 네 파일을 재실행하지 않으며 이후 drift가 생기면 객체별로 점검한다.
 
 ## 적용 이력
 
 | Applied At | File | Environment | Result |
 | --- | --- | --- | --- |
+| 2026-10-17 23:24 KST | `docs/db/migrations/20261016_add_personal_system_goal_mapping.sql` | local production Docker MySQL | 성공. mapping 컬럼·unique·FK 점검 9/9 통과 |
+| 2026-10-17 23:24 KST | `docs/db/migrations/20261015_add_goal_direct_log_request_hash.sql` | local production Docker MySQL | 성공. 지문 컬럼과 opaque key utf8mb4_bin 점검 2/2 통과 |
+| 2026-10-17 23:24 KST | `docs/db/migrations/20261014_add_goal_journey.sql` | local production Docker MySQL | 성공. 목표 여정 7개 테이블·Task 연결·index/FK 점검 37/37 통과 |
+| 2026-10-17 23:24 KST | `docs/db/migrations/20261012_add_personal_system.sql` | local production Docker MySQL | 성공. 개인 시스템 4개 테이블·index/FK 점검 16/16 통과 |
 | 2026-09-05 15:24 KST | `docs/db/migrations/20260903_add_daily_plan_initial_focus_task.sql` | local production Docker MySQL | 성공. `DAILY_PLAN_INITIAL_FOCUS_TASK` 테이블과 index 생성 확인 |
 | 2026-09-05 15:24 KST | `docs/db/migrations/20260901_add_task_checklist_item.sql` | local production Docker MySQL | 성공. `TASK_CHECKLIST_ITEM` 테이블과 index 생성 확인 |
 | 2026-09-05 15:24 KST | `docs/db/migrations/20260831_add_daily_plan.sql` | local production Docker MySQL | 성공. `DAILY_PLAN`, `DAILY_PLAN_FOCUS_TASK` 테이블과 index 생성 확인 |

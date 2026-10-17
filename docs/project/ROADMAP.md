@@ -34,7 +34,7 @@ Last updated: 2026-10-17
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 | monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
-| 목표 중심 계획·실천 여정 | 목표/계획/실천/여정·명시적 이관, 기본 비활성 AI API와 호출 제한 기반 구현 완료 | 운영 schema 적용과 클라이언트 이관 연동, AI provider·보관·삭제 정책 확정 후 실제 adapter 연결 |
+| 목표 중심 계획·실천 여정 | 목표/계획/실천/여정·명시적 이관, 기본 비활성 AI API·호출 제한 구현 및 운영 schema 적용 완료 | 새 backend 배포·인증 후 smoke와 클라이언트 이관 연동, AI provider·보관·삭제 정책 확정 후 실제 adapter 연결 |
 
 ## 2. 제품 기능 로드맵
 
@@ -44,7 +44,9 @@ Last updated: 2026-10-17
 
 목표: real API 연결과 PRD 출시 검증을 막는 backend gap을 먼저 닫는다.
 
-- [x] production DB에 미적용 migration을 적용한 뒤 최신 backend image를 배포한다.
+- [x] 2026-09-05 기준 production DB migration과 당시 backend 배포를 완료한다.
+- [x] 2026-10-17 개인 시스템·목표 schema 4개를 적용하고 기존 `3bda00c` image 재기동·공개 HTTPS 검증을 완료한다.
+- [ ] 현재 main의 새 backend image를 배포하고 목표/계획/실천 API의 인증 후 smoke를 확인한다. 실행 JAR 빌드는 완료했다.
 - [ ] Android production build에서 `https://dooitapi.hsng.pe.kr` 기준 login/me, Today 조회·생성·완료, guest 발급·병합을 확인한다.
 - [ ] smoke 결과에 backend commit SHA 또는 image tag, API URL, 적용 migration 범위, 호환성, 실행 테스트를 함께 남긴다.
 
@@ -107,8 +109,8 @@ Last updated: 2026-10-17
 
 - [x] readiness가 개인 시스템/목표 테이블과 Task 목표 연결·직접 기록 지문·이관 mapping 컬럼 누락을 탐지하도록 보강한다.
 - [x] 읽기 전용 사전 점검과 release 차단을 추가한다. 2026-10-17 현재 Docker MySQL 점검에서 기본 선행 조건은 통과하고 10-12/14/15/16 대상 객체는 모두 누락으로 확인했다.
-- [x] 2026-10-17 새 백업 gzip 검증, 격리 MySQL 복구·원본 schema 일치, 네 DDL 순서별 리허설과 최종 사전 점검 READY를 확인했다. 운영 DDL은 아직 미적용이다.
-- [ ] 백업/복구 확인 후 `20261012_add_personal_system.sql`, `20261014_add_goal_journey.sql`, `20261015_add_goal_direct_log_request_hash.sql`, `20261016_add_personal_system_goal_mapping.sql` 미적용분을 순서대로 적용하고 사전 점검·readiness를 재확인한다.
+- [x] 2026-10-17 새 백업 gzip 검증, 격리 MySQL 복구·원본 schema 일치, 네 DDL 순서별 리허설과 최종 사전 점검 READY를 확인했다.
+- [x] 명시적 승인 후 최종 백업과 기존 행 수 보존을 확인하고 `20261012_add_personal_system.sql`, `20261014_add_goal_journey.sql`, `20261015_add_goal_direct_log_request_hash.sql`, `20261016_add_personal_system_goal_mapping.sql`을 순서대로 적용했다. 기존 image 재기동·launchd 복원·사전 점검 READY와 로컬/공개 readiness UP을 확인했다.
 
 - [x] production DB backup을 생성하고 gzip 무결성을 확인한다.
 - [x] `docs/db/MIGRATION_HISTORY.md`의 미적용 migration을 날짜 순서대로 확인한다.
