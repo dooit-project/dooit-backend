@@ -73,6 +73,15 @@ class GoalSchemaPreflightTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 CHECK.parse_metadata(text)
 
+    def test_no_action_equals_restrict_only_for_innodb(self):
+        actual = complete_metadata()
+        key = ('fk', 'PERSONAL_SYSTEM', 'FK_PERSONAL_SYSTEM_MIGRATED_GOAL')
+        actual[key]['delete_rule'] = 'NO ACTION'
+        self.assertEqual([], CHECK.mismatches(CHECK.MIGRATIONS['20261016_add_personal_system_goal_mapping.sql'], actual))
+        self.assertEqual('NO ACTION', actual[key]['delete_rule'])
+        actual['table', 'PERSONAL_SYSTEM', '']['engine'] = 'NDB'
+        self.assertIn(('DRIFT', key), CHECK.mismatches(CHECK.MIGRATIONS['20261016_add_personal_system_goal_mapping.sql'], actual))
+
     def test_manifest_covers_migration_table_index_fk_and_added_column_names(self):
         for filename, checks in CHECK.MIGRATIONS.items():
             sql = (ROOT / 'docs/db/migrations' / filename).read_text()

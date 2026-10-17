@@ -78,6 +78,13 @@ clean {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // The schema preflight contract tests execute Python and inspect release/DDL files.
+    inputs.files('scripts/check-goal-schema.py', 'scripts/release-production.sh')
+    inputs.files(fileTree('src/test/python') { include '**/*.py' })
+    inputs.files('docs/db/migrations/20261012_add_personal_system.sql',
+            'docs/db/migrations/20261014_add_goal_journey.sql',
+            'docs/db/migrations/20261015_add_goal_direct_log_request_hash.sql',
+            'docs/db/migrations/20261016_add_personal_system_goal_mapping.sql')
     finalizedBy jacocoTestReport
 }
 

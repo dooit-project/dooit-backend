@@ -14,7 +14,7 @@ def group(filename, tables):
     checks = []
     MIGRATIONS[filename] = checks
     for table in tables.split():
-        checks.append((('table', table, ''), {}))
+        checks.append((('table', table, ''), {'engine': 'InnoDB'}))
     return checks
 
 
@@ -99,13 +99,13 @@ for table, name, unique_name, fk_name, target in [
     index(mapping, table, unique_name, name, True)
     foreign_key(mapping, table, fk_name, name, target)
 
-PREREQUISITES = [(('table', name, ''), {}) for name in ('APP_USER', 'DDAY_GOAL', 'TASK')]
+PREREQUISITES = [(('table', name, ''), {'engine': 'InnoDB'}) for name in ('APP_USER', 'DDAY_GOAL', 'TASK')]
 PREREQUISITES += [(('column', 'TASK', 'COMPLETED_AT'), {})]
 
 # These queries only return metadata from the explicitly selected database, never application rows.
 QUERY = """
 SELECT JSON_OBJECT('kind','database','selected',DATABASE() IS NOT NULL);
-SELECT JSON_OBJECT('kind','table','table',TABLE_NAME,'name','')
+SELECT JSON_OBJECT('kind','table','table',TABLE_NAME,'name','','engine',ENGINE)
 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE';
 SELECT JSON_OBJECT('kind','column','table',TABLE_NAME,'name',COLUMN_NAME,'type',DATA_TYPE,
  'length',CHARACTER_MAXIMUM_LENGTH,'nullable',IS_NULLABLE='YES','collation',COLLATION_NAME)
@@ -144,8 +144,14 @@ def mismatches(checks, actual):
         row = actual.get(key)
         if row is None:
             result.append(('MISSING', key))
-        elif any(row.get(field) != value for field, value in expected.items()) or (key[0] == 'fk' and row.get('local_reference') != 1):
-            result.append(('DRIFT', key))
+        else:
+            # InnoDB checks immediately: NO ACTION and RESTRICT have identical semantics.
+            # Do not apply this equivalence to other engines such as NDB.
+            if key[0] == 'fk' and row.get('delete_rule') == 'NO ACTION' \
+                    and actual.get(('table', key[1], ''), {}).get('engine') == 'InnoDB':
+                row = {**row, 'delete_rule': 'RESTRICT'}
+            if any(row.get(field) != value for field, value in expected.items()) or (key[0] == 'fk' and row.get('local_reference') != 1):
+                result.append(('DRIFT', key))
     return result
 
 

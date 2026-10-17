@@ -333,4 +333,13 @@ release-production.sh는 이 점검을 `./gradlew clean test bootJar`, image bui
 
 2026-10-17 실제 Docker MySQL 읽기 전용 점검 결과는 선행 4/4 통과, 10-12/14/15/16 대상 객체 전체 MISSING이었다. 이번 작업에서 운영 schema를 바꾸지 않았다. 다음 실행 순서는 백업/복구 확인 → 권한/실제 객체 확인 → 미적용 DDL 순서별 수동 적용 → 사전 점검 재실행 → release/readiness다. MySQL DDL의 implicit commit 때문에 파일의 START TRANSACTION/COMMIT으로 전체 rollback을 기대하지 않는다. 부분 적용 상태는 누락 객체 단위로 검토한다.
 
-DB 없이 fixture를 점검하려면 `python3 -B scripts/check-goal-schema.py --metadata-file <metadata.jsonl>`을 사용한다. 테스트용 JSON-lines 형식이며 운영 raw metadata를 공유할 필요는 없다. 이 옵션은 release 경로에서 사용하지 않는다. 회귀 테스트는 `./gradlew test`에 포함된 Python unittest 7개로 실행한다.
+DB 없이 fixture를 점검하려면 `python3 -B scripts/check-goal-schema.py --metadata-file <metadata.jsonl>`을 사용한다. 테스트용 JSON-lines 형식이며 운영 raw metadata를 공유할 필요는 없다. 이 옵션은 release 경로에서 사용하지 않는다. 회귀 테스트는 `./gradlew test`에 포함된 Python unittest 8개로 실행한다.
+
+
+### 2026-10-17 백업·격리 복구 리허설 결과
+
+비공개 새 백업의 gzip 무결성·덤프 완료 표식·0600 권한을 확인하고, network none 및 별도 일회용 volume의 MySQL 8.4.11에 복구했다. 원본 schema metadata 일치 후 네 DDL을 순서대로 적용했으며 전체 사전 점검이 READY였다. 임시 DB 컨테이너와 volume은 제거했다. 백업과 검증 JSON은 git 제외 backups 디렉터리에만 보존하며 dump 내용/접속 정보는 로그나 문서에 기록하지 않는다.
+
+리허설에서 발견한 InnoDB NO ACTION/RESTRICT 동등성 오판을 수정했다. InnoDB engine을 확인한 경우에만 정규화하며 CASCADE/SET NULL·잘못된 참조는 허용하지 않는다. Python/DDL/release 파일 변경도 Gradle test 입력에 포함해 검사 결과를 잘못 재사용하지 않도록 했다.
+
+운영 유지보수 명령은 자동 승인 검토에서 구체적 운영 변경 승인이 없다는 사유로 실행 전에 거절됐다. 운영 DB 변경/앱 중지/launchd 변경은 발생하지 않았고 기존 이미지 readiness는 UP이다. 운영 적용을 진행하려면 앱 잠시 중지, 자동 복구 작업의 일시 정지·복구, 최종 백업, 네 DDL 순서별 적용, 기존 컨테이너 재시작·readiness 확인 범위에 대한 승인을 먼저 받는다. 새 backend image 배포나 사용자 데이터 이관 API 호출은 이 범위에 포함하지 않는다. DDL은 전체 트랜잭션 rollback을 기대할 수 없으며 부분 적용 실패는 객체별로 점검한다.

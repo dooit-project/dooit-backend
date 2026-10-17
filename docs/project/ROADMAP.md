@@ -107,6 +107,7 @@ Last updated: 2026-10-17
 
 - [x] readiness가 개인 시스템/목표 테이블과 Task 목표 연결·직접 기록 지문·이관 mapping 컬럼 누락을 탐지하도록 보강한다.
 - [x] 읽기 전용 사전 점검과 release 차단을 추가한다. 2026-10-17 현재 Docker MySQL 점검에서 기본 선행 조건은 통과하고 10-12/14/15/16 대상 객체는 모두 누락으로 확인했다.
+- [x] 2026-10-17 새 백업 gzip 검증, 격리 MySQL 복구·원본 schema 일치, 네 DDL 순서별 리허설과 최종 사전 점검 READY를 확인했다. 운영 DDL은 아직 미적용이다.
 - [ ] 백업/복구 확인 후 `20261012_add_personal_system.sql`, `20261014_add_goal_journey.sql`, `20261015_add_goal_direct_log_request_hash.sql`, `20261016_add_personal_system_goal_mapping.sql` 미적용분을 순서대로 적용하고 사전 점검·readiness를 재확인한다.
 
 - [x] production DB backup을 생성하고 gzip 무결성을 확인한다.

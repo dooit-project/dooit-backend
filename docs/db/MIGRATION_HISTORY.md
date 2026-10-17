@@ -16,6 +16,12 @@ Last updated: 2026-10-17
 
 ### 2026-10-17 읽기 전용 사전 점검
 
+추가 검증: 새 비공개 백업 `dooit-before-goal-20261017-230727-403e3471.sql.gz`의 gzip 무결성/덤프 완료 표식/0600 권한을 확인했다. 네트워크와 production volume을 공유하지 않는 MySQL 8.4.11 임시 컨테이너에 복구했고 source와 schema metadata가 일치했다. 이 복구 DB에서 10-12 → 10-14 → 10-15 → 10-16을 적용하고 각 단계 및 최종 사전 점검을 통과했다(4/4, 16/16, 37/37, 2/2, 9/9). 임시 컨테이너와 volume은 제거했다. 원본 백업과 SHA-256 검증 기록은 git에서 제외된 backups 디렉터리에 보존한다.
+
+리허설에서 기본 FK 삭제 규칙이 `NO ACTION`으로 보고되어 기존 도구가 `RESTRICT`와 다르다고 오판한 문제가 발견됐다. InnoDB engine을 확인하고 두 규칙을 동등 처리하도록 수정했으며 다른 engine에는 이를 적용하지 않는다. [MySQL 8.4 FOREIGN KEY 문서](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html)의 InnoDB 동작을 따른다. CASCADE/SET NULL이나 잘못된 참조는 계속 거절한다.
+
+운영 앱 중지·최종 백업·네 DDL 적용·기존 이미지 재기동을 포함한 유지보수 명령은 구체적인 운영 변경 승인이 없다는 사유로 자동 승인 검토에서 실행 전에 거절됐다. 운영 DB/app/launchd는 변경되지 않았고 재점검 결과 대상 객체는 여전히 MISSING, 기존 이미지 readiness는 UP이었다. 이 기록은 적용 성공 이력이 아니다. 운영 적용 전 별도 승인이 필요하다.
+
 `python3 -B scripts/check-goal-schema.py`를 현재 Docker Compose MySQL의 애플리케이션 DB 사용자로 실행했다. 선행 조건 4/4는 통과했고 10-12(0/16), 10-14(0/37), 10-15(0/2), 10-16(0/9)은 모두 MISSING이었다. 종료 코드 1은 점검 실패를 올바르게 탐지한 결과다. 이 실행은 information_schema SELECT만 수행했으며 DDL·개인 데이터 이관·재배포를 하지 않았다. 적용 이력 표에도 migration 성공으로 추가하지 않는다.
 
 도구는 테이블 존재, 핵심 추가 컬럼 type/length/nullability와 opaque key collation, 명시한 index의 열 순서/unique 여부, FK 연결 열/대상/삭제 규칙/동일 DB 참조를 점검한다. baseline 테이블의 모든 컬럼/type/default, FK update rule, 실제 데이터 일관성/중복/고아 행이나 migration 실행 이력은 보장하지 않는다. metadata 조회 권한으로 보이지 않는 객체도 누락으로 표시될 수 있으므로 MISSING만 보고 DDL을 중복 실행하지 않는다.
