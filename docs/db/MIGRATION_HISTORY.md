@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-10-16
+Last updated: 2026-10-17
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -13,6 +13,10 @@ Last updated: 2026-10-16
 - schema 변경 빈도가 늘어나거나 다중 환경 migration 순서 관리가 필요해지면 Flyway 도입을 별도 작업으로 전환한다.
 
 ## 신규 migration 적용 확인 필요
+
+- 2026-10-17 readiness 보강은 DDL을 적용하지 않는다. `20261012_add_personal_system.sql`과 `20261014_add_goal_journey.sql`은 아래 적용 이력에 기록되어 있지 않으므로 운영 DB의 실제 존재 여부를 먼저 확인하고, 미적용이면 이 순서로 적용한다. 이어 직접 기록 지문(10-15), 명시적 이관 mapping(10-16)을 점검한다. 기존의 2026-09-05 적용 완료를 이 신규 migration의 적용 증거로 사용하지 않는다.
+- schema health는 현재 연결 catalog/schema 안에서 기본 10개와 개인 시스템/목표 11개 테이블의 정확한 이름, `TASK.LINKED_GOAL_ID`, `GOAL_DIRECT_LOG.CREATE_REQUEST_HASH`, `PERSONAL_SYSTEM.MIGRATED_GOAL_ID/MIGRATED_PLAN_ID`, `PERSONAL_SYSTEM_OCCURRENCE.MIGRATED_OCCURRENCE_ID` 존재 여부를 검사한다. 빠진 항목은 내부 health detail의 missingTables/missingColumns에 표시하고 readiness를 DOWN으로 한다. 다른 schema의 동명 테이블이나 `_` wildcard와 비슷한 이름으로 통과하지 않는다.
+- 이 검사는 테이블/주요 추가 컬럼 존재 확인이며 모든 column type, nullability, collation, unique/FK/index와 실제 데이터 이관 완료 여부를 보장하지 않는다. 기존 migration 사전 점검과 Hibernate validate를 계속 수행한다. 운영 DB 변경, app 재배포와 사용자 데이터 이관은 이번 작업에서 실행하지 않았다.
 
 - `docs/db/migrations/20261016_add_personal_system_goal_mapping.sql`: 구 시스템의 새 Goal/Plan ID와 구 회차의 새 회차 ID를 nullable unique FK로 보존한다. 선행 조건은 `20261012_add_personal_system.sql`, `20261014_add_goal_journey.sql`이며 직접 기록 지문 migration도 별도로 적용해야 한다. 운영 DB에는 아직 적용하지 않았다.
 - mapping DDL은 계정 데이터를 이관하지 않는다. 백업·column/index/constraint 점검 후 DDL과 새 backend를 적용하고, 새 API 전환 준비가 된 클라이언트만 명시적 이관 API를 호출한다. 이관 실패는 한 트랜잭션 전체를 롤백하고 재시도는 mapping을 재사용한다.

@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-10-16
+Last updated: 2026-10-17
 
 이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -34,7 +34,7 @@ Last updated: 2026-10-16
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 | monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
-| 목표 중심 계획·실천 여정 | 목표/여러 계획/실천/일회성 기록/여정과 기존 시스템 명시적 이관 구현 완료 | 운영 schema 적용과 클라이언트 이관 연동, AI provider·보관·삭제 정책 확정 후 초안·요약 구현 |
+| 목표 중심 계획·실천 여정 | 목표/계획/실천/여정·명시적 이관, 기본 비활성 AI API와 호출 제한 기반 구현 완료 | 운영 schema 적용과 클라이언트 이관 연동, AI provider·보관·삭제 정책 확정 후 실제 adapter 연결 |
 
 ## 2. 제품 기능 로드맵
 
@@ -102,6 +102,11 @@ Last updated: 2026-10-16
 ### P0. production DB migration 적용
 
 목표: 현재 `main`의 API 계약이 production DB schema와 맞도록 미적용 migration을 백업 후 수동 적용한다.
+
+2026-09-05 적용 완료 이력은 당시 schema 기준이다. 이후 개인 시스템·목표 여정 migration 적용 여부는 별도로 확인해야 한다.
+
+- [x] readiness가 개인 시스템/목표 테이블과 Task 목표 연결·직접 기록 지문·이관 mapping 컬럼 누락을 탐지하도록 보강한다.
+- [ ] `20261012_add_personal_system.sql`, `20261014_add_goal_journey.sql`, `20261015_add_goal_direct_log_request_hash.sql`, `20261016_add_personal_system_goal_mapping.sql`의 운영 적용 여부를 확인하고 백업 후 미적용분을 순서대로 적용한다.
 
 - [x] production DB backup을 생성하고 gzip 무결성을 확인한다.
 - [x] `docs/db/MIGRATION_HISTORY.md`의 미적용 migration을 날짜 순서대로 확인한다.

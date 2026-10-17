@@ -304,3 +304,13 @@ DOOIT_STRICT_POWER=true ./scripts/check-production-host.sh
 ```
 
 현재 권한 없는 shell에서는 `pmset` 변경이 실패할 수 있다. 이 경우 관리자 권한으로 위 명령을 한 번 적용한 뒤 strict check를 통과시킨다. display sleep은 API availability에 직접 영향을 주지 않으므로 별도 제품/운영 선호에 따라 조정한다.
+
+## 개인 시스템·목표 schema readiness (2026-10-17)
+
+새 release의 schema health는 기존 기본 테이블 10개 외에 개인 시스템 4개/목표 여정 7개 테이블과 주요 추가 컬럼 5개를 검사한다. 목록과 적용 순서는 `../db/MIGRATION_HISTORY.md`의 신규 migration 절을 따른다. 현재 연결 DB의 catalog/schema에서 정확한 테이블·컬럼 이름을 확인하므로 다른 schema의 동명 테이블은 대체하지 못한다. metadata 조회 실패나 DB namespace 확인 불가도 DOWN으로 처리하며 연결 오류 원문/credential은 health detail에 담지 않는다.
+
+readiness가 DOWN이면 내부에서 schema component의 missingTables/missingColumns를 확인한다. 공개 health의 detail 비공개 정책은 유지한다. 테이블만 있고 직접 기록 지문/이관 mapping 컬럼이 없는 부분 적용 상태도 DOWN이다. 기본 API DTO/URL은 바뀌지 않지만 schema 누락 환경의 readiness는 이제 503이 될 수 있으므로 기존 배포 점검과 자동 복구 절차에 영향을 준다.
+
+백업/복구 확인 후 개인 시스템(10-12), 목표 여정(10-14), 직접 기록 지문(10-15), 이관 mapping(10-16)의 실제 적용 상태를 점검하고 미적용분만 순서대로 수동 적용한다. metadata 오류만으로 DDL을 중복 실행하지 않는다. 2026-09-05 배포 성공 이력은 이 신규 schema 적용을 의미하지 않는다. unique/FK/index, type/collation과 데이터 검증은 별도 migration 점검을 계속 수행한다.
+
+이번 변경은 readiness 검사 코드와 테스트를 보강한 것이며 운영 DB migration·재배포·개인 데이터 이관을 실행하지 않았다.
