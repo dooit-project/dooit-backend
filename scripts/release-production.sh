@@ -6,6 +6,9 @@ image_tag=${DOOIT_APP_IMAGE_TAG:-$(git rev-parse --short HEAD)}
 
 echo "Releasing Dooit backend image tag: ${image_tag}"
 
+# Read-only gate before build or app replacement. Never auto-apply partial migrations.
+python3 ./scripts/check-goal-schema.py
+
 ./gradlew clean test bootJar
 
 DOOIT_APP_COMMIT_SHA="$commit_sha" DOOIT_APP_IMAGE_TAG="$image_tag" docker compose build app

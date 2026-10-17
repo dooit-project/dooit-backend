@@ -14,6 +14,14 @@ Last updated: 2026-10-17
 
 ## 신규 migration 적용 확인 필요
 
+### 2026-10-17 읽기 전용 사전 점검
+
+`python3 -B scripts/check-goal-schema.py`를 현재 Docker Compose MySQL의 애플리케이션 DB 사용자로 실행했다. 선행 조건 4/4는 통과했고 10-12(0/16), 10-14(0/37), 10-15(0/2), 10-16(0/9)은 모두 MISSING이었다. 종료 코드 1은 점검 실패를 올바르게 탐지한 결과다. 이 실행은 information_schema SELECT만 수행했으며 DDL·개인 데이터 이관·재배포를 하지 않았다. 적용 이력 표에도 migration 성공으로 추가하지 않는다.
+
+도구는 테이블 존재, 핵심 추가 컬럼 type/length/nullability와 opaque key collation, 명시한 index의 열 순서/unique 여부, FK 연결 열/대상/삭제 규칙/동일 DB 참조를 점검한다. baseline 테이블의 모든 컬럼/type/default, FK update rule, 실제 데이터 일관성/중복/고아 행이나 migration 실행 이력은 보장하지 않는다. metadata 조회 권한으로 보이지 않는 객체도 누락으로 표시될 수 있으므로 MISSING만 보고 DDL을 중복 실행하지 않는다.
+
+`scripts/release-production.sh`는 빌드와 app 교체 전에 같은 점검을 실행하며 실패 시 중단한다. 운영 적용 전 백업/복구 확인, 실제 객체/권한 점검, 미적용 DDL의 순서별 수동 실행과 데이터 검증은 계속 필요하다. MySQL DDL은 migration 안의 START TRANSACTION/COMMIT만으로 전체 원자성이 보장되지 않으므로 부분 적용 상태에서 파일 전체를 다시 실행하지 않는다.
+
 - 2026-10-17 readiness 보강은 DDL을 적용하지 않는다. `20261012_add_personal_system.sql`과 `20261014_add_goal_journey.sql`은 아래 적용 이력에 기록되어 있지 않으므로 운영 DB의 실제 존재 여부를 먼저 확인하고, 미적용이면 이 순서로 적용한다. 이어 직접 기록 지문(10-15), 명시적 이관 mapping(10-16)을 점검한다. 기존의 2026-09-05 적용 완료를 이 신규 migration의 적용 증거로 사용하지 않는다.
 - schema health는 현재 연결 catalog/schema 안에서 기본 10개와 개인 시스템/목표 11개 테이블의 정확한 이름, `TASK.LINKED_GOAL_ID`, `GOAL_DIRECT_LOG.CREATE_REQUEST_HASH`, `PERSONAL_SYSTEM.MIGRATED_GOAL_ID/MIGRATED_PLAN_ID`, `PERSONAL_SYSTEM_OCCURRENCE.MIGRATED_OCCURRENCE_ID` 존재 여부를 검사한다. 빠진 항목은 내부 health detail의 missingTables/missingColumns에 표시하고 readiness를 DOWN으로 한다. 다른 schema의 동명 테이블이나 `_` wildcard와 비슷한 이름으로 통과하지 않는다.
 - 이 검사는 테이블/주요 추가 컬럼 존재 확인이며 모든 column type, nullability, collation, unique/FK/index와 실제 데이터 이관 완료 여부를 보장하지 않는다. 기존 migration 사전 점검과 Hibernate validate를 계속 수행한다. 운영 DB 변경, app 재배포와 사용자 데이터 이관은 이번 작업에서 실행하지 않았다.

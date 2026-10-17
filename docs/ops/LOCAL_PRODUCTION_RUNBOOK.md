@@ -314,3 +314,23 @@ readiness가 DOWN이면 내부에서 schema component의 missingTables/missingCo
 백업/복구 확인 후 개인 시스템(10-12), 목표 여정(10-14), 직접 기록 지문(10-15), 이관 mapping(10-16)의 실제 적용 상태를 점검하고 미적용분만 순서대로 수동 적용한다. metadata 오류만으로 DDL을 중복 실행하지 않는다. 2026-09-05 배포 성공 이력은 이 신규 schema 적용을 의미하지 않는다. unique/FK/index, type/collation과 데이터 검증은 별도 migration 점검을 계속 수행한다.
 
 이번 변경은 readiness 검사 코드와 테스트를 보강한 것이며 운영 DB migration·재배포·개인 데이터 이관을 실행하지 않았다.
+
+## 목표 migration 읽기 전용 배포 사전 점검 (2026-10-17)
+
+```bash
+python3 -B scripts/check-goal-schema.py
+```
+
+저장소 루트에서 Docker Compose의 mysql service와 기존 컨테이너 MYSQL_USER/MYSQL_PASSWORD/MYSQL_DATABASE를 사용한다. host에서 .env를 실행하거나 credential을 인자로 출력하지 않는다. Python 3와 Docker Compose, MySQL service 및 해당 DB의 metadata 조회 권한이 필요하다. 쿼리는 information_schema SELECT만 사용하고 application row를 읽지 않는다. raw metadata/접속 오류 원문을 파일이나 보고서로 저장하지 않는다.
+
+- 종료 0: 선행 조건과 명시한 모든 점검 통과. migration 실행 이력이나 전체 schema/data 정확성을 증명하지 않는다.
+- 종료 1: MISSING 또는 PARTIAL_OR_DRIFT. 출력된 파일/객체/차이를 수동 점검한다. index의 이름만 아니라 열 순서/unique, FK 열/대상/삭제 규칙/동일 DB 참조, 지문 길이와 key collation도 비교한다.
+- 종료 2: 연결/metadata 판독 실패. DB/컨테이너 가용성·접속/metadata 권한을 확인한다. 민감한 원문 오류는 출력하지 않는다. DB 조회 대기는 최대 30초다.
+
+READY는 명시한 항목만 통과했다는 의미다. 전체 baseline column/type/default, FK update rule, 실제 데이터·중복·고아 행 등은 별도 검증해야 한다. 동등한 schema라도 다른 index/constraint 이름이면 drift로 표시한다. 권한 때문에 안 보이는 객체도 MISSING일 수 있으므로 출력만 보고 DDL을 재실행하지 않는다. 운영 파일은 자동 적용하지 않는다.
+
+release-production.sh는 이 점검을 `./gradlew clean test bootJar`, image build, app 교체보다 먼저 실행하며 실패 시 기존 app을 그대로 둔다. 점검부터 배포까지 schema가 바뀌지 않는다는 보장은 없으므로 배포 중 schema 변경을 조율하고 기존 readiness도 계속 확인한다. 점검 우회 옵션은 제공하지 않는다.
+
+2026-10-17 실제 Docker MySQL 읽기 전용 점검 결과는 선행 4/4 통과, 10-12/14/15/16 대상 객체 전체 MISSING이었다. 이번 작업에서 운영 schema를 바꾸지 않았다. 다음 실행 순서는 백업/복구 확인 → 권한/실제 객체 확인 → 미적용 DDL 순서별 수동 적용 → 사전 점검 재실행 → release/readiness다. MySQL DDL의 implicit commit 때문에 파일의 START TRANSACTION/COMMIT으로 전체 rollback을 기대하지 않는다. 부분 적용 상태는 누락 객체 단위로 검토한다.
+
+DB 없이 fixture를 점검하려면 `python3 -B scripts/check-goal-schema.py --metadata-file <metadata.jsonl>`을 사용한다. 테스트용 JSON-lines 형식이며 운영 raw metadata를 공유할 필요는 없다. 이 옵션은 release 경로에서 사용하지 않는다. 회귀 테스트는 `./gradlew test`에 포함된 Python unittest 7개로 실행한다.
