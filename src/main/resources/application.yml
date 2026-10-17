@@ -9,6 +9,11 @@ spring:
 app:
   goal-ai:
     enabled: ${DOOIT_GOAL_AI_ENABLED:false}
+    call-timeout: ${DOOIT_GOAL_AI_CALL_TIMEOUT:PT10S}
+    max-concurrent-calls: ${DOOIT_GOAL_AI_MAX_CONCURRENT_CALLS:8}
+    max-requests-per-window: ${DOOIT_GOAL_AI_MAX_REQUESTS_PER_WINDOW:20}
+    rate-limit-window: ${DOOIT_GOAL_AI_RATE_LIMIT_WINDOW:PT1H}
+    max-tracked-users: ${DOOIT_GOAL_AI_MAX_TRACKED_USERS:10000}
   auth:
     jwt:
       issuer: https://dooit.local

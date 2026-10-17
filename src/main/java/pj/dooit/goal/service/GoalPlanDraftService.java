@@ -6,6 +6,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import pj.dooit.Constant;
 import pj.dooit.goal.ai.GoalDraftProperties;
+import pj.dooit.goal.ai.GoalAiCallExecutor;
+import pj.dooit.goal.exception.GoalAiRateLimitExceededException;
 import pj.dooit.goal.ai.GoalPlanDraftProvider;
 import pj.dooit.goal.dto.GoalPlanDraftRequest;
 import pj.dooit.goal.dto.GoalPlanDraftResponse;
@@ -22,6 +24,7 @@ import java.time.ZoneId;
 public class GoalPlanDraftService {
     private final GoalService goals;
     private final GoalDraftProperties properties;
+    private final GoalAiCallExecutor calls;
     private final ObjectProvider<GoalPlanDraftProvider> providers;
     private final Validator validator;
 
@@ -36,10 +39,12 @@ public class GoalPlanDraftService {
             if (provider == null) throw new GoalAiUnavailableException();
             var context = new GoalPlanDraftProvider.Context(goal.title(), goal.desiredOutcome(),
                     goal.motivationText(), request.description().strip());
-            var suggestion = GoalPlanDraftContent.validated(provider.draft(context), validator);
+            var suggestion = GoalPlanDraftContent.validated(calls.call(owner.getId(), () -> provider.draft(context)), validator);
             return new GoalPlanDraftResponse(goal.id(), goal.currentVersion(), suggestion.name(),
                     suggestion.triggerText(), schedule, suggestion.standardAction(),
                     suggestion.minimumAction(), suggestion.nextAction());
+        } catch (GoalAiRateLimitExceededException e) {
+            throw e;
         } catch (RuntimeException ignored) {
             // Provider errors may contain prompts and credentials; discard message and cause.
             throw new GoalAiUnavailableException();

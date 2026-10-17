@@ -238,3 +238,21 @@ DOOIT_REDIS_HEALTH_ENABLED=false
 - Logback 기본 기능은 압축 시점을 롤오버 시점으로 처리한다. 정확히 3일 지난 파일만 지연 압축해야 하면 운영 환경의 `logrotate` 또는 cron 정책을 추가한다.
 - 서버 push 1차 provider는 `EXPO`이며, `DOOIT_PUSH_ENABLED=false`가 기본값이다. enabled 값을 켜면 개인 owner와 ACTIVE workspace 멤버의 알림 후보를 scheduler가 자동 발송한다.
 - Android/iOS push credentials는 EAS/Expo project에 보관하고, 백엔드는 Expo enhanced push security를 켠 경우에만 `DOOIT_PUSH_ACCESS_TOKEN`을 환경변수로 받는다.
+
+## 목표 AI 공통 호출 제한 (2026-10-17)
+
+외부 제공자 adapter는 아직 없고 `DOOIT_GOAL_AI_ENABLED=false`가 기본이다. 활성화만으로 외부 호출이 생기지 않는다. 실제 adapter 연결 전 provider·보관·삭제 정책을 별도 확정한다.
+
+| 환경변수 | 기본값 | 허용 범위/의미 |
+| --- | --- | --- |
+| `DOOIT_GOAL_AI_CALL_TIMEOUT` | `PT10S` | 1ms~60초, 제출 후 제공자 결과 대기 시간 |
+| `DOOIT_GOAL_AI_MAX_CONCURRENT_CALLS` | `8` | 1~64, 프로세스 전체 동시 작업 수 |
+| `DOOIT_GOAL_AI_MAX_REQUESTS_PER_WINDOW` | `20` | 1~10000, 사용자 ID당 창 내 승인 호출 시도 수 |
+| `DOOIT_GOAL_AI_RATE_LIMIT_WINDOW` | `PT1H` | 1초~24시간, 첫 승인 호출 기준 고정 창 |
+| `DOOIT_GOAL_AI_MAX_TRACKED_USERS` | `10000` | 1~100000, 프로세스 내 quota 추적 사용자 수 |
+
+설정이 유효하지 않으면 시작을 거부하며 제한 변경은 재시작 시 반영된다. 네 AI API가 같은 quota를 공유한다. 제공자 호출 전 검증/소유권/연결/version 검사를 유지한다. 미설정/비활성/무호출 빈 여정과 제출 전 용량 거절은 횟수를 소비하지 않는다. 승인 후 실패/timeout/출력 오류는 횟수를 소비한다. 한도 초과는 429/70010 + Retry-After(초), 동시 작업 또는 추적 사용자 용량 부족/timeout/제공자 실패는 503/70009다.
+
+작업 큐 없이 별도 virtual worker에서 제공자를 호출한다. timeout 시 취소 interrupt를 요청하지만 interrupt를 무시하는 작업은 실제 종료까지 용량을 차지한다. 애플리케이션 종료 시에도 interrupt를 요청하며 외부 작업 강제 종료나 과금 취소를 보장하지 않는다. adapter의 HTTP 연결/응답 timeout, 응답 크기 제한과 비용 정책은 별도로 필요하다. 요청 전체/DB 조회 deadline은 이 제한 범위가 아니다.
+
+사용자 ID·창 시작·시도 수만 메모리에 저장하고 입력/출력 원문은 보관하지 않는다. 만료는 재접근 또는 용량 정리 시 확인한다. 활성 창을 강제로 밀어내지 않으며 추적 용량이 차면 새 사용자 호출은 503으로 거절한다. 재시작은 quota를 초기화하고 다중 인스턴스·새 사용자 ID 사이에서는 합산하지 않는다. 다중 서버 운영 전 공유 quota와 실제 비용 상한을 별도 설계한다. 이 작업에는 DB migration이나 production credential 적용이 없다.

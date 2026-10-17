@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import pj.dooit.goal.ai.GoalDraftProperties;
+import pj.dooit.goal.ai.GoalAiCallExecutor;
+import pj.dooit.goal.exception.GoalAiRateLimitExceededException;
 import pj.dooit.goal.ai.GoalJourneySummaryProvider;
 import pj.dooit.goal.dto.GoalJourneyItem;
 import pj.dooit.goal.dto.GoalJourneyResponse;
@@ -24,6 +26,7 @@ public class GoalJourneySummaryService {
     private static final int EVIDENCE_LIMIT = 100;
     private final GoalJourneyService journeys;
     private final GoalDraftProperties properties;
+    private final GoalAiCallExecutor calls;
     private final ObjectProvider<GoalJourneySummaryProvider> providers;
 
     // The journey read transaction ends before the provider call. No draft/cache/persistence writes.
@@ -47,8 +50,9 @@ public class GoalJourneySummaryService {
                 evidence.add(new GoalJourneySummaryProvider.Evidence(i, item.sourceType(), item.practicedDate(),
                         item.title(), item.actionText(), item.actionVariant(), item.note(), item.nextAction(), item.difficulties()));
             }
-            var selection = provider.select(new GoalJourneySummaryProvider.Context(snapshot.range(), snapshot.summary(),
-                    evidence, snapshot.nextCursor() != null));
+            var context = new GoalJourneySummaryProvider.Context(snapshot.range(), snapshot.summary(),
+                    evidence, snapshot.nextCursor() != null);
+            var selection = calls.call(owner.getId(), () -> provider.select(context));
             if (selection == null || selection.evidenceIndices() == null || selection.evidenceIndices().isEmpty()
                     || selection.evidenceIndices().size() > 5) throw new GoalAiUnavailableException();
             var indices = List.copyOf(selection.evidenceIndices());
@@ -59,6 +63,8 @@ public class GoalJourneySummaryService {
                 highlights.add(snapshot.items().get(index));
             }
             return response(snapshot, highlights);
+        } catch (GoalAiRateLimitExceededException e) {
+            throw e;
         } catch (RuntimeException ignored) {
             // Provider failures can contain private evidence and credentials. Discard message and cause.
             throw new GoalAiUnavailableException();

@@ -24,9 +24,9 @@ class GoalDraftServiceTest {
         var properties = new GoalDraftProperties();
         properties.setEnabled(true);
         try (var factory = Validation.buildDefaultValidatorFactory()) {
-            var service = new GoalDraftService(properties,
+            var service = new GoalDraftService(properties, mock(pj.dooit.goal.ai.GoalAiCallExecutor.class),
                     new DefaultListableBeanFactory().getBeanProvider(GoalDraftProvider.class), factory.getValidator());
-            assertThatThrownBy(() -> service.draft(new GoalDraftRequest("목표", null)))
+            assertThatThrownBy(() -> service.draft(new GoalDraftRequest("목표", null), 1L))
                     .isInstanceOf(GoalAiUnavailableException.class).hasNoCause();
         }
     }
@@ -38,7 +38,7 @@ class GoalDraftServiceTest {
         var owner = new User("draft@example.com", "encoded", "사용자");
         when(goals.get(1L, owner)).thenReturn(GoalResponse.from(new Goal(owner, "목표", null, null, null, null)));
         try (var factory = Validation.buildDefaultValidatorFactory()) {
-            var service = new GoalPlanDraftService(goals, properties,
+            var service = new GoalPlanDraftService(goals, properties, mock(pj.dooit.goal.ai.GoalAiCallExecutor.class),
                     new DefaultListableBeanFactory().getBeanProvider(GoalPlanDraftProvider.class), factory.getValidator());
             var request = new GoalPlanDraftRequest("계획",
                     new GoalPlanScheduleRequest(LocalDate.of(2026, 11, 1), List.of(ScheduleDay.MO), null, null));

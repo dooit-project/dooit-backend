@@ -23,6 +23,15 @@ import static org.hamcrest.Matchers.hasItem;
 @ActiveProfiles("test")
 class OpenApiDocumentationIntegrationTest {
 
+    @Test void apiDocs_goalAiLimits() throws Exception {
+        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/draft'].post.responses['429'].headers['Retry-After']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/plan-draft'].post.responses['429']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/adjustment-draft'].post.responses['429']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/{goalId}/journey-summary'].post.responses['429']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/goals/draft'].post.responses['503']").exists());
+    }
+
     @Test
     void apiDocs_goalDraft() throws Exception {
         mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())

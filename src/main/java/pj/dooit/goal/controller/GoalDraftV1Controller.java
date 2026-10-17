@@ -1,6 +1,9 @@
 package pj.dooit.goal.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,6 +35,12 @@ import pj.dooit.goal.service.GoalJourneySummaryService;
 @RequiredArgsConstructor
 @Tag(name = "v1 Goal Journey", description = "목표 중심 계획·실천 여정 API")
 @SecurityRequirement(name = "bearerAuth")
+@ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "계정별 AI 호출 한도 초과 (70010)",
+                headers = @Header(name = "Retry-After", description = "다시 요청하기까지 대기할 초", schema = @Schema(type = "integer", format = "int64"))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "AI 비활성/미설정/실패/시간 초과 또는 서버 호출 용량 부족 (70009)")
+})
 public class GoalDraftV1Controller {
     private final CurrentUserService currentUserService;
     private final GoalDraftService draftService;
@@ -67,7 +76,7 @@ public class GoalDraftV1Controller {
     @Operation(summary = "저장하지 않는 목표 초안 생성", description = "기본 비활성 상태이며 제공자 미설정/실패 시 503/70009를 반환합니다. targetDate는 요청값을 유지하고 저장은 사용자 확인 후 별도 목표 생성 API로 요청합니다.")
     public ResponseEntity<ApiResponse<GoalDraftResponse>> draft(@AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody GoalDraftRequest request) {
-        currentUserService.requireUser(jwt);
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(draftService.draft(request)));
+        var owner = currentUserService.requireUser(jwt);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(draftService.draft(request, owner.getId())));
     }
 }

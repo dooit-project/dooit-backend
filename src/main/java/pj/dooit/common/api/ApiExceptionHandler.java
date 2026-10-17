@@ -12,6 +12,7 @@ import pj.dooit.common.idempotency.IdempotencyKeyReusedException;
 import pj.dooit.dday.exception.DdayGoalNotFoundException;
 import pj.dooit.goal.exception.GoalNotFoundException;
 import pj.dooit.goal.exception.GoalAiUnavailableException;
+import pj.dooit.goal.exception.GoalAiRateLimitExceededException;
 import pj.dooit.goal.exception.GoalPlanNotFoundException;
 import pj.dooit.goal.exception.GoalTaskConflictException;
 import pj.dooit.goal.exception.GoalDirectLogNotFoundException;
@@ -371,6 +372,13 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(ErrorCode.GOAL_AI_UNAVAILABLE.getStatus())
                 .cacheControl(CacheControl.noStore())
                 .body(ApiResponse.failure(ErrorCode.GOAL_AI_UNAVAILABLE));
+    }
+
+    @ExceptionHandler(GoalAiRateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<?>> handleGoalAiRateLimitExceededException(GoalAiRateLimitExceededException e) {
+        return ResponseEntity.status(ErrorCode.GOAL_AI_RATE_LIMIT_EXCEEDED.getStatus())
+                .cacheControl(CacheControl.noStore()).header("Retry-After", Long.toString(e.getRetryAfterSeconds()))
+                .body(ApiResponse.failure(ErrorCode.GOAL_AI_RATE_LIMIT_EXCEEDED));
     }
 
     @ExceptionHandler(Exception.class)
