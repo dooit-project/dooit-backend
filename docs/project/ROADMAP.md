@@ -46,7 +46,8 @@ Last updated: 2026-10-17
 
 - [x] 2026-09-05 기준 production DB migration과 당시 backend 배포를 완료한다.
 - [x] 2026-10-17 개인 시스템·목표 schema 4개를 적용하고 기존 `3bda00c` image 재기동·공개 HTTPS 검증을 완료한다.
-- [ ] 현재 main의 새 backend image를 배포하고 목표/계획/실천 API의 인증 후 smoke를 확인한다. 실행 JAR 빌드는 완료했다.
+- [x] 후보 image `6cdc9e5` 빌드와 운영 schema-only 복제 DB의 production profile 기동·인증 후 목표 API smoke를 확인한다. 전체 테스트 618개 통과, 임시 리소스 제거 완료.
+- [ ] 후보 `6cdc9e5`의 운영 app image 교체와 인증 API smoke를 명시적으로 승인받아 실행한다. 자동 승인 검토에서 일반적인 다음 작업 지시는 운영 교체 승인으로 인정되지 않아 실행 전 차단됐다. 현재 운영은 `3bda00c`다.
 - [ ] Android production build에서 `https://dooitapi.hsng.pe.kr` 기준 login/me, Today 조회·생성·완료, guest 발급·병합을 확인한다.
 - [ ] smoke 결과에 backend commit SHA 또는 image tag, API URL, 적용 migration 범위, 호환성, 실행 테스트를 함께 남긴다.
 

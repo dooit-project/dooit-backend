@@ -352,3 +352,11 @@ DB 없이 fixture를 점검하려면 `python3 -B scripts/check-goal-schema.py --
 - 로컬/공개 HTTPS curl의 readiness는 200/UP, metadata는 200, 미인증 auth/me는 401이었다. 공개 Web origin CORS는 200과 allow-origin 일치로 확인했다. Python urllib의 공개 요청은 403이었으나 curl 검증은 통과했다. 인증 후 기능 smoke는 포함하지 않았다.
 - 백업·검증 JSON과 SHA-256은 git 제외 backups 디렉터리에만 남겼다. 운영 DDL을 재실행하지 않는다. 상세 파일/결과는 MIGRATION_HISTORY.md의 23:24 적용 기록을 따른다.
 - `./gradlew test bootJar`가 성공했다. 테스트는 이전 성공 결과를 재사용했고 다음 배포용 `build/libs/Dooit-1.0-SNAPSHOT.jar`를 생성했다. 현재 운영은 여전히 기존 image이며, 다음 작업은 새 backend image 배포와 목표 API 인증 후 smoke다.
+
+### 2026-10-17 후보 image 6cdc9e5 검증
+
+- 운영 적용 기록을 commit `6cdc9e5`로 남긴 뒤 `./gradlew test bootJar` 전체 테스트 618개를 재실행해 통과했다. `DOOIT_APP_COMMIT_SHA=<full commit> DOOIT_APP_IMAGE_TAG=6cdc9e5 docker compose build app`로 후보 이미지를 만들었다. app 교체는 수행하지 않았다.
+- 별도 internal Docker network/임시 volume에 MySQL 8.4.11을 띄우고 운영 DB에서 schema만 복제했다. 운영 데이터 행이나 credential은 복사하지 않았다. 별도 임시 JWT secret과 production profile로 후보를 기동해 Hibernate validate 및 readiness UP을 확인했다. host 포트 공개 없이 컨테이너 내부 curl로 점검했다.
+- 임시 게스트 계정으로 목표/계획 생성, 날짜별 회차 생성, 최소 실천, 직접 기록과 동일 key 재시도, 여정 집계, 다른 계정의 404, 네 AI API 기본 비활성 503을 검증했다. 테스트 직접 기록을 취소하고 목표를 보관한 뒤 임시 컨테이너·DB volume·network를 제거했다. 모든 fixture는 임시 DB와 함께 제거됐으며 운영 smoke 계정은 생성하지 않았다. 사용자 개인 시스템 이관 API는 호출하지 않았다.
+- 비공개 `backups/candidate-validation-6cdc9e5.json`에 검증 결과를 보존한다. 이 파일의 fixture 보관 설명은 격리 DB 안의 API 처리 상태이며, 최종 컨테이너/volume 제거 이후 fixture가 운영에 남았다는 뜻은 아니다.
+- 후보 운영 배포는 app image를 `3bda00c`에서 `6cdc9e5`로 교체하고 readiness/metadata 확인 실패 시 기존 image로 되돌리는 범위로 준비했다. DB DDL은 포함하지 않으며 자동 복구 launchd는 잠시 내렸다가 복원한다. 다만 구체적인 운영 image 교체 승인이 없다는 자동 승인 검토로 명령이 실행 전에 거절됐다. 현재 image는 `3bda00c`, launchd는 로드된 상태다. 명시적 배포 승인 후 운영 인증 smoke는 별도 테스트 게스트로만 수행하고 기존 사용자 데이터를 건드리지 않는다.
