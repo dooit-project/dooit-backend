@@ -234,6 +234,16 @@ public class Task {
         this.completedAt = null;
     }
 
+    public void planTodo(LocalDate plannedDate) {
+        validateTargetDate(plannedDate);
+        if (this.type != TaskType.TODO || !isUnscheduled()) {
+            throw new IllegalArgumentException("날짜 없는 TODO에만 계획일을 지정할 수 있습니다.");
+        }
+        this.status = TaskStatus.TODAY;
+        this.targetDate = plannedDate;
+        this.completedAt = null;
+    }
+
     public void disableNotification() {
         this.notificationEnabled = false;
         this.notifyAt = null;

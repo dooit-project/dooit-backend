@@ -132,6 +132,41 @@ class IdempotencyIntegrationTest {
         assertThat(taskRepository.findByOwnerId(auth.userId())).hasSize(1);
     }
 
+    @Test
+    void quickCapture_selectedType_validationRetryReplayAndConflict() throws Exception {
+        AuthFixture auth = accessToken("idempotent-selected-quick@example.com");
+        String key = UUID.randomUUID().toString();
+        String invalid = "{\"text\":\"내일 3시 공부\",\"requestedType\":\"TODO\"}";
+        String valid = "{\"text\":\"내일 공부\",\"requestedType\":\"TODO\",\"referenceDate\":\"2026-10-18\"}";
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + auth.accessToken())
+                        .header(CorsConfig.IDEMPOTENCY_KEY_HEADER, key)
+                        .contentType(MediaType.APPLICATION_JSON).content(invalid))
+                .andExpect(status().isBadRequest());
+        assertThat(taskRepository.findByOwnerId(auth.userId())).isEmpty();
+        assertThat(idempotencyRecordRepository.count()).isZero();
+        String first = mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + auth.accessToken())
+                        .header(CorsConfig.IDEMPOTENCY_KEY_HEADER, key)
+                        .contentType(MediaType.APPLICATION_JSON).content(valid))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String replay = mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + auth.accessToken())
+                        .header(CorsConfig.IDEMPOTENCY_KEY_HEADER, key)
+                        .contentType(MediaType.APPLICATION_JSON).content(valid))
+                .andExpect(status().isCreated())
+                .andExpect(header().string(CorsConfig.IDEMPOTENCY_REPLAYED_HEADER, "true"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(replay).isEqualTo(first);
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + auth.accessToken())
+                        .header(CorsConfig.IDEMPOTENCY_KEY_HEADER, key)
+                        .contentType(MediaType.APPLICATION_JSON).content(valid.replace("TODO", "IDEA")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value(10004));
+        assertThat(taskRepository.findByOwnerId(auth.userId())).hasSize(1);
+    }
+
     private AuthFixture accessToken(String email) {
         User user = userRepository.save(new User(email, "encoded-password", "테스터"));
         return new AuthFixture(user.getId(), jwtTokenService.createAccessToken(user).tokenValue());

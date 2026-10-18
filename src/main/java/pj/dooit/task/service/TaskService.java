@@ -8,6 +8,7 @@ import pj.dooit.task.domain.DeferReason;
 import pj.dooit.task.domain.RecurrenceEditScope;
 import pj.dooit.task.domain.RecurrenceSeries;
 import pj.dooit.task.domain.Task;
+import pj.dooit.task.domain.TaskType;
 import pj.dooit.task.domain.TaskStatus;
 import pj.dooit.task.domain.TodayOrderDirection;
 import pj.dooit.task.domain.query.DateRange;
@@ -95,7 +96,8 @@ public class TaskService {
         }
 
         TaskQuickCaptureParser.ParsedQuickCapture parsed = taskQuickCaptureParser.parse(request, owner);
-        TaskResponse task = create(parsed.taskRequest(), owner, null);
+        TaskResponse task = create(parsed.taskRequest(), owner, null,
+                parsed.parsedType() == TaskType.TODO ? parsed.parsedDate() : null);
         return new TaskQuickCaptureResponse(
                 task,
                 parsed.parsed(),
@@ -114,6 +116,10 @@ public class TaskService {
     }
 
     private TaskResponse create(TaskRequest req, User owner, SharedWorkspace workspace) {
+        return create(req, owner, workspace, null);
+    }
+
+    private TaskResponse create(TaskRequest req, User owner, SharedWorkspace workspace, LocalDate plannedDate) {
         req.validate();
         Task task = Task.builder()
                 .title(req.title())
@@ -153,6 +159,9 @@ public class TaskService {
             task.connectRecurrenceSeries(series, req.startAt().toLocalDate());
         }
 
+        if (plannedDate != null) {
+            task.planTodo(plannedDate);
+        }
         Task saved = taskRepository.save(task);
         return TaskResponse.from(saved);
     }

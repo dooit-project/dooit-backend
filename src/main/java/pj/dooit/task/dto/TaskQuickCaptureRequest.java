@@ -1,8 +1,10 @@
 package pj.dooit.task.dto;
 
+import pj.dooit.task.domain.TaskType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.time.LocalDate;
 
@@ -21,6 +23,13 @@ public record TaskQuickCaptureRequest(
 
         @Size(max = 30, message = "기본 카테고리는 30자 이하여야 합니다")
         @Schema(description = "파싱 결과에 적용할 기본 카테고리", example = "업무", maxLength = 30, nullable = true)
-        String defaultCategory
+        String defaultCategory,
+
+        @Schema(description = "사용자가 선택한 유형. 생략 또는 null이면 기존 자동 해석입니다.", nullable = true)
+        @JsonDeserialize(using = QuickCaptureTaskTypeDeserializer.class)
+        TaskType requestedType
 ) {
+    public TaskQuickCaptureRequest(String text, LocalDate referenceDate, String timeZone, String defaultCategory) {
+        this(text, referenceDate, timeZone, defaultCategory, null);
+    }
 }

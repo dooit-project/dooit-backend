@@ -20,6 +20,9 @@ import pj.dooit.user.domain.User;
 import pj.dooit.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -32,8 +35,11 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -483,11 +489,11 @@ class TaskV1IntegrationTest {
         Number recurrenceSeriesId = JsonPath.read(response, "$.data.recurrenceSeriesId");
 
         RecurrenceSeries series = recurrenceSeriesRepository.findById(recurrenceSeriesId.longValue()).orElseThrow();
-        org.assertj.core.api.Assertions.assertThat(series.getFrequency()).isEqualTo(RecurrenceFrequency.WEEKLY);
-        org.assertj.core.api.Assertions.assertThat(series.getInterval()).isEqualTo(1);
-        org.assertj.core.api.Assertions.assertThat(series.getRecurrenceRule()).isEqualTo("FREQ=WEEKLY;INTERVAL=1;BYDAY=TU;COUNT=3");
-        org.assertj.core.api.Assertions.assertThat(series.getTimeZone()).isEqualTo("Asia/Seoul");
-        org.assertj.core.api.Assertions.assertThat(series.getRecurrenceCount()).isEqualTo(3);
+        assertThat(series.getFrequency()).isEqualTo(RecurrenceFrequency.WEEKLY);
+        assertThat(series.getInterval()).isEqualTo(1);
+        assertThat(series.getRecurrenceRule()).isEqualTo("FREQ=WEEKLY;INTERVAL=1;BYDAY=TU;COUNT=3");
+        assertThat(series.getTimeZone()).isEqualTo("Asia/Seoul");
+        assertThat(series.getRecurrenceCount()).isEqualTo(3);
 
         mockMvc.perform(get("/api/v1/tasks")
                         .header("Authorization", "Bearer " + accessToken)
@@ -1487,9 +1493,9 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data").isEmpty());
 
         Task skipped = taskRepository.findById(secondOccurrenceId.longValue()).orElseThrow();
-        org.assertj.core.api.Assertions.assertThat(skipped.getRecurrenceException()).isEqualTo(RecurrenceExceptionType.SKIPPED);
-        org.assertj.core.api.Assertions.assertThat(skipped.getOccurrenceDate()).isEqualTo(LocalDate.of(2026, 8, 11));
-        org.assertj.core.api.Assertions.assertThat(skipped.getOwner().getId()).isEqualTo(owner.getId());
+        assertThat(skipped.getRecurrenceException()).isEqualTo(RecurrenceExceptionType.SKIPPED);
+        assertThat(skipped.getOccurrenceDate()).isEqualTo(LocalDate.of(2026, 8, 11));
+        assertThat(skipped.getOwner().getId()).isEqualTo(owner.getId());
 
         mockMvc.perform(get("/api/v1/tasks/today")
                         .header("Authorization", "Bearer " + accessToken)
@@ -1516,7 +1522,7 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data[0].occurrenceDate").value("2026-08-04"))
                 .andExpect(jsonPath("$.data[1].occurrenceDate").value("2026-08-18"));
 
-        org.assertj.core.api.Assertions.assertThat(
+        assertThat(
                 taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(recurrenceSeriesId, owner.getId())
         ).hasSize(3);
     }
@@ -1586,18 +1592,18 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data.recurrence.recurrenceCount").value(2));
 
         RecurrenceSeries updatedSeries = recurrenceSeriesRepository.findById(recurrenceSeriesId).orElseThrow();
-        org.assertj.core.api.Assertions.assertThat(updatedSeries.getInterval()).isEqualTo(2);
-        org.assertj.core.api.Assertions.assertThat(updatedSeries.getRecurrenceStartAt()).isEqualTo(LocalDateTime.of(2026, 7, 21, 9, 0));
-        org.assertj.core.api.Assertions.assertThat(updatedSeries.getRecurrenceRule()).isEqualTo("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;COUNT=2");
+        assertThat(updatedSeries.getInterval()).isEqualTo(2);
+        assertThat(updatedSeries.getRecurrenceStartAt()).isEqualTo(LocalDateTime.of(2026, 7, 21, 9, 0));
+        assertThat(updatedSeries.getRecurrenceRule()).isEqualTo("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;COUNT=2");
 
         List<Task> afterUpdate = taskRepository.findByRecurrenceSeriesIdAndOwnerIdOrderByOccurrenceDateAscIdAsc(
                 recurrenceSeriesId,
                 owner.getId()
         );
-        org.assertj.core.api.Assertions.assertThat(afterUpdate)
+        assertThat(afterUpdate)
                 .extracting(Task::getOccurrenceDate)
                 .containsExactly(LocalDate.of(2026, 7, 7), LocalDate.of(2026, 7, 14), LocalDate.of(2026, 7, 21));
-        org.assertj.core.api.Assertions.assertThat(afterUpdate.get(1).getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(afterUpdate.get(1).getStatus()).isEqualTo(TaskStatus.DONE);
 
         mockMvc.perform(get("/api/v1/tasks")
                         .header("Authorization", "Bearer " + accessToken)
@@ -1741,6 +1747,163 @@ class TaskV1IntegrationTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.timestamp").value(notNullValue()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"오늘,2026-10-18", "내일,2026-10-19"})
+    void quickCapture_requestedTodo_preservesTypeAndPlansWithoutSchedule(String day, String date) throws Exception {
+        String email = "quick-selected-todo-" + date + "@example.com";
+        String token = accessToken(email);
+        String body = mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskQuickCaptureRequest(
+                                day + " 영단어 30개", LocalDate.of(2026, 10, 18), "Asia/Seoul", null, TaskType.TODO))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.task.type").value("TODO"))
+                .andExpect(jsonPath("$.data.task.title").value("영단어 30개"))
+                .andExpect(jsonPath("$.data.task.status").value("TODAY"))
+                .andExpect(jsonPath("$.data.task.plannedDate").value(date))
+                .andExpect(jsonPath("$.data.task.targetDate").value(date))
+                .andExpect(jsonPath("$.data.task.startAt").isEmpty())
+                .andExpect(jsonPath("$.data.task.endAt").isEmpty())
+                .andExpect(jsonPath("$.data.task.allDay").value(false))
+                .andExpect(jsonPath("$.data.parsed").value(true))
+                .andExpect(jsonPath("$.data.parsedDate").value(date))
+                .andExpect(jsonPath("$.data.parsedType").value("TODO"))
+                .andReturn().getResponse().getContentAsString();
+        Number id = JsonPath.read(body, "$.data.task.id");
+        Task saved = taskRepository.findById(id.longValue()).orElseThrow();
+        assertThat(saved.getType()).isEqualTo(TaskType.TODO);
+        assertThat(saved.getPlannedDate()).isEqualTo(LocalDate.parse(date));
+        mockMvc.perform(get("/api/v1/tasks/today").param("date", date)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(id));
+        if (day.equals("내일")) {
+            mockMvc.perform(get("/api/v1/tasks/today").param("date", "2026-10-18")
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.data").isEmpty());
+        }
+    }
+
+    @Test
+    void quickCapture_requestedTodoWithoutDate_staysInbox() throws Exception {
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken("quick-selected-inbox@example.com"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"로그인 버튼 연결하기\",\"requestedType\":\"TODO\",\"referenceDate\":\"2026-10-18\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.task.type").value("TODO"))
+                .andExpect(jsonPath("$.data.task.status").value("INBOX"))
+                .andExpect(jsonPath("$.data.task.plannedDate").isEmpty())
+                .andExpect(jsonPath("$.data.parsed").value(false));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"오늘 오후 3시 메모", "매주 월요일 운동", "2026-02-30 99:99 아이디어", "내일 아주 길게 적어 두는 아이디어 내용이라서 제목 길이 제한을 넘는 문장"})
+    void quickCapture_requestedIdea_preservesTemporalText(String text) throws Exception {
+        String body = mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken("quick-idea-" + UUID.randomUUID() + "@example.com"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskQuickCaptureRequest(
+                                text, LocalDate.of(2026, 10, 18), "Asia/Seoul", null, TaskType.IDEA))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.task.type").value("IDEA"))
+                .andExpect(jsonPath("$.data.task.status").value("INBOX"))
+                .andExpect(jsonPath("$.data.task.plannedDate").isEmpty())
+                .andExpect(jsonPath("$.data.task.startAt").isEmpty())
+                .andExpect(jsonPath("$.data.task.recurrenceSeriesId").isEmpty())
+                .andExpect(jsonPath("$.data.parsed").value(false))
+                .andExpect(jsonPath("$.data.parsedDate").isEmpty())
+                .andExpect(jsonPath("$.data.parsedTime").isEmpty())
+                .andExpect(jsonPath("$.data.parsedType").value("IDEA"))
+                .andExpect(jsonPath("$.data.parsedRecurrenceFrequency").isEmpty())
+                .andExpect(jsonPath("$.data.parsedByDays").isEmpty())
+                .andReturn().getResponse().getContentAsString();
+        assertThat((String) JsonPath.read(body,
+                text.length() > 30 ? "$.data.task.description" : "$.data.task.title")).isEqualTo(text);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "SCHEDULE,내일 오후 3시 회의,2026-10-19T15:00:00,2026-10-19T16:00:00,false",
+            "SCHEDULE,내일 회의,2026-10-19T00:00:00,2026-10-20T00:00:00,true",
+            "SCHEDULE,오후 3시 회의,2026-10-18T15:00:00,2026-10-18T16:00:00,false",
+            ",내일 회의,2026-10-19T00:00:00,2026-10-20T00:00:00,true"
+    })
+    void quickCapture_scheduleAndNullType_keepAppliedTimes(TaskType type, String text, String start, String end, boolean allDay) throws Exception {
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken("quick-schedule-" + UUID.randomUUID() + "@example.com"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskQuickCaptureRequest(
+                                text, LocalDate.of(2026, 10, 18), "Asia/Seoul", null, type))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.task.type").value("SCHEDULE"))
+                .andExpect(jsonPath("$.data.task.startAt").value(start))
+                .andExpect(jsonPath("$.data.task.endAt").value(end))
+                .andExpect(jsonPath("$.data.task.allDay").value(allDay));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"TODO,내일 오후 3시 공부", "TODO,매주 월요일 운동", "SCHEDULE,회의 준비", "UNKNOWN,내일 공부"})
+    void quickCapture_unsupportedSelection_createsNothing(String type, String text) throws Exception {
+        String email = "quick-invalid-" + UUID.randomUUID() + "@example.com";
+        String token = accessToken(email);
+        long seriesCount = recurrenceSeriesRepository.count();
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("text", text, "requestedType", type))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value(10001));
+        assertThat(taskRepository.findByOwnerId(userRepository.findByEmail(email).orElseThrow().getId())).isEmpty();
+        assertThat(recurrenceSeriesRepository.count()).isEqualTo(seriesCount);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"\"todo\"", "\"\"", "0", "true", "[]", "{}"})
+    void quickCapture_invalidTypeRepresentation_isRejected(String value) throws Exception {
+        String email = "quick-invalid-type-" + UUID.randomUUID() + "@example.com";
+        String token = accessToken(email);
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"내일 공부\",\"requestedType\":" + value + "}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value(10001));
+        assertThat(taskRepository.findByOwnerId(userRepository.findByEmail(email).orElseThrow().getId())).isEmpty();
+    }
+
+    @Test
+    void quickCapture_omittedType_keepsLegacyAutomaticInterpretation() throws Exception {
+        mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken("quick-type-omitted@example.com"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"오늘 공부\",\"referenceDate\":\"2026-10-18\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.task.type").value("SCHEDULE"))
+                .andExpect(jsonPath("$.data.task.allDay").value(true));
+    }
+
+    @Test
+    void quickCapture_selectedSchedule_persistsWeeklySeries() throws Exception {
+        long before = recurrenceSeriesRepository.count();
+        String body = mockMvc.perform(post("/api/v1/tasks/quick-capture")
+                        .header("Authorization", "Bearer " + accessToken("quick-selected-weekly@example.com"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TaskQuickCaptureRequest(
+                                "매주 월요일 운동", LocalDate.of(2026, 10, 18), "Asia/Seoul", null, TaskType.SCHEDULE))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.parsedRecurrenceFrequency").value("WEEKLY"))
+                .andExpect(jsonPath("$.data.parsedByDays[0]").value("MO"))
+                .andExpect(jsonPath("$.data.task.recurrenceSeriesId").isNotEmpty())
+                .andExpect(jsonPath("$.data.task.recurrence.frequency").value("WEEKLY"))
+                .andReturn().getResponse().getContentAsString();
+        Number seriesId = JsonPath.read(body, "$.data.task.recurrenceSeriesId");
+        assertThat(recurrenceSeriesRepository.existsById(seriesId.longValue())).isTrue();
+        assertThat(recurrenceSeriesRepository.count()).isEqualTo(before + 1);
     }
 
     private String accessToken(String email) {

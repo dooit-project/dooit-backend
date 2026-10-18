@@ -23,6 +23,16 @@ import static org.hamcrest.Matchers.hasItem;
 @ActiveProfiles("test")
 class OpenApiDocumentationIntegrationTest {
 
+    @Test
+    void apiDocs_quickCaptureSelectedType() throws Exception {
+        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.schemas.TaskQuickCaptureRequest.properties.requestedType").exists())
+                .andExpect(jsonPath("$.components.schemas.TaskQuickCaptureRequest.properties.requestedType.enum", hasItem("TODO")))
+                .andExpect(jsonPath("$.components.schemas.TaskQuickCaptureRequest.properties.requestedType.enum", hasItem("SCHEDULE")))
+                .andExpect(jsonPath("$.components.schemas.TaskQuickCaptureRequest.properties.requestedType.enum", hasItem("IDEA")));
+    }
+
+
     @Test void apiDocs_goalAiLimits() throws Exception {
         mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/v1/goals/draft'].post.responses['429'].headers['Retry-After']").exists())

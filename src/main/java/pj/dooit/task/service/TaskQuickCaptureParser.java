@@ -43,6 +43,16 @@ public class TaskQuickCaptureParser {
                 ? LocalDate.now(zoneId)
                 : request.referenceDate();
 
+        if (request.requestedType() == TaskType.IDEA) {
+            String title = truncate(originalText, TITLE_MAX_LENGTH);
+            String description = originalText.length() > TITLE_MAX_LENGTH ? originalText : null;
+            return new ParsedQuickCapture(
+                    new TaskRequest(title, description, TaskType.IDEA, null, null,
+                            request.defaultCategory(), false, null),
+                    false, originalText, null, null, TaskType.IDEA, null, List.of(), zoneId.getId()
+            );
+        }
+
         List<String> consumedTokens = new ArrayList<>();
         ParsedDate parsedDate = parseDate(originalText, referenceDate, consumedTokens);
         ParsedWeekly parsedWeekly = parseWeekly(originalText, consumedTokens);
@@ -65,12 +75,20 @@ public class TaskQuickCaptureParser {
         }
 
         boolean parsed = effectiveDate != null || parsedTime.time() != null || recurrence != null;
-        TaskType type = parsed ? TaskType.SCHEDULE : TaskType.TODO;
-        boolean allDay = parsed && parsedTime.time() == null;
+        TaskType type = request.requestedType() == null
+                ? (parsed ? TaskType.SCHEDULE : TaskType.TODO)
+                : request.requestedType();
+        if (type == TaskType.TODO && (parsedTime.time() != null || recurrence != null)) {
+            throw new TaskValidationException("TODO 빠른 등록은 시각 또는 반복 표현을 지원하지 않습니다. 날짜만 입력해주세요.");
+        }
+        if (type == TaskType.SCHEDULE && !parsed) {
+            throw new TaskValidationException("SCHEDULE 빠른 등록에는 날짜, 시각 또는 지원하는 반복 표현이 필요합니다.");
+        }
+        boolean allDay = type == TaskType.SCHEDULE && parsedTime.time() == null;
         LocalDateTime startAt = null;
         LocalDateTime endAt = null;
 
-        if (parsed) {
+        if (parsed && type == TaskType.SCHEDULE) {
             LocalDate date = effectiveDate == null ? referenceDate : effectiveDate;
             if (parsedTime.time() == null) {
                 startAt = date.atStartOfDay();

@@ -30,7 +30,7 @@ public record TaskResponse(
         LocalDateTime endAt,
         @Schema(description = "종일 일정 여부", example = "false", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean allDay,
-        @Schema(description = "날짜가 없는 Task 여부", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "시작/종료 시각이 없는 Task 여부. 계획일이 있는 TODO도 true일 수 있습니다.", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean unscheduled,
         @Schema(description = "카테고리명", example = "업무", nullable = true)
         String category,
@@ -44,7 +44,7 @@ public record TaskResponse(
         TaskStatus status,
         @Schema(description = "표시 기준 날짜. targetDate가 있으면 targetDate, 없으면 startAt 날짜입니다.", example = "2026-07-22", nullable = true)
         LocalDate plannedDate,
-        @Schema(description = "Today 실행 날짜. Inbox 또는 미정 Task는 null입니다.", example = "2026-07-22", nullable = true)
+        @Schema(description = "Today 계획 날짜. 미래 날짜도 가능하며 Inbox는 null입니다.", example = "2026-07-22", nullable = true)
         LocalDate targetDate,
         @Schema(description = "Today 정렬 순서. Today 정렬 대상이 아니면 null입니다.", example = "0", nullable = true)
         Integer todayOrder,

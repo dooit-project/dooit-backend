@@ -10,7 +10,7 @@ import java.util.List;
 
 @Schema(description = "Task 빠른 등록 응답")
 public record TaskQuickCaptureResponse(
-        @Schema(description = "생성된 Task")
+        @Schema(description = "실제 저장된 Task 원본. 모바일 표시의 기준입니다.")
         TaskResponse task,
 
         @Schema(description = "날짜, 시간 또는 반복 규칙을 파싱해 적용했는지 여부", example = "true")
@@ -19,13 +19,13 @@ public record TaskQuickCaptureResponse(
         @Schema(description = "사용자가 입력한 원문", example = "내일 오후 3시 출시 회의")
         String originalText,
 
-        @Schema(description = "적용된 날짜", type = "string", format = "date", example = "2026-08-14", nullable = true)
+        @Schema(description = "실제 적용된 일정 날짜 또는 TODO 계획일. 해석 제안이 아닙니다.", type = "string", format = "date", example = "2026-08-14", nullable = true)
         LocalDate parsedDate,
 
         @Schema(description = "적용된 시간", type = "string", format = "time", example = "15:00:00", nullable = true)
         LocalTime parsedTime,
 
-        @Schema(description = "적용된 Task 종류", example = "SCHEDULE")
+        @Schema(description = "실제 저장된 Task 종류. parsed=false여도 선택 유형을 반환합니다.", example = "SCHEDULE")
         TaskType parsedType,
 
         @Schema(description = "적용된 반복 주기", example = "WEEKLY", nullable = true)
