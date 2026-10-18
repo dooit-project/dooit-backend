@@ -57,7 +57,7 @@ EXPO_PUBLIC_API_MODE_OVERRIDE=real EXPO_PUBLIC_API_URL_OVERRIDE=http://localhost
 - localhost:8081/8090 origin의 quick-capture POST preflight에서 Authorization/Content-Type/Idempotency-Key 허용 확인.
 - 실행 중인 STG OpenAPI에서 requestedType이 optional TODO/SCHEDULE/IDEA enum임을 확인.
 - 합성 게스트로 선택 유형·계획일·반복 저장·오류·재시도 실 API 검증 통과, 생성 Task 삭제.
-- 모바일 소스 확인 결과 `src/types/task.ts`의 요청 필드, `src/features/today/quick-capture.tsx`의 TODO 선택 전달, mock 파싱/저장 정책과 STG 실행 설정 연결이 남아 있다. 이 확인은 클라이언트 구현·화면 검증 완료를 뜻하지 않는다.
+- 모바일 c6cb6b4에서 요청 필드·Today TODO 전달·mock 정책·STG 실행 설정을 연결하고 실제 apiClient/taskApi → STG 검증을 통과했다. 실행은 모바일 저장소의 `npm run web:stg`, 네트워크 테스트는 `npm run test:stg`다. 실제 화면·공용 스크린샷 갱신은 브라우저 도구 문제로 남아 있다.
 
 ## 3. CORS Preflight 확인
 

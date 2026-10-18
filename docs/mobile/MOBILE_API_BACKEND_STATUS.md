@@ -34,7 +34,15 @@ Last audited: 2026-10-18 (목표 API 배포 검증 및 빠른 기록 선택 유�
 
 - 목표 중심 요청과 별도로 `requestedType` nullable 선택 필드를 구현했다. 생략/null은 자동 해석, TODO는 날짜만 계획일로 적용, IDEA는 날짜 문구 보존, SCHEDULE은 기존 일정 생성 정책이다.
 - TODO 시각/지원 주간 반복과 날짜·시각·지원 반복 없는 SCHEDULE은 400/10001이며 생성하지 않는다. TODAY의 미래 계획 포함, 실제 반복 시리즈 저장, 기존 멱등성 재시도 및 장애 구간 제약을 [회신 계약](../api/QUICK_CAPTURE_TYPE_CONTRACT.md)에 정리했다.
-- STG localhost:18080에 새 필드를 배포하고 합성 데이터로 실 API를 검증했다. PRD image `6cdc9e5`에는 새 필드가 없다. PRD 빠른 기록 호출·DB 변경·새 image 배포·모바일 코드/mock 변경은 수행하지 않았다. 정책 확인과 배포 후 클라이언트 연동이 남았다.
+- STG localhost:18080에 새 필드를 배포하고 합성 데이터로 실 API를 검증했다. PRD image `6cdc9e5`에는 새 필드가 없다. PRD 빠른 기록 호출·DB 변경·새 image 배포·모바일 코드/mock 변경은 수행하지 않았다. 최초 서버 구현 단계에는 클라이언트를 수정하지 않았다. 이후 모바일 STG 연결 결과는 아래 후속 확인을 따른다.
+
+### 2026-10-18 모바일 STG API 연결
+
+- 모바일 `c6cb6b4`에 requestedType 타입, Today의 TODO 명시, 서버와 같은 mock 정책, localhost STG 실행 명령을 연결했다. 기존 화면 정적 검사 오류는 별도 `ed5ad05`로 정리했다. 다른 미커밋 목표 기능은 이번 커밋에서 제외했다.
+- 해당 커밋 후보만 추출해 타입·lint와 단위 테스트 537개를 통과했고, 실제 모바일 apiClient/taskApi → STG 통합 테스트 1개도 통과했다. 합성 Task와 refresh session은 정리했으며 guest/멱등성 기록은 STG에 남는다.
+- Web은 localhost:8090 → API localhost:18080으로 실행한다. 번들 컴파일과 주소 주입, 기존 localhost:8081/8090 CORS를 확인했다. PRD image 6cdc9e5와 운영 클라이언트 배포는 변경하지 않았다.
+- 실제 화면 감사는 iab/Chrome 도구 연결 불가로 보류다. 모바일 전체 validate는 기존 공용 스크린샷이 35일이 지나 30일 주기를 넘긴 검사에서 실패했으며, 날짜를 임의 갱신하지 않았다. API/타입/단위 테스트 통과를 전체 validate·UI·실기기 검증 완료로 해석하지 않는다.
+- 다음은 승인된 브라우저 도구로 실제 화면·공용 스크린샷 갱신, 제품 정책 확인 후 PRD 배포 순서다.
 
 ## 1. 현재 보존할 검증 기준
 

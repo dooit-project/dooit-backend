@@ -116,7 +116,7 @@ HTTPS 도메인, Tunnel, Web CORS host 검증은 완료했다. [환경 기준](.
 ### P1. STG 클라이언트 검증
 
 STG는 localhost:18080으로 운영한다. 외부 도메인 연결은 현재 작업 범위에 포함하지 않는다.
-- [ ] STG에서 모바일 요청 타입/mock과 선택 유형 정책을 확인하고 PRD release 범위를 확정한다.
+- [ ] 모바일 c6cb6b4의 요청/mock과 실제 API client → STG 연결은 확인했다. 브라우저 도구를 복구해 화면·공용 스크린샷을 검증하고 PRD release 범위를 확정한다.
 
 ### P0. Android production smoke
 
