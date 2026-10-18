@@ -52,7 +52,7 @@ Last updated: 2026-10-18
 STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../api/QUICK_CAPTURE_TYPE_CONTRACT.md`](../api/QUICK_CAPTURE_TYPE_CONTRACT.md).
 
 - [ ] TODO 시각/반복 오류 및 날짜 없는 TODO 기록함 정책을 모바일/제품과 확인한다.
-- [ ] 커밋·배포 후 새 필드 지원을 전달하고 모바일 타입/mock/저장 task 우선 안내를 연동한다. PRD 빠른 기록 API 검증은 현재 보류다.
+- [ ] 커밋 image STG 반영은 완료했다. 모바일 타입/mock/저장 task 우선 안내를 STG에서 확인한 뒤 PRD 배포를 진행한다. PRD 빠른 기록 API 검증은 현재 보류다.
 - [ ] 생성 멱등성의 Task/응답 기록 트랜잭션 분리와 프로세스 내부 잠금을 개선해 서버 장애·다중 인스턴스 중복 구간을 줄인다.
 
 ### P1. 모바일 실사용 로그 기반 개선

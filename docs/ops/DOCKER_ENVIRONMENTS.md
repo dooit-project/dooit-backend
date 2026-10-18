@@ -60,14 +60,23 @@ Alloy의 프로젝트 필터도 같은 환경변수를 받아 PRD 로그만 수�
 - 동일 이미지/볼륨으로 prd_dooit 프로젝트를 기동하고 healthy 및 이미지 ID/볼륨 일치를 확인한 뒤 launchd를 다시 등록했다. PRD DB DDL과 새 백엔드 image 배포는 하지 않았다.
 - 비공개 복구 자료는 git 제외 `backups/project-split-20261018-123614/`에 0700 디렉터리/0600 파일로 보관했다. DB 백업, 이전 env, rollback Compose 설정에는 운영 비밀/데이터가 있으므로 공유하지 않는다.
 - PRD/STG readiness UP, PRD 자동 복구 반복 실행 시 app ID 유지, Prometheus target UP 및 Loki/Grafana 점검을 확인했다. 재기동 직후 Loki 준비 과정의 503은 초기화 완료 후 해소됐다.
-- 최종 STG image는 `stg-a27fcd2-20261018124000`이며 미커밋 작업본이다. 전체 백엔드 테스트 648개와 실제 실행 환경의 비밀 값/네트워크/볼륨 분리 검증을 통과했다.
+- 최초 STG 검증 image는 `stg-a27fcd2-20261018124000`인 미커밋 작업본이었으며, 아래 커밋 image로 교체했다. 전체 백엔드 테스트 648개와 실제 실행 환경의 비밀 값/네트워크/볼륨 분리 검증을 통과했다.
 - STG는 새 빈 MySQL에 초기 schema와 누락됐던 10-15/10-16 변경을 적용했다. 이후 초기 schema도 보완하고 별도 일회성 STG DB에서 전체 SQL 실행·최신 컬럼·key collation을 검증한 후 일회성 DB를 삭제했다.
 - STG 실 API에서 TODO 계획일/Today 분리, IDEA 문구 보존, SCHEDULE 시각, 실제 주간 반복 저장, 기존 자동 해석, 미지원 입력 오류와 멱등 재시도를 통과했다. 생성 Task는 삭제했다.
 
 일회성 전환 도구 `python3 -B scripts/split-production-project.py`는 기본 읽기 전용이다. 최초 적용 때만 `--apply`를 사용했으며 실패 시 원래 dooit 그룹으로 복구하도록 구성했다. 이미 prd_dooit이면 변경하지 않는다. 운영 볼륨과 현재 설정을 확인하지 않은 다른 PC에 이 도구를 그대로 적용하지 않는다.
 
+## 커밋 image STG 반영 (2026-10-18)
+
+- `e802541`: 운영 자동 복구 배포 메타데이터 보존.
+- `ab5107d`: 빠른 기록 선택 유형 보존.
+- `475b82e`: PRD/STG Docker 분리와 문서 정리.
+- 깨끗한 작업 트리에서 STG image `stg-475b82e-20261018124446`을 빌드·반영했다. runtime commitSha가 `475b82e2a97fd5be2919bc8d9e748c36d3c04af2`와 일치하고 dirty 표시가 없음을 확인했다.
+- readiness와 합성 빠른 기록 API smoke를 통과했다. 생성 Task는 삭제했고 검증 게스트/멱등성 기록은 STG에만 남았다. 전체 테스트 648개 통과 결과를 확인했으며 소스 변경이 없어 STG 빌드에서는 Gradle 검사 결과를 재사용했다.
+- PRD app image는 `6cdc9e5`, healthy 상태를 유지했다. 이번 작업으로 새 기능을 PRD에 배포하지 않았다. 이후 문서 기록 커밋은 STG 실행 소스 커밋과 구분한다.
+
 ## 남은 일
 
 - STG 외부 도메인/실기기 접근 경로 확정.
-- STG에서 제품 정책과 모바일 연동 확인 후 커밋된 release를 별도로 PRD에 배포.
+- STG에서 제품 정책과 모바일 연동 확인 후 검증된 release를 별도로 PRD에 배포.
 - host 전원 정책·재부팅 후 복구·offsite backup은 [로드맵](../project/ROADMAP.md) 기준으로 계속 검증.
