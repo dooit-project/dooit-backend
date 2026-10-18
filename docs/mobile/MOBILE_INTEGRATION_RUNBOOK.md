@@ -1,12 +1,14 @@
 # Dooit Mobile Integration Runbook
 
-Last updated: 2026-09-05
+Last updated: 2026-10-18
 
 이 문서는 모바일 real mode smoke test를 반복 가능한 절차로 남기기 위한 백엔드 기준 runbook이다.
 
 ## 1. 사전 조건
 
-- 백엔드가 local 환경에서 실행 중이어야 한다.
+- 백엔드가 검증 대상 환경에서 실행 중이어야 한다. 기본 검증 대상은 local 또는 STG `http://localhost:18080`이다. PRD와 DB·인증이 다르며 [Docker 운영](../ops/DOCKER_ENVIRONMENTS.md)을 따른다.
+- 로컬 구현 완료와 배포 완료를 구분한다. 배포 상태는 [백엔드 현황](MOBILE_API_BACKEND_STATUS.md), 운영 image 기록은 [운영 runbook](../ops/LOCAL_PRODUCTION_RUNBOOK.md)을 확인한다.
+- 운영 쓰기 smoke는 승인된 범위에서만 실행하고 테스트 데이터의 보존/정리 상태를 기록한다.
 - 모바일 앱은 mock mode가 아니라 real mode로 실행해야 한다.
 - 모바일 base URL은 `docs/ops/ENVIRONMENT_INTEGRATION.md`의 환경별 API URL을 사용한다.
 - 모바일 요청은 인증이 필요한 v1 API에 `Authorization: Bearer <accessToken>`을 포함해야 한다.
@@ -124,6 +126,23 @@ Authorization: Bearer <accessToken>
 
 - 토큰이 없거나 만료되면 HTTP 401
 - 응답은 공통 실패 envelope이며 모바일에는 안전한 `error.message`만 노출
+
+### 게스트 발급·갱신·승격·병합
+
+상세 계약은 [인증 계약](../api/AUTH_CONTRACT.md)을 따른다. 각 흐름은 별도 테스트 게스트로 검증한다.
+
+| 검증 | 요청 | 확인 기준 |
+| --- | --- | --- |
+| 발급 | POST /api/v1/auth/guest | 201, GUEST, nullable email/displayName, access/refresh token과 만료 시각 |
+| 본인 조회 | GET /api/v1/auth/me | 발급 때와 같은 user id, GUEST |
+| 만료 전 access 갱신 | POST /api/v1/auth/guest/refresh + guest Bearer | 200, 같은 user id, 새 만료 시각 |
+| refresh rotation | POST /api/v1/auth/refresh | 새 access/refresh token, 이전 refresh 재사용 거부 |
+| 회원가입 승격 | POST /api/v1/auth/register + guest Bearer | 201, 같은 user id, REGISTERED, 작성 데이터 유지 |
+| 기존 계정 병합 | POST /api/v1/auth/login + guest Bearer | 대상 계정 기존 데이터 유지, guest 데이터 이전, mergeResult 반환 |
+| 병합 재시도 | 같은 guest token과 같은 대상 로그인 | 중복 이전 없이 성공, 기존 guest의 owner API 접근은 401/11010 |
+| 검증 실패 | 잘못된 비밀번호 또는 중복 이메일 | 게스트 데이터 유지, 부분 이전 없음 |
+
+자동 host smoke의 현재 검증 범위는 `scripts/smoke-production-api.sh`를 확인한다. 승격/병합·refresh 전체 검증을 자동 스크립트 한 번의 성공으로 대체하지 않는다. token과 비밀번호는 결과 기록에 포함하지 않는다.
 
 ## 5. Today / Calendar / D-Day Smoke Test
 

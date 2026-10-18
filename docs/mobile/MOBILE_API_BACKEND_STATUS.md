@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-09-05
+Last audited: 2026-10-18 (목표 API 배포 검증 및 빠른 기록 선택 유형 로컬 구현 갱신)
 
 이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -12,7 +12,7 @@ Last audited: 2026-09-05
 
 ## 0. 현재 요약
 
-2026-09-05 기준 backend 계약과 구현은 모바일 v1 연동에 필요한 핵심 흐름을 제공한다. production DB migration 적용과 최신 backend image `63a54d5` 배포, 실제 도메인 public smoke, production Web CORS 확인은 완료됐다. 남은 최우선 확인은 Android 실제 기기 검증이다. Java package는 `pj.dooit`을 사용한다.
+2026-10-18 현재 운영 image는 `6cdc9e5`다. 개인 시스템·목표 schema 4개 적용과 새 backend 배포, 공개 HTTPS의 인증 후 목표 API smoke 및 Web CORS 확인을 완료했다. Android 실제 기기 검증은 아직 남아 있다. Java package는 `pj.dooit`을 사용한다. 아래 기존 연동 항목은 전체 모바일 재감사를 의미하지 않으며 이번 확인 범위는 목표 API의 기록된 PRD 배포와 빠른 기록 선택 유형의 STG 배포·합성 API 검증이다.
 
 | 영역 | 상태 | 현재 기준 |
 | --- | --- | --- |
@@ -20,12 +20,21 @@ Last audited: 2026-09-05
 | Task/D-Day | [x] | owner scope, Today/Calendar, 검색, D-Day 연결, 반복 occurrence 구현 |
 | Daily Planning | [x] | `daily-plans`, focus task 1~3개, 계획 확정/마감 상태, 결과 summary, Task 예상 소요 시간 구현. 계약은 `docs/api/DAILY_PLANNING_CONTRACT.md` 기준 |
 | Checklist | [x] | 개인/Workspace Task 하위 checklist item CRUD, 완료/재개, 정렬, Task 완료 시 자동 완료 구현 |
-| Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 상대 주, 한국어 날짜, 축약 상대일, 시 반/콜론 시간 표현 포함. 실제 입력 로그 기반 파싱 보강만 남음 |
+| Quick Capture | [x] | `POST /api/v1/tasks/quick-capture` 구현. 상대 주, 한국어 날짜, 축약 상대일, 시 반/콜론 시간 표현 포함. 선택 유형 requestedType 추가는 STG 반영·실 API 검증 완료, PRD 미배포. 모바일/제품 확인 및 배포 후 연동 필요 |
 | Templates | [x] | `TaskTemplate` CRUD와 template 기반 Task 생성 구현 |
 | Sharing | [x] | workspace 생성/초대/멤버/Task/D-Day 1차 API 구현 |
 | Notifications | [x] | 로컬 알림 후보, push token, 발송 이력, Expo client, 개인/workspace scheduler 자동 발송 구현. 운영 credential 적용 후 실수신 smoke 필요 |
+| Guest Lifecycle | [x] | 발급·갱신·승격·병합·만료·rate limit 계약은 [인증 계약](../api/AUTH_CONTRACT.md), 검증 순서는 [연동 runbook](MOBILE_INTEGRATION_RUNBOOK.md) 기준 |
+| Goal Journey | [x] | image `6cdc9e5`에서 목표/계획/회차 최소 실천/직접 기록 idempotency/여정 집계/다른 owner 404를 공개 HTTPS로 검증. 실제 개인 시스템 이관은 미실행 |
+| Goal AI | [~] | 네 API 기반은 배포됐으며 기본 비활성 503 확인. provider·보관·삭제 정책과 외부 adapter는 미확정/미구현 |
 | Production Android | [ ] | 실제 도메인 HTTPS URL로 Android 실제 기기 smoke 필요 |
 | Production Web | [x] | `https://dooit.hsng.pe.kr` 배포 및 API CORS preflight 확인 |
+
+### 2026-10-18 빠른 기록 선택 유형 추가 요청
+
+- 목표 중심 요청과 별도로 `requestedType` nullable 선택 필드를 구현했다. 생략/null은 자동 해석, TODO는 날짜만 계획일로 적용, IDEA는 날짜 문구 보존, SCHEDULE은 기존 일정 생성 정책이다.
+- TODO 시각/지원 주간 반복과 날짜·시각·지원 반복 없는 SCHEDULE은 400/10001이며 생성하지 않는다. TODAY의 미래 계획 포함, 실제 반복 시리즈 저장, 기존 멱등성 재시도 및 장애 구간 제약을 [회신 계약](../api/QUICK_CAPTURE_TYPE_CONTRACT.md)에 정리했다.
+- STG localhost:18080에 새 필드를 배포하고 합성 데이터로 실 API를 검증했다. PRD image `6cdc9e5`에는 새 필드가 없다. PRD 빠른 기록 호출·DB 변경·새 image 배포·모바일 코드/mock 변경은 수행하지 않았다. 정책 확인과 배포 후 클라이언트 연동이 남았다.
 
 ## 1. 현재 보존할 검증 기준
 
@@ -40,7 +49,14 @@ Last audited: 2026-09-05
 - 게스트 생성, `/auth/me`, refresh, logout, 신규 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit은 구현되어 있다.
 - Today/Calendar 범위 조회, 검색, D-Day 연결, 반복 occurrence, 알림 후보, push token/history, workspace 1차 API는 구현되어 있다.
 - 실제 도메인 public HTTPS smoke와 Web CORS preflight는 host에서 확인 가능하며, 실제 token/guest id는 문서에 기록하지 않는다.
-- 아직 남은 확인은 production DB migration 적용, Android 실제 기기 production smoke, host 전원 정책 strict 확인, offsite backup 확정이다.
+- 목표 관련 production DB migration과 backend 배포는 완료했다. 남은 확인은 Android 실제 기기 production smoke, 클라이언트 이관 연동, host 전원 정책 strict 확인, offsite backup 확정이다.
+
+### 2026-10-18 목표 API 운영 검증
+
+- 공개 API `https://dooitapi.hsng.pe.kr`의 imageTag `6cdc9e5`와 full commit SHA 일치, readiness 200/UP 및 공개 Web origin CORS를 확인했다.
+- 테스트 게스트 두 개만 사용해 목표/계획 생성, 현재 날짜 회차 생성, MINIMUM 결과, 직접 기록 동일 key 재시도 시 동일 ID, 여정 집계, 다른 계정 접근 404를 검증했다. 목표/계획 초안·조정안·여정 요약은 기본 비활성 상태의 503이었다. 외부 provider 호출은 없었다.
+- 테스트 목표는 보관하고 직접 기록은 취소했다. 게스트 두 개와 smoke 실천 이력은 운영 DB에 남아 있다. 실제 사용자 데이터를 이관하지 않았고 개인 시스템 이관 API는 호출하지 않았다. token/guest ID는 문서에 기록하지 않는다.
+- DB migration 10-12/14/15/16의 상세 적용 이력과 호환성은 `docs/db/MIGRATION_HISTORY.md`, 배포/복구 점검은 `docs/ops/LOCAL_PRODUCTION_RUNBOOK.md`를 따른다. 이 확인은 Android 실기기 UI, 실제 개인 데이터 이관, 서버 push 수신 검증을 대체하지 않는다.
 
 ## 2. 여러 날 일정 / Calendar 범위 조회
 
@@ -205,7 +221,6 @@ Last audited: 2026-09-05
 | --- | --- | --- |
 | 개발 / 스테이징 / 운영 API URL | [~] | local, host 내부 production, public HTTPS 도메인, Web production origin은 확정. Android 실제 기기 확인 필요 |
 | 인증 방식과 토큰 계약 | [x] | `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me`, refresh, logout 있음. TTL, rotation/reuse detection, 401/403 계약은 `docs/api/AUTH_CONTRACT.md` 기준 |
-| 게스트 계정 bootstrap과 정식 계정 연동 | [x] | `POST /api/v1/auth/guest`, 게스트 회원가입 승격, 기존 계정 로그인 병합, 만료 정리, 생성 rate limit 계약은 `docs/api/GUEST_ACCOUNT_HANDOFF.md` 기준 |
 | OpenAPI 명세 | [x] | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 제공. v1 주요 controller tag/summary/security/error schema와 tag 순서 검증 추가 |
 | 오류 코드와 장애 대응 | [x] | `docs/api/API_ERROR_CODES.md`와 `docs/mobile/MOBILE_INCIDENT_RUNBOOK.md`에 오류 코드, retry, logging/masking, 장애 확인 순서 정리 |
 | 데이터 모델 사전 | [x] | `docs/api/DATA_MODEL_GLOSSARY.md`에 Task, D-Day, User 주요 필드, 상태 전이, owner scope 정리 |

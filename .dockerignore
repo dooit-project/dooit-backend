@@ -9,3 +9,9 @@ build/test-results
 build/tmp
 *.iml
 .DS_Store
+
+.env
+.env.*
+backups
+logs
+monitoring-secrets

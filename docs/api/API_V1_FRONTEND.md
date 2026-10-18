@@ -1,6 +1,6 @@
 # Dooit v1 Frontend API
 
-Last updated: 2026-10-16
+Last updated: 2026-10-18
 
 이 문서는 모바일/프론트엔드가 실제 연동할 수 있는 현재 백엔드 v1 API 계약이다.
 
@@ -724,7 +724,7 @@ Task 응답 nullable/default 규칙:
 
 - 생성/조회 응답에서 `id`, `type`, `title`, `allDay`, `unscheduled`, `status`, `carryOverCount`, `staleCarryOver`는 항상 내려온다.
 - 저장된 Task의 `createdAt`은 내려온다. 일부 legacy 테스트/생성자 기반 응답에서는 null일 수 있으나 v1 API 응답에서는 non-null로 본다.
-- 날짜 없는 Task는 `startAt`, `endAt`, `plannedDate`, `targetDate`, `todayOrder`, `completedAt`이 null이고 `status=INBOX`, `unscheduled=true`, `allDay=false`다.
+- 일반 생성에서 날짜 없는 Task는 `startAt`, `endAt`, `plannedDate`, `targetDate`, `todayOrder`, `completedAt`이 null이고 `status=INBOX`, `unscheduled=true`, `allDay=false`다. 빠른 기록 requestedType=TODO의 날짜 입력은 예외로 시각 없이 계획일만 저장한다. 따라서 unscheduled=true만으로 INBOX나 계획일 없음을 판단하지 않는다.
 - 날짜가 있는 Task는 생성 직후 `status=TODAY`, `targetDate=startAt 날짜`, `plannedDate=targetDate`, `unscheduled=false`다.
 - `description`, `category`, `estimatedDurationMinutes`, `deferReason`, `deferReasonLabel`, D-Day 연결 필드, 반복 occurrence 필드는 값이 없으면 null이다.
 - `updatedAt`은 생성 직후 null이고 수정 후 값이 생긴다.
@@ -732,7 +732,7 @@ Task 응답 nullable/default 규칙:
 
 ## 3-2. 목표 중심 계획·실천 여정
 
-사용자의 "목표 -> 여러 반복 계획과 일회성 행동 -> 실제 실천 기록 -> 목표별 지나온 길" 흐름을 지원한다. 상세 정책은 [`PERSONAL_SYSTEM_CONTRACT.md`](./PERSONAL_SYSTEM_CONTRACT.md)를 원본으로 본다.
+사용자의 "목표 -> 여러 반복 계획과 일회성 행동 -> 실제 실천 기록 -> 목표별 지나온 길" 흐름을 지원한다. 상세 정책은 [`GOAL_JOURNEY_CONTRACT.md`](./GOAL_JOURNEY_CONTRACT.md)를 원본으로 본다.
 
 현재 구현된 `/api/v1/personal-systems/**`는 2026-10-12의 개인 시스템 1개 모델이다. 2026-10-14 기준 새 계약은 이 모델을 목표 중심 API로 전환하는 요구사항이며, 신규 `/api/v1/goals/**` 경로명은 아직 최종 확정 전이다.
 
@@ -923,7 +923,14 @@ Request: `TaskQuickCaptureRequest`
 
 Response: `TaskQuickCaptureResponse`
 
-규칙:
+2026-10-18 추가: 선택 필드 `requestedType: TODO | SCHEDULE | IDEA`를 구현했다. **STG 반영·PRD 미배포**이며 기존 클라이언트는 생략하면 된다. null도 기존 자동 해석이다. 선택 유형별 정책·응답 예시·오류·재시도 제약은 [백엔드 회신](QUICK_CAPTURE_TYPE_CONTRACT.md)을 따른다.
+
+- TODO: 날짜는 plannedDate/targetDate로만 적용하며 일정 시각은 만들지 않는다. 날짜가 없으면 INBOX다. 시각 또는 지원하는 주간 반복이 있으면 400/10001이다.
+- SCHEDULE: 날짜만 있으면 종일 하루, 시각이 있으면 시작+1시간이다. 날짜/시각/지원 반복이 모두 없으면 400/10001이다.
+- IDEA: 날짜/시각/반복을 해석하지 않고 문구를 제목(길면 description)에 보존한다.
+- 실제 저장 결과는 `task`가 기준이며 parsed*는 제안이 아닌 적용 결과다. TODAY는 미래 계획도 포함하므로 계획 날짜로 오늘 여부를 판단한다.
+
+기존 자동 해석 규칙(requestedType 생략/null):
 
 - 현재 지원 범위는 `오늘`, `내일`, `낼`, `모레`, `내일모레`, `낼모레`, `YYYY-MM-DD`, `YYYY년 M월 D일`, `M월 D일`, `M/D`, `이번 주/다음 주/담주/다다음주/다담주 + 요일`, 단독 요일(`금요일 병원`), `오전/오후 N시`, `N시`, `N시 반`, `HH:mm`, `매주 요일` 기반 규칙 파싱이다.
 - 날짜 또는 시간이 파싱되면 `SCHEDULE`로 저장하고, 시간만 있으면 `referenceDate`를 날짜로 사용한다.

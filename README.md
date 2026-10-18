@@ -67,7 +67,9 @@ Authorization: Bearer <accessToken>
 
 ```bash
 cp .env.example .env
-docker volume create dooit-mysql-data
+for volume in dooit-mysql-data dooit-app-logs dooit-prometheus-data dooit-loki-data dooit-alloy-data dooit-grafana-data; do
+  docker volume create "$volume"
+done
 docker compose up --build
 ```
 
@@ -106,6 +108,8 @@ src/main/java/pj/dooit/
 
 ## 운영까지 포함한 백엔드
 
+Docker 환경은 이 PC의 `prd_dooit`와 `stg_dooit`로 분리했습니다. STG는 `http://localhost:18080`이며 별도 DB와 인증 키를 사용합니다. 로컬 구현 완료와 운영 배포 여부는 [문서 현황](./docs/README.md#현재-기준-요약)에서 구분합니다.
+
 production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로 공개합니다. Web은 별도 정적 서버의 `127.0.0.1:4173`을 `https://dooit.hsng.pe.kr`에 연결하며, 두 공개 주소 모두 Cloudflare edge에서 HTTPS를 강제합니다. MySQL port는 host에 공개하지 않습니다.
 
 최신 코드 기준 production DB migration은 [docs/db/MIGRATION_HISTORY.md](./docs/db/MIGRATION_HISTORY.md)에 적용 이력을 남깁니다. `prod` profile은 `ddl-auto: validate`를 사용하므로 schema 변경 release 전에는 백업, migration 적용, readiness 확인을 먼저 끝내야 합니다.
@@ -137,19 +141,19 @@ production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Clo
 | --- | --- |
 | [v1 API 계약](./docs/api/API_V1_FRONTEND.md) | 모바일/프론트엔드가 호출하는 endpoint, request/response, 오류 기준 |
 | [일일 계획 계약](./docs/api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 summary |
-| [개인 시스템 계약](./docs/api/PERSONAL_SYSTEM_CONTRACT.md) | 시스템, 회차, 실천/휴식, 주간 증거, AI 초안/회고 계약 |
-| [게스트 계정 인수인계](./docs/api/GUEST_ACCOUNT_HANDOFF.md) | 게스트 시작, 승격, 기존 계정 병합, 만료와 rate limit |
+| [목표 여정 계약](./docs/api/GOAL_JOURNEY_CONTRACT.md) | 목표·계획·실천·직접 기록·여정과 기존 개인 시스템 이관 |
+| [빠른 기록 선택 유형](./docs/api/QUICK_CAPTURE_TYPE_CONTRACT.md) | 선택 유형 보존 정책, 오류·재시도, STG 반영·PRD 미배포 상태 |
+| [PRD/STG Docker 운영](./docs/ops/DOCKER_ENVIRONMENTS.md) | 프로젝트·DB·포트 분리와 STG 기동·업데이트 |
 | [환경 연동 기준](./docs/ops/ENVIRONMENT_INTEGRATION.md) | local, production 실제 도메인, CORS, 문서 UI 공개 기준 |
-| [인증 계약](./docs/api/AUTH_CONTRACT.md) | JWT claim, token TTL, refresh rotation, logout, 비밀번호 재설정 |
+| [인증 계약](./docs/api/AUTH_CONTRACT.md) | 게스트 수명 주기, JWT, refresh rotation, logout, 비밀번호 재설정 |
 | [오류 코드](./docs/api/API_ERROR_CODES.md) | 오류 코드, 사용자 노출 message, 모바일 처리 기준 |
 | [데이터 모델 사전](./docs/api/DATA_MODEL_GLOSSARY.md) | Task, D-Day, User 주요 필드와 상태 전이 |
 | [시간대 계약](./docs/api/TIMEZONE_CONTRACT.md) | 사용자 timezone과 날짜 경계 계산 기준 |
 | [반복 모델](./docs/api/RECURRENCE_MODEL.md) | 반복 series, occurrence, 수정·삭제 정책 |
 | [알림 계약](./docs/api/NOTIFICATION_CONTRACT.md) | 로컬 알림 후보와 서버 push 책임 경계 |
 | [공유 계약](./docs/api/SHARING_CONTRACT.md) | Workspace 권한, scope, 공유 Task/D-Day 정책 |
-| [게스트 운영 적용](./docs/ops/GUEST_ACCOUNT_PRODUCTION_APPLY.md) | 게스트 계약 production 점검 항목 |
 | [로컬 production Runbook](./docs/ops/LOCAL_PRODUCTION_RUNBOOK.md) | Docker Compose production, 백업, 복구, release, rollback |
-| [모니터링 Runbook](./docs/ops/MONITORING_RUNBOOK.md) | Prometheus, Grafana, Loki, Alloy 구성 계획과 구현 작업 |
+| [모니터링 Runbook](./docs/ops/MONITORING_RUNBOOK.md) | Prometheus, Grafana, Loki, Alloy 운영 구성과 후속 alerting |
 | [로드맵](./docs/project/ROADMAP.md) | 아직 닫히지 않은 제품/운영 작업 |
 | [Migration 이력](./docs/db/MIGRATION_HISTORY.md) | Flyway 도입 전 수동 DB migration 적용 이력 |
 

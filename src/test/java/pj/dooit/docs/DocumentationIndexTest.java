@@ -14,8 +14,8 @@ class DocumentationIndexTest {
     private static final List<DocumentLink> FRONTEND_DOCS = List.of(
             new DocumentLink("docs/api/API_V1_FRONTEND.md", "api/API_V1_FRONTEND.md"),
             new DocumentLink("docs/api/DAILY_PLANNING_CONTRACT.md", "api/DAILY_PLANNING_CONTRACT.md"),
-            new DocumentLink("docs/api/PERSONAL_SYSTEM_CONTRACT.md", "api/PERSONAL_SYSTEM_CONTRACT.md"),
-            new DocumentLink("docs/api/GUEST_ACCOUNT_HANDOFF.md", "api/GUEST_ACCOUNT_HANDOFF.md"),
+            new DocumentLink("docs/api/GOAL_JOURNEY_CONTRACT.md", "api/GOAL_JOURNEY_CONTRACT.md"),
+            new DocumentLink("docs/api/QUICK_CAPTURE_TYPE_CONTRACT.md", "api/QUICK_CAPTURE_TYPE_CONTRACT.md"),
             new DocumentLink("docs/ops/ENVIRONMENT_INTEGRATION.md", "ops/ENVIRONMENT_INTEGRATION.md"),
             new DocumentLink("docs/api/AUTH_CONTRACT.md", "api/AUTH_CONTRACT.md"),
             new DocumentLink("docs/api/API_ERROR_CODES.md", "api/API_ERROR_CODES.md"),
@@ -45,7 +45,6 @@ class DocumentationIndexTest {
     void docsIndexDefinesMaintenanceRules() throws Exception {
         String docsIndex = Files.readString(Path.of("docs/README.md"));
         String auth = Files.readString(Path.of("docs/api/AUTH_CONTRACT.md"));
-        String guest = Files.readString(Path.of("docs/api/GUEST_ACCOUNT_HANDOFF.md"));
 
         assertThat(docsIndex).contains("## 유지 원칙");
         assertThat(docsIndex).contains("## 현재 기준 요약");
@@ -74,8 +73,6 @@ class DocumentationIndexTest {
         assertThat(auth).contains("REFRESH_TOKEN_SESSION");
         assertThat(auth).contains("refresh token 재사용 감지");
         assertThat(auth).contains("POST /api/v1/auth/logout");
-        assertThat(guest).contains("기존 계정 로그인 및 게스트 병합");
-        assertThat(guest).contains("backend commit은 이 문서가 포함된 최신 `main` 커밋을 사용한다.");
     }
 
     @Test
@@ -84,7 +81,7 @@ class DocumentationIndexTest {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
         assertThat(roadmap).contains("## 2. 제품 기능 로드맵");
-        assertThat(roadmap).contains("### 2026-09-05 정리");
+        assertThat(roadmap).contains("### 현재 운영 기준");
         assertThat(roadmap).contains("일일 계획");
         assertThat(roadmap).contains("PRD DB schema");
         assertThat(roadmap).contains("### P0. 프론트 출시 연동 차단 해소");

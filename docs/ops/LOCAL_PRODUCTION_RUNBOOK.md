@@ -1,6 +1,6 @@
 # Local PC Production Runbook
 
-Last updated: 2026-09-06
+Last updated: 2026-10-18
 
 이 문서는 이 Mac의 Docker Compose를 Dooit의 단일 production 서버로 사용하고 실제 HTTPS 도메인으로 Android/Web이 접근하는 절차다.
 
@@ -13,7 +13,9 @@ Last updated: 2026-09-06
 - 최초 1회 external DB volume을 만든다.
 
 ```bash
-docker volume create dooit-mysql-data
+for volume in dooit-mysql-data dooit-app-logs dooit-prometheus-data dooit-loki-data dooit-alloy-data dooit-grafana-data; do
+  docker volume create "$volume"
+done
 ```
 
 `.env`와 백업 파일은 Git에 커밋하지 않는다.
@@ -286,7 +288,7 @@ DOOIT_CONFIRM_DB_OUTAGE=STOP_MYSQL ./scripts/drill-production-incident.sh
 
 이 모드는 MySQL container를 중지해 readiness가 내려가는지 확인한 뒤 MySQL/app을 다시 올리고 readiness `UP`까지 대기한다. 실행 전 모바일 사용자가 없는지 확인한다. Android production build smoke는 실제 기기에서 별도로 검증한다.
 
-## 10. 전원 정책
+## 11. 전원 정책
 
 이 PC를 production 서버로 사용할 때 AC 전원 연결 중 시스템 절전을 허용하면 API가 내려갈 수 있다. production 정책은 AC 전원에서 system sleep, disk sleep, power nap을 끄는 것이다.
 
@@ -342,8 +344,6 @@ DB 없이 fixture를 점검하려면 `python3 -B scripts/check-goal-schema.py --
 
 리허설에서 발견한 InnoDB NO ACTION/RESTRICT 동등성 오판을 수정했다. InnoDB engine을 확인한 경우에만 정규화하며 CASCADE/SET NULL·잘못된 참조는 허용하지 않는다. Python/DDL/release 파일 변경도 Gradle test 입력에 포함해 검사 결과를 잘못 재사용하지 않도록 했다.
 
-초기 유지보수 명령은 자동 승인 검토에서 거절되어 실행하지 않았고, 이후 사용자가 운영 범위를 명시적으로 승인한 뒤 다음 적용을 완료했다.
-
 ### 2026-10-17 23:24 KST 운영 DDL 적용·기존 image 재기동
 
 - launchd 자동 복구를 잠시 중지하고 app을 내린 뒤 최종 백업을 만들었다. gzip 무결성·덤프 완료 표식과 비공개 보관을 확인했다.
@@ -351,7 +351,7 @@ DB 없이 fixture를 점검하려면 `python3 -B scripts/check-goal-schema.py --
 - 기존 app 컨테이너를 다시 시작하고 launchd를 복원했다. 전후 image digest는 같고 운영 image tag는 3bda00c다. 새 backend image 배포와 사용자 데이터 이관 API는 실행하지 않았다.
 - 로컬/공개 HTTPS curl의 readiness는 200/UP, metadata는 200, 미인증 auth/me는 401이었다. 공개 Web origin CORS는 200과 allow-origin 일치로 확인했다. Python urllib의 공개 요청은 403이었으나 curl 검증은 통과했다. 인증 후 기능 smoke는 포함하지 않았다.
 - 백업·검증 JSON과 SHA-256은 git 제외 backups 디렉터리에만 남겼다. 운영 DDL을 재실행하지 않는다. 상세 파일/결과는 MIGRATION_HISTORY.md의 23:24 적용 기록을 따른다.
-- `./gradlew test bootJar`가 성공했다. 테스트는 이전 성공 결과를 재사용했고 다음 배포용 `build/libs/Dooit-1.0-SNAPSHOT.jar`를 생성했다. 현재 운영은 여전히 기존 image이며, 다음 작업은 새 backend image 배포와 목표 API 인증 후 smoke다.
+- `./gradlew test bootJar`가 성공했다. 테스트는 이전 성공 결과를 재사용했고 다음 배포용 `build/libs/Dooit-1.0-SNAPSHOT.jar`를 생성했다. 이 단계에서는 기존 image를 유지했으며, 이후 2026-10-18 아래의 새 image 배포와 목표 API smoke를 완료했다.
 
 ### 2026-10-17 후보 image 6cdc9e5 검증
 
@@ -359,4 +359,27 @@ DB 없이 fixture를 점검하려면 `python3 -B scripts/check-goal-schema.py --
 - 별도 internal Docker network/임시 volume에 MySQL 8.4.11을 띄우고 운영 DB에서 schema만 복제했다. 운영 데이터 행이나 credential은 복사하지 않았다. 별도 임시 JWT secret과 production profile로 후보를 기동해 Hibernate validate 및 readiness UP을 확인했다. host 포트 공개 없이 컨테이너 내부 curl로 점검했다.
 - 임시 게스트 계정으로 목표/계획 생성, 날짜별 회차 생성, 최소 실천, 직접 기록과 동일 key 재시도, 여정 집계, 다른 계정의 404, 네 AI API 기본 비활성 503을 검증했다. 테스트 직접 기록을 취소하고 목표를 보관한 뒤 임시 컨테이너·DB volume·network를 제거했다. 모든 fixture는 임시 DB와 함께 제거됐으며 운영 smoke 계정은 생성하지 않았다. 사용자 개인 시스템 이관 API는 호출하지 않았다.
 - 비공개 `backups/candidate-validation-6cdc9e5.json`에 검증 결과를 보존한다. 이 파일의 fixture 보관 설명은 격리 DB 안의 API 처리 상태이며, 최종 컨테이너/volume 제거 이후 fixture가 운영에 남았다는 뜻은 아니다.
-- 후보 운영 배포는 app image를 `3bda00c`에서 `6cdc9e5`로 교체하고 readiness/metadata 확인 실패 시 기존 image로 되돌리는 범위로 준비했다. DB DDL은 포함하지 않으며 자동 복구 launchd는 잠시 내렸다가 복원한다. 다만 구체적인 운영 image 교체 승인이 없다는 자동 승인 검토로 명령이 실행 전에 거절됐다. 현재 image는 `3bda00c`, launchd는 로드된 상태다. 명시적 배포 승인 후 운영 인증 smoke는 별도 테스트 게스트로만 수행하고 기존 사용자 데이터를 건드리지 않는다.
+- 후보 검증은 일회성 격리 환경에서 수행했으며 상시 STG는 구축하지 않았다. 이후 운영 image 교체 결과는 아래 배포 완료 기록을 따른다.
+
+
+### 2026-10-18 운영 image 6cdc9e5 배포 완료
+
+사용자가 운영 image 교체·자동 복구 일시정지/복원·실패 시 롤백·테스트 계정 API smoke를 명시적으로 승인한 뒤 `3bda00c`에서 `6cdc9e5`로 app만 교체했다. DB DDL은 재실행하지 않았다. 새 image readiness가 통과해 롤백은 실행하지 않았다. 이전 image는 보존했다.
+
+공개 HTTPS에서 테스트 게스트로 목표/계획 생성, 회차 생성·MINIMUM 실천, 직접 기록 같은 key 재시도와 동일 ID, 여정 집계, 다른 owner 접근 404, 네 AI API 비활성 503을 확인했다. 테스트 목표는 보관하고 직접 기록은 취소했지만 두 게스트와 실천 이력은 남아 있다. 기존 사용자 데이터나 개인 시스템 이관 API는 건드리지 않았다. Android 실제 기기/실제 사용자 이관 검증은 별도다.
+
+배포 후 launchd 복구 스크립트가 commit env를 전달하지 않아 metadata를 local로 덮고 같은 image를 재생성하는 문제를 발견했다. `ensure-production-up.sh`가 같은 running image의 기존 commit을 보존하고, 누락/local이면 image tag를 git commit으로 해석하도록 보정했다. explicit image가 다르면 이전 컨테이너 commit을 상속하지 않고 explicit commit이 있으면 우선한다. git에서 찾을 수 없는 custom tag는 tag 자체를 fallback으로 사용한다. Docker inspect env는 commit 필드만 추출하고 다른 env는 출력하지 않는다.
+
+host 복구 스크립트 보정 후 같은 `6cdc9e5` image에 full commit SHA를 전달해 재기동했다. 반복 복구 실행에서 컨테이너 ID가 유지됐고 로컬/공개 readiness UP, metadata의 tag/full SHA 일치, CORS 및 launchd 로드 상태를 재확인했다. 이는 host 스크립트 수정이며 app image를 다시 빌드한 것은 아니다. 회귀 테스트 네 개를 포함해 전체 622개가 통과했다.
+
+최종 비공개 보고서는 `backups/production-release-6cdc9e5-20261018-011714.json`이며 token/credential은 저장하지 않았다. 이번 배포의 API 변경은 기존 계약에 새 목표 API·nullable 연결 필드·AI 오류 응답을 추가한 것이며, 구 personal system의 60004 동작은 명시적 이관을 선택한 경우에만 적용된다. 클라이언트는 기존 예약 정리와 새 ID/API 전환을 이관 계약에 따라 처리한다. AI 외부 adapter는 여전히 없으며 다음 작업은 모바일 실제 기기 연동 확인과 provider·보관·삭제 정책 확정이다.
+
+## 게스트 schema와 배포 점검
+
+게스트 컬럼 migration `../db/migrations/20260809_add_guest_account_columns.sql`은 이미 적용됐다. 적용 이력은 [DB 이력](../db/MIGRATION_HISTORY.md), 실제 컬럼/nullable/index 정의는 SQL을 원본으로 본다. 재구축 또는 drift 복구 때는 APP_USER의 ACCOUNT_TYPE/MERGED_INTO_USER_ID/MERGED_AT/LAST_ACTIVE_AT/GUEST_EXPIRES_AT와 IDX_APP_USER_ACCOUNT_TYPE_EXPIRES를 확인하고 누락된 변경만 검토한다. 적용된 파일을 통째로 재실행하지 않는다.
+
+게스트 row가 있으면 EMAIL/PASSWORD_HASH/DISPLAY_NAME을 NOT NULL로 되돌릴 수 없으므로 단순 역방향 DDL을 rollback으로 사용하지 않는다. 백업/복구와 데이터 처리 계획을 먼저 확인한다. 배포는 이 문서의 공통 release 절차를 따르고, 게스트 발급·갱신·승격·병합 검증은 [모바일 연동 runbook](../mobile/MOBILE_INTEGRATION_RUNBOOK.md#게스트-발급갱신승격병합)을 따른다. 완료 보고에는 commit/image, migration 적용 여부, readiness, 테스트 범위, 테스트 데이터 잔존 여부를 적는다.
+
+## PRD/STG 프로젝트 분리 (2026-10-18)
+
+기존 운영 image/볼륨을 보존해 프로젝트를 prd_dooit로 전환했고, 별도 STG를 localhost:18080에 기동했다. 현재 `.env`의 DOOIT_COMPOSE_PROJECT_NAME이 PRD 그룹을 선택한다. 전환 백업·검증과 STG 명령은 [PRD/STG 운영](DOCKER_ENVIRONMENTS.md)을 따른다. 이 전환은 PRD에 빠른 기록 새 기능을 배포한 것이 아니다.

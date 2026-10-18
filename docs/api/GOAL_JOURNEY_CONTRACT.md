@@ -1,10 +1,12 @@
 # Goal Journey Contract
 
-Last updated: 2026-10-16
+Last updated: 2026-10-18
 
 이 문서는 "목표 -> 여러 반복 계획과 일회성 행동 -> 실제 실천 기록 -> 목표별 지나온 길" 흐름의 백엔드 구현 계약이다. 2026-10-12의 개인 시스템 하나 중심 계약은 이 문서로 대체한다. 기존 구현의 `personal-systems` 모델은 폐기하지 않고 목표의 반복 실행 계획 모델로 확장 또는 마이그레이션한다.
 
-첫 전환 목표는 아래 예시를 중복 없이 표현하는 것이다.
+2026-10-18 기록 기준 image `6cdc9e5`에 1차 API와 schema 배포 및 공개 HTTPS smoke를 완료했다. 사용자 데이터 이관과 모바일 실기기 검증은 별도이며 AI 외부 adapter는 미구현/기본 비활성이다. 배포 상세는 [운영 runbook](../ops/LOCAL_PRODUCTION_RUNBOOK.md)을 따른다.
+
+아래 예시를 중복 없이 표현한다.
 
 - 목표: 토익 900점, 선택 목표일 2026-11-30
 - 반복 계획: 매일 단어 30개, 선택한 주말 요일 문제 5개
@@ -39,7 +41,7 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 
 `UNKNOWN`은 기존 Task 완료나 외부 hook처럼 기본/최소 행동 여부를 알 수 없을 때만 사용한다. 백엔드는 기본 행동을 했다고 추정하지 않는다.
 
-## 3. 제안 데이터 모델
+## 3. 데이터 모델
 
 ### `GOAL`
 
@@ -170,7 +172,7 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
 
 2026-10-15 구현: 목표별 Task 생성은 `title`(1~30자), `date` 필수 body로 Today Task를 만든다. 별도 목표 연결 PUT/DELETE와 일반 Task 생성/수정의 선택 `linkedGoalId`를 지원한다. 수정 시 목표 ID 생략/null은 기존 연결을 유지하고 별도 DELETE로 해제한다. 응답 `linkedGoalId`는 nullable이다. 완료 상태/시각과 D-Day 연결은 보존한다. 일반 반복/목표 계획/기존 개인 시스템 회차 Task의 목표는 개별 Task에서 변경할 수 없다. workspace Task는 개인 목표 연결 대상이 아니다. 여정 통합/중복 제거는 후속 단계에서 구현한다.
 
-## 4. API 초안
+## 4. API 계약
 
 경로명은 아직 최종 확정 전이다. 기존 `/api/v1/personal-systems/**`는 호환 기간 동안 유지하고 새 goal API로 단계적 전환한다.
 
@@ -406,7 +408,9 @@ Task 완료는 목표 여정의 `TASK_COMPLETION` 원본으로 들어온다. 이
 - 기존 `linkedDdayGoalId`는 새 `GOAL.linkedDdayGoalId`로 옮기는 것을 우선한다. Task의 기존 D-Day 연결 필드는 유지한다.
 - API 계약 변경은 외부 클라이언트에 영향을 준다. 새 `/goals/**` API를 먼저 추가하고 기존 `/personal-systems/**`는 호환 경로로 유지한 뒤 deprecation 계획을 별도 공지한다.
 
-## 8. 구현 순서
+## 8. 구현 범위
+
+아래 1~9는 1차 구현 범위다. 10의 API·호출 제한 기반은 구현됐고 외부 AI adapter·제품 정책 확정은 남아 있다. 현재 미완료 작업은 [로드맵](../project/ROADMAP.md)에서 관리한다.
 
 1. 계약 확정: DTO, enum, validation, 오류 코드, OpenAPI 예시, D-Day/Task 연결 정책을 확정한다.
 2. DB migration: `GOAL`, `GOAL_VERSION`, `GOAL_PLAN`, `GOAL_PLAN_VERSION`, `GOAL_PLAN_OCCURRENCE`, `GOAL_PRACTICE_RESULT`, `GOAL_DIRECT_LOG`, `TASK.linked_goal_id`를 추가한다.

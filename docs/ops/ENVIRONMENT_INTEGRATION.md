@@ -1,15 +1,19 @@
 # Dooit Environment Integration
 
-Last updated: 2026-09-05
+Last updated: 2026-10-18
 
 이 문서는 모바일 real mode가 백엔드에 붙을 때 사용하는 환경별 URL, CORS origin, 문서 UI 공개 기준, API 로그 운영 기준을 정리한다.
 
-이 PC를 단일 production으로 운영하는 실제 명령과 백업·복구 절차는 [`LOCAL_PRODUCTION_RUNBOOK.md`](./LOCAL_PRODUCTION_RUNBOOK.md)를 따른다.
-Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링 구성 계획은 [`MONITORING_RUNBOOK.md`](./MONITORING_RUNBOOK.md)를 따른다.
+이 PC의 production 명령과 백업·복구 절차는 [`LOCAL_PRODUCTION_RUNBOOK.md`](./LOCAL_PRODUCTION_RUNBOOK.md)를 따른다.
+Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링 운영 구성은 [`MONITORING_RUNBOOK.md`](./MONITORING_RUNBOOK.md)를 따른다.
 
 ## 현재 운영 입력 상태
 
-2026-09-05 기준 local 개발 URL, host 내부 production URL, Docker Compose loopback bind, 실제 도메인 기반 public smoke가 확인됐다. 공개 Web은 `https://dooit.hsng.pe.kr`, 공개 API는 `https://dooitapi.hsng.pe.kr`을 사용한다. `.env`의 `DOOIT_PUBLIC_API_URL`과 `DOOIT_JWT_ISSUER`는 공개 API origin으로, `DOOIT_ALLOWED_ORIGINS`는 공개 Web origin으로 설정한다. production DB migration 적용 후 backend image `63a54d5`가 배포됐고 readiness/public smoke가 통과했다. `./scripts/check-production-recovery.sh`는 host 내부 readiness 복구를 확인하고, public readiness와 Web CORS preflight는 `./scripts/check-public-production.sh`로 확인한다. 아직 문서에 확정값을 남기지 않는 항목은 Android 실제 기기 smoke 결과와 offsite backup 경로다.
+local 개발 URL, host 내부 production URL, Docker Compose loopback bind, 실제 도메인 기반 public smoke가 확인됐다. 공개 Web은 `https://dooit.hsng.pe.kr`, 공개 API는 `https://dooitapi.hsng.pe.kr`을 사용한다. `.env`의 `DOOIT_PUBLIC_API_URL`과 `DOOIT_JWT_ISSUER`는 공개 API origin으로, `DOOIT_ALLOWED_ORIGINS`는 공개 Web origin으로 설정한다.
+
+Docker 환경은 `prd_dooit`와 `stg_dooit`로 분리했다. STG는 localhost:18080과 별도 DB/JWT를 사용한다. [분리·기동 절차](DOCKER_ENVIRONMENTS.md)를 따른다. 운영 image·API별 배포 여부는 [현재 기준 요약](../README.md#현재-기준-요약)과 [운영 기록](LOCAL_PRODUCTION_RUNBOOK.md)을 확인한다. 프로젝트 분리 후 PRD readiness/복구와 STG 합성 API 검증을 수행했다.
+
+`./scripts/check-production-recovery.sh`는 host 내부 readiness 복구를 확인하고, public readiness와 Web CORS preflight는 `./scripts/check-public-production.sh`로 확인한다. Android 실제 기기 smoke와 offsite backup 경로는 아직 확정 결과가 없다.
 
 전원 정책은 아직 strict production 기준이 아니다. `DOOIT_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`는 macOS 관리자 비밀번호 입력이 필요하므로 운영자 터미널에서 실행한다.
 
@@ -22,7 +26,7 @@ Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링 구성 계획은 [`
 | local | `http://localhost:8080` | 확정 | 백엔드 로컬 실행 기준 |
 | local, Android Emulator | `http://10.0.2.2:8080` | 확정 | Android Emulator에서 호스트 머신 접근 시 사용 |
 | local, 실제 기기 | `http://<dev-machine-lan-ip>:8080` | 확인 필요 | 같은 네트워크에서 개발 머신 IP로 접근 |
-| staging | 사용하지 않음 | 해당 없음 | 이 PC 단일 production 운영에서는 별도 staging을 두지 않는다. |
+| staging | `http://localhost:18080` | host 검증 완료 | 별도 DB/JWT, loopback 전용. 외부 도메인은 미연결 |
 | production, host 내부 | `http://127.0.0.1:8080` | 확정 | Docker Compose app port는 loopback에만 공개한다. |
 | production, Android | `.env`의 `DOOIT_PUBLIC_API_URL` | host public smoke 확인됨, 실제 기기 확인 필요 | 실제 API 도메인을 사용한다. |
 | production, 실제 도메인 | `https://dooitapi.hsng.pe.kr` | 확인됨 | Cloudflare Tunnel, TLS, readiness public smoke 통과 |
@@ -40,7 +44,7 @@ Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링 구성 계획은 [`
 | local, iOS Simulator | CORS origin 없음 | 확인됨 | native 요청은 브라우저 CORS 대상이 아님 |
 | local, Android Emulator | CORS origin 없음 | 확인됨 | native 요청은 브라우저 CORS 대상이 아님 |
 | local, 실제 기기 | CORS origin 없음 | 확인 필요 | Expo Go/native 요청은 브라우저 CORS 대상이 아님 |
-| staging | 사용하지 않음 | 해당 없음 | 이 PC 단일 production 운영에서는 별도 staging을 두지 않는다. |
+| staging, Expo Web | `http://localhost:8081`, `http://localhost:8090` | 설정됨 | `docker-compose.stg.yml` |
 | production, native app | CORS origin 없음 | 확인 필요 | native 요청은 브라우저 CORS 대상이 아님 |
 | production, Expo Web | `https://dooit.hsng.pe.kr` | 확인됨 | `DOOIT_ALLOWED_ORIGINS`에 이 origin만 허용 |
 
@@ -77,7 +81,7 @@ DOOIT_DOCS_PUBLIC_ENABLED=false
 
 원칙:
 
-- staging은 현재 운영하지 않는다. production origin은 코드에 하드코딩하지 않는다.
+- STG와 PRD origin/인증 키는 분리한다. production origin은 코드에 하드코딩하지 않는다.
 - 여러 origin은 쉼표로 구분한다.
 - secret 값은 문서에 기록하지 않는다.
 - origin을 추가한 뒤 `Authorization`, `Content-Type`, `Idempotency-Key` header가 포함된 preflight를 확인한다.
@@ -87,16 +91,16 @@ DOOIT_DOCS_PUBLIC_ENABLED=false
 
 ## 4. 운영 환경 확정 입력값
 
-production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 secret이나 private URL은 이 문서에 기록하지 않고 배포 환경 변수로만 관리한다. staging은 현재 운영하지 않는다.
+production 환경을 확정할 때는 아래 값을 먼저 결정한다. 실제 secret이나 private URL은 이 문서에 기록하지 않고 배포 환경 변수로만 관리한다. STG 값은 별도 `.env.stg`와 Compose 파일을 사용한다.
 
 | 항목 | staging | production | 검증 기준 |
 | --- | --- | --- | --- |
-| API base URL | 사용하지 않음 | host 내부 `http://127.0.0.1:8080`, 외부 공개용 HTTPS URL은 `.env`의 `DOOIT_PUBLIC_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
-| Web origin | 사용하지 않음 | `https://dooit.hsng.pe.kr` | Web에서 API CORS preflight와 인증 요청 확인 |
-| Native 앱 API 접근 | 사용하지 않음 | `https://dooitapi.hsng.pe.kr` | Android 실제 기기에서 HTTPS API 접근 가능 |
-| 문서 UI 공개 여부 | 사용하지 않음 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 비공개 정책 확인 |
-| CORS 환경변수 | 사용하지 않음 | `https://dooit.hsng.pe.kr` | 공개 Web origin만 허용 |
-| backend metadata | 사용하지 않음 | `GET /api/v1/system/metadata` | `commitSha`, `imageTag`, `version` 확인 |
+| API base URL | `http://localhost:18080` | host 내부 `http://127.0.0.1:8080`, 외부 공개용 HTTPS URL은 `.env`의 `DOOIT_PUBLIC_API_URL` | 모바일 base URL에서 `/api/v1/auth/me` 접근 가능 |
+| Web origin | localhost:8081/8090 | `https://dooit.hsng.pe.kr` | Web에서 API CORS preflight와 인증 요청 확인 |
+| Native 앱 API 접근 | Emulator: 10.0.2.2:18080, 실기기 경로 미정 | `https://dooitapi.hsng.pe.kr` | Android 실제 기기에서 HTTPS API 접근 가능 |
+| 문서 UI 공개 여부 | loopback에서 공개 | 비공개 기본 | `/v3/api-docs`, `/swagger-ui`, `/scalar.html` 비공개 정책 확인 |
+| CORS 환경변수 | STG Compose의 로컬 Web origin | `https://dooit.hsng.pe.kr` | 공개 Web origin만 허용 |
+| backend metadata | `GET /api/v1/system/metadata` | `GET /api/v1/system/metadata` | `commitSha`, `imageTag`, `version` 확인 |
 
 확정 후 반영 순서:
 
@@ -171,7 +175,7 @@ curl --fail http://127.0.0.1:8080/api/v1/system/metadata
 | 환경 | Swagger UI `/swagger-ui` | Scalar `/scalar.html` | 비고 |
 | --- | --- | --- | --- |
 | local | 공개 | 공개 | 개발 확인용 |
-| staging | 사용하지 않음 | 사용하지 않음 | 이 PC 단일 production 운영에서는 별도 staging을 두지 않는다. |
+| staging | loopback 공개 | loopback 공개 | STG 전용 설정, 외부 도메인 미연결 |
 | production | 비공개 기본 | 비공개 기본 | `DOOIT_DOCS_PUBLIC_ENABLED=false` 기본값 유지 |
 
 현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다. prod 설정의 `DOOIT_DOCS_PUBLIC_ENABLED`, `DOOIT_SPRINGDOC_API_DOCS_ENABLED`, `DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED` 기본값은 테스트로 검증한다.

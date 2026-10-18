@@ -9,7 +9,7 @@ discovery.docker "dooit" {
 
   filter {
     name   = "label"
-    values = ["com.docker.compose.project=dooit"]
+    values = ["com.docker.compose.project=" + sys.env("DOOIT_COMPOSE_PROJECT_NAME")]
   }
 }
 

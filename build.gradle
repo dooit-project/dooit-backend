@@ -78,8 +78,10 @@ clean {
 
 tasks.named('test') {
     useJUnitPlatform()
+    inputs.files("README.md", "docker-compose.yml", "docker-compose.stg.yml", "scripts/staging.sh")
+    inputs.files(fileTree("docs") { include "**/*.md" })
     // The schema preflight contract tests execute Python and inspect release/DDL files.
-    inputs.files('scripts/check-goal-schema.py', 'scripts/release-production.sh')
+    inputs.files('scripts/check-goal-schema.py', 'scripts/release-production.sh', 'scripts/ensure-production-up.sh')
     inputs.files(fileTree('src/test/python') { include '**/*.py' })
     inputs.files('docs/db/migrations/20261012_add_personal_system.sql',
             'docs/db/migrations/20261014_add_goal_journey.sql',

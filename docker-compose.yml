@@ -1,4 +1,4 @@
-name: dooit
+name: ${DOOIT_COMPOSE_PROJECT_NAME:-dooit}
 
 services:
   mysql:
@@ -141,6 +141,8 @@ services:
 
   alloy:
     image: grafana/alloy:latest
+    environment:
+      DOOIT_COMPOSE_PROJECT_NAME: ${DOOIT_COMPOSE_PROJECT_NAME:-dooit}
     container_name: dooit-alloy
     restart: unless-stopped
     profiles: ["monitoring"]
@@ -203,12 +205,17 @@ volumes:
     external: true
     name: dooit-mysql-data
   dooit-app-logs:
+    external: true
     name: dooit-app-logs
   dooit-prometheus-data:
+    external: true
     name: dooit-prometheus-data
   dooit-loki-data:
+    external: true
     name: dooit-loki-data
   dooit-alloy-data:
+    external: true
     name: dooit-alloy-data
   dooit-grafana-data:
+    external: true
     name: dooit-grafana-data

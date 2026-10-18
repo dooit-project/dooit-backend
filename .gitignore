@@ -9,6 +9,7 @@ monitoring-secrets/
 
 src/main/resources/application-local.yml
 .env
+.env.stg
 
 ### IntelliJ IDEA ###
 .idea/

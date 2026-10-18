@@ -1,6 +1,6 @@
 # DB Migration History
 
-Last updated: 2026-10-17
+Last updated: 2026-10-18
 
 이 문서는 Flyway 도입 전 production DB에 수동 적용한 migration 이력을 기록한다. secret, dump 내용, access token은 기록하지 않는다.
 
@@ -11,6 +11,8 @@ Last updated: 2026-10-17
 - migration 적용 전에는 대상 column, index, constraint 존재 여부를 확인해 중복 적용을 피한다.
 - migration 적용 후에는 schema 검증 쿼리와 app readiness를 확인한다.
 - schema 변경 빈도가 늘어나거나 다중 환경 migration 순서 관리가 필요해지면 Flyway 도입을 별도 작업으로 전환한다.
+
+2026-10-18에는 schema를 추가 변경하지 않고 image `6cdc9e5` 배포 및 목표 API smoke를 완료했다. 아래 10월 17일 절의 기존 image 설명은 DDL 적용 당시의 기록이다. 현재 배포 기록은 [운영 runbook](../ops/LOCAL_PRODUCTION_RUNBOOK.md#2026-10-18-운영-image-6cdc9e5-배포-완료)을 따른다.
 
 ## 2026-10-17 개인 시스템·목표 migration 적용 완료
 
@@ -29,7 +31,7 @@ Last updated: 2026-10-17
 ### 검증 범위와 호환성
 
 - 읽기 전용 `scripts/check-goal-schema.py`는 현재 DB의 테이블 존재, 핵심 추가 컬럼 type/length/nullability, opaque key collation, 명시한 index의 열 순서/unique, FK 열/대상/삭제 규칙/동일 DB 참조와 InnoDB engine을 확인한다. READY는 모든 baseline column/default/update rule 또는 실제 데이터 이관 완료를 보장하지 않는다. source 행 수 보존은 확인했지만 데이터 값 전체의 대조 검증을 의미하지 않는다.
-- schema health는 21개 테이블과 핵심 추가 컬럼 5개의 존재를 확인한다. 실제 readiness 응답은 여전히 기존 운영 image의 검사 결과이며 새 main의 readiness 구현을 배포한 결과로 해석하지 않는다. Hibernate validate와 기존 배포 점검을 계속 수행한다.
+- schema health는 21개 테이블과 핵심 추가 컬럼 5개의 존재를 확인한다. DDL 적용 직후 readiness는 당시 기존 image의 검사 결과였으며 새 readiness 구현 배포 결과와 구분한다. Hibernate validate와 기존 배포 점검을 계속 수행한다.
 - 새 테이블과 nullable TASK.LINKED_GOAL_ID를 추가해 기존 image의 API 계약을 유지한다. CREATE_REQUEST_HASH가 null인 기존 기록은 최초 생성 본문을 복구할 수 없어 동일 key 재시도를 409/10004로 거절하는 계약을 유지한다. 현재 수정값으로 임의 backfill하지 않는다.
 - mapping DDL만으로 개인 데이터가 이관되지는 않는다. 클라이언트 준비 후 명시적 API를 호출해야 하며, 이관된 canonical 기록이 변경된 계정은 mapping 미지원 backend로 단순 rollback하지 않는다. 쓰기 중지와 새 기록 조정/복구 계획이 먼저 필요하다. 원본 테이블이나 mapping을 임의로 비우지 않는다.
 - MySQL DDL은 파일의 START TRANSACTION/COMMIT만으로 전체 rollback을 보장하지 않는다. 이미 적용된 네 파일을 재실행하지 않으며 이후 drift가 생기면 객체별로 점검한다.

@@ -1,6 +1,6 @@
 # Monitoring Runbook
 
-Last updated: 2026-09-06
+Last updated: 2026-10-18
 
 이 문서는 Dooit local production에 Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링을 붙이는 구성과 운영 절차를 정리한다. 실제 secret, 관리자 비밀번호, public/private 관리 URL은 문서에 기록하지 않는다.
 
@@ -12,7 +12,7 @@ Last updated: 2026-09-06
 - `/actuator/health/**`는 기존 public readiness smoke 용도로 유지하되, `/actuator/prometheus`는 외부 공개 도메인에 노출하지 않는다.
 - 대시보드와 datasource는 수동 클릭 설정이 아니라 provisioning 파일로 재현 가능하게 둔다.
 
-## 2. 권장 구성
+## 2. 운영 구성
 
 | 구성요소 | 역할 | 1차 배치 |
 | --- | --- | --- |
@@ -128,8 +128,8 @@ docker compose ps
 
 - [x] `scripts/check-monitoring-stack.sh`를 추가해 Prometheus, Loki, Grafana datasource health를 점검한다.
 - [x] `scripts/report-production-status.sh`에 monitoring endpoint 요약을 포함한다.
-- [ ] `docs/ops/LOCAL_PRODUCTION_RUNBOOK.md`에 monitoring 기동과 장애 확인 순서를 추가한다.
-- [ ] `docs/project/ROADMAP.md`에서 monitoring 구축 작업을 완료 상태로 갱신한다.
+- [x] `docs/ops/LOCAL_PRODUCTION_RUNBOOK.md`에 monitoring 기동과 장애 확인 순서를 추가한다.
+- [x] `docs/project/ROADMAP.md`에서 기본 monitoring 구축 완료와 후속 alerting 작업을 구분한다.
 
 ## 5. 운영 확인 순서
 

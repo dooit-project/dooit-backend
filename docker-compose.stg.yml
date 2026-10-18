@@ -1,0 +1,83 @@
+name: stg_dooit
+
+services:
+  mysql:
+    image: mysql:8.4.11
+    restart: unless-stopped
+    mem_limit: 768m
+    environment:
+      MYSQL_ROOT_PASSWORD: ${STG_MYSQL_ROOT_PASSWORD:?Run scripts/staging.sh init}
+      MYSQL_DATABASE: dooit_stg
+      MYSQL_USER: dooit_stg
+      MYSQL_PASSWORD: ${STG_DB_PASSWORD:?Run scripts/staging.sh init}
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app:
+    image: dooit-backend:${STG_APP_IMAGE_TAG:?Run scripts/staging.sh build}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${STG_APP_IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 768m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx512m
+      DOOIT_DB_URL: jdbc:mysql://mysql:3306/dooit_stg
+      DOOIT_DB_USERNAME: dooit_stg
+      DOOIT_DB_PASSWORD: ${STG_DB_PASSWORD:?Run scripts/staging.sh init}
+      DOOIT_JWT_ISSUER: http://localhost:18080
+      DOOIT_JWT_SECRET: ${STG_JWT_SECRET:?Run scripts/staging.sh init}
+      DOOIT_APP_COMMIT_SHA: ${STG_APP_COMMIT_SHA:-local-dirty}
+      DOOIT_APP_IMAGE_TAG: ${STG_APP_IMAGE_TAG}
+      DOOIT_MAIL_USERNAME: ""
+      DOOIT_MAIL_PASSWORD: ""
+      DOOIT_DAILY_SUMMARY_TO: ""
+      APP_BATCH_SCHEDULER_ENABLED: "false"
+      DOOIT_PUSH_ENABLED: "false"
+      DOOIT_GUEST_CLEANUP_ENABLED: "false"
+      DOOIT_MONITORING_ENABLED: "false"
+      DOOIT_API_LOGGING_PAYLOAD_ENABLED: "false"
+      DOOIT_ALLOWED_ORIGINS: http://localhost:8081,http://localhost:8090
+      DOOIT_DOCS_PUBLIC_ENABLED: "true"
+      DOOIT_SPRINGDOC_API_DOCS_ENABLED: "true"
+      DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED: "true"
+      DOOIT_LOG_PATH: /app/logs
+      TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:18080:8080"
+    volumes:
+      - app-logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health/readiness >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mysql-data:
+  app-logs:
