@@ -19,7 +19,7 @@ Last updated: 2026-10-18
 
 STG는 운영 데이터/계정을 복사하지 않은 검증용 환경이다. DB와 JWT가 다르므로 PRD 토큰/계정을 그대로 사용하지 않는다. STG app은 PRD와 같은 prod Spring profile 및 Hibernate validate로 실행한다. 그룹 분리는 같은 Mac의 자원/장애까지 격리하는 것은 아니다. STG 앱/DB 메모리 상한은 각각 768MiB다.
 
-STG는 우선 이 Mac의 loopback에만 열었다. 외부 도메인·실기기 접근은 아직 연결하지 않았다. Android Emulator에서는 호스트 접근 주소 `http://10.0.2.2:18080`을 사용하고 실제 기기는 별도 접근 경로를 정해야 한다. STG의 JWT issuer는 현재 `http://localhost:18080`이며 외부 공개 시 Compose issuer와 CORS 정책도 함께 검토한다.
+STG는 사용자 결정에 따라 이 Mac의 `http://localhost:18080`으로 운영한다. STG는 배포 전 검증 환경의 역할을 뜻하며 외부 도메인은 필요하지 않다. Android Emulator에서는 호스트 접근 주소 `http://10.0.2.2:18080`을 사용한다. 실제 기기나 다른 PC의 접근이 필요해질 때만 별도 경로를 검토한다. STG의 JWT issuer는 `http://localhost:18080`으로 유지한다.
 
 ## STG 기동과 업데이트
 
@@ -77,6 +77,5 @@ Alloy의 프로젝트 필터도 같은 환경변수를 받아 PRD 로그만 수�
 
 ## 남은 일
 
-- STG 외부 도메인/실기기 접근 경로 확정.
 - STG에서 제품 정책과 모바일 연동 확인 후 검증된 release를 별도로 PRD에 배포.
 - host 전원 정책·재부팅 후 복구·offsite backup은 [로드맵](../project/ROADMAP.md) 기준으로 계속 검증.

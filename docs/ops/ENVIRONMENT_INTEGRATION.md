@@ -26,7 +26,7 @@ Docker 환경은 `prd_dooit`와 `stg_dooit`로 분리했다. STG는 localhost:18
 | local | `http://localhost:8080` | 확정 | 백엔드 로컬 실행 기준 |
 | local, Android Emulator | `http://10.0.2.2:8080` | 확정 | Android Emulator에서 호스트 머신 접근 시 사용 |
 | local, 실제 기기 | `http://<dev-machine-lan-ip>:8080` | 확인 필요 | 같은 네트워크에서 개발 머신 IP로 접근 |
-| staging | `http://localhost:18080` | host 검증 완료 | 별도 DB/JWT, loopback 전용. 외부 도메인은 미연결 |
+| staging | `http://localhost:18080` | host 검증 완료 | 별도 DB/JWT, loopback 전용. localhost 운영 확정 |
 | production, host 내부 | `http://127.0.0.1:8080` | 확정 | Docker Compose app port는 loopback에만 공개한다. |
 | production, Android | `.env`의 `DOOIT_PUBLIC_API_URL` | host public smoke 확인됨, 실제 기기 확인 필요 | 실제 API 도메인을 사용한다. |
 | production, 실제 도메인 | `https://dooitapi.hsng.pe.kr` | 확인됨 | Cloudflare Tunnel, TLS, readiness public smoke 통과 |
@@ -175,7 +175,7 @@ curl --fail http://127.0.0.1:8080/api/v1/system/metadata
 | 환경 | Swagger UI `/swagger-ui` | Scalar `/scalar.html` | 비고 |
 | --- | --- | --- | --- |
 | local | 공개 | 공개 | 개발 확인용 |
-| staging | loopback 공개 | loopback 공개 | STG 전용 설정, 외부 도메인 미연결 |
+| staging | loopback 공개 | loopback 공개 | STG 전용 설정, localhost 운영 |
 | production | 비공개 기본 | 비공개 기본 | `DOOIT_DOCS_PUBLIC_ENABLED=false` 기본값 유지 |
 
 현재 백엔드는 `app.docs.public-enabled`로 문서 UI와 `/v3/api-docs` 공개 여부를 제어한다. local/test 기본값은 `true`, prod 기본값은 `false`다. prod 설정의 `DOOIT_DOCS_PUBLIC_ENABLED`, `DOOIT_SPRINGDOC_API_DOCS_ENABLED`, `DOOIT_SPRINGDOC_SWAGGER_UI_ENABLED` 기본값은 테스트로 검증한다.

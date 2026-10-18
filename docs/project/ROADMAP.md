@@ -113,9 +113,9 @@ HTTPS 도메인, Tunnel, Web CORS host 검증은 완료했다. [환경 기준](.
 - `DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh`
 - Android production build의 `/api/v1/auth/me` 결과
 
-### P1. STG 외부 연동
+### P1. STG 클라이언트 검증
 
-- [ ] localhost:18080 외 외부 STG 도메인/실기기 접근 경로를 확정한다.
+STG는 localhost:18080으로 운영한다. 외부 도메인 연결은 현재 작업 범위에 포함하지 않는다.
 - [ ] STG에서 모바일 요청 타입/mock과 선택 유형 정책을 확인하고 PRD release 범위를 확정한다.
 
 ### P0. Android production smoke
