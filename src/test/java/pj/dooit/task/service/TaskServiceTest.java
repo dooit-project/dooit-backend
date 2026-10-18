@@ -76,13 +76,12 @@ class TaskServiceTest {
         taskService = new TaskService(
                 taskTxService,
                 taskRepository,
-                recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(false, PushNotificationProvider.EXPO, null, null, null, null),
                 recurrenceRuleUpdateService,
-                new TaskQuickCaptureParser(),
-                goalTaskLinkService
+                new TaskCreationService(taskRepository, recurrenceSeriesRepository,
+                        goalTaskLinkService, new TaskQuickCaptureParser())
         );
     }
 
@@ -1483,13 +1482,12 @@ class TaskServiceTest {
         taskService = new TaskService(
                 taskTxService,
                 taskRepository,
-                recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(true, PushNotificationProvider.EXPO, null, null, null, null),
                 recurrenceRuleUpdateService,
-                new TaskQuickCaptureParser(),
-                goalTaskLinkService
+                new TaskCreationService(taskRepository, recurrenceSeriesRepository,
+                        goalTaskLinkService, new TaskQuickCaptureParser())
         );
         User owner = persistedOwner(1L);
         LocalDate date = LocalDate.of(2026, 7, 13);
@@ -1518,13 +1516,12 @@ class TaskServiceTest {
         taskService = new TaskService(
                 taskTxService,
                 taskRepository,
-                recurrenceSeriesRepository,
                 taskCategoryGrouper,
                 recurrenceOccurrenceMaterializer,
                 new PushNotificationProperties(true, PushNotificationProvider.EXPO, null, null, null, null),
                 recurrenceRuleUpdateService,
-                new TaskQuickCaptureParser(),
-                goalTaskLinkService
+                new TaskCreationService(taskRepository, recurrenceSeriesRepository,
+                        goalTaskLinkService, new TaskQuickCaptureParser())
         );
         User actor = persistedOwner(1L);
         SharedWorkspace workspace = new SharedWorkspace("workspace", null, actor);

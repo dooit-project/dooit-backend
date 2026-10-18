@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-10-18 (목표 API 배포 검증 및 빠른 기록 선택 유형 로컬 구현 갱신)
+Last audited: 2026-10-18 (요청 API 구현 점검 및 백엔드 작업 범위 정리)
 
 이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -42,7 +42,7 @@ Last audited: 2026-10-18 (목표 API 배포 검증 및 빠른 기록 선택 유�
 - 해당 커밋 후보만 추출해 타입·lint와 단위 테스트 537개를 통과했고, 실제 모바일 apiClient/taskApi → STG 통합 테스트 1개도 통과했다. 합성 Task와 refresh session은 정리했으며 guest/멱등성 기록은 STG에 남는다.
 - Web은 localhost:8090 → API localhost:18080으로 실행한다. 번들 컴파일과 주소 주입, 기존 localhost:8081/8090 CORS를 확인했다. PRD image 6cdc9e5와 운영 클라이언트 배포는 변경하지 않았다.
 - 실제 화면 감사는 iab/Chrome 도구 연결 불가로 보류다. 모바일 전체 validate는 기존 공용 스크린샷이 35일이 지나 30일 주기를 넘긴 검사에서 실패했으며, 날짜를 임의 갱신하지 않았다. API/타입/단위 테스트 통과를 전체 validate·UI·실기기 검증 완료로 해석하지 않는다.
-- 다음은 승인된 브라우저 도구로 실제 화면·공용 스크린샷 갱신, 제품 정책 확인 후 PRD 배포 순서다.
+- 화면·공용 스크린샷은 프론트 담당의 참고 이력이다. 백엔드 후속은 정책 확인, PRD API 반영, 코드 리팩토링과 서버 회귀 검증이다.
 
 ## 1. 현재 보존할 검증 기준
 
@@ -244,9 +244,10 @@ Last audited: 2026-10-18 (목표 API 배포 검증 및 빠른 기록 선택 유�
 - [ ] Android 실제 기기 production smoke: 실제 도메인 HTTPS URL로 `/api/v1/auth/me`, login, Today 조회·생성·완료 확인
 - [x] Web production origin: `https://dooit.hsng.pe.kr`; 공개 API CORS preflight 통과
 
-## 9. 다음 확인 순서
+## 9. 백엔드 다음 작업과 외부 확인 구분
 
-1. Android production build에 실제 도메인 HTTPS API URL을 반영한다.
-2. 실제 Android 기기에서 login/me, Today 조회·생성·완료, guest 발급과 병합 흐름을 확인한다.
-3. host 전원 정책 strict check와 재부팅/재로그인 후 recovery check를 통과시킨다.
-4. offsite backup 경로를 확정하고 sync, routine check, 임시 DB restore를 검증한다.
+- 2026-10-18 문서의 요청 항목과 DTO·서비스·관련 API 테스트 대조에서 추가 미구현 endpoint는 발견되지 않았다. 전체 클라이언트 검증 완료나 모든 결함 부재를 의미하지 않는다.
+- 목표 API는 PRD 반영 완료, 빠른 기록 선택 유형은 STG 반영·실 API 검증 완료이며 PRD 미반영이다. 날짜 없는 TODO와 TODO 시각/반복 제한은 제품 정책 확인 사항이다.
+- 백엔드는 `TaskService` 생성 책임 분리, 빠른 기록 파서 구조 검토, 멱등성 원자성·동시성 개선, 미사용 코드·중복 문서 점검 순서로 진행한다. 진행 상태는 [백엔드 로드맵](../project/ROADMAP.md)에서 관리한다.
+- 모바일 build·화면·스크린샷·실기기 확인은 프론트 담당이다. 이 문서의 관련 미확인 기록은 연동 참고 사항이며 백엔드 구현 미완료로 취급하지 않는다.
+- host 복구성·offsite backup은 별도 서버 운영 후속이며 API 코드 리팩토링과 구분한다.

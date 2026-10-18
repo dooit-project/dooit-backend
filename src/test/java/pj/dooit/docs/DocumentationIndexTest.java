@@ -76,7 +76,7 @@ class DocumentationIndexTest {
     }
 
     @Test
-    @DisplayName("로드맵은 앞으로 닫아야 할 제품 기능과 production 작업을 관리한다")
+    @DisplayName("로드맵은 백엔드 API 개선과 서버 운영 작업을 관리한다")
     void roadmapDocumentsNextBacklog() throws Exception {
         String roadmap = Files.readString(Path.of("docs/project/ROADMAP.md"));
 
@@ -84,8 +84,10 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("### 현재 운영 기준");
         assertThat(roadmap).contains("일일 계획");
         assertThat(roadmap).contains("PRD DB schema");
-        assertThat(roadmap).contains("### P0. 프론트 출시 연동 차단 해소");
-        assertThat(roadmap).contains("production DB migration 적용");
+        assertThat(roadmap).contains("### P0. 요청 API 누락 점검과 백엔드 코드 정리");
+        assertThat(roadmap).contains("TaskCreationService");
+        assertThat(roadmap).contains("멱등성의 원자성·다중 인스턴스 동시성");
+        assertThat(roadmap).contains("production DB migration");
         assertThat(roadmap).contains("### P1. 모바일 실사용 로그 기반 개선");
         assertThat(roadmap).contains("POST /api/v1/tasks/quick-capture");
         assertThat(roadmap).contains("POST /api/v1/daily-plans/{date}/apply");
@@ -93,9 +95,9 @@ class DocumentationIndexTest {
         assertThat(roadmap).contains("### P2. 제품 정책 후속 결정");
         assertThat(roadmap).contains("Workspace template");
         assertThat(roadmap).contains("## 3. 운영 마무리 로드맵");
-        assertThat(roadmap).contains("### P0. production DB migration 적용");
-        assertThat(roadmap).contains("### P0. 실제 도메인 production 접근 경로 확정");
-        assertThat(roadmap).contains("### P0. Android production smoke");
+        assertThat(roadmap).contains("### 적용 완료한 production DB migration 기준");
+        assertThat(roadmap).contains("### P1. API 배포와 연동 지원");
+        assertThat(roadmap).doesNotContain("### P0. Android production smoke");
         assertThat(roadmap).contains("### P0. host 상시 가용성 검증");
         assertThat(roadmap).contains("### P1. offsite backup 확정");
         assertThat(roadmap).contains("### P1. production 모니터링 구축");

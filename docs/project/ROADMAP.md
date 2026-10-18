@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-18
 
-이 문서는 완료 이력 보관소가 아니라 **앞으로 닫아야 할 백엔드/운영 작업 목록**이다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
+이 문서는 **백엔드 API 개발·리팩토링과 서버 운영 작업 목록**이다. 프론트 요청의 서버 구현 누락을 먼저 확인하고, 누락이 없으면 기존 API를 유지하는 코드 개선과 정리를 진행한다. 모바일 구현·화면 감사·스크린샷·실기기 UI 검증은 프론트 담당이며 이 저장소의 개발 할 일에 포함하지 않는다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
 ## 1. 현재 기준
 
@@ -17,43 +17,48 @@ Last updated: 2026-10-18
 
 ### 현재 운영 기준
 
-현재 남은 P0는 Android 실기기 production smoke와 운영 복구성 검증이다. 공개 HTTPS 도메인, Docker Compose production 구조, production DB migration 적용, 최신 backend image 배포, readiness/public HTTPS smoke는 완료됐다.
+서버 측 잔여 작업은 빠른 기록 requestedType의 PRD 반영과 운영 복구성 검증이다. 클라이언트 실기기 검증 결과는 외부 연동 참고 사항으로만 관리한다. 공개 HTTPS 도메인, Docker Compose production 구조, production DB migration 적용, 최신 backend image 배포, readiness/public HTTPS smoke는 완료됐다.
 
 | 구분 | 현재 상태 | 다음에 닫을 일 |
 | --- | --- | --- |
-| 빠른 등록 | 기존 자동 파싱 유지 및 requestedType 선택 유형 보존 STG 반영·실 API 검증. 새 필드는 PRD 미배포 | 선택 유형 정책 확인·배포 후 모바일 연동, 실제 입력 로그 기반 예외 표현 보강 |
-| 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 모바일 UI 연동 후 누락 필드가 있으면 계약 보강 |
-| 일일 계획 | `daily-plans` resource, focus 1~3개, 계획 확정/마감 상태, 결과 summary 구현 완료 | 모바일 연동 후 하루 마감 UX에서 batch mutation 필요 여부 확인 |
-| 예상 소요 시간 | Task nullable 필드와 template 기본값 적용 구현 완료 | 모바일 연동 후 입력 preset/표시 정책 검증 |
-| Checklist | 개인/Workspace Task 하위 한 단계 checklist item API 구현 완료 | 모바일 연동 후 담당자/알림 같은 추가 필드 필요 여부 결정 |
-| 카테고리 탐색 | 개인 Task category 목록/count API 구현 완료 | 모바일 연동 후 수동 category order 필요 여부 결정 |
-| 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 모바일 연동 과정에서 권한/초대 UX 검증 |
+| 빠른 등록 | 기존 자동 파싱 유지 및 requestedType 선택 유형 보존 STG 반영·실 API 검증. 새 필드는 PRD 미배포 | 선택 유형 정책 확인·PRD API 반영, 실제 입력 사례 기반 예외 표현 검토 |
+| 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 추가 필드 요청이 접수되면 계약 검토 |
+| 일일 계획 | `daily-plans` resource, focus 1~3개, 계획 확정/마감 상태, 결과 summary 구현 완료 | 부분 실패 사례가 접수되면 batch mutation 필요성 검토 |
+| 예상 소요 시간 | Task nullable 필드와 template 기본값 적용 구현 완료 | 추가 입력 요구가 접수되면 validation·계약 검토 |
+| Checklist | 개인/Workspace Task 하위 한 단계 checklist item API 구현 완료 | 담당자/알림 추가 요청 시 계약 검토 |
+| 카테고리 탐색 | 개인 Task category 목록/count API 구현 완료 | 수동 정렬 요청 시 저장 모델·계약 검토 |
+| 공유 workspace | 설계와 1차 Task/D-Day API 구현 완료 | 권한·초대 API 결함 재현 시 서버 회귀 검증 |
 | 서버 push | token, 후보, 이력, provider 설정, Expo client, idempotency, invalid token 처리, 개인 owner와 shared workspace scheduler 자동 발송 완료 | 운영 credential 적용 후 실수신 smoke |
-| PRD DB schema | production DB migration 적용 완료. 목표 schema 포함 적용 완료. 배포 상세는 운영 runbook 기준 | Android 실제 기기 smoke |
-| production 접근 | 실제 Web/API 도메인 HTTPS 연결, HTTPS 강제, readiness·CORS public smoke 완료 | Android 실제 기기 smoke |
+| PRD DB schema | production DB migration 적용 완료. 목표 schema 포함 적용 완료. 배포 상세는 운영 runbook 기준 | 새 schema 변경 시 migration/호환성 점검 |
+| production 접근 | 실제 Web/API 도메인 HTTPS 연결, HTTPS 강제, readiness·CORS public smoke 완료 | 배포 시 서버 API smoke |
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
 | monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
-| 목표 중심 계획·실천 여정 | 운영 schema와 image `6cdc9e5` 배포 및 공개 HTTPS 인증 API smoke 완료. AI는 기본 비활성 | Android 실제 기기·클라이언트 이관 연동, AI provider·보관·삭제 정책 확정 후 실제 adapter 연결 |
+| 목표 중심 계획·실천 여정 | 운영 schema와 image `6cdc9e5` 배포 및 공개 HTTPS 인증 API smoke 완료. AI는 기본 비활성 | 이관 API 오류 대응, AI provider·보관·삭제 정책 확정 후 실제 adapter 연결 |
 
 ## 2. 제품 기능 로드맵
 
-제품 기능은 대부분 1차 구현이 닫혔다. 로드맵에는 출시를 막거나 모바일 실사용 로그가 생겨야 판단할 수 있는 후속 작업만 남긴다. 완료된 API의 상세 계약은 `docs/api/**`를 원본으로 본다.
+요청된 제품 API는 대부분 1차 구현이 닫혔다. 이후에는 서버 구조·정합성·회귀 테스트와 실제 API 사용에서 확인된 결함을 개선한다. 새 기능은 요청 근거와 계약을 확인한 뒤 추가한다. 완료된 API의 상세 계약은 `docs/api/**`를 원본으로 본다.
 
-### P0. 프론트 출시 연동 차단 해소
+### P0. 요청 API 누락 점검과 백엔드 코드 정리
 
-목표: real API 연결과 PRD 출시 검증을 막는 backend gap을 먼저 닫는다.
+2026-10-18 계약·구현·관련 테스트 대조 기준, 전달받은 목표 API와 빠른 기록 선택 유형 요청의 추가 미구현 endpoint는 발견되지 않았다. 빠른 기록은 STG 검증 완료·PRD 미배포이며, 날짜 없는 TODO 및 시각/반복 제한은 구현 누락과 구분해 정책 확인 사항으로 관리한다. 외부 AI adapter는 기존의 별도 미완료 범위다.
 
-- [ ] Android production build에서 `https://dooitapi.hsng.pe.kr` 기준 login/me, Today 조회·생성·완료, guest 발급·병합을 확인한다.
-- [ ] smoke 결과에 backend commit SHA 또는 image tag, API URL, 적용 migration 범위, 호환성, 실행 테스트를 함께 남긴다.
+1. [x] 프론트 요청과 서버 DTO·서비스·회귀 테스트를 대조한다. 세부 기준은 [연동 상태](../mobile/MOBILE_API_BACKEND_STATUS.md), [목표 계약](../api/GOAL_JOURNEY_CONTRACT.md), [빠른 기록 계약](../api/QUICK_CAPTURE_TYPE_CONTRACT.md)을 따른다.
+2. [x] `TaskService`의 일반/Workspace/빠른 기록 생성 책임을 `TaskCreationService`로 분리한다. 반복 시리즈와 Task 저장은 같은 트랜잭션을 유지한다.
+3. [ ] 빠른 기록 파서의 날짜·시간 해석과 유형별 적용 정책 분리가 실제 중복·결합을 줄이는지 검토한다. 표현 지원 범위와 오류 계약은 임의 변경하지 않는다.
+4. [ ] 생성 멱등성의 원자성·다중 인스턴스 동시성 개선안을 정하고 장애·경합 회귀 테스트를 추가한다. DB 변경과 기존 키/응답 호환성을 먼저 검토한다.
+5. [ ] 미사용 코드·중복 문서를 참조와 테스트 근거로 정리한다. legacy API는 참조가 적다는 이유만으로 제거하지 않는다. 이번에는 문서의 프론트 작업 지시와 백엔드 작업 범위를 정리했다.
+
+리팩토링 검증은 `./gradlew test`로 수행한다. 이번 생성 서비스 분리는 URL·요청/응답 DTO·오류 코드·DB schema 변경이 없고 클라이언트 수정이나 migration이 필요하지 않다. 커밋·배포 여부는 구현 완료와 별도로 기록한다.
 
 ### P1. 빠른 기록 선택 유형 보존 (2026-10-18 별도 요청)
 
 STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../api/QUICK_CAPTURE_TYPE_CONTRACT.md`](../api/QUICK_CAPTURE_TYPE_CONTRACT.md).
 
 - [ ] TODO 시각/반복 오류 및 날짜 없는 TODO 기록함 정책을 모바일/제품과 확인한다.
-- [ ] 커밋 image STG 반영은 완료했다. 모바일 타입/mock/저장 task 우선 안내를 STG에서 확인한 뒤 PRD 배포를 진행한다. PRD 빠른 기록 API 검증은 현재 보류다.
-- [ ] 생성 멱등성의 Task/응답 기록 트랜잭션 분리와 프로세스 내부 잠금을 개선해 서버 장애·다중 인스턴스 중복 구간을 줄인다.
+- [ ] 커밋 image STG 반영은 완료했다. 서버 API client → STG 검증도 완료했다. 정책 확인 후 PRD 반영 대상 image·호환성·rollback을 점검해 배포한다. PRD 빠른 기록 API 검증은 현재 보류다.
+- 멱등성 개선은 위 백엔드 코드 정리 4번에서 관리한다.
 
 ### P1. 모바일 실사용 로그 기반 개선
 
@@ -88,7 +93,7 @@ STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../
 
 운영 로드맵은 실제 secret, private URL, DB dump 내용을 남기지 않고 통과한 명령과 검증 범위만 기록한다.
 
-### P0. production DB migration 적용
+### 적용 완료한 production DB migration 기준
 
 목표: 현재 `main`의 API 계약이 production DB schema와 맞도록 미적용 migration을 백업 후 수동 적용한다.
 
@@ -101,37 +106,13 @@ STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../
 - `curl --fail http://127.0.0.1:8080/actuator/health/readiness`
 - `GET /api/v1/system/metadata`
 
-### P0. 실제 도메인 production 접근 경로 확정
+### P1. API 배포와 연동 지원
 
-HTTPS 도메인, Tunnel, Web CORS host 검증은 완료했다. [환경 기준](../ops/ENVIRONMENT_INTEGRATION.md)을 따르며 실제 기기 검증이 남아 있다.
+공개 HTTPS, Web origin CORS와 localhost STG API 검증은 완료했다. 백엔드는 API 계약·배포 상태와 서버 측 인증/생성/조회 smoke를 관리한다.
 
-- [ ] Android 실제 기기에서 `GET /api/v1/auth/me`까지 실제 도메인 HTTPS로 접근되는지 확인한다.
-
-증적:
-
-- `DOOIT_REQUIRE_PUBLIC_API_URL=true ./scripts/check-production-env.sh`
-- `DOOIT_PUBLIC_API_URL=https://<api-origin> ./scripts/check-public-production.sh`
-- Android production build의 `/api/v1/auth/me` 결과
-
-### P1. STG 클라이언트 검증
-
-STG는 localhost:18080으로 운영한다. 외부 도메인 연결은 현재 작업 범위에 포함하지 않는다.
-- [ ] 모바일 c6cb6b4의 요청/mock과 실제 API client → STG 연결은 확인했다. 브라우저 도구를 복구해 화면·공용 스크린샷을 검증하고 PRD release 범위를 확정한다.
-
-### P0. Android production smoke
-
-목표: 실제 도메인 production API URL 확정 후 모바일 핵심 흐름을 실제 기기에서 검증한다.
-
-- [ ] Android production build에 실제 도메인 HTTPS API URL을 반영한다.
-- [ ] `/api/v1/auth/login` 성공과 401 실패 처리를 확인한다.
-- [ ] Today 조회, 생성, 완료를 확인한다.
-- [ ] 게스트 발급, 게스트 `/auth/me`, 게스트 승격 또는 기존 계정 병합 흐름을 확인한다.
-- [ ] 결과를 `docs/mobile/MOBILE_API_BACKEND_STATUS.md`에 날짜와 범위만 기록한다. token, 비밀번호, private URL은 기록하지 않는다.
-
-증적:
-
-- `DOOIT_SMOKE_BASE_URL=https://<api-origin> ./scripts/smoke-production-api.sh`
-- `docs/mobile/MOBILE_INTEGRATION_RUNBOOK.md`의 production 결과 기록 템플릿
+- [ ] 빠른 기록 선택 유형의 PRD 반영 시 image/commit, readiness, 요청 유형별 저장 결과, 기존 자동 해석 호환성을 기록한다.
+- 클라이언트에서 재현된 API 오류는 요청·응답·서버 로그를 근거로 백엔드 결함 여부를 확인한다.
+- Android build 설정·실기기 UI·화면 감사·스크린샷 갱신은 프론트 담당이다. 기존 검증 미완료 이력은 [연동 상태](../mobile/MOBILE_API_BACKEND_STATUS.md)에 참고 기록으로 보존한다.
 
 ### P0. host 상시 가용성 검증
 
@@ -140,7 +121,7 @@ STG는 localhost:18080으로 운영한다. 외부 도메인 연결은 현재 작
 - [ ] `DOOIT_CONFIRM_POWER_POLICY=APPLY ./scripts/apply-production-power-policy.sh`를 관리자 권한으로 실행한다.
 - [ ] `DOOIT_STRICT_POWER=true ./scripts/check-production-host.sh`를 통과시킨다.
 - [ ] 실제 재부팅 또는 로그아웃/로그인 후 `./scripts/check-production-recovery.sh`를 통과시킨다.
-- [ ] Docker Desktop 재시작, 네트워크 변경, 절전 복귀 뒤 readiness와 Android 접근을 확인한다.
+- [ ] Docker Desktop 재시작, 네트워크 변경, 절전 복귀 뒤 readiness와 공개 API 접근을 확인한다.
 
 증적:
 
