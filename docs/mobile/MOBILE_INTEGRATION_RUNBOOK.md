@@ -40,6 +40,25 @@ production host 내부 확인은 아래 명령을 사용한다.
 ./scripts/smoke-production-api.sh
 ```
 
+### STG 클라이언트 연결
+
+STG API origin은 `http://localhost:18080`이며 v1 경로는 `/api/v1`이다. 현재 이 Mac의 8080 포트는 PRD이므로 STG 검증에서 기본 local 주소를 그대로 사용하지 않는다.
+
+모바일 저장소에서 Expo Web을 STG로 실행할 때는 기존 web:real 스크립트의 8080 강제 설정을 우회해 다음 값을 명시한다.
+
+```bash
+EXPO_PUBLIC_API_MODE_OVERRIDE=real EXPO_PUBLIC_API_URL_OVERRIDE=http://localhost:18080 npx expo start --web --localhost --port 8090
+```
+
+이 명령은 클라이언트 실행 예시이며 백엔드 검증 과정에서 실행한 결과가 아니다. STG용 새 게스트/로그인 session을 사용한다. PRD token은 STG JWT 키와 다르므로 재사용하지 않는다. Android Emulator의 API origin은 `http://10.0.2.2:18080`이다.
+
+2026-10-18 백엔드 확인 범위:
+
+- localhost:8081/8090 origin의 quick-capture POST preflight에서 Authorization/Content-Type/Idempotency-Key 허용 확인.
+- 실행 중인 STG OpenAPI에서 requestedType이 optional TODO/SCHEDULE/IDEA enum임을 확인.
+- 합성 게스트로 선택 유형·계획일·반복 저장·오류·재시도 실 API 검증 통과, 생성 Task 삭제.
+- 모바일 소스 확인 결과 `src/types/task.ts`의 요청 필드, `src/features/today/quick-capture.tsx`의 TODO 선택 전달, mock 파싱/저장 정책과 STG 실행 설정 연결이 남아 있다. 이 확인은 클라이언트 구현·화면 검증 완료를 뜻하지 않는다.
+
 ## 3. CORS Preflight 확인
 
 Expo Web local origin:
