@@ -75,6 +75,14 @@ Alloy의 프로젝트 필터도 같은 환경변수를 받아 PRD 로그만 수�
 - readiness와 합성 빠른 기록 API smoke를 통과했다. 생성 Task는 삭제했고 검증 게스트/멱등성 기록은 STG에만 남았다. 전체 테스트 648개 통과 결과를 확인했으며 소스 변경이 없어 STG 빌드에서는 Gradle 검사 결과를 재사용했다.
 - PRD app image는 `6cdc9e5`, healthy 상태를 유지했다. 이번 작업으로 새 기능을 PRD에 배포하지 않았다. 이후 문서 기록 커밋은 STG 실행 소스 커밋과 구분한다.
 
+## 개인 Task 소유권 수정 STG 반영 (2026-10-25)
+
+- 파서 분리 `41e02db`와 소유권 보안 수정 `b9495f0`을 별도 커밋했다. 전체 백엔드 테스트 692개가 통과했다.
+- 깨끗한 작업 트리의 `b9495f0`으로 `scripts/staging.sh build` 후 `up`을 실행했다. 현재 STG image는 `stg-b9495f0-20261025163438`, runtime commitSha는 `b9495f031dcd041fec46ef6085a07fcf9252fd8d`이며 readiness UP이다. schema 변경은 없다.
+- `python3 scripts/smoke-staging-task-ownership.py`가 계정 간 Task/체크리스트 11개 연산, 미인증 요청, 부모/item ID 혼합, legacy Task 우회 경로를 포함한 거부 요청 38건과 A의 원본 보존을 검증했다. 생성 Task 두 개와 체크리스트는 삭제하고 두 refresh session은 logout했다. 합성 게스트 두 계정은 STG에 남는다.
+- `python3 scripts/smoke-staging.py`로 선택 유형/계획일/Today 분리/일정 시각/주간 반복/자동 해석/오류/멱등 재시도도 통과했다. 생성 Task는 삭제했고 해당 검증의 게스트와 멱등성 기록은 STG에 남는다.
+- PRD는 image `6cdc9e5`, 기존 runtime commit, readiness UP을 읽기 전용으로 확인했다. PRD 앱·DB는 변경하지 않았다. 따라서 legacy Task 경로 보안 수정도 PRD에는 아직 적용되지 않았다.
+
 ## 남은 일
 
 - STG에서 제품 정책과 모바일 연동 확인 후 검증된 release를 별도로 PRD에 배포.

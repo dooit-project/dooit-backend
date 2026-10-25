@@ -1,6 +1,6 @@
 # Mobile API Backend Status
 
-Last audited: 2026-10-18 (요청 API 구현 점검 및 백엔드 작업 범위 정리)
+Last audited: 2026-10-25 (개인 Task 소유권 회귀 검증과 STG 보안 수정 반영)
 
 이 문서는 `dooit-mobile/docs/API_*.md`와 모바일 로드맵의 백엔드 확인 항목을 `dooit-backend` 현재 코드 기준으로 대조한 관리 문서다.
 
@@ -29,6 +29,12 @@ Last audited: 2026-10-18 (요청 API 구현 점검 및 백엔드 작업 범위 �
 | Goal AI | [~] | 네 API 기반은 배포됐으며 기본 비활성 503 확인. provider·보관·삭제 정책과 외부 adapter는 미확정/미구현 |
 | Production Android | [ ] | 실제 도메인 HTTPS URL로 Android 실제 기기 smoke 필요 |
 | Production Web | [x] | `https://dooit.hsng.pe.kr` 배포 및 API CORS preflight 확인 |
+
+### 2026-10-25 개인 Task 소유권 보안 검증
+
+- v1 조회·수정·삭제·완료와 체크리스트 7개 연산은 인증 사용자/개인 scope 및 부모/item 소속을 검사한다. 두 계정과 미인증/ID 혼합/legacy 우회를 포함한 회귀 테스트 34개를 추가했고 전체 692개가 통과했다.
+- 소유권 없는 legacy `/api/tasks`와 하위 경로를 차단했다. 기존 경로 이용자는 Bearer JWT 기반 v1으로 이관해야 한다. v1 DTO와 DB schema는 변경하지 않았다.
+- STG `b9495f0`에서 실제 거부 요청 38건과 원본 보존, 기존 빠른 기록 smoke를 통과했다. PRD `6cdc9e5`는 변경하지 않았으며 보안 수정도 미반영이다. [배포 증적](../ops/DOCKER_ENVIRONMENTS.md)을 따른다.
 
 ### 2026-10-18 빠른 기록 선택 유형 추가 요청
 
