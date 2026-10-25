@@ -84,6 +84,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/password-reset/**",
                                 "/api/v1/calendar-feeds/*.ics"
                         ).permitAll()
+                        // 소유권 검사가 없는 legacy Task 경로를 통한 v1 우회 접근을 차단한다.
+                        .requestMatchers("/api/tasks", "/api/tasks/**").denyAll()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll()
                 )

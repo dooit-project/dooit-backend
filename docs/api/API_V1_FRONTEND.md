@@ -882,6 +882,16 @@ type PracticeDifficulty = 'NO_TIME' | 'UNCLEAR_FIRST_ACTION' | 'TOO_HEAVY' | 'FO
 
 모든 `/api/v1/tasks/**` 요청은 현재 로그인 사용자의 Task만 대상으로 한다. 다른 사용자의 Task ID는 `TASK_NOT_FOUND`처럼 처리된다.
 
+2026-10-25 소유권 점검:
+
+- 단건 조회·수정·삭제·완료는 JWT로 식별한 사용자와 `PERSONAL` scope 조건으로 Task를 조회한다. 타 사용자 Task는 `404/20001`이며 데이터는 반환하거나 변경하지 않는다.
+- 체크리스트는 부모 Task 권한 확인 후 item의 `taskId`까지 검사한다. 타 사용자 개인 Task는 `404/20001`, 본인 Task 경로에 다른 Task의 item ID를 넣으면 `404/20004`다.
+- 소유권 없는 legacy `/api/tasks` 및 `/api/tasks/**`는 보안 필터에서 차단한다. 인증된 요청은 `403`, 미인증 요청은 `401`이다. 기존 legacy 클라이언트에는 접근 차단이라는 호환성 변경이므로 Bearer JWT를 사용하는 `/api/v1/tasks/**`로 이관해야 한다. v1 URL·DTO·오류 계약과 DB schema는 변경하지 않으며 migration은 없다.
+- `TaskOwnershipV1IntegrationTest`는 실제 JWT 두 계정으로 Task 4개 연산, 체크리스트 7개 연산, 부모/item ID 혼합, 미인증 요청과 legacy 우회를 검사한다. 거부 후 A로 Task·체크리스트 전체 응답을 재조회해 원본 보존을 확인한다. 운영 데이터나 실제 계정을 사용하지 않는다.
+- localhost STG 재검증은 `python3 scripts/smoke-staging-task-ownership.py`로 수행한다. 합성 게스트 두 계정과 생성 Task만 사용하며 Task 삭제·refresh session logout 후 게스트 row는 STG에 남긴다.
+- 이 결과는 저장소 코드·테스트 기준이며 운영/STG 보안 수정 반영을 의미하지 않는다.
+
+
 ### 생성
 
 ```http
