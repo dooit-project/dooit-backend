@@ -20,14 +20,14 @@ Last updated: 2026-10-30
 
 | 항목 | 마지막 검증 기록 기준 | 상세 원본 |
 | --- | --- | --- |
-| 접근 제어 | Task·D-Day 차단은 10월 30일 작업본 STG 검증 완료. PRD 미반영 | [호환성 정책](api/API_COMPATIBILITY_POLICY.md), [로드맵](project/ROADMAP.md) |
-| 목표·계획·실천 여정 | 운영 image `6cdc9e5`, schema 적용 및 공개 HTTPS smoke 완료 | [운영 기록](ops/LOCAL_PRODUCTION_RUNBOOK.md#2026-10-18-운영-image-6cdc9e5-배포-완료), [DB 이력](db/MIGRATION_HISTORY.md) |
-| 빠른 기록 선택 유형 | STG 배포·실 API 수용 예시 통과, PRD 미배포 | [서버 회신](api/QUICK_CAPTURE_TYPE_CONTRACT.md) |
+| 접근 제어 | Task·D-Day 차단은 10월 30일 PRD 1d719d3 반영·검증 완료 | [호환성 정책](api/API_COMPATIBILITY_POLICY.md), [로드맵](project/ROADMAP.md) |
+| 목표·계획·실천 여정 | 목표 schema 적용 및 공개 HTTPS smoke 완료. 현재 PRD image는 `1d719d3` | [운영 기록](ops/LOCAL_PRODUCTION_RUNBOOK.md#2026-10-18-운영-image-6cdc9e5-배포-완료), [DB 이력](db/MIGRATION_HISTORY.md) |
+| 빠른 기록 선택 유형 | STG 수용 예시 통과, 10월 30일 PRD 반영·IDEA 저장 검증 | [서버 회신](api/QUICK_CAPTURE_TYPE_CONTRACT.md) |
 | 목표 AI | API 기반 배포, 기본 비활성. 외부 adapter 미구현 | [목표 계약](api/GOAL_JOURNEY_CONTRACT.md) |
-| 모니터링 | 10월 30일 target UP·Loki 점검 로그 유입 확인. p95 수집·계산 STG 검증 완료/PRD 미반영, alerting 미구현 | [모니터링 운영](ops/MONITORING_RUNBOOK.md) |
+| 모니터링 | 10월 30일 target UP·Loki 점검 로그 유입 확인. p95 PRD 검증·5xx 패널·장애 규칙 2개 적용. 외부 통지는 미연결 | [모니터링 운영](ops/MONITORING_RUNBOOK.md) |
 | 모바일 실제 기기 | production smoke 미완료 | [백엔드 현황](mobile/MOBILE_API_BACKEND_STATUS.md) |
 
-기능·운영 상태는 각 문서의 검증일 기준이며 이번 코드 검토에서 운영 환경을 재점검하지 않았다. 이후 가동 상태는 readiness와 운영 점검 명령으로 확인한다. 실제 URL/CORS는 [환경 기준](ops/ENVIRONMENT_INTEGRATION.md), 아직 닫히지 않은 제품/운영 작업은 [로드맵](project/ROADMAP.md)에서 관리한다. OpenAPI는 local/test에서 확인하며 production 기본값은 비공개다.
+기능·운영 상태는 각 문서의 검증일 기준이며 10월 30일 PRD 배포와 모니터링 상태를 재점검했다. 이후 가동 상태는 readiness와 운영 점검 명령으로 확인한다. 실제 URL/CORS는 [환경 기준](ops/ENVIRONMENT_INTEGRATION.md), 아직 닫히지 않은 제품/운영 작업은 [로드맵](project/ROADMAP.md)에서 관리한다. OpenAPI는 local/test에서 확인하며 production 기본값은 비공개다.
 
 ## 프론트/모바일 전달 문서
 

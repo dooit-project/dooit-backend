@@ -2042,4 +2042,4 @@ type AppMetadataResponse = {
 
 ### D-Day legacy 접근 차단 (2026-10-29)
 
-소유권 검사 없이 전체 목표·연결 Task 조회와 삭제가 가능했던 `/api/ddays` 및 `/api/ddays/**`를 차단한다. 미인증 `401`, 인증 `403`이며 기존 클라이언트는 Bearer JWT와 `/api/v1/dday-goals/**`로 이관해야 한다. v1 계약과 DB schema는 변경하지 않는다. 기존 목표 보존 및 GET/POST/DELETE 차단을 통합 테스트로 검증한다. 2026-10-30 미커밋 작업본을 STG에 반영하고 차단·원본 보존을 검증했다. PRD는 미반영이다.
+소유권 검사 없이 전체 목표·연결 Task 조회와 삭제가 가능했던 `/api/ddays` 및 `/api/ddays/**`를 차단한다. 미인증 `401`, 인증 `403`이며 기존 클라이언트는 Bearer JWT와 `/api/v1/dday-goals/**`로 이관해야 한다. v1 계약과 DB schema는 변경하지 않는다. 기존 목표 보존 및 GET/POST/DELETE 차단을 통합 테스트로 검증한다. 2026-10-30 미커밋 작업본을 STG에 반영하고 차단·원본 보존을 검증했다. PRD는 10월 30일 1d719d3에 반영하고 차단·원본 보존을 확인했다.

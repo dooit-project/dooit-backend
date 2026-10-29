@@ -186,6 +186,67 @@
     },
     {
       "datasource": {
+        "type": "prometheus",
+        "uid": "dooit-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "((sum(rate(http_server_requests_seconds_count{job=\"dooit-backend\",uri=~\"/api/.*\",status=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_server_requests_seconds_count{job=\"dooit-backend\",uri=~\"/api/.*\"}[5m])))",
+          "legendFormat": "5xx ratio",
+          "refId": "A"
+        }
+      ],
+      "title": "API 5xx Error Ratio",
+      "type": "timeseries",
+      "description": "최근 5분 API 요청 중 5xx 비율. 요청이 없으면 No data/NaN이며 서버 상태는 Backend Up을 함께 확인합니다."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "dooit-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_requests_seconds_count{job=\"dooit-backend\",uri=~\"/api/.*\",status=~\"5..\"}[5m])) or vector(0)",
+          "legendFormat": "5xx count",
+          "refId": "A"
+        }
+      ],
+      "title": "API 5xx Count (5m)",
+      "type": "timeseries",
+      "description": "최근 5분 5xx 증가량. Prometheus 경계 보간으로 소수가 나올 수 있습니다."
+    },
+    {
+      "datasource": {
         "type": "loki",
         "uid": "dooit-loki"
       },
@@ -193,7 +254,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 24
       },
       "id": 6,
       "options": {

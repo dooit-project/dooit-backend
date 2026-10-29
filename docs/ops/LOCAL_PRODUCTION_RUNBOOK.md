@@ -383,3 +383,13 @@ host 복구 스크립트 보정 후 같은 `6cdc9e5` image에 full commit SHA를
 ## PRD/STG 프로젝트 분리 (2026-10-18)
 
 기존 운영 image/볼륨을 보존해 프로젝트를 prd_dooit로 전환했고, 별도 STG를 localhost:18080에 기동했다. 현재 `.env`의 DOOIT_COMPOSE_PROJECT_NAME이 PRD 그룹을 선택한다. 전환 백업·검증과 STG 명령은 [PRD/STG 운영](DOCKER_ENVIRONMENTS.md)을 따른다. 이 전환은 PRD에 빠른 기록 새 기능을 배포한 것이 아니다.
+
+## 2026-10-30 보안·p95 image 1d719d3 배포 완료
+
+- 1d719d3efebce32963fa77a9e26e9e2fb50b6e46을 커밋·푸시하고 release-production.sh로 PRD에 반영했다. 이전 6cdc9e5 이미지는 롤백용으로 유지했다.
+- 배포 전 backup-db.sh 백업의 gzip 검증과 goal schema 읽기 전용 검사 전 항목 READY를 확인했다. DDL 변경은 없다.
+- clean test/bootJar(702개), readiness, production API smoke, 공개 HTTPS/CORS, monitoring stack 검사를 통과했다. metadata image/commit 일치를 확인했다.
+- legacy Task·D-Day 차단과 빠른 기록 requestedType도 포함됐다. 합성 계정으로 IDEA 저장, legacy 거부 8건, 원본 보존을 검증하고 만든 Task·D-Day 삭제 및 refresh session 폐기를 완료했다.
+- 기본 production/public smoke의 합성 계정·병합 데이터와 별도 검증 게스트는 남는다. 실제 사용자 데이터는 검증 대상으로 사용하지 않았다.
+- 운영 p95와 5xx 패널·장애 규칙 정상 평가를 확인했다. 외부 통지는 미연결이다. [모니터링 runbook](MONITORING_RUNBOOK.md)을 따른다.
+- legacy 클라이언트는 JWT 기반 v1으로 전환해야 한다. v1 DTO·오류 코드·DB schema는 그대로다. 롤백하면 legacy 보안 차단도 되돌아간다.

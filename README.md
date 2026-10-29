@@ -148,7 +148,7 @@ production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Clo
 | [v1 API 계약](./docs/api/API_V1_FRONTEND.md) | 모바일/프론트엔드가 호출하는 endpoint, request/response, 오류 기준 |
 | [일일 계획 계약](./docs/api/DAILY_PLANNING_CONTRACT.md) | 오늘 계획, focus task, 예상 소요 시간, 하루 마감 summary |
 | [목표 여정 계약](./docs/api/GOAL_JOURNEY_CONTRACT.md) | 목표·계획·실천·직접 기록·여정과 기존 개인 시스템 이관 |
-| [빠른 기록 선택 유형](./docs/api/QUICK_CAPTURE_TYPE_CONTRACT.md) | 선택 유형 보존 정책, 오류·재시도, STG 반영·PRD 미배포 상태 |
+| [빠른 기록 선택 유형](./docs/api/QUICK_CAPTURE_TYPE_CONTRACT.md) | 선택 유형 보존 정책, 오류·재시도, STG/PRD 반영 상태 |
 | [PRD/STG Docker 운영](./docs/ops/DOCKER_ENVIRONMENTS.md) | 프로젝트·DB·포트 분리와 STG 기동·업데이트 |
 | [환경 연동 기준](./docs/ops/ENVIRONMENT_INTEGRATION.md) | local, production 실제 도메인, CORS, 문서 UI 공개 기준 |
 | [인증 계약](./docs/api/AUTH_CONTRACT.md) | 게스트 수명 주기, JWT, refresh rotation, logout, 비밀번호 재설정 |

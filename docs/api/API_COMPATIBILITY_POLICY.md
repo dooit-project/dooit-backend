@@ -82,7 +82,7 @@ API 계약 변경 PR에는 아래를 함께 반영한다.
 - `/api/v1/**`는 모바일/외부 클라이언트용 안정 계약이다.
 - `/api/tasks/**`, `/api/ddays/**`는 legacy 계약이다.
 - `/api/tasks`, `/api/tasks/**`, `/api/ddays`, `/api/ddays/**`는 소유권 검사 우회 방지를 위해 차단한다. 미인증 요청은 `401`, 인증 요청은 `403`이다.
-- Task 차단은 2026-10-25 STG 검증 기록이 있으며, D-Day 차단은 2026-10-29 코드에 추가했다. 2026-10-30 수정 작업본의 STG 검증을 완료했으며 PRD는 미반영이다.
+- Task 차단은 2026-10-25 STG 검증 기록이 있으며, D-Day 차단은 2026-10-29 코드에 추가했다. 2026-10-30 수정 작업본의 STG 검증을 완료했으며 PRD는 10월 30일 1d719d3에 반영하고 차단·원본 보존을 확인했다.
 - 이는 legacy 클라이언트의 breaking change다. Task는 `/api/v1/tasks/**`, D-Day는 `/api/v1/dday-goals/**`로 전환하고 Bearer JWT를 전달해야 한다. 공유 데이터는 `/api/v1/workspaces/{workspaceId}/...`를 사용한다.
 - v1 URL·DTO·오류 코드와 DB schema는 그대로다. DB migration은 필요하지 않다. 소유자 없는 과거 데이터는 자동 노출하지 않으며 소유자 확인 후 별도 이관해야 한다.
 - 명시적으로 허용한 경로와 인증된 v1 외의 `/api/**`는 기본 거부한다. 구현이 없는 `/api/auth/**` 공개 예외도 제거했다.

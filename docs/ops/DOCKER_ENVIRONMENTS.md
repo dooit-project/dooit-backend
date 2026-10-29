@@ -101,5 +101,9 @@ Alloy의 프로젝트 필터도 같은 환경변수를 받아 PRD 로그만 수�
 
 ## 남은 일
 
-- STG에서 제품 정책과 모바일 연동 확인 후 검증된 release를 별도로 PRD에 배포.
+- 10월 30일 PRD 1d719d3 배포 완료. 이후 변경도 STG 검증과 승인 후 별도 PRD 반영.
 - host 전원 정책·재부팅 후 복구·offsite backup은 [로드맵](../project/ROADMAP.md) 기준으로 계속 검증.
+
+## 2026-10-30 PRD 반영
+
+1d719d3 커밋 image를 PRD에 반영하고 readiness·공개 API·legacy 차단·p95를 검증했다. 이전 절의 PRD 미반영 표시는 당시 기록이다. [운영 배포 기록](LOCAL_PRODUCTION_RUNBOOK.md)을 현재 기준으로 따른다.

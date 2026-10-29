@@ -1,0 +1,179 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "dooit-production",
+      "folder": "Dooit",
+      "interval": "1m",
+      "rules": [
+        {
+          "uid": "dooit-backend-scrape-down",
+          "title": "Dooit backend metrics unavailable",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "dooit-prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "dooit-prometheus"
+                },
+                "editorMode": "code",
+                "expr": "1 - (min(up{job=\"dooit-backend\"}) or vector(0))",
+                "instant": true,
+                "range": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "type": "threshold",
+                "refId": "B",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0.5
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ]
+              }
+            }
+          ],
+          "noDataState": "Alerting",
+          "execErrState": "Alerting",
+          "for": "2m",
+          "annotations": {
+            "summary": "백엔드 메트릭 수집 중단",
+            "description": "2분 이상 scrape 실패 또는 target 부재. readiness, 앱 상태, monitoring 인증을 확인하세요. 실제 readiness 상태를 직접 측정하는 규칙은 아닙니다.",
+            "__dashboardUid__": "dooit-production-overview",
+            "__panelId__": "1"
+          },
+          "labels": {
+            "service": "dooit-backend",
+            "env": "production",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "dooit-api-high-5xx",
+          "title": "Dooit API high 5xx",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "dooit-prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "dooit-prometheus"
+                },
+                "editorMode": "code",
+                "expr": "((sum(increase(http_server_requests_seconds_count{job=\"dooit-backend\",uri=~\"/api/.*\",status=~\"5..\"}[5m])) or vector(0)) / clamp_min((sum(increase(http_server_requests_seconds_count{job=\"dooit-backend\",uri=~\"/api/.*\"}[5m])) or vector(0)), 1) > bool 0.05) * ((sum(increase(http_server_requests_seconds_count{job=\"dooit-backend\",uri=~\"/api/.*\",status=~\"5..\"}[5m])) or vector(0)) >= bool 5)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "type": "threshold",
+                "refId": "B",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0.5
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ]
+              }
+            }
+          ],
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "for": "5m",
+          "annotations": {
+            "summary": "API 5xx 오류율 증가",
+            "description": "최근 5분 5xx 비율이 5% 초과이고 추정 건수가 5건 이상인 상태가 5분 지속됐습니다. Loki 오류 로그와 requestId를 확인하세요.",
+            "__dashboardUid__": "dooit-production-overview",
+            "__panelId__": "7"
+          },
+          "labels": {
+            "service": "dooit-backend",
+            "env": "production",
+            "severity": "warning"
+          },
+          "isPaused": false
+        }
+      ]
+    }
+  ]
+}

@@ -41,9 +41,9 @@ Spring Actuator + Micrometer → /actuator/prometheus ← Prometheus (15초 주�
 - requestId는 로그 본문/MDC에 있다. 현재 Alloy에는 requestId 파싱이나 stack trace multiline 결합 단계가 없으며, Grafana에서 문자열로 검색한다.
 - Loki 로그 보관 설정은 168시간(7일), Prometheus 메트릭 보관 기본값은 15일이다.
 - Docker json-file은 컨테이너별 10MB × 5개로 회전한다. production Logback 파일은 `/app/logs` 볼륨에도 별도로 기록하며 각 rolling policy는 30일/1GB 상한이다. 이 파일은 현재 Alloy 수집 원본이 아니다.
-- Grafana datasource와 6개 패널은 `config/monitoring/grafana`의 provisioning/JSON 파일로 관리한다. 로컬 접속 주소는 `http://127.0.0.1:3000`이다.
+- Grafana datasource와 8개 패널은 `config/monitoring/grafana`의 provisioning/JSON 파일로 관리한다. 로컬 접속 주소는 `http://127.0.0.1:3000`이다.
 
-### 2026-10-30 읽기 전용 점검
+### 2026-10-30 배포 전 읽기 전용 점검
 
 - `check-monitoring-stack.sh` 통과, Prometheus `up{job="dooit-backend"}=1` 확인.
 - 점검용 metadata 읽기 요청에 requestId를 부여하고 Loki에서 해당 문자열의 로그 유입을 확인했다. 초기 빈 조회만으로 수집 장애라고 판단하지 않고 실제 요청→수집까지 검증했다.
@@ -51,7 +51,7 @@ Spring Actuator + Micrometer → /actuator/prometheus ← Prometheus (15초 주�
 - 이 스크립트는 서비스 endpoint/target 상태를 확인한다. Grafana datasource 인증 health나 실제 Loki 로그 유입까지 자동 검증하지는 않는다.
 - 이번에는 PRD 앱·모니터링 설정을 변경하지 않았다. 알림 연락처/규칙도 아직 설정하지 않았다.
 
-### p95 수집 보완과 STG 검증 (2026-10-30)
+### p95 수집 보완과 배포 전 STG 검증 (2026-10-30)
 
 - 공통 `application.yml`에 `management.metrics.distribution.percentiles-histogram.http.server.requests=true`를 추가했다. local/test/prod에서 같은 분포 설정을 사용하며 metric endpoint의 기존 인증·활성화 정책은 유지한다.
 - HTTP 요청별 시간 구간의 누적 bucket을 내보내고 Prometheus에서 `histogram_quantile`로 p95를 추정한다. [Spring Boot 4.0 metrics 문서](https://docs.spring.io/spring-boot/4.0/reference/actuator/metrics.html)를 기준으로 구성했다.
@@ -154,16 +154,18 @@ docker compose ps
 - [x] 1차 dashboard는 backend scrape 상태/HTTP/JVM/DB/오류 로그 중심으로 만든다.
 - [x] Grafana anonymous access는 production 기본 비활성으로 둔다.
 
-현재 `Dooit Production Overview`의 실제 패널은 6개다.
+현재 `Dooit Production Overview`의 실제 패널은 8개다.
 
 - Backend Up: Prometheus scrape 성공 여부. readiness나 Docker health와는 다르다.
 - API Request Rate: `job="dooit-backend"`, `uri=~"/api/.*"`의 초당 요청 증가율. Actuator·문서 UI 요청은 제외한다.
-- API Latency p95: 같은 API 범위의 histogram bucket을 합산해 계산한다. 2026-10-30 histogram 생성·쿼리 계산을 STG에서 검증했다. PRD 앱은 아직 이전 image여서 배포 전까지 bucket이 없다.
+- API Latency p95: 같은 API 범위의 histogram bucket을 합산해 계산한다. 2026-10-30 PRD 1d719d3 배포 후 bucket과 실제 p95 계산을 확인했다.
 - JVM Memory Used: heap/non-heap 메모리 사용량.
 - HikariCP Connections: active/idle/pending 연결 수.
+- API 5xx Error Ratio: 최근 5분 API 요청 중 5xx 비율. 무요청은 no data/NaN으로 둔다.
+- API 5xx Count (5m): 최근 5분 5xx 증가량. 경계 보간으로 소수가 나올 수 있다.
 - Recent App Errors: Loki app 로그 중 `ERROR` 문자열 검색.
 
-5xx, GC pause, CPU, uptime, container restart/health 패널은 아직 없다. 특히 Docker 상태를 수집할 exporter도 현재 구성에 없다.
+GC pause, CPU, uptime, container restart/health 패널은 아직 없다. 특히 Docker 상태를 수집할 exporter도 현재 구성에 없다.
 
 ### B5. 운영 스크립트와 문서
 
@@ -191,16 +193,24 @@ Grafana에서 확인한다.
 - `{compose_service="app"}` 로그가 최신 시각까지 유입
 - app ERROR 로그가 request id와 함께 조회
 
-## 6. 알림은 후속 작업
+## 6. 장애 규칙과 수신처
 
-Alertmanager, Grafana contact point, Slack/Discord/email 알림은 1차 dashboard와 log 수집이 안정된 뒤 붙인다. 1차 alert 후보는 아래로 제한한다.
+2026-10-30 Grafana 파일 provisioning으로 두 규칙을 활성화했다. 1분마다 평가한다.
 
-- readiness down 2분 이상
-- 5xx rate 급증
-- DB connection pending 증가
-- app container restart
-- backup age 기준 초과
-- disk free space 부족
+| 규칙 | 조건 | 유지 시간 |
+| --- | --- | --- |
+| Backend metrics unavailable | backend up=0 또는 target 부재 | 2분 |
+| API high 5xx | 최근 5분 API 5xx 비율 5% 초과 및 추정 5xx 건수 5건 이상 | 5분 |
+
+- 수집 중단은 readiness 장애와 동일하지 않다. 앱·인증·Prometheus 경로를 함께 확인한다. 호스트가 꺼지면 같은 호스트의 Grafana도 멈추므로 외부 감시가 별도로 필요하다.
+- 오류율은 `/api/**`만 집계한다. 무요청과 성공 응답만 있는 상황은 정상이다. 적은 요청의 일시적 오류로 경보가 과도하게 발생하지 않도록 건수 조건을 둔다.
+- 쿼리 실행 실패와 수집 중단 규칙의 NoData는 Alerting이다. 5xx NoData는 정상으로 처리하며 수집 가용성은 별도 규칙이 담당한다.
+- 현재 contact point는 없고 root receiver는 기존 `empty`다. Grafana 내부 평가만 동작하며 이메일·Slack·Discord 전송은 미연결이다. 수신처와 자격증명 확정 후 시험/복구 통지 수신을 검증해야 한다.
+- 원본은 `config/monitoring/grafana/provisioning/alerting/dooit-rules.json`이다. [Grafana 공식 절차](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/)에 따라 admin API `POST /api/admin/provisioning/alerting/reload` 또는 Grafana 재시작으로 적용한다. 비밀번호는 셸 인자·로그에 남기지 않는다.
+- `python3 -B scripts/test-monitoring-rules.py`는 실행 중인 Prometheus image ID로 네트워크 없는 임시 promtool 컨테이너를 띄워 실제 쿼리 9개 시나리오를 검증한다. 정상/수집 중단/target 부재/무요청/5% 경계/건수 부족/오류 증가/Actuator 제외를 포함한다.
+- 운영에 실제 5xx나 서버 중단을 유발하지 않았다. 두 규칙의 `inactive`, `health=ok` 평가를 확인했다. 소량 점검 트래픽의 p95는 부하 테스트 결과가 아니다.
+
+후속: 외부 수신처 연결, 임계값 조정, DB pending·backup age·disk 여유·외부 가용성 감시 확장.
 
 ## 7. 참고 원본
 
@@ -208,3 +218,9 @@ Alertmanager, Grafana contact point, Slack/Discord/email 알림은 1차 dashboar
 - Spring Boot Actuator endpoint exposure: https://docs.spring.io/spring-boot/reference/actuator/endpoints.html
 - Grafana Loki stack and Alloy: https://grafana.com/docs/enterprise-logs/latest/get-started/quick-start/tutorial/
 - Grafana datasource provisioning: https://grafana.com/docs/grafana/latest/administration/provisioning/
+
+## 2026-10-30 PRD 반영 기록
+
+- 1d719d3 배포 후 API histogram 621개와 실제 p95 값 반환을 확인했다. 시계열 수는 route/status 조합에 따라 변하므로 고정 목표가 아니다.
+- Grafana live dashboard에서 5xx 비율/건수 포함 8개 패널과 두 장애 규칙의 정상 평가를 확인했다. 외부 통지는 미연결이다.
+- 앞의 읽기 전용/STG 검증 기록은 배포 전 이력이다. 현재 상태는 이 절을 따른다.

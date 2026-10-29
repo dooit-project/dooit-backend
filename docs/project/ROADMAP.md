@@ -17,11 +17,11 @@ Last updated: 2026-10-30
 
 ### 현재 운영 기준
 
-우선 잔여 작업은 legacy Task·D-Day 접근 차단의 배포와 검증, 멱등성 원자성 보강, 빠른 기록 requestedType의 PRD 반영과 운영 복구성 검증이다. 클라이언트 실기기 검증 결과는 외부 연동 참고 사항으로만 관리한다. 공개 HTTPS 도메인, Docker Compose production 구조, production DB migration 적용, 최신 backend image 배포, readiness/public HTTPS smoke는 완료됐다.
+legacy 접근 차단·requestedType·p95는 10월 30일 PRD에 반영했다. 우선 잔여 작업은 외부 장애 통지 연결, 멱등성 원자성 보강과 운영 복구성 검증이다. 클라이언트 실기기 검증 결과는 외부 연동 참고 사항으로만 관리한다. 공개 HTTPS 도메인, Docker Compose production 구조, production DB migration 적용, 최신 backend image 배포, readiness/public HTTPS smoke는 완료됐다.
 
 | 구분 | 현재 상태 | 다음에 닫을 일 |
 | --- | --- | --- |
-| 빠른 등록 | 기존 자동 파싱 유지 및 requestedType 선택 유형 보존 STG 반영·실 API 검증. 새 필드는 PRD 미배포 | 선택 유형 정책 확인·PRD API 반영, 실제 입력 사례 기반 예외 표현 검토 |
+| 빠른 등록 | 기존 자동 파싱 유지 및 requestedType 선택 유형 보존 STG 반영·실 API 검증. 새 필드는 10월 30일 PRD 반영 | 선택 유형 제품 정책 확인, 실제 입력 사례 기반 예외 표현 검토 |
 | 빠른 등록 템플릿 | personal template CRUD와 template 기반 Task 생성 구현 완료 | 추가 필드 요청이 접수되면 계약 검토 |
 | 일일 계획 | `daily-plans` resource, focus 1~3개, 계획 확정/마감 상태, 결과 summary 구현 완료 | 부분 실패 사례가 접수되면 batch mutation 필요성 검토 |
 | 예상 소요 시간 | Task nullable 필드와 template 기본값 적용 구현 완료 | 추가 입력 요구가 접수되면 validation·계약 검토 |
@@ -33,8 +33,8 @@ Last updated: 2026-10-30
 | production 접근 | 실제 Web/API 도메인 HTTPS 연결, HTTPS 강제, readiness·CORS public smoke 완료 | 배포 시 서버 API smoke |
 | 운영 복구성 | launchd, Docker health, readiness recovery check 통과 | 전원 정책 적용과 재부팅/Docker 재시작 실검증 |
 | backup | local routine backup 검증 통과 | offsite backup 위치 결정과 restore 연습 |
-| monitoring | Prometheus, Grafana, Loki, Alloy 기본 stack 실기동 통과 | alerting 기준 결정과 noise 조정 |
-| 목표 중심 계획·실천 여정 | 운영 schema와 image `6cdc9e5` 배포 및 공개 HTTPS 인증 API smoke 완료. AI는 기본 비활성 | 이관 API 오류 대응, AI provider·보관·삭제 정책 확정 후 실제 adapter 연결 |
+| monitoring | 기본 stack·p95·5xx 패널과 장애 규칙 2개 정상 평가 | 외부 통지 연결과 noise 조정 |
+| 목표 중심 계획·실천 여정 | 목표 schema·공개 HTTPS 인증 API smoke 완료. 현재 PRD image는 `1d719d3`. AI는 기본 비활성 | 이관 API 오류 대응, AI provider·보관·삭제 정책 확정 후 실제 adapter 연결 |
 
 ## 2. 제품 기능 로드맵
 
@@ -42,7 +42,7 @@ Last updated: 2026-10-30
 
 ### P0. 요청 API 누락 점검과 백엔드 코드 정리
 
-2026-10-18 계약·구현·관련 테스트 대조 기준, 전달받은 목표 API와 빠른 기록 선택 유형 요청의 추가 미구현 endpoint는 발견되지 않았다. 빠른 기록은 STG 검증 완료·PRD 미배포이며, 날짜 없는 TODO 및 시각/반복 제한은 구현 누락과 구분해 정책 확인 사항으로 관리한다. 외부 AI adapter는 기존의 별도 미완료 범위다.
+2026-10-18 계약·구현·관련 테스트 대조 기준, 전달받은 목표 API와 빠른 기록 선택 유형 요청의 추가 미구현 endpoint는 발견되지 않았다. 당시 빠른 기록은 STG 검증 완료·PRD 미배포였다. 이후 2026-10-30 PRD에 반영했다. 날짜 없는 TODO 및 시각/반복 제한은 구현 누락과 구분해 정책 확인 사항으로 관리한다. 외부 AI adapter는 기존의 별도 미완료 범위다.
 
 1. [x] 프론트 요청과 서버 DTO·서비스·회귀 테스트를 대조한다. 세부 기준은 [연동 상태](../mobile/MOBILE_API_BACKEND_STATUS.md), [목표 계약](../api/GOAL_JOURNEY_CONTRACT.md), [빠른 기록 계약](../api/QUICK_CAPTURE_TYPE_CONTRACT.md)을 따른다.
 2. [x] `TaskService`의 일반/Workspace/빠른 기록 생성 책임을 `TaskCreationService`로 분리한다. 반복 시리즈와 Task 저장은 같은 트랜잭션을 유지한다.
@@ -58,7 +58,7 @@ Last updated: 2026-10-30
 - [x] 소유권 없는 legacy `/api/tasks/**` 우회를 보안 필터에서 차단했다. 기존 경로 이용자는 인증된 v1 API로 이관해야 한다. 상세 영향은 [API 계약](../api/API_V1_FRONTEND.md)의 Task 보안 점검을 따른다.
 - [x] A Task를 B로 요청한 뒤 원본 재조회, 본인 부모에 타인 item ID 혼합, 미인증 요청과 legacy 경로 차단 회귀 테스트를 추가했다.
 - [x] `b9495f0` image의 STG 반영과 실제 거부 요청 38건/원본 보존 및 기존 빠른 기록 smoke를 통과했다. 전체 테스트는 692개 통과다. 상세 증적은 [Docker 환경](../ops/DOCKER_ENVIRONMENTS.md)을 따른다.
-- [ ] 보안 수정의 PRD 반영과 배포 후 API 검증. 현재 PRD `6cdc9e5`에는 legacy Task 경로 차단이 없으며 STG 통과와 구분한다.
+- [x] 보안 수정은 10월 30일 PRD 1d719d3에 반영하고 legacy 차단·원본 보존을 검증했다.
 
 ### 운영 관점 코드 검토 (2026-10-29)
 
@@ -68,7 +68,7 @@ Last updated: 2026-10-30
 - [x] 멱등성 잠금 제거 시 대기자와 새 요청의 잠금이 갈라지는 경합을 고정 크기 잠금으로 수정했다. 실패 요청 이후 대기/신규 요청의 직렬화를 검증한다.
 - [x] JSON 파싱에 실패한 payload 원문이 로그에 남는 문제를 수정했다. 잘린 JSON·일반 텍스트는 `[UNPARSEABLE_PAYLOAD]`로 기록한다. 운영 payload 로깅 기본 비활성은 유지한다.
 - [x] 2026-10-30 미커밋 작업본을 STG에 반영하고 거부 요청 46건·원본 보존·빠른 등록 smoke를 통과했다. [STG 기록](../ops/DOCKER_ENVIRONMENTS.md)을 따른다.
-- [ ] 검증 작업본을 사용자 확인 후 커밋하고 확정 image를 재검증한 뒤 PRD에 반영한다. PRD는 기존 image를 유지했다.
+- [x] 사용자 승인 후 커밋·푸시하고 확정 image 1d719d3를 PRD에 반영했다. 백업·702개 테스트·공개 API 검증을 통과했다.
 - [ ] 생성 업무와 멱등성 기록의 원자성, 다중 인스턴스 DB 잠금, 만료 레코드 정리 및 실패 후 재시도 정책을 함께 설계한다. 현재 `expiresAt`만 기록하며 자동 삭제하지 않는다.
 - [ ] `TaskService`(약 920줄)의 검색 매칭·추천 계산을 순수 계산 객체로 분리한다. `TaskTxService`(약 690줄)는 반복 수정과 일반 상태 변경의 트랜잭션 경계를 보존하며 나눈다. 이미 분리한 생성·날짜 파서는 유지한다.
 - [ ] monitoring image의 `latest` 태그를 검증된 버전/digest로 고정한다. 실제 stack 호환성 검증 후 반영하며 이번에는 임의 버전으로 바꾸지 않았다.
@@ -77,10 +77,10 @@ Last updated: 2026-10-30
 
 ### P1. 빠른 기록 선택 유형 보존 (2026-10-18 별도 요청)
 
-STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../api/QUICK_CAPTURE_TYPE_CONTRACT.md`](../api/QUICK_CAPTURE_TYPE_CONTRACT.md).
+STG 실 API 검증 및 10월 30일 PRD 반영 완료. 계약/서버 회신: [`../api/QUICK_CAPTURE_TYPE_CONTRACT.md`](../api/QUICK_CAPTURE_TYPE_CONTRACT.md).
 
 - [ ] TODO 시각/반복 오류 및 날짜 없는 TODO 기록함 정책을 모바일/제품과 확인한다.
-- [ ] 커밋 image STG 반영은 완료했다. 서버 API client → STG 검증도 완료했다. 정책 확인 후 PRD 반영 대상 image·호환성·rollback을 점검해 배포한다. PRD 빠른 기록 API 검증은 현재 보류다.
+- [x] PRD 1d719d3 배포와 합성 IDEA 선택 유형 저장 검증을 완료했다. STG 전체 수용 예시와 구분한다.
 - 멱등성 개선은 위 백엔드 코드 정리 4번에서 관리한다.
 
 ### P1. 모바일 실사용 로그 기반 개선
@@ -133,7 +133,7 @@ STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../
 
 공개 HTTPS, Web origin CORS와 localhost STG API 검증은 완료했다. 백엔드는 API 계약·배포 상태와 서버 측 인증/생성/조회 smoke를 관리한다.
 
-- [ ] 빠른 기록 선택 유형의 PRD 반영 시 image/commit, readiness, 요청 유형별 저장 결과, 기존 자동 해석 호환성을 기록한다.
+- [x] PRD image/commit·readiness·IDEA 저장 검증을 운영 runbook에 기록했다. 전체 유형 수용 예시는 STG 기록을 따른다.
 - 클라이언트에서 재현된 API 오류는 요청·응답·서버 로그를 근거로 백엔드 결함 여부를 확인한다.
 - Android build 설정·실기기 UI·화면 감사·스크린샷 갱신은 프론트 담당이다. 기존 검증 미완료 이력은 [연동 상태](../mobile/MOBILE_API_BACKEND_STATUS.md)에 참고 기록으로 보존한다.
 
@@ -173,9 +173,12 @@ STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../
 Prometheus, Grafana, Loki, Grafana Alloy 기본 stack 실기동과 점검은 완료했다. 구성과 명령은 [모니터링 runbook](../ops/MONITORING_RUNBOOK.md)을 따른다.
 
 - [x] HTTP histogram 수집 설정과 API 전용 쿼리를 추가했다. 2026-10-30 STG에서 bucket과 별도 Prometheus의 실제 p95 계산을 검증했다.
-- [ ] p95 수정 image를 PRD에 반영한 뒤 bucket·차트·시계열 증가량을 확인한다. PRD 앱은 아직 기존 image다.
-- [ ] 필요에 따라 5xx·GC·CPU 패널을 추가하고 container health/restart는 별도 exporter 도입을 검토한다. 현재 실제 패널은 6개다.
-- [ ] alerting은 dashboard와 log 수집 안정화 이후 별도 작업으로 진행한다.
+- [x] p95 image를 PRD에 반영하고 bucket·실제 p95 값을 확인했다.
+- [ ] 트래픽 증가에 따른 histogram 시계열 수와 Prometheus 메모리를 관찰한다.
+- [x] 5xx 비율·건수 패널을 추가했다. 현재 패널은 8개다.
+- [ ] GC·CPU 패널과 container health/restart exporter 필요성을 검토한다.
+- [x] 수집 중단·5xx 증가 규칙을 적용하고 정상 평가 및 PromQL 9개 시나리오를 검증했다.
+- [ ] 외부 수신처를 확정하고 시험/복구 통지 수신을 검증한다. 현재 Grafana 내부 표시만 동작한다.
 
 증적:
 
