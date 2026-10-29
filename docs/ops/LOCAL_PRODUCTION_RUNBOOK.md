@@ -39,7 +39,7 @@ curl --fail http://127.0.0.1:8080/actuator/health/readiness
 ./scripts/smoke-production-api.sh
 ```
 
-MySQL port는 host에 공개하지 않는다. app port도 `127.0.0.1:8080`에만 공개하고 Cloudflare Tunnel 또는 동등한 reverse proxy가 실제 HTTPS 도메인의 진입점이 된다.
+현재 Compose는 MySQL을 host loopback `127.0.0.1:3306`에만 공개한다. 외부 인터페이스에는 바인딩하지 않는다. app port도 `127.0.0.1:8080`에만 공개하고 Cloudflare Tunnel 또는 동등한 reverse proxy가 실제 HTTPS 도메인의 진입점이 된다.
 
 로그인 후 Docker Desktop과 Compose stack 자동 복구가 필요하면 LaunchAgent를 설치한다.
 

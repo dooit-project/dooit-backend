@@ -1,6 +1,6 @@
 # Dooit Backend Roadmap
 
-Last updated: 2026-10-25
+Last updated: 2026-10-30
 
 이 문서는 **백엔드 API 개발·리팩토링과 서버 운영 작업 목록**이다. 프론트 요청의 서버 구현 누락을 먼저 확인하고, 누락이 없으면 기존 API를 유지하는 코드 개선과 정리를 진행한다. 모바일 구현·화면 감사·스크린샷·실기기 UI 검증은 프론트 담당이며 이 저장소의 개발 할 일에 포함하지 않는다. 이미 구현된 API 계약과 운영 절차의 세부 내용은 각 계약 문서와 runbook을 원본으로 본다.
 
@@ -17,7 +17,7 @@ Last updated: 2026-10-25
 
 ### 현재 운영 기준
 
-서버 측 잔여 작업은 빠른 기록 requestedType의 PRD 반영과 운영 복구성 검증이다. 클라이언트 실기기 검증 결과는 외부 연동 참고 사항으로만 관리한다. 공개 HTTPS 도메인, Docker Compose production 구조, production DB migration 적용, 최신 backend image 배포, readiness/public HTTPS smoke는 완료됐다.
+우선 잔여 작업은 legacy Task·D-Day 접근 차단의 배포와 검증, 멱등성 원자성 보강, 빠른 기록 requestedType의 PRD 반영과 운영 복구성 검증이다. 클라이언트 실기기 검증 결과는 외부 연동 참고 사항으로만 관리한다. 공개 HTTPS 도메인, Docker Compose production 구조, production DB migration 적용, 최신 backend image 배포, readiness/public HTTPS smoke는 완료됐다.
 
 | 구분 | 현재 상태 | 다음에 닫을 일 |
 | --- | --- | --- |
@@ -48,7 +48,7 @@ Last updated: 2026-10-25
 2. [x] `TaskService`의 일반/Workspace/빠른 기록 생성 책임을 `TaskCreationService`로 분리한다. 반복 시리즈와 Task 저장은 같은 트랜잭션을 유지한다.
 3. [x] 날짜·시간·주간 반복의 정규식 해석을 내부 `TaskQuickCaptureTemporalParser`로 분리했다. `TaskQuickCaptureParser`는 유형별 정책·시간 구간·응답 메타데이터를 결정한다. IDEA 해석 생략, 날짜/시각 오류 우선순위, 날짜·반복 동시 입력의 기존 적용 규칙을 회귀 테스트로 보존한다. 표현 지원 범위와 오류 계약은 변경하지 않았다.
 4. [ ] 생성 멱등성의 원자성·다중 인스턴스 동시성 개선안을 정하고 장애·경합 회귀 테스트를 추가한다. DB 변경과 기존 키/응답 호환성을 먼저 검토한다.
-5. [ ] 미사용 코드·중복 문서를 참조와 테스트 근거로 정리한다. legacy API는 참조가 적다는 이유만으로 제거하지 않는다. 이번에는 문서의 프론트 작업 지시와 백엔드 작업 범위를 정리했다.
+5. [x] 비활성 메일 실행기, 서비스 검증 없는 스레드 벤치마크, 구 버전 Gradle 주석을 제거했다. 문서의 legacy 공개 정책·MySQL 바인딩·현황 요약을 구현과 맞췄다. 실제 MVC 가상 스레드 검증과 migration 이력은 유지한다.
 
 리팩토링 검증은 `./gradlew test`로 수행한다. 생성 서비스·빠른 기록 파서 분리는 URL·요청/응답 DTO·오류 코드·DB schema 변경이 없고 클라이언트 수정이나 migration이 필요하지 않다. 생성 서비스 분리는 `9038f39`로 커밋했다. 빠른 기록 파서 분리는 `41e02db`로 커밋하고 소유권 수정과 함께 STG에 반영했다. 커밋·배포 여부는 구현 완료와 별도로 기록한다.
 
@@ -59,6 +59,21 @@ Last updated: 2026-10-25
 - [x] A Task를 B로 요청한 뒤 원본 재조회, 본인 부모에 타인 item ID 혼합, 미인증 요청과 legacy 경로 차단 회귀 테스트를 추가했다.
 - [x] `b9495f0` image의 STG 반영과 실제 거부 요청 38건/원본 보존 및 기존 빠른 기록 smoke를 통과했다. 전체 테스트는 692개 통과다. 상세 증적은 [Docker 환경](../ops/DOCKER_ENVIRONMENTS.md)을 따른다.
 - [ ] 보안 수정의 PRD 반영과 배포 후 API 검증. 현재 PRD `6cdc9e5`에는 legacy Task 경로 차단이 없으며 STG 통과와 구분한다.
+
+### 운영 관점 코드 검토 (2026-10-29)
+
+이번 검토는 인증/인가, 멱등성, 로깅, 주요 서비스 책임, 빌드·Compose와 문서 대조에 집중했다. 모든 비즈니스 분기나 실제 운영 부하를 검증한 것은 아니다.
+
+- [x] legacy D-Day의 전체 조회·연결 Task 조회·삭제 우회를 차단하고 인증 유무별 회귀 테스트를 추가했다. API 기본 접근 정책도 명시 허용 외에는 거부하도록 변경했다.
+- [x] 멱등성 잠금 제거 시 대기자와 새 요청의 잠금이 갈라지는 경합을 고정 크기 잠금으로 수정했다. 실패 요청 이후 대기/신규 요청의 직렬화를 검증한다.
+- [x] JSON 파싱에 실패한 payload 원문이 로그에 남는 문제를 수정했다. 잘린 JSON·일반 텍스트는 `[UNPARSEABLE_PAYLOAD]`로 기록한다. 운영 payload 로깅 기본 비활성은 유지한다.
+- [x] 2026-10-30 미커밋 작업본을 STG에 반영하고 거부 요청 46건·원본 보존·빠른 등록 smoke를 통과했다. [STG 기록](../ops/DOCKER_ENVIRONMENTS.md)을 따른다.
+- [ ] 검증 작업본을 사용자 확인 후 커밋하고 확정 image를 재검증한 뒤 PRD에 반영한다. PRD는 기존 image를 유지했다.
+- [ ] 생성 업무와 멱등성 기록의 원자성, 다중 인스턴스 DB 잠금, 만료 레코드 정리 및 실패 후 재시도 정책을 함께 설계한다. 현재 `expiresAt`만 기록하며 자동 삭제하지 않는다.
+- [ ] `TaskService`(약 920줄)의 검색 매칭·추천 계산을 순수 계산 객체로 분리한다. `TaskTxService`(약 690줄)는 반복 수정과 일반 상태 변경의 트랜잭션 경계를 보존하며 나눈다. 이미 분리한 생성·날짜 파서는 유지한다.
+- [ ] monitoring image의 `latest` 태그를 검증된 버전/digest로 고정한다. 실제 stack 호환성 검증 후 반영하며 이번에는 임의 버전으로 바꾸지 않았다.
+
+가독성은 도메인별 controller/service/repository와 DTO 분리가 일관적이지만 위 대형 서비스에 책임이 집중돼 있다. 문서 개수 자체보다 정책 모순과 구현/배포 상태 혼동을 먼저 정리했다. 계약·runbook·migration 이력은 각각 참조와 운영 용도가 있어 삭제하지 않았다.
 
 ### P1. 빠른 기록 선택 유형 보존 (2026-10-18 별도 요청)
 
@@ -157,6 +172,8 @@ STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../
 
 Prometheus, Grafana, Loki, Grafana Alloy 기본 stack 실기동과 점검은 완료했다. 구성과 명령은 [모니터링 runbook](../ops/MONITORING_RUNBOOK.md)을 따른다.
 
+- [ ] HTTP histogram 수집을 활성화하고 현재 비어 있는 p95 패널을 검증한다. 2026-10-30 운영 조회에서 bucket 부재를 확인했다.
+- [ ] 필요에 따라 5xx·GC·CPU 패널을 추가하고 container health/restart는 별도 exporter 도입을 검토한다. 현재 실제 패널은 6개다.
 - [ ] alerting은 dashboard와 log 수집 안정화 이후 별도 작업으로 진행한다.
 
 증적:

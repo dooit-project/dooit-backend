@@ -7,6 +7,7 @@ import urllib.request
 BASE = 'http://127.0.0.1:18080'
 accounts = []
 tasks = []
+goals = []
 checks = 0
 
 
@@ -105,13 +106,36 @@ try:
             assert result.get('data') is None
             unchanged()
             checks += 1
-    print(f'STG Task ownership smoke passed: {checks} denied requests; owner snapshots unchanged.')
+    goal = request('POST', '/api/v1/dday-goals', owner,
+                   {'title': 'STG private D-Day', 'targetDate': '2027-01-01'}, 201)['data']
+    goals.append((owner, goal['id']))
+    goal_path = '/api/v1/dday-goals/' + str(goal['id'])
+    original_goal = request('GET', goal_path, owner)['data']
+    original_goals = request('GET', '/api/v1/dday-goals', owner)['data']
+    for method, path, body in [
+        ('GET', '/api/ddays', None),
+        ('POST', '/api/ddays', {'title': 'Unauthorized', 'targetDate': '2027-01-01'}),
+        ('GET', '/api/ddays/' + str(goal['id']) + '/tasks', None),
+        ('DELETE', '/api/ddays/' + str(goal['id']), None),
+    ]:
+        for actor, expected in [(other, 403), (None, 401)]:
+            result = request(method, path, actor, body, expected)
+            assert result.get('data') is None
+            assert request('GET', goal_path, owner)['data'] == original_goal
+            assert request('GET', '/api/v1/dday-goals', owner)['data'] == original_goals
+            checks += 1
+    print(f'STG Task/D-Day ownership smoke passed: {checks} denied requests; owner snapshots unchanged.')
 finally:
     # Delete only resources created by this run, using their own authenticated owner.
     cleanup_errors = []
     for token, task_id in reversed(tasks):
         try:
             request('DELETE', '/api/v1/tasks/' + str(task_id), token)
+        except Exception as error:
+            cleanup_errors.append(type(error).__name__)
+    for token, goal_id in reversed(goals):
+        try:
+            request('DELETE', '/api/v1/dday-goals/' + str(goal_id), token)
         except Exception as error:
             cleanup_errors.append(type(error).__name__)
     for account in accounts:
@@ -122,4 +146,4 @@ finally:
             cleanup_errors.append(type(error).__name__)
     if cleanup_errors:
         raise RuntimeError('Synthetic cleanup incomplete: ' + ', '.join(cleanup_errors))
-    print('Synthetic STG tasks deleted and refresh sessions logged out; guest accounts remain in STG only.')
+    print('Synthetic STG tasks and D-Day goals deleted and refresh sessions logged out; guest accounts remain in STG only.')

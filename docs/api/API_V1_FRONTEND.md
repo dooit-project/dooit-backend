@@ -41,7 +41,7 @@ Pragma: no-cache
 Expires: 0
 ```
 
-멱등성 replay 응답을 도입할 때 사용할 `Idempotency-Replayed` response header는 CORS expose header에 포함되어 있다.
+멱등성 replay 응답에 사용하는 `Idempotency-Replayed` response header는 CORS expose header에 포함되어 있다.
 
 생성 요청 멱등성:
 
@@ -50,7 +50,9 @@ Expires: 0
 - 같은 key와 같은 payload는 resource를 다시 만들지 않고 최초 status/body를 반환한다.
 - replay 응답은 `Idempotency-Replayed: true` header를 포함한다.
 - 같은 key와 다른 payload는 HTTP 409와 `10004`를 반환한다.
-- replay 저장 기간은 최소 24시간이다.
+- replay 저장 기간은 최소 24시간이다. 현재 `expiresAt`을 저장하지만 만료 레코드 정리 작업은 아직 없다.
+- 같은 프로세스에서는 동일 key 요청을 직렬화한다. 실패 응답은 저장하지 않아 재시도할 수 있다.
+- 다중 인스턴스 간 잠금과 업무 데이터/응답 기록의 단일 트랜잭션은 아직 없다. 업무 저장 후 응답 기록 실패·프로세스 중단 시 재시도로 중복 생성될 수 있다. 다중 인스턴스 운영 전 DB 기반 원자성 보강이 필요하다.
 
 대상 endpoint:
 
@@ -1953,7 +1955,7 @@ type AppMetadataResponse = {
 ## 13. Legacy API 정책
 
 - 모바일 신규 연동 기준은 `/api/v1/**`다.
-- legacy `/api/tasks/**`, `/api/ddays/**`는 과거 호환 범위로만 유지한다.
+- legacy `/api/tasks/**`, `/api/ddays/**`는 코드만 남아 있으며 HTTP 접근은 차단한다. [호환성 정책](API_COMPATIBILITY_POLICY.md#6-legacy-api-정책)의 v1 이관 기준을 따른다.
 - 모바일 호환을 위해 legacy `/api/ddays/{id}`, `/api/ddays/{id}/tasks` alias를 새로 추가하지 않는다.
 - D-Day 단건 조회는 `GET /api/v1/dday-goals/{id}`, D-Day 기반 Today Task 생성은 `POST /api/v1/dday-goals/{id}/tasks`를 사용한다.
 
@@ -2037,3 +2039,7 @@ type AppMetadataResponse = {
 - 기본 제공자 대기 timeout은 10초, 서버 내 동시 작업은 8건이다. timeout·동시 작업/추적 사용자 용량 부족은 기존 503/70009로 반환한다. 요청 전체 처리 시간을 10초로 보장하는 계약은 아니다.
 - 실제 제출이 승인된 호출은 제공자 실패·timeout·출력 오류도 횟수를 소비한다. 입력/인증/소유권/연결/version 실패, 비활성/제공자 미설정, 활성 빈 여정의 무호출 요약과 제출 전 용량 거절은 소비하지 않는다.
 - 새 오류/헤더 처리가 추가되며 DTO·URL·DB migration은 없다. 서버 재시작/다중 서버에서는 quota를 공유하지 않으며 토큰·금액 상한을 보장하지 않는다. 실제 외부 adapter와 provider·보관·삭제 정책은 여전히 후속 작업이다.
+
+### D-Day legacy 접근 차단 (2026-10-29)
+
+소유권 검사 없이 전체 목표·연결 Task 조회와 삭제가 가능했던 `/api/ddays` 및 `/api/ddays/**`를 차단한다. 미인증 `401`, 인증 `403`이며 기존 클라이언트는 Bearer JWT와 `/api/v1/dday-goals/**`로 이관해야 한다. v1 계약과 DB schema는 변경하지 않는다. 기존 목표 보존 및 GET/POST/DELETE 차단을 통합 테스트로 검증한다. 2026-10-30 미커밋 작업본을 STG에 반영하고 차단·원본 보존을 검증했다. PRD는 미반영이다.

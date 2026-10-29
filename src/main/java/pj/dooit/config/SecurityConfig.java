@@ -75,7 +75,6 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",
                                 "/api/v1/system/metadata",
                                 "/api/v1/auth/guest",
                                 "/api/v1/auth/register",
@@ -84,10 +83,10 @@ public class SecurityConfig {
                                 "/api/v1/auth/password-reset/**",
                                 "/api/v1/calendar-feeds/*.ics"
                         ).permitAll()
-                        // 소유권 검사가 없는 legacy Task 경로를 통한 v1 우회 접근을 차단한다.
-                        .requestMatchers("/api/tasks", "/api/tasks/**").denyAll()
+                        // 소유권 검사가 없는 legacy 경로를 통한 v1 우회 접근을 차단한다.
+                        .requestMatchers("/api/tasks", "/api/tasks/**", "/api/ddays", "/api/ddays/**").denyAll()
                         .requestMatchers("/api/v1/**").authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .build();

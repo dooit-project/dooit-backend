@@ -99,7 +99,7 @@ D-Day와 별도로 Goal(선택 목표일), GoalPlan(반복 계획), GoalPlanOccu
 
 - v1 모바일 API는 항상 현재 인증 사용자의 User를 owner 기준으로 사용한다.
 - 다른 사용자의 Task/D-Day id는 존재하지 않는 리소스처럼 처리한다.
-- legacy `/api/**`는 웹/과거 호환 범위이며 모바일 신규 계약은 `/api/v1/**`다.
+- legacy Task·D-Day 경로는 보안상 HTTP 접근을 차단한다. 모바일/웹 계약은 `/api/v1/**`이며 이관 기준은 [호환성 정책](API_COMPATIBILITY_POLICY.md#6-legacy-api-정책)을 따른다.
 
 ## Resource Scope
 

@@ -47,6 +47,30 @@ class DdayGoalV1IntegrationTest {
     @MockitoBean
     MailService mailService;
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({
+            "GET,/api/ddays,true", "POST,/api/ddays,true",
+            "GET,/api/ddays/{id}/tasks,true", "DELETE,/api/ddays/{id},true",
+            "GET,/api/ddays,false", "POST,/api/ddays,false",
+            "GET,/api/ddays/{id}/tasks,false", "DELETE,/api/ddays/{id},false"
+    })
+    void legacyDdayCannotBypassOwnership(String method, String path, boolean authenticated) throws Exception {
+        User owner = userRepository.save(new User(java.util.UUID.randomUUID() + "@example.com", "hash", "owner"));
+        User other = userRepository.save(new User(java.util.UUID.randomUUID() + "@example.com", "hash", "other"));
+        String ownerToken = jwtTokenService.createAccessToken(owner).tokenValue();
+        Long id = createGoal(ownerToken, new DdayGoalRequest("비공개 목표", LocalDate.of(2027, 1, 1)));
+        var request = org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .request(org.springframework.http.HttpMethod.valueOf(method), path.replace("{id}", id.toString()))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"변조 시도\",\"targetDate\":\"2027-01-01\"}");
+        if (authenticated) request.header("Authorization", "Bearer " + jwtTokenService.createAccessToken(other).tokenValue());
+        mockMvc.perform(request).andExpect(status().is(authenticated ? 403 : 401))
+                .andExpect(jsonPath("$.data").isEmpty());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/dday-goals/{id}", id).header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.title").value("비공개 목표"));
+    }
+
     @Test
     @DisplayName("v1 D-Day 목표 생성 응답은 nullable 필드 없이 계약 필드를 반환한다")
     void create_responseFields_nonNull() throws Exception {

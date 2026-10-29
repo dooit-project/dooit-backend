@@ -13,6 +13,15 @@ class ApiPayloadSanitizerTest {
     private final ApiPayloadSanitizer sanitizer = new ApiPayloadSanitizer(new ObjectMapper());
 
     @Test
+    void malformedPayloadDoesNotLeakSecretsOrLogControlCharacters() {
+        String result = sanitizer.sanitizeJsonPayload(
+                "{\"password\":\"secret-value\",\r\nforged-log", Set.of("password"), 4096);
+        assertThat(result).isEqualTo("[UNPARSEABLE_PAYLOAD]");
+        assertThat(sanitizer.sanitizeJsonPayload("token=secret-value", Set.of("token"), 4096))
+                .isEqualTo("[UNPARSEABLE_PAYLOAD]");
+    }
+
+    @Test
     @DisplayName("JSON 전문의 민감 필드를 재귀적으로 마스킹한다")
     void sanitizeJsonPayload_masksSensitiveFields() {
         String payload = """

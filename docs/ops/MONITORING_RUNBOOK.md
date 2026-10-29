@@ -1,6 +1,6 @@
 # Monitoring Runbook
 
-Last updated: 2026-10-18
+Last updated: 2026-10-30
 
 이 문서는 Dooit local production에 Prometheus, Grafana, Loki, Grafana Alloy 기반 모니터링을 붙이는 구성과 운영 절차를 정리한다. 실제 secret, 관리자 비밀번호, public/private 관리 URL은 문서에 기록하지 않는다.
 
@@ -20,7 +20,7 @@ Last updated: 2026-10-18
 | Micrometer Prometheus registry | `/actuator/prometheus` scrape 형식 제공 | app dependency |
 | Prometheus | app metric scrape와 단기 보관 | Compose service, `127.0.0.1:9090` |
 | Loki | 로그 저장과 LogQL 조회 | Compose service, `127.0.0.1:3100` |
-| Grafana Alloy | Docker log 또는 app log file 수집 후 Loki 전송 | Compose service |
+| Grafana Alloy | Docker socket으로 container stdout/stderr 수집 후 Loki 전송 | Compose service |
 | Grafana | Prometheus/Loki datasource와 dashboard UI | Compose service, `127.0.0.1:3000` |
 
 1차 운영에서는 Grafana, Prometheus, Loki, Alloy를 외부 공개하지 않는다. Cloudflare Tunnel에 management UI를 연결해야 할 때는 Cloudflare Access 또는 동등한 인증을 먼저 붙인 뒤 별도 작업으로 진행한다.
@@ -28,6 +28,28 @@ Last updated: 2026-10-18
 ## 현재 상태
 
 2026-09-06 기준 monitoring password file과 Grafana admin password를 local production `.env`에 적용했고, `docker compose --profile monitoring up -d app prometheus loki alloy grafana`와 `./scripts/check-monitoring-stack.sh`가 통과했다. Grafana, Prometheus, Loki, Alloy는 host loopback에만 bind되어 있다.
+
+### 실제 데이터 흐름과 보관
+
+```text
+Spring Logback → stdout/stderr → Docker json-file → Alloy → Loki → Grafana (LogQL)
+Spring Actuator + Micrometer → /actuator/prometheus ← Prometheus (15초 주기) → Grafana (PromQL)
+```
+
+- 로그는 사건별 텍스트이고 메트릭은 요청 횟수·지연시간·메모리 등의 시계열 수치다. Grafana가 두 저장소를 각각 조회한다. 로그를 변환해 현재 JVM/HTTP 메트릭을 만드는 구조는 아니다.
+- Alloy는 `DOOIT_COMPOSE_PROJECT_NAME`에 해당하는 PRD 컨테이너만 수집한다. `compose_project`, `compose_service`, `container`, `env`를 라벨로 붙인다. STG는 별도 Docker logs로 확인한다.
+- requestId는 로그 본문/MDC에 있다. 현재 Alloy에는 requestId 파싱이나 stack trace multiline 결합 단계가 없으며, Grafana에서 문자열로 검색한다.
+- Loki 로그 보관 설정은 168시간(7일), Prometheus 메트릭 보관 기본값은 15일이다.
+- Docker json-file은 컨테이너별 10MB × 5개로 회전한다. production Logback 파일은 `/app/logs` 볼륨에도 별도로 기록하며 각 rolling policy는 30일/1GB 상한이다. 이 파일은 현재 Alloy 수집 원본이 아니다.
+- Grafana datasource와 6개 패널은 `config/monitoring/grafana`의 provisioning/JSON 파일로 관리한다. 로컬 접속 주소는 `http://127.0.0.1:3000`이다.
+
+### 2026-10-30 읽기 전용 점검
+
+- `check-monitoring-stack.sh` 통과, Prometheus `up{job="dooit-backend"}=1` 확인.
+- 점검용 metadata 읽기 요청에 requestId를 부여하고 Loki에서 해당 문자열의 로그 유입을 확인했다. 초기 빈 조회만으로 수집 장애라고 판단하지 않고 실제 요청→수집까지 검증했다.
+- HTTP count 메트릭은 존재하지만 `http_server_requests_seconds_bucket`은 없었다. p95는 histogram 설정을 추가하고 앱 배포 후 bucket과 차트를 검증해야 한다.
+- 이 스크립트는 서비스 endpoint/target 상태를 확인한다. Grafana datasource 인증 health나 실제 Loki 로그 유입까지 자동 검증하지는 않는다.
+- 이번에는 PRD 앱·모니터링 설정을 변경하지 않았다. 알림 연락처/규칙도 아직 설정하지 않았다.
 
 ## 3. 네트워크와 보안 원칙
 
@@ -70,7 +92,7 @@ curl --fail --user "$DOOIT_MONITORING_USERNAME:$(cat "$DOOIT_MONITORING_PASSWORD
 검증:
 
 ```bash
-docker compose config
+docker compose config --quiet
 docker compose --profile monitoring up -d app prometheus loki alloy grafana
 docker compose ps
 ```
@@ -112,17 +134,19 @@ docker compose ps
 - [x] `config/monitoring/grafana/provisioning/datasources`에 Prometheus와 Loki datasource를 추가한다.
 - [x] Prometheus URL은 `http://prometheus:9090`, Loki URL은 `http://loki:3100`을 사용한다.
 - [x] dashboard provisioning 디렉터리를 추가한다.
-- [x] 1차 dashboard는 JVM/HTTP/DB/Container health 중심으로 만든다.
+- [x] 1차 dashboard는 backend scrape 상태/HTTP/JVM/DB/오류 로그 중심으로 만든다.
 - [x] Grafana anonymous access는 production 기본 비활성으로 둔다.
 
-1차 dashboard panel:
+현재 `Dooit Production Overview`의 실제 패널은 6개다.
 
-- API request rate, latency p95, 5xx count
-- JVM heap/non-heap memory, GC pause
-- HikariCP active/idle/pending connection
-- process CPU, uptime
-- app container restart count 또는 Docker health 상태
-- recent ERROR logs
+- Backend Up: Prometheus scrape 성공 여부. readiness나 Docker health와는 다르다.
+- API Request Rate: HTTP 요청 횟수의 초당 증가율. 현재 쿼리는 Actuator 요청도 포함한다.
+- API Latency p95: histogram bucket으로 계산하도록 되어 있으나 현재 운영에는 bucket 메트릭이 없어 표시되지 않는다.
+- JVM Memory Used: heap/non-heap 메모리 사용량.
+- HikariCP Connections: active/idle/pending 연결 수.
+- Recent App Errors: Loki app 로그 중 `ERROR` 문자열 검색.
+
+5xx, GC pause, CPU, uptime, container restart/health 패널은 아직 없다. 특히 Docker 상태를 수집할 exporter도 현재 구성에 없다.
 
 ### B5. 운영 스크립트와 문서
 

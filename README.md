@@ -67,6 +67,8 @@ Authorization: Bearer <accessToken>
 
 ```bash
 cp .env.example .env
+# .env 필수 값을 설정한 뒤 실행합니다.
+./gradlew clean bootJar
 for volume in dooit-mysql-data dooit-app-logs dooit-prometheus-data dooit-loki-data dooit-alloy-data dooit-grafana-data; do
   docker volume create "$volume"
 done
@@ -94,6 +96,10 @@ docker compose up --build
 src/main/java/pj/dooit/
 ├── auth/          # 회원, 게스트, JWT, refresh, 비밀번호 재설정
 ├── task/          # Task, quick capture, template, recurrence
+├── goal/          # 목표·계획·실천·직접 기록과 여정
+├── personalsystem/ # 기존 개인 시스템과 목표 모델 이관
+├── dailyplan/     # 일일 계획과 마감 요약
+├── user/          # 사용자 프로필과 시간대
 ├── dday/          # D-Day 목표와 연결 Task
 ├── workspace/     # 공유 workspace, 멤버, 권한
 ├── notification/  # 알림 후보, push token, 발송 이력
@@ -110,7 +116,7 @@ src/main/java/pj/dooit/
 
 Docker 환경은 이 PC의 `prd_dooit`와 `stg_dooit`로 분리했습니다. STG는 `http://localhost:18080`이며 별도 DB와 인증 키를 사용합니다. 로컬 구현 완료와 운영 배포 여부는 [문서 현황](./docs/README.md#현재-기준-요약)에서 구분합니다.
 
-production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로 공개합니다. Web은 별도 정적 서버의 `127.0.0.1:4173`을 `https://dooit.hsng.pe.kr`에 연결하며, 두 공개 주소 모두 Cloudflare edge에서 HTTPS를 강제합니다. MySQL port는 host에 공개하지 않습니다.
+production app port는 `127.0.0.1:8080`에만 바인딩하고, 외부 API는 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로 공개합니다. Web은 별도 정적 서버의 `127.0.0.1:4173`을 `https://dooit.hsng.pe.kr`에 연결하며, 두 공개 주소 모두 Cloudflare edge에서 HTTPS를 강제합니다. MySQL은 `127.0.0.1:3306`에만 바인딩하며 외부 인터페이스에 공개하지 않습니다.
 
 최신 코드 기준 production DB migration은 [docs/db/MIGRATION_HISTORY.md](./docs/db/MIGRATION_HISTORY.md)에 적용 이력을 남깁니다. `prod` profile은 `ddl-auto: validate`를 사용하므로 schema 변경 release 전에는 백업, migration 적용, readiness 확인을 먼저 끝내야 합니다.
 

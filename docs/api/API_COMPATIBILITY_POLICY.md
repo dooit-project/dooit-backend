@@ -1,6 +1,6 @@
 # Dooit API Compatibility Policy
 
-Last updated: 2026-08-21
+Last updated: 2026-10-29
 
 이 문서는 `/api/v1/**` 모바일 API를 변경할 때 지켜야 할 호환성 기준과 OpenAPI 변경 검토 방식을 정리한다.
 
@@ -9,7 +9,7 @@ Last updated: 2026-08-21
 - 모바일이 사용하는 안정 API는 `/api/v1/**`이다.
 - 기존 v1 endpoint의 path, method, request field, response field, error envelope는 호환성을 유지한다.
 - 새 기능은 가능한 한 기존 v1 계약을 깨지 않고 field 또는 endpoint를 추가하는 방식으로 확장한다.
-- 기존 `/api/**` legacy endpoint는 과거 연동 호환을 위해 유지하되, 모바일/웹 클라이언트 신규 기능에는 사용하지 않는다.
+- legacy Task·D-Day 코드는 남아 있지만 HTTP 접근은 보안상 차단한다. 신규·기존 클라이언트 모두 아래 v1 이관 기준을 따른다.
 - 모바일 호환을 위해 legacy `/api/ddays/**` alias를 새로 추가하지 않는다. 모바일은 D-Day API를 `/api/v1/dday-goals/**`로 전환한다.
 - legacy endpoint 제거는 과거 클라이언트 사용 여부와 운영 로그를 확인한 뒤 별도 deprecation 절차로 진행한다.
 
@@ -81,9 +81,12 @@ API 계약 변경 PR에는 아래를 함께 반영한다.
 
 - `/api/v1/**`는 모바일/외부 클라이언트용 안정 계약이다.
 - `/api/tasks/**`, `/api/ddays/**`는 legacy 계약이다.
-- legacy `/api/tasks/**`는 과거 호환 범위로만 유지한다.
-- legacy `/api/ddays/**`는 현재 제공 중인 범위만 유지한다. 없는 endpoint를 모바일 호환용 alias로 새로 추가하지 않는다.
-- legacy API에는 v1 owner scope, JWT 인증, OpenAPI 품질 보강을 새 기능 수준으로 확대하지 않는다.
+- `/api/tasks`, `/api/tasks/**`, `/api/ddays`, `/api/ddays/**`는 소유권 검사 우회 방지를 위해 차단한다. 미인증 요청은 `401`, 인증 요청은 `403`이다.
+- Task 차단은 2026-10-25 STG 검증 기록이 있으며, D-Day 차단은 2026-10-29 코드에 추가했다. 2026-10-30 수정 작업본의 STG 검증을 완료했으며 PRD는 미반영이다.
+- 이는 legacy 클라이언트의 breaking change다. Task는 `/api/v1/tasks/**`, D-Day는 `/api/v1/dday-goals/**`로 전환하고 Bearer JWT를 전달해야 한다. 공유 데이터는 `/api/v1/workspaces/{workspaceId}/...`를 사용한다.
+- v1 URL·DTO·오류 코드와 DB schema는 그대로다. DB migration은 필요하지 않다. 소유자 없는 과거 데이터는 자동 노출하지 않으며 소유자 확인 후 별도 이관해야 한다.
+- 명시적으로 허용한 경로와 인증된 v1 외의 `/api/**`는 기본 거부한다. 구현이 없는 `/api/auth/**` 공개 예외도 제거했다.
+- OpenAPI에 남은 legacy path가 호출 가능하다는 뜻은 아니다. 모바일 호환용 alias를 추가하지 않는다.
 - 새 모바일 API는 반드시 `/api/v1/**`에 추가한다.
 
 제거 검토 조건:

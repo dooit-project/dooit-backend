@@ -1,6 +1,6 @@
 # PRD / STG Docker 운영
 
-Last updated: 2026-10-18
+Last updated: 2026-10-30
 
 이 Mac에서 PRD와 STG를 별도 Compose 프로젝트로 실행한다. Compose 프로젝트 이름은 소문자만 허용하므로 Docker Desktop 그룹명은 `prd_dooit`, `stg_dooit`다.
 
@@ -82,6 +82,15 @@ Alloy의 프로젝트 필터도 같은 환경변수를 받아 PRD 로그만 수�
 - `python3 scripts/smoke-staging-task-ownership.py`가 계정 간 Task/체크리스트 11개 연산, 미인증 요청, 부모/item ID 혼합, legacy Task 우회 경로를 포함한 거부 요청 38건과 A의 원본 보존을 검증했다. 생성 Task 두 개와 체크리스트는 삭제하고 두 refresh session은 logout했다. 합성 게스트 두 계정은 STG에 남는다.
 - `python3 scripts/smoke-staging.py`로 선택 유형/계획일/Today 분리/일정 시각/주간 반복/자동 해석/오류/멱등 재시도도 통과했다. 생성 Task는 삭제했고 해당 검증의 게스트와 멱등성 기록은 STG에 남는다.
 - PRD는 image `6cdc9e5`, 기존 runtime commit, readiness UP을 읽기 전용으로 확인했다. PRD 앱·DB는 변경하지 않았다. 따라서 legacy Task 경로 보안 수정도 PRD에는 아직 적용되지 않았다.
+
+## 운영 검토 수정 STG 반영 (2026-10-30)
+
+- 전체 테스트 701개 통과 결과를 확인하고 `scripts/staging.sh build` 및 `up`을 수행했다. STG image는 `stg-bc55e44-20261030000018`, runtime commitSha는 `bc55e44c8f90c93377dcb1f5b895629b99dcce45-dirty`다. 미커밋 작업본이며 확정 release가 아니다.
+- legacy D-Day 접근 차단, API 기본 거부 정책, 단일 프로세스 멱등성 잠금 경합 수정, 파싱 실패 payload 로그 보호를 포함한다. schema migration은 없다.
+- `smoke-staging-task-ownership.py`에 D-Day 검증을 추가했다. Task/체크리스트/D-Day 거부 요청 46건과 원본 보존을 통과했다.
+- `smoke-staging.py`의 선택 유형·계획일·Today·시각·반복·자동 해석·오류·replay 검증도 통과했다.
+- 합성 Task·체크리스트·D-Day는 삭제했고 소유권 검증 refresh session은 로그아웃했다. 게스트 및 멱등성 기록은 STG에 남는다.
+- PRD 앱은 기존 `6cdc9e5`를 유지했다. PRD 보안 수정 배포는 아직 남아 있다.
 
 ## 남은 일
 

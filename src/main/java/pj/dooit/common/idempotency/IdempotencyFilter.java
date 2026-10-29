@@ -29,8 +29,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 @Component
@@ -57,7 +55,11 @@ public class IdempotencyFilter extends OncePerRequestFilter {
 
     private final IdempotencyRecordRepository repository;
     private final JwtDecoder jwtDecoder;
-    private final Map<String, Object> locks = new ConcurrentHashMap<>();
+    // 잠금을 제거하면 기존 대기자와 새 요청이 서로 다른 잠금으로 실행될 수 있다.
+    // 고정 크기 stripe는 잠금 수를 제한하면서 같은 key의 모든 요청을 직렬화한다.
+    // 서로 다른 key의 hash 충돌은 직렬화만 추가하며 replay 범위에는 영향을 주지 않는다.
+    private final Object[] locks = java.util.stream.IntStream.range(0, 256)
+            .mapToObj(ignored -> new Object()).toArray();
 
     @Autowired
     public IdempotencyFilter(
@@ -92,46 +94,42 @@ public class IdempotencyFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String requestHash = sha256(cachedRequest.cachedBody());
         String lockKey = scopeKey + ":" + method + ":" + path + ":" + idempotencyKey;
-        Object lock = locks.computeIfAbsent(lockKey, ignored -> new Object());
+        Object lock = locks[Math.floorMod(lockKey.hashCode(), locks.length)];
 
         synchronized (lock) {
-            try {
-                IdempotencyRecord existing = repository
-                        .findByScopeKeyAndHttpMethodAndRequestPathAndIdempotencyKey(
-                                scopeKey,
-                                method,
-                                path,
-                                idempotencyKey
-                        )
-                        .orElse(null);
-                if (existing != null) {
-                    if (!existing.getRequestHash().equals(requestHash)) {
-                        writeConflict(response);
-                        return;
-                    }
-                    replay(existing, response);
-                    return;
-                }
-
-                ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-                filterChain.doFilter(cachedRequest, responseWrapper);
-                if (HttpStatus.valueOf(responseWrapper.getStatus()).is2xxSuccessful()) {
-                    repository.save(new IdempotencyRecord(
+            IdempotencyRecord existing = repository
+                    .findByScopeKeyAndHttpMethodAndRequestPathAndIdempotencyKey(
                             scopeKey,
                             method,
                             path,
-                            idempotencyKey,
-                            requestHash,
-                            responseWrapper.getStatus(),
-                            responseWrapper.getContentType(),
-                            responseBody(responseWrapper),
-                            LocalDateTime.now(Constant.ZONE).plus(RETENTION)
-                    ));
+                            idempotencyKey
+                    )
+                    .orElse(null);
+            if (existing != null) {
+                if (!existing.getRequestHash().equals(requestHash)) {
+                    writeConflict(response);
+                    return;
                 }
-                responseWrapper.copyBodyToResponse();
-            } finally {
-                locks.remove(lockKey);
+                replay(existing, response);
+                return;
             }
+
+            ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
+            filterChain.doFilter(cachedRequest, responseWrapper);
+            if (HttpStatus.valueOf(responseWrapper.getStatus()).is2xxSuccessful()) {
+                repository.save(new IdempotencyRecord(
+                        scopeKey,
+                        method,
+                        path,
+                        idempotencyKey,
+                        requestHash,
+                        responseWrapper.getStatus(),
+                        responseWrapper.getContentType(),
+                        responseBody(responseWrapper),
+                        LocalDateTime.now(Constant.ZONE).plus(RETENTION)
+                ));
+            }
+            responseWrapper.copyBodyToResponse();
         }
     }
 

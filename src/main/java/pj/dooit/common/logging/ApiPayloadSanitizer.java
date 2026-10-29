@@ -79,7 +79,8 @@ public class ApiPayloadSanitizer {
             mask(root, sensitiveFields);
             return objectMapper.writeValueAsString(root);
         } catch (JsonProcessingException e) {
-            return payload;
+            // 잘린 JSON이나 일반 텍스트에서는 민감 필드 마스킹을 보장할 수 없다.
+            return "[UNPARSEABLE_PAYLOAD]";
         }
     }
 
