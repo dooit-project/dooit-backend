@@ -92,6 +92,13 @@ Alloy의 프로젝트 필터도 같은 환경변수를 받아 PRD 로그만 수�
 - 합성 Task·체크리스트·D-Day는 삭제했고 소유권 검증 refresh session은 로그아웃했다. 게스트 및 멱등성 기록은 STG에 남는다.
 - PRD 앱은 기존 `6cdc9e5`를 유지했다. PRD 보안 수정 배포는 아직 남아 있다.
 
+## p95 histogram STG 검증 (2026-10-30)
+
+- 이전 보안·문서 정리는 `4a14f3b`로 main에 커밋·푸시했다.
+- histogram 변경 작업본 image `stg-4a14f3b-20261030000822`를 빌드·반영했다. 미커밋 후속 변경이 포함돼 runtime SHA는 `4a14f3b` 전체 SHA에 `-dirty`가 붙는다.
+- 임시 모니터링 인증으로 실제 HTTP bucket을 확인하고 STG 전용 임시 Prometheus에서 대시보드 요청량/p95 쿼리가 값을 반환하는지 확인했다. 상세는 [모니터링 runbook](MONITORING_RUNBOOK.md)을 따른다.
+- 임시 수집기는 삭제했고 STG는 모니터링 비활성·readiness UP으로 복구했다. PRD 앱·DB는 변경하지 않았다.
+
 ## 남은 일
 
 - STG에서 제품 정책과 모바일 연동 확인 후 검증된 release를 별도로 PRD에 배포.

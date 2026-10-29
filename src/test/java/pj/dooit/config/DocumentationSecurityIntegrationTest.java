@@ -2,6 +2,8 @@ package pj.dooit.config;
 
 import pj.dooit.mail.MailService;
 import org.junit.jupiter.api.DisplayName;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +32,25 @@ class DocumentationSecurityIntegrationTest {
 
     @MockitoBean
     MailService mailService;
+
+    @Test
+    @DisplayName("실제 HTTP 요청의 Prometheus histogram bucket과 count를 노출한다")
+    void httpRequestHistogramIsExported() throws Exception {
+        mockMvc.perform(get("/api/v1/system/metadata")).andExpect(status().isOk());
+        String metrics = mockMvc.perform(get("/actuator/prometheus")
+                        .with(httpBasic("dooit-prometheus", "test-monitoring-password")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        var buckets = metrics.lines()
+                .filter(line -> line.startsWith("http_server_requests_seconds_bucket{"))
+                .filter(line -> line.contains("uri=\"/api/v1/system/metadata\""))
+                .toList();
+        assertThat(buckets).hasSizeGreaterThan(1);
+        assertThat(buckets).anyMatch(line -> !line.contains("le=\"+Inf\"")
+                && Double.parseDouble(line.substring(line.lastIndexOf(' ') + 1)) >= 1);
+        assertThat(buckets)
+                .anyMatch(line -> line.contains("le=\"+Inf\"")
+                        && Double.parseDouble(line.substring(line.lastIndexOf(' ') + 1)) >= 1);
+    }
 
     @Test
     @DisplayName("문서 공개 설정을 끄면 OpenAPI 문서 endpoint가 공개되지 않는다")

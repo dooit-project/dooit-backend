@@ -51,6 +51,23 @@ Spring Actuator + Micrometer → /actuator/prometheus ← Prometheus (15초 주�
 - 이 스크립트는 서비스 endpoint/target 상태를 확인한다. Grafana datasource 인증 health나 실제 Loki 로그 유입까지 자동 검증하지는 않는다.
 - 이번에는 PRD 앱·모니터링 설정을 변경하지 않았다. 알림 연락처/규칙도 아직 설정하지 않았다.
 
+### p95 수집 보완과 STG 검증 (2026-10-30)
+
+- 공통 `application.yml`에 `management.metrics.distribution.percentiles-histogram.http.server.requests=true`를 추가했다. local/test/prod에서 같은 분포 설정을 사용하며 metric endpoint의 기존 인증·활성화 정책은 유지한다.
+- HTTP 요청별 시간 구간의 누적 bucket을 내보내고 Prometheus에서 `histogram_quantile`로 p95를 추정한다. [Spring Boot 4.0 metrics 문서](https://docs.spring.io/spring-boot/4.0/reference/actuator/metrics.html)를 기준으로 구성했다.
+- 대시보드 요청량·p95의 쿼리를 backend job의 `/api/**`로 한정했다. route template을 사용하는 `uri` tag로 집계하며 requestId나 사용자 ID 라벨을 추가하지 않는다.
+- HTTP metadata 요청 후 인증된 Prometheus endpoint에서 유한 bucket과 `+Inf` bucket의 실제 증가를 통합 테스트로 검증한다.
+- STG image `stg-4a14f3b-20261030000822`에서 일회성 모니터링 인증을 활성화해 69개 bucket series를 확인했다. STG 네트워크의 임시 Prometheus에서 대시보드 원본 쿼리로 요청량·p95가 유한한 양수를 반환하는 것을 검증했다. 소량 합성 요청 결과이며 운영 성능 수치로 해석하지 않는다.
+- 임시 Prometheus는 삭제했고 STG 모니터링은 비활성으로 복구했다. PRD 앱 image는 변경하지 않았다. 대시보드 JSON은 기존 provisioning bind mount에 따라 갱신될 수 있지만 PRD histogram 수집은 새 앱 배포가 필요하다.
+- histogram은 요청 tag 조합마다 시계열을 늘린다. 배포 뒤 Prometheus series·메모리 증가를 확인한다. p95는 최근 5분 요청과 최소 두 번의 scrape가 필요하며, 요청이 없는 구간의 no data/NaN을 0ms로 치환하지 않는다.
+
+배포 후 확인할 쿼리:
+
+```promql
+count(http_server_requests_seconds_bucket{job="dooit-backend",uri=~"/api/.*"})
+histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job="dooit-backend",uri=~"/api/.*"}[5m])) by (le))
+```
+
 ## 3. 네트워크와 보안 원칙
 
 - app API public endpoint는 기존처럼 Cloudflare Tunnel을 통해 `https://dooitapi.hsng.pe.kr`로만 공개한다.
@@ -140,8 +157,8 @@ docker compose ps
 현재 `Dooit Production Overview`의 실제 패널은 6개다.
 
 - Backend Up: Prometheus scrape 성공 여부. readiness나 Docker health와는 다르다.
-- API Request Rate: HTTP 요청 횟수의 초당 증가율. 현재 쿼리는 Actuator 요청도 포함한다.
-- API Latency p95: histogram bucket으로 계산하도록 되어 있으나 현재 운영에는 bucket 메트릭이 없어 표시되지 않는다.
+- API Request Rate: `job="dooit-backend"`, `uri=~"/api/.*"`의 초당 요청 증가율. Actuator·문서 UI 요청은 제외한다.
+- API Latency p95: 같은 API 범위의 histogram bucket을 합산해 계산한다. 2026-10-30 histogram 생성·쿼리 계산을 STG에서 검증했다. PRD 앱은 아직 이전 image여서 배포 전까지 bucket이 없다.
 - JVM Memory Used: heap/non-heap 메모리 사용량.
 - HikariCP Connections: active/idle/pending 연결 수.
 - Recent App Errors: Loki app 로그 중 `ERROR` 문자열 검색.

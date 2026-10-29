@@ -87,6 +87,11 @@ springdoc:
     operations-sorter: method
 
 management:
+  metrics:
+    distribution:
+      # Prometheus histogram_quantile로 인스턴스 간 집계 가능한 p95를 계산한다.
+      percentiles-histogram:
+        http.server.requests: true
   health:
     redis:
       enabled: false

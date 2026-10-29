@@ -172,7 +172,8 @@ STG 반영 및 실 API 검증 완료, PRD 미배포. 계약/서버 회신: [`../
 
 Prometheus, Grafana, Loki, Grafana Alloy 기본 stack 실기동과 점검은 완료했다. 구성과 명령은 [모니터링 runbook](../ops/MONITORING_RUNBOOK.md)을 따른다.
 
-- [ ] HTTP histogram 수집을 활성화하고 현재 비어 있는 p95 패널을 검증한다. 2026-10-30 운영 조회에서 bucket 부재를 확인했다.
+- [x] HTTP histogram 수집 설정과 API 전용 쿼리를 추가했다. 2026-10-30 STG에서 bucket과 별도 Prometheus의 실제 p95 계산을 검증했다.
+- [ ] p95 수정 image를 PRD에 반영한 뒤 bucket·차트·시계열 증가량을 확인한다. PRD 앱은 아직 기존 image다.
 - [ ] 필요에 따라 5xx·GC·CPU 패널을 추가하고 container health/restart는 별도 exporter 도입을 검토한다. 현재 실제 패널은 6개다.
 - [ ] alerting은 dashboard와 log 수집 안정화 이후 별도 작업으로 진행한다.
 
