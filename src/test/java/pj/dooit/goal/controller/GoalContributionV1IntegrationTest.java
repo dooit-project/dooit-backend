@@ -104,8 +104,11 @@ class GoalContributionV1IntegrationTest {
         Long first = goal(token);
         Long second = goal(token);
         Long task = task(token);
-        String done = mockMvc.perform(patch("/api/v1/tasks/{id}/done", task).header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String done = mockMvc.perform(patch("/api/v1/tasks/{id}/done", task).header("Authorization", "Bearer " + token)
+                        .param("completedAt", "2026-10-30T10:45:19.102095604"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.completedAt").value("2026-10-30T10:45:19"))
+                .andReturn().getResponse().getContentAsString();
         Object completedAt = JsonPath.read(done, "$.data.completedAt");
         for (Long goal : List.of(first, second)) {
             mockMvc.perform(put("/api/v1/tasks/{id}/goal-link", task).header("Authorization", "Bearer " + token)

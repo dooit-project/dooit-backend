@@ -1311,7 +1311,7 @@ PUT /api/v1/tasks/{taskId}/checklist-items/order
 - item 제목은 30자 이하이며 Task당 최대 100개다.
 - item에는 별도 날짜, 알림, 담당자, 하위 checklist를 두지 않는다.
 - 생성 응답은 `201 Created`와 `TaskChecklistItemResponse`다.
-- `done` 처리 시 `completedAt`을 생략하면 서버 현재 시각을 사용한다.
+- `done` 처리 시 `completedAt`을 생략하면 서버 현재 시각을 사용한다. 완료 시각은 운영 DB 정밀도에 맞춰 초 단위로 저장·응답하며, 입력한 소수 초는 버린다. 기존 저장 데이터의 이관은 필요 없다.
 - Task 완료 시 미완료 checklist item은 같은 완료 시각으로 함께 완료된다.
 - Task 삭제 시 checklist item도 함께 삭제된다.
 - 정렬은 `orderedItemIds`에 현재 Task의 item 전체 ID를 중복 없이 보내는 전체 교체 방식이다.

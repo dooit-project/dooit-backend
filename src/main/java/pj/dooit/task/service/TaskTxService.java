@@ -185,10 +185,10 @@ public class TaskTxService {
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTask(id);
         task.complete(completedAt);
-        goalOccurrenceTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
+        goalOccurrenceTaskLinkService.recordLinkedTaskCompleted(task, task.getCompletedAt());
         removeFocus(task);
         checklistItemService.completeAllForTask(task.getId(), task.getCompletedAt());
-        personalSystemTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
+        personalSystemTaskLinkService.recordLinkedTaskCompleted(task, task.getCompletedAt());
         return taskRepository.save(task);
     }
 
@@ -198,10 +198,10 @@ public class TaskTxService {
         goalOccurrenceTaskLinkService.lockLinkedOccurrence(id);
         Task task = findTaskForOwner(id, owner);
         task.complete(completedAt);
-        goalOccurrenceTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
+        goalOccurrenceTaskLinkService.recordLinkedTaskCompleted(task, task.getCompletedAt());
         removeFocus(task);
         checklistItemService.completeAllForTask(task.getId(), task.getCompletedAt());
-        personalSystemTaskLinkService.recordLinkedTaskCompleted(task, completedAt);
+        personalSystemTaskLinkService.recordLinkedTaskCompleted(task, task.getCompletedAt());
         return taskRepository.save(task);
     }
 

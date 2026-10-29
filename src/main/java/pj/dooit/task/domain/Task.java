@@ -256,7 +256,8 @@ public class Task {
     public void complete(LocalDateTime completedAt) {
         validateCompletedAt(completedAt);
         this.status = TaskStatus.DONE;
-        this.completedAt = completedAt;
+        // 운영 DB의 COMPLETED_AT은 초 단위 DATETIME이다. 저장 전 응답도 같은 값을 반환한다.
+        this.completedAt = completedAt.truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
     }
 
     public void reopenToday(LocalDate targetDate) {

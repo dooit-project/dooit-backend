@@ -90,7 +90,7 @@ public class GoalOccurrenceTaskLinkService {
                 .withZoneSameInstant(Constant.ZONE).toLocalDateTime();
         task.complete(completedAt);
         dailyPlanService.removeFocusTask(task.getId());
-        checklistItemService.completeAllForTask(task.getId(), completedAt);
+        checklistItemService.completeAllForTask(task.getId(), task.getCompletedAt());
     }
 
     @Transactional
