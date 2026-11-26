@@ -105,4 +105,29 @@ class DateRangeTest {
         assertThat(serviceRange.materializeFromInclusive()).isEqualTo(java.time.LocalDate.of(2026, 7, 13));
         assertThat(serviceRange.materializeToExclusive()).isEqualTo(java.time.LocalDate.of(2026, 7, 15));
     }
+    @Test
+    @DisplayName("서머타임 시작일은 서비스 시간대에서 23시간 범위로 변환한다")
+    void toServiceZone_daylightSavingStarts() {
+        DateRange range = DateRange.ofDay("2026-03-08");
+
+        DateRange serviceRange = range.toServiceZone(ZoneId.of("America/New_York"));
+
+        assertThat(serviceRange.getStart()).isEqualTo(LocalDateTime.of(2026, 3, 8, 14, 0));
+        assertThat(serviceRange.getEnd()).isEqualTo(LocalDateTime.of(2026, 3, 9, 13, 0));
+        assertThat(java.time.Duration.between(serviceRange.getStart(), serviceRange.getEnd()).toHours())
+                .isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("서머타임 종료일은 서비스 시간대에서 25시간 범위로 변환한다")
+    void toServiceZone_daylightSavingEnds() {
+        DateRange range = DateRange.ofDay("2026-11-01");
+
+        DateRange serviceRange = range.toServiceZone(ZoneId.of("America/New_York"));
+
+        assertThat(serviceRange.getStart()).isEqualTo(LocalDateTime.of(2026, 11, 1, 13, 0));
+        assertThat(serviceRange.getEnd()).isEqualTo(LocalDateTime.of(2026, 11, 2, 14, 0));
+        assertThat(java.time.Duration.between(serviceRange.getStart(), serviceRange.getEnd()).toHours())
+                .isEqualTo(25);
+    }
 }
